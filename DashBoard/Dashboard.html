@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flash Pay</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="Dashboard.css">
+</head>
+<body>
+
+    <aside class="sidebar">
+        <div class="logo">
+            <i class="fa-solid fa-wallet"></i>
+            <span>FlashPay</span>
+        </div>
+        <nav>
+            <ul>
+                <li id="nav-dashboard" class="active"><a href="#"><i class="fa-solid fa-table-columns"></i> لوحة التحكم</a></li>
+                <li id="nav-transfers"><a href="#"><i class="fa-solid fa-money-bill-transfer"></i> الحوالات</a></li>
+                <li id="nav-employees"><a href="#"><i class="fa-solid fa-users"></i> الموظفين</a></li>
+                <li id="nav-reports"><a href="#"><i class="fa-solid fa-chart-line"></i> التقارير</a></li>
+                <li><a href="#"><i class="fa-solid fa-gear"></i> الإعدادات</a></li>
+            </ul>
+        </nav>
+        <div class="logout">
+            <a href="#"><i class="fa-solid fa-arrow-right-from-bracket"></i> تسجيل الخروج</a>
+        </div>
+    </aside>
+
+    <main class="main-content">
+
+        <header>
+            <div class="header-title">
+                <h2 id="page-title">لوحة التحكم</h2>
+                <span class="date">24 أكتوبر 2025</span>
+            </div>
+
+            <div class="header-actions">
+                <select id="role-switcher" onchange="switchRole(this.value)">
+                    <option value="super_admin" selected>صلاحية: المدير العام (Super Admin)</option>
+                    <option value="admin">صلاحية: مدير مكتب (Admin)</option>
+                    <option value="agent">صلاحية: وكيل (Agent)</option>
+                    <option value="cashier">صلاحية: أمين صندوق (Cashier)</option>
+                    <option value="accountant">صلاحية: محاسب</option>
+                    <option value="customer">واجهة: العميل</option>
+                </select>
+
+                <button class="icon-btn" aria-label="الإشعارات" title="الإشعارات">
+                    <i class="fa-regular fa-bell"></i>
+                    <span class="badge">3</span>
+                </button>
+                <div class="profile">
+                    <img src="https://ui-avatars.com/api/?name=Admin+User&background=0D8ABC&color=fff" alt="Profile" id="profile-img">
+                    <div class="profile-info">
+                        <span class="name" id="user-name">أحمد المدير</span>
+                        <span class="role" id="user-role">المدير العام</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="content-body">
+
+            <div id="section-stats" class="stats-grid">
+                <div class="card stat-card">
+                    <div class="icon blue"><i class="fa-solid fa-dollar-sign"></i></div>
+                    <div class="info">
+                        <h3>رصيد الصندوق (USD)</h3>
+                        <p>$124,500.00</p>
+                    </div>
+                </div>
+                <div class="card stat-card">
+                    <div class="icon green"><i class="fa-solid fa-arrow-trend-up"></i></div>
+                    <div class="info">
+                        <h3>حجم اليوم</h3>
+                        <p>$32,100.00</p>
+                    </div>
+                </div>
+                <div class="card stat-card">
+                    <div class="icon orange"><i class="fa-solid fa-users"></i></div>
+                    <div class="info">
+                        <h3>عملاء نشطين</h3>
+                        <p>1,240</p>
+                    </div>
+                </div>
+                <div class="card stat-card">
+                    <div class="icon purple"><i class="fa-solid fa-exchange-alt"></i></div>
+                    <div class="info">
+                        <h3>حوالات معلقة</h3>
+                        <p>14</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="role-super-admin" class="role-section">
+                <!-- Office Management Section -->
+                <div class="card" style="border-top: 4px solid var(--primary);">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-building"></i> إضافة مكتب جديد وتعيين مدير</h3>
+                    </div>
+                    <form id="office-form">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>اسم المكتب</label>
+                                <input type="text" id="office-name" placeholder="مثال: مكتب دمشق المركزي">
+                            </div>
+                            <div class="form-group">
+                                <label>المدينة / العنوان</label>
+                                <input type="text" id="office-address" placeholder="العنوان بالتفصيل">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="office-manager">تعيين مدير للمكتب</label>
+                                <select id="office-manager">
+                                    <option disabled selected>اختر المدير...</option>
+                                    <option value="new">+ إضافة مدير جديد</option>
+                                    <option value="1">خالد العلي</option>
+                                    <option value="2">محمد Hassan</option>
+                                    <option value="3">أحمد Martins</option>
+                                </select>
+                            </div>
+                            <div class="form-group" id="new-manager-fields" style="display: none;">
+                                <label>اسم المدير الجديد</label>
+                                <input type="text" id="new-manager-name" placeholder="الاسم الثلاثي">
+                            </div>
+                            <div class="form-group">
+                                <label for="default-currency">العملة الافتراضية</label>
+                                <select id="default-currency">
+                                    <option value="USD" selected>USD - دولار أمريكي</option>
+                                    <option value="SYP">SYP - جنيه سوري</option>
+                                    <option value="EUR">EUR - يورو</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>رصيد الافتتاح (دولار)</label>
+                                <input type="number" id="office-balance" placeholder="0.00">
+                            </div>
+                            <div class="form-group">
+                                <label>رقم الهاتف</label>
+                                <input type="tel" id="office-phone" placeholder="+963...">
+                            </div>
+                        </div>
+                        <button type="button" class="btn-primary" id="save-office-btn" style="width: auto; padding: 10px 30px;">حفظ المكتب الجديد</button>
+                    </form>
+                </div>
+
+                <div class="grid-2-1">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3><i class="fa-solid fa-building-columns"></i> المكاتب الحالية ومدراءها</h3>
+                        </div>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>اسم المكتب</th>
+                                    <th>المدير</th>
+                                    <th>الهاتف</th>
+                                    <th>الحالة</th>
+                                    <th>الإجراء</th>
+                                </tr>
+                            </thead>
+                            <tbody id="offices-table-body">
+                                <tr>
+                                    <td>مكتب دمشق المركزي</td>
+                                    <td>أحمد Martins</td>
+                                    <td>+963 11 1234567</td>
+                                    <td><span class="status-badge status-active">نشط</span></td>
+                                    <td>
+                                        <button class="icon-btn" title="تعديل"><i class="fa-solid fa-pen"></i></button>
+                                        <button class="icon-btn text-danger" title="حذف"><i class="fa-solid fa-trash"></i></button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>مكتب حلب</td>
+                                    <td>خالد العلي</td>
+                                    <td>+963 21 7654321</td>
+                                    <td><span class="status-badge status-active">نشط</span></td>
+                                    <td>
+                                        <button class="icon-btn" title="تعديل"><i class="fa-solid fa-pen"></i></button>
+                                        <button class="icon-btn text-danger" title="حذف"><i class="fa-solid fa-trash"></i></button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Exchange Rate Section - Improved -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3><i class="fa-solid fa-exchange-alt"></i> أسعار الصرف</h3>
+                        </div>
+                        <div class="rate-display">
+                            <div class="rate-main">
+                                <span class="rate-label">الدولار الأمريكي (USD)</span>
+                                <span class="rate-value">1.00</span>
+                            </div>
+                        </div>
+                        <div class="exchange-rate-form">
+                            <div class="form-group">
+                                <label>من عملة</label>
+                                <select id="rate-from">
+                                    <option value="USD" selected>USD - دولار أمريكي</option>
+                                    <option value="SYP">SYP - جنيه سوري</option>
+                                    <option value="EUR">EUR - يورو</option>
+                                    <option value="GBP">GBP - جنيه إسترليني</option>
+                                    <option value="TRY">TRY - Lira تركية</option>
+                                    <option value="SAR">SAR - ريال سعودي</option>
+                                    <option value="AED">AED - درهم إماراتي</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>إلى عملة</label>
+                                <select id="rate-to">
+                                    <option value="SYP" selected>SYP - جنيه سوري</option>
+                                    <option value="USD">USD - دولار أمريكي</option>
+                                    <option value="EUR">EUR - يورو</option>
+                                    <option value="GBP">GBP - جنيه إسترليني</option>
+                                    <option value="TRY">TRY - Lira تركية</option>
+                                    <option value="SAR">SAR - ريال سعودي</option>
+                                    <option value="AED">AED - درهم إماراتي</option>
+                                </select>
+                            </div>
+                            <div class="rate-result">
+                                <div class="rate-conversion">
+                                    <span class="from-rate">1 USD</span>
+                                    <i class="fa-solid fa-arrow-left"></i>
+                                    <span class="to-rate" id="calculated-rate">12,500 SYP</span>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>سعر الصرف الجديد</label>
+                                <input type="number" id="new-exchange-rate" placeholder="أدخل السعر الجديد">
+                            </div>
+                            <button type="button" class="btn-primary full-width" id="update-rate-btn">
+                                <i class="fa-solid fa-sync-alt"></i> تحديث السعر
+                            </button>
+                        </div>
+                        <div class="quick-rates">
+                            <h4><i class="fa-solid fa-bolt"></i> أسعار سريعة</h4>
+                            <div class="quick-rate-grid">
+                                <div class="quick-rate-item">
+                                    <span class="currency">USD/SYP</span>
+                                    <span class="value">12,500</span>
+                                </div>
+                                <div class="quick-rate-item">
+                                    <span class="currency">USD/EUR</span>
+                                    <span class="value">0.92</span>
+                                </div>
+                                <div class="quick-rate-item">
+                                    <span class="currency">USD/GBP</span>
+                                    <span class="value">0.78</span>
+                                </div>
+                                <div class="quick-rate-item">
+                                    <span class="currency">USD/TRY</span>
+                                    <span class="value">27.50</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Employees Management Section -->
+            <div id="role-employees" class="role-section hidden">
+                <div class="section-header">
+                    <h2><i class="fa-solid fa-users"></i> إدارة الموظفين</h2>
+                    <button class="btn-primary" id="add-employee-btn">
+                        <i class="fa-solid fa-plus"></i> إضافة موظف جديد
+                    </button>
+                </div>
+
+                <!-- Employee Filters -->
+                <div class="card employee-filters">
+                    <div class="filter-row">
+                        <div class="form-group">
+                            <label>بحث بالاسم أو رقم الهاتف</label>
+                            <input type="text" id="employee-search" placeholder="البحث...">
+                        </div>
+                        <div class="form-group">
+                            <label>نوع الموظف</label>
+                            <select id="employee-type-filter">
+                                <option value="all">الكل</option>
+                                <option value="agent">مندوب</option>
+                                <option value="cashier">كاشير</option>
+                                <option value="office_manager">مدير مكتب</option>
+                                <option value="accountant">محاسب</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>المكتب</label>
+                            <select id="employee-office-filter">
+                                <option value="all">الكل</option>
+                                <option value="1">مكتب دمشق المركزي</option>
+                                <option value="2">مكتب حلب</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>الحالة</label>
+                            <select id="employee-status-filter">
+                                <option value="all">الكل</option>
+                                <option value="active">نشط</option>
+                                <option value="inactive">غير نشط</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Employees Table -->
+                <div class="card">
+                    <table class="data-table" id="employees-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>الاسم</th>
+                                <th>رقم الهاتف</th>
+                                <th>نوع الموظف</th>
+                                <th>المكتب</th>
+                                <th>تاريخ التعيين</th>
+                                <th>الحالة</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="employees-table-body">
+                            <tr>
+                                <td>1</td>
+                                <td>
+                                    <div class="employee-info">
+                                        <img src="https://ui-avatars.com/api/?name=Ahmed+Ali&background=0D8ABC&color=fff" alt="">
+                                        <span>أحمد علي</span>
+                                    </div>
+                                </td>
+                                <td>+963 955 123 456</td>
+                                <td><span class="role-badge role-agent"><i class="fa-solid fa-user"></i> مندوب</span></td>
+                                <td>مكتب دمشق المركزي</td>
+                                <td>15 يناير 2024</td>
+                                <td><span class="status-badge status-active">نشط</span></td>
+                                <td>
+                                    <button class="icon-btn" title="تعديل"><i class="fa-solid fa-pen"></i></button>
+                                    <button class="icon-btn text-danger" title="حذف"><i class="fa-solid fa-trash"></i></button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>2</td>
+                                <td>
+                                    <div class="employee-info">
+                                        <img src="https://ui-avatars.com/api/?name=Sarah+Ahmad&background=28a745&color=fff" alt="">
+                                        <span>سارة أحمد</span>
+                                    </div>
+                                </td>
+                                <td>+963 955 234 567</td>
+                                <td><span class="role-badge role-cashier"><i class="fa-solid fa-cash-register"></i> كاشير</span></td>
+                                <td>مكتب دمشق المركزي</td>
+                                <td>20 فبراير 2024</td>
+                                <td><span class="status-badge status-active">نشط</span></td>
+                                <td>
+                                    <button class="icon-btn" title="تعديل"><i class="fa-solid fa-pen"></i></button>
+                                    <button class="icon-btn text-danger" title="حذف"><i class="fa-solid fa-trash"></i></button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>3</td>
+                                <td>
+                                    <div class="employee-info">
+                                        <img src="https://ui-avatars.com/api/?name=Khalid+Ali&background=6f42c1&color=fff" alt="">
+                                        <span>خالد العلي</span>
+                                    </div>
+                                </td>
+                                <td>+963 955 345 678</td>
+                                <td><span class="role-badge role-manager"><i class="fa-solid fa-user-tie"></i> مدير مكتب</span></td>
+                                <td>مكتب حلب</td>
+                                <td>1 مارس 2023</td>
+                                <td><span class="status-badge status-active">نشط</span></td>
+                                <td>
+                                    <button class="icon-btn" title="تعديل"><i class="fa-solid fa-pen"></i></button>
+                                    <button class="icon-btn text-danger" title="حذف"><i class="fa-solid fa-trash"></i></button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>4</td>
+                                <td>
+                                    <div class="employee-info">
+                                        <img src="https://ui-avatars.com/api/?name=Fadi+Mohammed&background=fd7e14&color=fff" alt="">
+                                        <span>فادي محمد</span>
+                                    </div>
+                                </td>
+                                <td>+963 955 456 789</td>
+                                <td><span class="role-badge role-accountant"><i class="fa-solid fa-calculator"></i> محاسب</span></td>
+                                <td>مكتب دمشق المركزي</td>
+                                <td>10 أبريل 2024</td>
+                                <td><span class="status-badge status-active">نشط</span></td>
+                                <td>
+                                    <button class="icon-btn" title="تعديل"><i class="fa-solid fa-pen"></i></button>
+                                    <button class="icon-btn text-danger" title="حذف"><i class="fa-solid fa-trash"></i></button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>5</td>
+                                <td>
+                                    <div class="employee-info">
+                                        <img src="https://ui-avatars.com/api/?name=Maria+Ghaleb&background=dc3545&color=fff" alt="">
+                                        <span>مريم غالي</span>
+                                    </div>
+                                </td>
+                                <td>+963 955 567 890</td>
+                                <td><span class="role-badge role-agent"><i class="fa-solid fa-user"></i> مندوب</span></td>
+                                <td>مكتب حلب</td>
+                                <td>5 مايو 2024</td>
+                                <td><span class="status-badge status-inactive">غير نشط</span></td>
+                                <td>
+                                    <button class="icon-btn" title="تعديل"><i class="fa-solid fa-pen"></i></button>
+                                    <button class="icon-btn text-danger" title="حذف"><i class="fa-solid fa-trash"></i></button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Employee Stats -->
+                <div class="stats-grid employee-stats">
+                    <div class="card stat-card">
+                        <div class="icon blue"><i class="fa-solid fa-users"></i></div>
+                        <div class="info">
+                            <h3>إجمالي الموظفين</h3>
+                            <p>24</p>
+                        </div>
+                    </div>
+                    <div class="card stat-card">
+                        <div class="icon green"><i class="fa-solid fa-user-check"></i></div>
+                        <div class="info">
+                            <h3>الموظفين النشطين</h3>
+                            <p>22</p>
+                        </div>
+                    </div>
+                    <div class="card stat-card">
+                        <div class="icon orange"><i class="fa-solid fa-user-clock"></i></div>
+                        <div class="info">
+                            <h3>المندوبين</h3>
+                            <p>10</p>
+                        </div>
+                    </div>
+                    <div class="card stat-card">
+                        <div class="icon purple"><i class="fa-solid fa-user-shield"></i></div>
+                        <div class="info">
+                            <h3>مديري المكاتب</h3>
+                            <p>3</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Add/Edit Employee Modal -->
+            <div id="employee-modal" class="modal hidden">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3><i class="fa-solid fa-user-plus"></i> إضافة موظف جديد</h3>
+                        <button class="modal-close" id="close-modal">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="employee-form">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>الاسم الكامل</label>
+                                    <input type="text" id="emp-name" placeholder="الاسم الثلاثي" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>رقم الهاتف</label>
+                                    <input type="tel" id="emp-phone" placeholder="+963..." required>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>البريد الإلكتروني</label>
+                                    <input type="email" id="emp-email" placeholder="email@example.com">
+                                </div>
+                                <div class="form-group">
+                                    <label>كلمة المرور</label>
+                                    <input type="password" id="emp-password" placeholder="********">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>نوع الموظف</label>
+                                    <select id="emp-type" required>
+                                        <option disabled selected>اختر النوع...</option>
+                                        <option value="agent">مندوب (Agent)</option>
+                                        <option value="cashier">كاشير (Cashier)</option>
+                                        <option value="office_manager">مدير مكتب (Office Manager)</option>
+                                        <option value="accountant">محاسب (Accountant)</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>المكتب</label>
+                                    <select id="emp-office" required>
+                                        <option disabled selected>اختر المكتب...</option>
+                                        <option value="1">مكتب دمشق المركزي</option>
+                                        <option value="2">مكتب حلب</option>
+                                        <option value="3">مكتب اللاذقية</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>تاريخ التعيين</label>
+                                    <input type="date" id="emp-hire-date" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>الراتب</label>
+                                    <input type="number" id="emp-salary" placeholder="0">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>ملاحظات</label>
+                                <textarea id="emp-notes" placeholder="ملاحظات إضافية..." rows="3"></textarea>
+                            </div>
+                            <div class="modal-actions">
+                                <button type="button" class="btn-secondary" id="cancel-employee">إلغاء</button>
+                                <button type="submit" class="btn-primary">حفظ الموظف</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div id="role-admin" class="role-section hidden">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>طلبات الحوالات المعلقة (المكتب)</h3>
+                    </div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>رقم الحوالة</th>
+                                <th>الوكيل</th>
+                                <th>المبلغ</th>
+                                <th>النوع</th>
+                                <th>الإجراء</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>#TRX-9981</td>
+                                <td>ماهر الأسعد</td>
+                                <td>$5,000.00</td>
+                                <td>دولي</td>
+                                <td>
+                                    <button class="btn-success-sm">موافقة</button>
+                                    <button class="btn-danger-sm">رفض</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="role-agent" class="role-section hidden">
+                <div class="grid-2-1">
+                    <div class="card">
+                        <div class="card-header"><h3>إنشاء حوالة جديدة</h3></div>
+                        <div class="tabs">
+                            <button class="tab-btn active">تسليم نقدي</button>
+                            <button class="tab-btn">تحويل داخلي</button>
+                            <button class="tab-btn">فيزا كارد</button>
+                        </div>
+                        <form class="transfer-form">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>هاتف المرسل</label>
+                                    <input type="text" placeholder="+963 ...">
+                                </div>
+                                <div class="form-group">
+                                    <label>اسم المستلم</label>
+                                    <input type="text" placeholder="الاسم الثلاثي">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>المبلغ (USD)</label>
+                                    <input type="number" placeholder="0.00">
+                                </div>
+                                <div class="form-group">
+                                    <label for="country-selector">اختر الدولة</label>
+                                    <select id="country-selector" name="country">
+                                        <option value disabled selected>اختر الدولة...</option>
+                                        <option value="SY">سوريا</option>
+                                        <option value="LB">لبنان</option>
+                                        <option value="EG">مصر</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <button type="button" class="btn-primary full-width">إتمام العملية</button>
+                        </form>
+                    </div>
+                    <div class="card wallet-card">
+                        <h3>محفظة الوكيل</h3>
+                        <div class="wallet-balance" style="font-size: 24px; font-weight: bold; color: var(--primary); margin: 10px 0;">$4,250.00</div>
+                        <p class="text-muted">متاح للصرف</p>
+                        <hr style="margin: 15px 0; border: 0; border-top: 1px solid #eee;">
+                        <div class="mini-list">
+                            <div class="mini-item" style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                <span>تغذية رصيد</span>
+                                <span class="green-text">+$500</span>
+                            </div>
+                            <div class="mini-item" style="display: flex; justify-content: space-between;">
+                                <span>حوالة صادرة #881</span>
+                                <span class="red-text">-$120</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="role-customer" class="role-section hidden">
+                <div style="display: flex; justify-content: center;">
+                    <div class="card transfer-wizard" style="max-width: 600px; width: 100%;">
+                        <div class="card-header"><h3>إرسال أموال</h3></div>
+                        <form>
+                            <div class="form-group">
+                                <label>رقم هاتفك</label>
+                                <input type="tel" placeholder="+963 ...">
+                            </div>
+
+                            <div class="form-group file-upload">
+                                <label for="id-upload">
+                                    <i class="fa-solid fa-cloud-arrow-up"></i>
+                                    رفع صورة الهوية
+                                </label>
+                                <input id="id-upload" type="file" hidden>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>المبلغ</label>
+                                    <input type="number" placeholder="100.00">
+                                </div>
+                                <div class="form-group">
+                                    <label for="currency-selector">العملة</label>
+                                    <select id="currency-selector">
+                                        <option value="USD">USD</option>
+                                        <option value="EUR">EUR</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label>واتساب المستلم (للإشعار)</label>
+                                <input type="text" placeholder="رقم الموبايل مع الرمز الدولي">
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>الدولة</label>
+                                    <input type="text" placeholder="الدولة">
+                                </div>
+                                <div class="form-group">
+                                    <label>المدينة</label>
+                                    <input type="text" placeholder="المدينة">
+                                </div>
+                            </div>
+
+                            <label style="display: block; margin-bottom: 10px;">طريقة الدفع</label>
+                            <div class="payment-methods">
+                                <div class="pm-card selected">
+                                    <i class="fa-solid fa-money-bill-wave"></i>
+                                    <span>نقدي (كاش)</span>
+                                </div>
+                                <div class="pm-card">
+                                    <i class="fa-brands fa-cc-visa"></i>
+                                    <span>فيزا</span>
+                                </div>
+                                <div class="pm-card chat-pm">
+                                    <i class="fa-brands fa-whatsapp"></i>
+                                    <span>تواصل الآن</span>
+                                </div>
+                            </div>
+
+                            <button type="button" class="btn-primary full-width mt-20" style="margin-top: 20px;">تأكيد ودفع</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div id="role-accountant" class="role-section hidden">
+                <div class="card">
+                    <div class="card-header"><h3>سجل الحركات اليومي</h3></div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>التاريخ</th>
+                                <th>الوصف</th>
+                                <th>وارد</th>
+                                <th>صادر</th>
+                                <th>الرصيد</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>24 أكتوبر</td>
+                                <td>رصيد افتتاحي</td>
+                                <td>-</td>
+                                <td>-</td>
+                                <td>$120,000</td>
+                            </tr>
+                            <tr>
+                                <td>24 أكتوبر</td>
+                                <td>إيداع وكيل #04</td>
+                                <td class="green-text">+$5,000</td>
+                                <td>-</td>
+                                <td>$125,000</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+
+        <footer>
+            <div class="footer-content">
+                <p>&copy; 2025 باي فلو للأنظمة المالية. جميع الحقوق محفوظة.</p>
+                <div class="footer-links" style="display: flex; gap: 15px;">
+                    <a href="#">الدعم الفني</a>
+                    <a href="#">سياسة الخصوصية</a>
+                </div>
+            </div>
+        </footer>
+    </main>
+
+  <script src="js/auth.js"></script>
+    <script src="js/customer.js"></script>
+    <script src="js/agent.js"></script>
+    <script src="js/admin.js"></script>
+
+    <script>
+        // تشغيل الحالة الابتدائية
+        window.onload = () => {
+            switchRole('super_admin');
+        };
+    </script>
+</body>
+</html>
