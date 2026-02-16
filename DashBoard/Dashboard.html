@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>باي فلو | النظام المالي المتكامل</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="Dashboard.css">
+</head>
+<body>
+
+    <aside class="sidebar">
+        <div class="logo">
+            <i class="fa-solid fa-wallet"></i>
+            <span>FlexPay</span>
+        </div>
+        <nav>
+            <ul>
+                <li id="nav-dashboard" class="active"><a href="#"><i class="fa-solid fa-table-columns"></i> لوحة التحكم</a></li>
+                <li id="nav-transfers"><a href="#"><i class="fa-solid fa-money-bill-transfer"></i> الحوالات</a></li>
+                <li id="nav-employees"><a href="#"><i class="fa-solid fa-users"></i> الموظفين</a></li>
+                <li id="nav-reports"><a href="#"><i class="fa-solid fa-chart-line"></i> التقارير</a></li>
+                <li><a href="#"><i class="fa-solid fa-gear"></i> الإعدادات</a></li>
+            </ul>
+        </nav>
+        <div class="logout">
+            <a href="#"><i class="fa-solid fa-arrow-right-from-bracket"></i> تسجيل الخروج</a>
+        </div>
+    </aside>
+
+    <main class="main-content">
+
+        <header>
+            <div class="header-title">
+                <h2 id="page-title">لوحة التحكم</h2>
+                <span class="date">24 أكتوبر 2025</span>
+            </div>
+
+            <div class="header-actions">
+                <select id="role-switcher" onchange="switchRole(this.value)">
+                    <option value="super_admin" selected>صلاحية: المدير العام (Super Admin)</option>
+                    <option value="admin">صلاحية: مدير مكتب (Admin)</option>
+                    <option value="agent">صلاحية: وكيل (Agent)</option>
+                    <option value="cashier">صلاحية: أمين صندوق (Cashier)</option>
+                    <option value="accountant">صلاحية: محاسب</option>
+                    <option value="customer">واجهة: العميل</option>
+                </select>
+
+                <button class="icon-btn" aria-label="الإشعارات" title="الإشعارات">
+                    <i class="fa-regular fa-bell"></i>
+                    <span class="badge">3</span>
+                </button>
+                <div class="profile">
+                    <img src="https://ui-avatars.com/api/?name=Admin+User&background=0D8ABC&color=fff" alt="Profile" id="profile-img">
+                    <div class="profile-info">
+                        <span class="name" id="user-name">أحمد المدير</span>
+                        <span class="role" id="user-role">المدير العام</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="content-body">
+
+            <div id="section-stats" class="stats-grid">
+                <div class="card stat-card">
+                    <div class="icon blue"><i class="fa-solid fa-dollar-sign"></i></div>
+                    <div class="info">
+                        <h3>رصيد الصندوق (USD)</h3>
+                        <p>$124,500.00</p>
+                    </div>
+                </div>
+                <div class="card stat-card">
+                    <div class="icon green"><i class="fa-solid fa-arrow-trend-up"></i></div>
+                    <div class="info">
+                        <h3>حجم اليوم</h3>
+                        <p>$32,100.00</p>
+                    </div>
+                </div>
+                <div class="card stat-card">
+                    <div class="icon orange"><i class="fa-solid fa-users"></i></div>
+                    <div class="info">
+                        <h3>عملاء نشطين</h3>
+                        <p>1,240</p>
+                    </div>
+                </div>
+                <div class="card stat-card">
+                    <div class="icon purple"><i class="fa-solid fa-exchange-alt"></i></div>
+                    <div class="info">
+                        <h3>حوالات معلقة</h3>
+                        <p>14</p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="role-super-admin" class="role-section">
+                <div class="card" style="border-top: 4px solid var(--primary);">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-building"></i> إضافة مكتب جديد وتعيين مدير</h3>
+                    </div>
+                    <form>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>اسم المكتب</label>
+                                <input type="text" placeholder="مثال: مكتب دمشق المركزي">
+                            </div>
+                            <div class="form-group">
+                                <label>المدينة / العنوان</label>
+                                <input type="text" placeholder="العنوان بالتفصيل">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="admin-manager">تعيين مدير للمكتب (Admin)</label>
+                                <select id="admin-manager">
+                                    <option disabled selected>اختر مستخدم لترقيته</option>
+                                    <option value="1">محمد علي (وكيل حالي)</option>
+                                    <option value="2">سارة أحمد (جديد)</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="default-currency">العملة الافتراضية</label>
+                                <select id="default-currency">
+                                    <option value="USD">USD</option>
+                                    <option value="SYP">SYP</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>رصيد الافتتاح</label>
+                                <input type="number" placeholder="0.00">
+                            </div>
+                        </div>
+                        <button type="button" class="btn-primary" style="width: auto; padding: 10px 30px;">حفظ المكتب الجديد</button>
+                    </form>
+                </div>
+
+                <div class="grid-2-1">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>المكاتب الحالية ومدراءها</h3>
+                        </div>
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>اسم المكتب</th>
+                                    <th>المدير (Admin)</th>
+                                    <th>الحالة</th>
+                                    <th>الإجراء</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>مكتب حلب</td>
+                                    <td>خالد العلي</td>
+                                    <td><span class="status active" style="color: var(--success); font-weight: bold;">نشط</span></td>
+                                    <td>
+                                        <button class="icon-btn" aria-label="تعديل المكتب" title="تعديل">
+                                            <i class="fa-solid fa-pen"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><h3>أسعار الصرف</h3></div>
+                        <div class="rate-form">
+                            <div class="form-group">
+                                <label for="usd-eur">USD مقابل EUR</label>
+                                <input type="number" id="usd-eur" value="0.92">
+                            </div>
+                            <div class="form-group">
+                                <label for="usd-gbp">USD مقابل GBP</label>
+                                <input type="number" id="usd-gbp" value="0.78">
+                            </div>
+                        </div>
+                        <button type="button" class="btn-primary full-width">تحديث الأسعار</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="role-admin" class="role-section hidden">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>طلبات الحوالات المعلقة (المكتب)</h3>
+                    </div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>رقم الحوالة</th>
+                                <th>الوكيل</th>
+                                <th>المبلغ</th>
+                                <th>النوع</th>
+                                <th>الإجراء</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>#TRX-9981</td>
+                                <td>ماهر الأسعد</td>
+                                <td>$5,000.00</td>
+                                <td>دولي</td>
+                                <td>
+                                    <button class="btn-success-sm">موافقة</button>
+                                    <button class="btn-danger-sm">رفض</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="role-agent" class="role-section hidden">
+                <div class="grid-2-1">
+                    <div class="card">
+                        <div class="card-header"><h3>إنشاء حوالة جديدة</h3></div>
+                        <div class="tabs">
+                            <button class="tab-btn active">تسليم نقدي</button>
+                            <button class="tab-btn">تحويل داخلي</button>
+                            <button class="tab-btn">فيزا كارد</button>
+                        </div>
+                        <form class="transfer-form">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>هاتف المرسل</label>
+                                    <input type="text" placeholder="+963 ...">
+                                </div>
+                                <div class="form-group">
+                                    <label>اسم المستلم</label>
+                                    <input type="text" placeholder="الاسم الثلاثي">
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>المبلغ (USD)</label>
+                                    <input type="number" placeholder="0.00">
+                                </div>
+                                <div class="form-group">
+                                    <label for="country-selector">اختر الدولة</label>
+                                    <select id="country-selector" name="country">
+                                        <option value disabled selected>اختر الدولة...</option>
+                                        <option value="SY">سوريا</option>
+                                        <option value="LB">لبنان</option>
+                                        <option value="EG">مصر</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <button type="button" class="btn-primary full-width">إتمام العملية</button>
+                        </form>
+                    </div>
+                    <div class="card wallet-card">
+                        <h3>محفظة الوكيل</h3>
+                        <div class="wallet-balance" style="font-size: 24px; font-weight: bold; color: var(--primary); margin: 10px 0;">$4,250.00</div>
+                        <p class="text-muted">متاح للصرف</p>
+                        <hr style="margin: 15px 0; border: 0; border-top: 1px solid #eee;">
+                        <div class="mini-list">
+                            <div class="mini-item" style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                <span>تغذية رصيد</span>
+                                <span class="green-text">+$500</span>
+                            </div>
+                            <div class="mini-item" style="display: flex; justify-content: space-between;">
+                                <span>حوالة صادرة #881</span>
+                                <span class="red-text">-$120</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="role-customer" class="role-section hidden">
+                <div style="display: flex; justify-content: center;">
+                    <div class="card transfer-wizard" style="max-width: 600px; width: 100%;">
+                        <div class="card-header"><h3>إرسال أموال</h3></div>
+                        <form>
+                            <div class="form-group">
+                                <label>رقم هاتفك</label>
+                                <input type="tel" placeholder="+963 ...">
+                            </div>
+
+                            <div class="form-group file-upload">
+                                <label for="id-upload">
+                                    <i class="fa-solid fa-cloud-arrow-up"></i>
+                                    رفع صورة الهوية
+                                </label>
+                                <input id="id-upload" type="file" hidden>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>المبلغ</label>
+                                    <input type="number" placeholder="100.00">
+                                </div>
+                                <div class="form-group">
+                                    <label for="currency-selector">العملة</label>
+                                    <select id="currency-selector">
+                                        <option value="USD">USD</option>
+                                        <option value="EUR">EUR</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label>واتساب المستلم (للإشعار)</label>
+                                <input type="text" placeholder="رقم الموبايل مع الرمز الدولي">
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>الدولة</label>
+                                    <input type="text" placeholder="الدولة">
+                                </div>
+                                <div class="form-group">
+                                    <label>المدينة</label>
+                                    <input type="text" placeholder="المدينة">
+                                </div>
+                            </div>
+
+                            <label style="display: block; margin-bottom: 10px;">طريقة الدفع</label>
+                            <div class="payment-methods">
+                                <div class="pm-card selected">
+                                    <i class="fa-solid fa-money-bill-wave"></i>
+                                    <span>نقدي (كاش)</span>
+                                </div>
+                                <div class="pm-card">
+                                    <i class="fa-brands fa-cc-visa"></i>
+                                    <span>فيزا</span>
+                                </div>
+                                <div class="pm-card chat-pm">
+                                    <i class="fa-brands fa-whatsapp"></i>
+                                    <span>تواصل الآن</span>
+                                </div>
+                            </div>
+
+                            <button type="button" class="btn-primary full-width mt-20" style="margin-top: 20px;">تأكيد ودفع</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div id="role-accountant" class="role-section hidden">
+                <div class="card">
+                    <div class="card-header"><h3>سجل الحركات اليومي</h3></div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>التاريخ</th>
+                                <th>الوصف</th>
+                                <th>وارد</th>
+                                <th>صادر</th>
+                                <th>الرصيد</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>24 أكتوبر</td>
+                                <td>رصيد افتتاحي</td>
+                                <td>-</td>
+                                <td>-</td>
+                                <td>$120,000</td>
+                            </tr>
+                            <tr>
+                                <td>24 أكتوبر</td>
+                                <td>إيداع وكيل #04</td>
+                                <td class="green-text">+$5,000</td>
+                                <td>-</td>
+                                <td>$125,000</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+
+        <footer>
+            <div class="footer-content">
+                <p>&copy; 2025 باي فلو للأنظمة المالية. جميع الحقوق محفوظة.</p>
+                <div class="footer-links" style="display: flex; gap: 15px;">
+                    <a href="#">الدعم الفني</a>
+                    <a href="#">سياسة الخصوصية</a>
+                </div>
+            </div>
+        </footer>
+    </main>
+
+    <script src="Dashboard.js"></script>
+</body>
+</html>
