@@ -6,16 +6,22 @@
     <title>Flash Pay</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="Dashboard.css">
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/mobile.css">
+
 </head>
 <body>
 
     <aside class="sidebar">
+        <button class="mobile-menu-toggle" onclick="toggleMobileMenu()" aria-label="Toggle navigation menu">
+            <i class="fa-solid fa-bars"></i>
+        </button>
         <div class="logo">
             <i class="fa-solid fa-wallet"></i>
             <span>FlashPay</span>
         </div>
-        <nav>
+        <nav id="mobile-nav">
+
             <ul>
                 <li id="nav-dashboard" class="active"><a href="#"><i class="fa-solid fa-table-columns"></i> لوحة التحكم</a></li>
                 <li id="nav-transfers"><a href="#"><i class="fa-solid fa-money-bill-transfer"></i> الحوالات</a></li>
@@ -38,7 +44,8 @@
             </div>
 
             <div class="header-actions">
-                <select id="role-switcher" onchange="switchRole(this.value)">
+                <select id="role-switcher" onchange="switchRole(this.value)" aria-label="اختيار نوع المستخدم">
+
                     <option value="super_admin" selected>صلاحية: المدير العام (Super Admin)</option>
                     <option value="admin">صلاحية: مدير مكتب (Admin)</option>
                     <option value="agent">صلاحية: وكيل (Agent)</option>
@@ -103,12 +110,14 @@
                     <form id="office-form">
                         <div class="form-row">
                             <div class="form-group">
-                                <label>اسم المكتب</label>
-                                <input type="text" id="office-name" placeholder="مثال: مكتب دمشق المركزي">
+                                <label for="office-name">اسم المكتب</label>
+                                <input type="text" id="office-name" placeholder="مثال: مكتب دمشق المركزي" title="اسم المكتب">
+
                             </div>
                             <div class="form-group">
-                                <label>المدينة / العنوان</label>
-                                <input type="text" id="office-address" placeholder="العنوان بالتفصيل">
+                                <label for="office-address">المدينة / العنوان</label>
+                                <input type="text" id="office-address" placeholder="العنوان بالتفصيل" title="المدينة أو العنوان">
+
                             </div>
                         </div>
                         <div class="form-row">
@@ -123,8 +132,9 @@
                                 </select>
                             </div>
                             <div class="form-group" id="new-manager-fields" style="display: none;">
-                                <label>اسم المدير الجديد</label>
-                                <input type="text" id="new-manager-name" placeholder="الاسم الثلاثي">
+                                <label for="new-manager-name">اسم المدير الجديد</label>
+                                <input type="text" id="new-manager-name" placeholder="الاسم الثلاثي" title="اسم المدير الجديد">
+
                             </div>
                             <div class="form-group">
                                 <label for="default-currency">العملة الافتراضية</label>
@@ -137,12 +147,14 @@
                         </div>
                         <div class="form-row">
                             <div class="form-group">
-                                <label>رصيد الافتتاح (دولار)</label>
-                                <input type="number" id="office-balance" placeholder="0.00">
+                                <label for="office-balance">رصيد الافتتاح (دولار)</label>
+                                <input type="number" id="office-balance" placeholder="0.00" title="رصيد الافتتاح بالدولار">
+
                             </div>
                             <div class="form-group">
-                                <label>رقم الهاتف</label>
-                                <input type="tel" id="office-phone" placeholder="+963...">
+                                <label for="office-phone">رقم الهاتف</label>
+                                <input type="tel" id="office-phone" placeholder="+963..." title="رقم هاتف المكتب">
+
                             </div>
                         </div>
                         <button type="button" class="btn-primary" id="save-office-btn" style="width: auto; padding: 10px 30px;">حفظ المكتب الجديد</button>
@@ -233,9 +245,10 @@
                                 </div>
                             </div>
                             <div class="form-group">
-                                <label>سعر الصرف الجديد</label>
-                                <input type="number" id="new-exchange-rate" placeholder="أدخل السعر الجديد">
+                                <label for="new-exchange-rate">سعر الصرف الجديد</label>
+                                <input type="number" id="new-exchange-rate" placeholder="أدخل السعر الجديد" title="سعر الصرف الجديد">
                             </div>
+
                             <button type="button" class="btn-primary full-width" id="update-rate-btn">
                                 <i class="fa-solid fa-sync-alt"></i> تحديث السعر
                             </button>
@@ -278,8 +291,9 @@
                 <div class="card employee-filters">
                     <div class="filter-row">
                         <div class="form-group">
-                            <label>بحث بالاسم أو رقم الهاتف</label>
-                            <input type="text" id="employee-search" placeholder="البحث...">
+                            <label for="employee-search">بحث بالاسم أو رقم الهاتف</label>
+                            <input type="text" id="employee-search" placeholder="البحث..." title="البحث بالاسم أو رقم الهاتف">
+
                         </div>
                         <div class="form-group">
                             <label>نوع الموظف</label>
@@ -464,22 +478,26 @@
                         <form id="employee-form">
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label>الاسم الكامل</label>
-                                    <input type="text" id="emp-name" placeholder="الاسم الثلاثي" required>
+                                    <label for="emp-name">الاسم الكامل</label>
+                                    <input type="text" id="emp-name" placeholder="الاسم الثلاثي" required title="الاسم الكامل للموظف">
+
                                 </div>
                                 <div class="form-group">
-                                    <label>رقم الهاتف</label>
-                                    <input type="tel" id="emp-phone" placeholder="+963..." required>
+                                    <label for="emp-phone">رقم الهاتف</label>
+                                    <input type="tel" id="emp-phone" placeholder="+963..." required title="رقم هاتف الموظف">
+
                                 </div>
                             </div>
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label>البريد الإلكتروني</label>
-                                    <input type="email" id="emp-email" placeholder="email@example.com">
+                                    <label for="emp-email">البريد الإلكتروني</label>
+                                    <input type="email" id="emp-email" placeholder="email@example.com" title="البريد الإلكتروني للموظف">
+
                                 </div>
                                 <div class="form-group">
-                                    <label>كلمة المرور</label>
-                                    <input type="password" id="emp-password" placeholder="********">
+                                    <label for="emp-password">كلمة المرور</label>
+                                    <input type="password" id="emp-password" placeholder="********" title="كلمة المرور">
+
                                 </div>
                             </div>
                             <div class="form-row">
@@ -505,17 +523,20 @@
                             </div>
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label>تاريخ التعيين</label>
-                                    <input type="date" id="emp-hire-date" required>
+                                    <label for="emp-hire-date">تاريخ التعيين</label>
+                                    <input type="date" id="emp-hire-date" required title="تاريخ تعيين الموظف">
+
                                 </div>
                                 <div class="form-group">
-                                    <label>الراتب</label>
-                                    <input type="number" id="emp-salary" placeholder="0">
+                                    <label for="emp-salary">الراتب</label>
+                                    <input type="number" id="emp-salary" placeholder="0" title="راتب الموظف">
+
                                 </div>
                             </div>
                             <div class="form-group">
-                                <label>ملاحظات</label>
-                                <textarea id="emp-notes" placeholder="ملاحظات إضافية..." rows="3"></textarea>
+                                <label for="emp-notes">ملاحظات</label>
+                                <textarea id="emp-notes" placeholder="ملاحظات إضافية..." rows="3" title="ملاحظات إضافية"></textarea>
+
                             </div>
                             <div class="modal-actions">
                                 <button type="button" class="btn-secondary" id="cancel-employee">إلغاء</button>
@@ -569,18 +590,21 @@
                         <form class="transfer-form">
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label>هاتف المرسل</label>
-                                    <input type="text" placeholder="+963 ...">
+                                    <label for="sender-phone">هاتف المرسل</label>
+                                    <input type="text" id="sender-phone" placeholder="+963 ..." title="هاتف المرسل">
+
                                 </div>
                                 <div class="form-group">
-                                    <label>اسم المستلم</label>
-                                    <input type="text" placeholder="الاسم الثلاثي">
+                                    <label for="receiver-name">اسم المستلم</label>
+                                    <input type="text" id="receiver-name" placeholder="الاسم الثلاثي" title="اسم المستلم">
+
                                 </div>
                             </div>
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label>المبلغ (USD)</label>
-                                    <input type="number" placeholder="0.00">
+                                    <label for="transfer-amount">المبلغ (USD)</label>
+                                    <input type="number" id="transfer-amount" placeholder="0.00" title="مبلغ التحويل بالدولار">
+
                                 </div>
                                 <div class="form-group">
                                     <label for="country-selector">اختر الدولة</label>
@@ -620,8 +644,9 @@
                         <div class="card-header"><h3>إرسال أموال</h3></div>
                         <form>
                             <div class="form-group">
-                                <label>رقم هاتفك</label>
-                                <input type="tel" placeholder="+963 ...">
+                                <label for="customer-phone">رقم هاتفك</label>
+                                <input type="tel" id="customer-phone" placeholder="+963 ..." title="رقم هاتف العميل">
+
                             </div>
 
                             <div class="form-group file-upload">
@@ -629,13 +654,15 @@
                                     <i class="fa-solid fa-cloud-arrow-up"></i>
                                     رفع صورة الهوية
                                 </label>
-                                <input id="id-upload" type="file" hidden>
+                                <input id="id-upload" type="file" hidden aria-label="رفع صورة الهوية" title="اختر ملف صورة الهوية">
+
                             </div>
 
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label>المبلغ</label>
-                                    <input type="number" placeholder="100.00">
+                                    <label for="customer-amount">المبلغ</label>
+                                    <input type="number" id="customer-amount" placeholder="100.00" title="المبلغ المراد إرساله">
+
                                 </div>
                                 <div class="form-group">
                                     <label for="currency-selector">العملة</label>
@@ -647,18 +674,21 @@
                             </div>
 
                             <div class="form-group">
-                                <label>واتساب المستلم (للإشعار)</label>
-                                <input type="text" placeholder="رقم الموبايل مع الرمز الدولي">
+                                <label for="receiver-whatsapp">واتساب المستلم (للإشعار)</label>
+                                <input type="text" id="receiver-whatsapp" placeholder="رقم الموبايل مع الرمز الدولي" title="رقم واتساب المستلم">
+
                             </div>
 
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label>الدولة</label>
-                                    <input type="text" placeholder="الدولة">
+                                    <label for="receiver-country">الدولة</label>
+                                    <input type="text" id="receiver-country" placeholder="الدولة" title="دولة المستلم">
+
                                 </div>
                                 <div class="form-group">
-                                    <label>المدينة</label>
-                                    <input type="text" placeholder="المدينة">
+                                    <label for="receiver-city">المدينة</label>
+                                    <input type="text" id="receiver-city" placeholder="المدينة" title="مدينة المستلم">
+
                                 </div>
                             </div>
 
@@ -736,10 +766,17 @@
     <script src="js/admin.js"></script>
 
     <script>
+        // Mobile menu toggle function
+        function toggleMobileMenu() {
+            const nav = document.getElementById('mobile-nav');
+            nav.classList.toggle('active');
+        }
+        
         // تشغيل الحالة الابتدائية
         window.onload = () => {
             switchRole('super_admin');
         };
     </script>
+
 </body>
 </html>

@@ -3,7 +3,6 @@
     "development"
   ],
   "hints": {
-<<<<<<< HEAD
     "no-inline-styles": "off",
     "axe/forms": [
       "default",
@@ -18,14 +17,5 @@
         "button-name": "off"
       }
     ]
-=======
-    "axe/forms": [
-      "default",
-      {
-        "select-name": "off"
-      }
-    ],
-    "no-inline-styles": "off"
->>>>>>> 666a12fa9e882bc2a44bd0935ffeb8ef40900e16
   }
 }

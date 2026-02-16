@@ -1,0 +1,421 @@
+
+/* RESPONSIVE - Tablet */
+@media (max-width: 768px) {
+    body { flex-direction: column; overflow: auto; }
+    .sidebar { width: 100%; height: auto; border-right: none; padding: 10px; flex-direction: row; justify-content: space-between; align-items: center; }
+    .sidebar nav { display: none; }
+    .grid-2-1 { grid-template-columns: 1fr; }
+    .header-actions span { display: none; }
+    .footer-content { flex-direction: column; gap: 10px; }
+}
+
+
+@media (max-width: 600px) {
+    /* Layout */
+    body { 
+        flex-direction: column; 
+        overflow-x: hidden;
+        height: auto;
+        min-height: 100vh;
+    }
+    
+    /* Mobile Menu Toggle */
+    .mobile-menu-toggle {
+        display: block;
+        order: 1;
+    }
+    
+    /* Sidebar Mobile */
+    .sidebar { 
+        width: 100%; 
+        padding: 10px 15px;
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 10px;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        align-items: center;
+    }
+    .sidebar .logo { 
+        font-size: 16px; 
+        margin-bottom: 0;
+        flex: 1;
+        order: 2;
+    }
+    .sidebar .logo i {
+        font-size: 20px;
+    }
+    
+    /* Mobile Navigation - Hidden by default, shown when active with animation */
+    .sidebar nav { 
+        display: none; 
+        width: 100%;
+        order: 4;
+        margin-top: 10px;
+        opacity: 0;
+        transform: translateY(-20px);
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .sidebar nav.active { 
+        display: block !important;
+        opacity: 1;
+        transform: translateY(0);
+        animation: slideDown 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .sidebar nav ul { 
+        display: flex; 
+        flex-wrap: wrap; 
+        gap: 8px;
+        width: 100%;
+    }
+    .sidebar nav li { 
+        margin-bottom: 0;
+        flex: 1 1 calc(50% - 4px);
+        min-width: 140px;
+        animation: fadeInUp 0.3s ease backwards;
+    }
+    .sidebar nav li:nth-child(1) { animation-delay: 0.05s; }
+    .sidebar nav li:nth-child(2) { animation-delay: 0.1s; }
+    .sidebar nav li:nth-child(3) { animation-delay: 0.15s; }
+    .sidebar nav li:nth-child(4) { animation-delay: 0.2s; }
+    .sidebar nav li:nth-child(5) { animation-delay: 0.25s; }
+    
+    .sidebar nav a {
+        padding: 10px 12px;
+        font-size: 13px;
+        justify-content: flex-start;
+        background: #f8f9fa;
+        border-radius: 8px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .sidebar nav a:hover {
+        transform: translateX(5px);
+        background: #e9ecef;
+    }
+    .sidebar nav li.active a {
+        background: var(--primary);
+        color: white;
+        animation: pulse 0.5s ease;
+    }
+
+    
+    /* Logout Button */
+    .logout { 
+        margin-top: 0; 
+        border-top: none; 
+        padding-top: 0;
+        order: 3;
+        animation: fadeIn 0.4s ease 0.3s backwards;
+    }
+    .logout a {
+        padding: 8px 12px;
+        font-size: 12px;
+        background: #f8f9fa;
+        border-radius: 8px;
+        transition: all var(--transition-fast);
+    }
+    .logout a:hover {
+        background: var(--danger);
+        color: white;
+        transform: translateX(-3px);
+    }
+
+    
+    /* Header Mobile */
+    header {
+        padding: 10px 15px;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    .header-title h2 {
+        font-size: 16px;
+    }
+    .header-title .date {
+        font-size: 11px;
+    }
+    .header-actions {
+        gap: 10px;
+        width: 100%;
+        justify-content: space-between;
+    }
+    #role-switcher {
+        font-size: 11px;
+        padding: 6px;
+        flex: 1;
+    }
+    .profile img {
+        width: 32px;
+        height: 32px;
+    }
+    .profile-info {
+        display: none;
+    }
+    
+    /* Content Body */
+    .content-body {
+        padding: 15px;
+    }
+    
+    /* Stats Grid - Single Column */
+    .stats-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+        margin-bottom: 20px;
+    }
+    .stat-card {
+        padding: 15px;
+        gap: 12px;
+    }
+    .stat-card .icon {
+        width: 40px;
+        height: 40px;
+        font-size: 16px;
+    }
+    .stat-card .info h3 {
+        font-size: 12px;
+    }
+    .stat-card .info p {
+        font-size: 18px;
+    }
+    
+    /* Cards */
+    .card {
+        padding: 15px;
+        margin-bottom: 15px;
+    }
+    .card-header {
+        margin-bottom: 15px;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    .card-header h3 {
+        font-size: 14px;
+    }
+    
+    /* Forms - Stacked Layout */
+    .form-row {
+        flex-direction: column;
+        gap: 0;
+        margin-bottom: 0;
+    }
+    .form-group {
+        margin-bottom: 12px;
+        gap: 5px;
+    }
+    label {
+        font-size: 12px;
+    }
+    input, select, textarea {
+        padding: 10px;
+        font-size: 14px;
+    }
+    
+    /* Tables - Horizontal Scroll */
+    .data-table {
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+        font-size: 12px;
+    }
+    .data-table th, .data-table td {
+        padding: 10px 8px;
+        min-width: 100px;
+    }
+    .data-table th:first-child,
+    .data-table td:first-child {
+        min-width: 50px;
+    }
+    
+    /* Employee Info in Table */
+    .employee-info {
+        gap: 8px;
+    }
+    .employee-info img {
+        width: 28px;
+        height: 28px;
+    }
+    
+    /* Role Badge */
+    .role-badge {
+        font-size: 10px;
+        padding: 3px 8px;
+    }
+    
+    /* Status Badge */
+    .status-badge {
+        font-size: 10px;
+        padding: 3px 8px;
+    }
+    
+    /* Section Header */
+    .section-header {
+        flex-direction: column;
+        gap: 12px;
+        align-items: flex-start;
+        margin-bottom: 20px;
+    }
+    .section-header h2 {
+        font-size: 18px;
+    }
+    
+    /* Filter Row */
+    .filter-row {
+        flex-direction: column;
+        gap: 10px;
+    }
+    .filter-row .form-group {
+        min-width: 100%;
+        margin-bottom: 10px;
+    }
+    
+    /* Tabs */
+    .tabs {
+        gap: 5px;
+        margin-bottom: 15px;
+    }
+    .tab-btn {
+        padding: 8px 12px;
+        font-size: 12px;
+    }
+    
+    /* Payment Methods */
+    .payment-methods {
+        gap: 10px;
+    }
+    .pm-card {
+        flex: 1 1 45%;
+        padding: 12px;
+        min-width: 100px;
+    }
+    .pm-card i {
+        font-size: 20px;
+    }
+    .pm-card span {
+        font-size: 11px;
+    }
+    
+    /* Quick Rates */
+    .quick-rate-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+    }
+    .quick-rate-item {
+        padding: 8px;
+    }
+    .quick-rate-item .currency {
+        font-size: 10px;
+    }
+    .quick-rate-item .value {
+        font-size: 14px;
+    }
+    
+    /* Rate Display */
+    .rate-display {
+        padding: 15px;
+    }
+    .rate-value {
+        font-size: 24px;
+    }
+    .rate-conversion {
+        font-size: 14px;
+        gap: 10px;
+    }
+    .rate-conversion .to-rate {
+        font-size: 16px;
+    }
+    
+    /* Modal - Full Width */
+    .modal-content {
+        width: 95%;
+        max-width: none;
+        margin: 10px;
+        max-height: 95vh;
+    }
+    .modal-header {
+        padding: 15px;
+    }
+    .modal-header h3 {
+        font-size: 16px;
+    }
+    .modal-body {
+        padding: 15px;
+    }
+    .modal-actions {
+        flex-direction: column-reverse;
+        gap: 10px;
+        margin-top: 15px;
+        padding-top: 15px;
+    }
+    .modal-actions button {
+        width: 100%;
+    }
+    
+    /* Buttons */
+    .btn-primary, .btn-secondary {
+        padding: 10px;
+        font-size: 14px;
+    }
+    .btn-primary-sm, .btn-success-sm, .btn-danger-sm {
+        padding: 5px 10px;
+        font-size: 11px;
+    }
+    
+    /* Grid Layouts */
+    .grid-2-1 {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    
+    /* Footer */
+    footer {
+        padding: 15px;
+    }
+    .footer-content {
+        flex-direction: column;
+        gap: 10px;
+        text-align: center;
+    }
+    .footer-links {
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    .footer-links a {
+        margin: 0 8px;
+        font-size: 12px;
+    }
+    
+    /* Employee Stats */
+    .employee-stats {
+        margin-top: 15px;
+    }
+    
+    /* File Upload */
+    .file-upload label {
+        padding: 15px;
+        font-size: 13px;
+    }
+    
+    /* Wallet Card */
+    .wallet-card {
+        padding: 15px;
+    }
+    .wallet-balance {
+        font-size: 20px !important;
+    }
+    
+    /* Icon Buttons */
+    .icon-btn {
+        font-size: 16px;
+    }
+    .data-table .icon-btn {
+        padding: 6px;
+    }
+    
+    /* Transfer Wizard */
+    .transfer-wizard {
+        max-width: 100% !important;
+    }
+}
