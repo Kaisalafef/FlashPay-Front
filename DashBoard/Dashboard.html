@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="css/mobile.css">
+    <link rel="stylesheet" href="css/polymorphic.css">
 
 </head>
 <body>
@@ -21,15 +22,12 @@
             <span>FlashPay</span>
         </div>
         <nav id="mobile-nav">
-
-            <ul>
-                <li id="nav-dashboard" class="active"><a href="#"><i class="fa-solid fa-table-columns"></i> لوحة التحكم</a></li>
-                <li id="nav-transfers"><a href="#"><i class="fa-solid fa-money-bill-transfer"></i> الحوالات</a></li>
-                <li id="nav-employees"><a href="#"><i class="fa-solid fa-users"></i> الموظفين</a></li>
-                <li id="nav-reports"><a href="#"><i class="fa-solid fa-chart-line"></i> التقارير</a></li>
-                <li><a href="#"><i class="fa-solid fa-gear"></i> الإعدادات</a></li>
+            <ul id="sidebar-nav-list">
+                <!-- Navigation items will be generated dynamically by rbac.js -->
             </ul>
         </nav>
+
+
         <div class="logout">
             <a href="#"><i class="fa-solid fa-arrow-right-from-bracket"></i> تسجيل الخروج</a>
         </div>
@@ -44,17 +42,34 @@
             </div>
 
             <div class="header-actions">
-                <select id="role-switcher" onchange="switchRole(this.value)" aria-label="اختيار نوع المستخدم">
+                <!-- Office Selector - Super Admin Only -->
+                <div id="office-selector-container" class="hidden" style="display: flex; align-items: center; gap: 10px;">
+                    <label for="office-selector" style="font-size: 14px; color: var(--text-secondary);">المكتب:</label>
+                    <select id="office-selector" onchange="onOfficeChange(this.value)" aria-label="اختيار المكتب" style="padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border); background: white; font-family: 'Cairo', sans-serif;">
+                        <option value="all">جميع المكاتب</option>
+                        <option value="1">مكتب دمشق المركزي</option>
+                        <option value="2">مكتب حلب</option>
+                        <option value="3">مكتب حمص</option>
+                        <option value="4">مكتب اللاذقية</option>
+                    </select>
+                </div>
+
+                <!-- Current Office Display - Other Roles -->
+                <div id="current-office-display" class="hidden" style="display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: rgba(13, 139, 188, 0.1); border-radius: 6px; font-size: 14px;">
+                    <i class="fa-solid fa-building" style="color: var(--primary);"></i>
+                    <span id="current-office-name">مكتب دمشق المركزي</span>
+                </div>
+
+                <select id="role-switcher" onchange="switchRole(this.value)" aria-label="اختيار نوع المستخدم" style="padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border); background: white; font-family: 'Cairo', sans-serif;">
 
                     <option value="super_admin" selected>صلاحية: المدير العام (Super Admin)</option>
                     <option value="admin">صلاحية: مدير مكتب (Admin)</option>
-                    <option value="agent">صلاحية: وكيل (Agent)</option>
                     <option value="cashier">صلاحية: أمين صندوق (Cashier)</option>
                     <option value="accountant">صلاحية: محاسب</option>
-                    <option value="customer">واجهة: العميل</option>
                 </select>
 
                 <button class="icon-btn" aria-label="الإشعارات" title="الإشعارات">
+
                     <i class="fa-regular fa-bell"></i>
                     <span class="badge">3</span>
                 </button>
@@ -105,61 +120,43 @@
                 <!-- Office Management Section -->
                 <div class="card" style="border-top: 4px solid var(--primary);">
                     <div class="card-header">
-                        <h3><i class="fa-solid fa-building"></i> إضافة مكتب جديد وتعيين مدير</h3>
+                        <h3><i class="fa-solid fa-building"></i> إضافة مكتب جديد</h3>
                     </div>
                     <form id="office-form">
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="office-name">اسم المكتب</label>
-                                <input type="text" id="office-name" placeholder="مثال: مكتب دمشق المركزي" title="اسم المكتب">
-
+                                <input type="text" id="office-name" placeholder="مثال: مكتب دمشق المركزي" title="اسم المكتب" required>
                             </div>
                             <div class="form-group">
-                                <label for="office-address">المدينة / العنوان</label>
-                                <input type="text" id="office-address" placeholder="العنوان بالتفصيل" title="المدينة أو العنوان">
-
-                            </div>
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="office-manager">تعيين مدير للمكتب</label>
-                                <select id="office-manager">
-                                    <option disabled selected>اختر المدير...</option>
-                                    <option value="new">+ إضافة مدير جديد</option>
-                                    <option value="1">خالد العلي</option>
-                                    <option value="2">محمد Hassan</option>
-                                    <option value="3">أحمد Martins</option>
-                                </select>
-                            </div>
-                            <div class="form-group" id="new-manager-fields" style="display: none;">
-                                <label for="new-manager-name">اسم المدير الجديد</label>
-                                <input type="text" id="new-manager-name" placeholder="الاسم الثلاثي" title="اسم المدير الجديد">
-
-                            </div>
-                            <div class="form-group">
-                                <label for="default-currency">العملة الافتراضية</label>
-                                <select id="default-currency">
-                                    <option value="USD" selected>USD - دولار أمريكي</option>
-                                    <option value="SYP">SYP - جنيه سوري</option>
-                                    <option value="EUR">EUR - يورو</option>
+                                <label for="office-governorate">المحافظة</label>
+                                <select id="office-governorate" required>
+                                    <option disabled selected>اختر المحافظة...</option>
                                 </select>
                             </div>
                         </div>
                         <div class="form-row">
                             <div class="form-group">
-                                <label for="office-balance">رصيد الافتتاح (دولار)</label>
-                                <input type="number" id="office-balance" placeholder="0.00" title="رصيد الافتتاح بالدولار">
-
+                                <label for="office-city">المدينة</label>
+                                <select id="office-city" required>
+                                    <option disabled selected>اختر المحافظة أولاً...</option>
+                                </select>
                             </div>
+                            <div class="form-group">
+                                <label for="office-opening-price">سعر الافتتاح</label>
+                                <input type="number" id="office-opening-price" placeholder="0.00" step="0.01" title="سعر الافتتاح" required>
+                            </div>
+                        </div>
+                        <div class="form-row">
                             <div class="form-group">
                                 <label for="office-phone">رقم الهاتف</label>
-                                <input type="tel" id="office-phone" placeholder="+963..." title="رقم هاتف المكتب">
-
+                                <input type="tel" id="office-phone" placeholder="+963..." title="رقم هاتف المكتب" required>
                             </div>
                         </div>
                         <button type="button" class="btn-primary" id="save-office-btn" style="width: auto; padding: 10px 30px;">حفظ المكتب الجديد</button>
                     </form>
                 </div>
+
 
                 <div class="grid-2-1">
                     <div class="card">
@@ -510,17 +507,54 @@
                                         <option value="office_manager">مدير مكتب (Office Manager)</option>
                                         <option value="accountant">محاسب (Accountant)</option>
                                     </select>
+                                    <span class="field-error" id="emp-type-error"></span>
                                 </div>
+                            </div>
+
+                            
+                            <!-- Agent Zone Selection (Country/City) - Hidden by default -->
+                            <div class="form-row" id="emp-country-group" style="display: none;">
                                 <div class="form-group">
-                                    <label>المكتب</label>
-                                    <select id="emp-office" required>
-                                        <option disabled selected>اختر المكتب...</option>
-                                        <option value="1">مكتب دمشق المركزي</option>
-                                        <option value="2">مكتب حلب</option>
-                                        <option value="3">مكتب اللاذقية</option>
+                                    <label>الدولة</label>
+                                    <select id="emp-country">
+                                        <option disabled selected>اختر الدولة...</option>
+                                    </select>
+                                    <span class="field-error" id="emp-country-error"></span>
+                                </div>
+                                <div class="form-group" id="emp-governorate-group" style="display: none;">
+                                    <label>المحافظة</label>
+                                    <select id="emp-governorate">
+                                        <option disabled selected>اختر المحافظة...</option>
                                     </select>
                                 </div>
                             </div>
+                            <div class="form-row" id="emp-city-group" style="display: none;">
+                                <div class="form-group">
+                                    <label>المدينة</label>
+                                    <select id="emp-city">
+                                        <option disabled selected>اختر المدينة...</option>
+                                    </select>
+                                    <span class="field-error" id="emp-city-error"></span>
+                                </div>
+                            </div>
+
+                            
+                            <!-- Office Selection (Required for non-Agent roles) - Hidden by default -->
+                            <div class="form-group" id="emp-office-section" style="display: none;">
+                                <label>المكتب <span class="required">*</span></label>
+                                <select id="emp-office" required>
+                                    <option disabled selected>اختر المكتب...</option>
+                                    <option value="1">مكتب دمشق المركزي</option>
+                                    <option value="2">مكتب حلب</option>
+                                    <option value="3">مكتب حمص</option>
+                                    <option value="4">مكتب اللاذقية</option>
+                                    <option value="5">مكتب طرطوس</option>
+                                </select>
+                                <span class="field-error" id="emp-office-error"></span>
+                                <p class="help-text">إلزامي لغير المندوبين - يتم تحديد المنطقة حسب موقع المكتب</p>
+                            </div>
+
+
                             <div class="form-row">
                                 <div class="form-group">
                                     <label for="emp-hire-date">تاريخ التعيين</label>
@@ -578,143 +612,47 @@
                 </div>
             </div>
 
-            <div id="role-agent" class="role-section hidden">
-                <div class="grid-2-1">
-                    <div class="card">
-                        <div class="card-header"><h3>إنشاء حوالة جديدة</h3></div>
-                        <div class="tabs">
-                            <button class="tab-btn active">تسليم نقدي</button>
-                            <button class="tab-btn">تحويل داخلي</button>
-                            <button class="tab-btn">فيزا كارد</button>
-                        </div>
-                        <form class="transfer-form">
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="sender-phone">هاتف المرسل</label>
-                                    <input type="text" id="sender-phone" placeholder="+963 ..." title="هاتف المرسل">
 
-                                </div>
-                                <div class="form-group">
-                                    <label for="receiver-name">اسم المستلم</label>
-                                    <input type="text" id="receiver-name" placeholder="الاسم الثلاثي" title="اسم المستلم">
-
-                                </div>
-                            </div>
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="transfer-amount">المبلغ (USD)</label>
-                                    <input type="number" id="transfer-amount" placeholder="0.00" title="مبلغ التحويل بالدولار">
-
-                                </div>
-                                <div class="form-group">
-                                    <label for="country-selector">اختر الدولة</label>
-                                    <select id="country-selector" name="country">
-                                        <option value disabled selected>اختر الدولة...</option>
-                                        <option value="SY">سوريا</option>
-                                        <option value="LB">لبنان</option>
-                                        <option value="EG">مصر</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <button type="button" class="btn-primary full-width">إتمام العملية</button>
-                        </form>
-                    </div>
-                    <div class="card wallet-card">
-                        <h3>محفظة الوكيل</h3>
-                        <div class="wallet-balance" style="font-size: 24px; font-weight: bold; color: var(--primary); margin: 10px 0;">$4,250.00</div>
-                        <p class="text-muted">متاح للصرف</p>
-                        <hr style="margin: 15px 0; border: 0; border-top: 1px solid #eee;">
-                        <div class="mini-list">
-                            <div class="mini-item" style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                                <span>تغذية رصيد</span>
-                                <span class="green-text">+$500</span>
-                            </div>
-                            <div class="mini-item" style="display: flex; justify-content: space-between;">
-                                <span>حوالة صادرة #881</span>
-                                <span class="red-text">-$120</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
             </div>
 
-            <div id="role-customer" class="role-section hidden">
-                <div style="display: flex; justify-content: center;">
-                    <div class="card transfer-wizard" style="max-width: 600px; width: 100%;">
-                        <div class="card-header"><h3>إرسال أموال</h3></div>
-                        <form>
-                            <div class="form-group">
-                                <label for="customer-phone">رقم هاتفك</label>
-                                <input type="tel" id="customer-phone" placeholder="+963 ..." title="رقم هاتف العميل">
-
-                            </div>
-
-                            <div class="form-group file-upload">
-                                <label for="id-upload">
-                                    <i class="fa-solid fa-cloud-arrow-up"></i>
-                                    رفع صورة الهوية
-                                </label>
-                                <input id="id-upload" type="file" hidden aria-label="رفع صورة الهوية" title="اختر ملف صورة الهوية">
-
-                            </div>
-
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="customer-amount">المبلغ</label>
-                                    <input type="number" id="customer-amount" placeholder="100.00" title="المبلغ المراد إرساله">
-
-                                </div>
-                                <div class="form-group">
-                                    <label for="currency-selector">العملة</label>
-                                    <select id="currency-selector">
-                                        <option value="USD">USD</option>
-                                        <option value="EUR">EUR</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="receiver-whatsapp">واتساب المستلم (للإشعار)</label>
-                                <input type="text" id="receiver-whatsapp" placeholder="رقم الموبايل مع الرمز الدولي" title="رقم واتساب المستلم">
-
-                            </div>
-
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="receiver-country">الدولة</label>
-                                    <input type="text" id="receiver-country" placeholder="الدولة" title="دولة المستلم">
-
-                                </div>
-                                <div class="form-group">
-                                    <label for="receiver-city">المدينة</label>
-                                    <input type="text" id="receiver-city" placeholder="المدينة" title="مدينة المستلم">
-
-                                </div>
-                            </div>
-
-                            <label style="display: block; margin-bottom: 10px;">طريقة الدفع</label>
-                            <div class="payment-methods">
-                                <div class="pm-card selected">
-                                    <i class="fa-solid fa-money-bill-wave"></i>
-                                    <span>نقدي (كاش)</span>
-                                </div>
-                                <div class="pm-card">
-                                    <i class="fa-brands fa-cc-visa"></i>
-                                    <span>فيزا</span>
-                                </div>
-                                <div class="pm-card chat-pm">
-                                    <i class="fa-brands fa-whatsapp"></i>
-                                    <span>تواصل الآن</span>
-                                </div>
-                            </div>
-
-                            <button type="button" class="btn-primary full-width mt-20" style="margin-top: 20px;">تأكيد ودفع</button>
-                        </form>
-                    </div>
-                </div>
-            </div>
 
             <div id="role-accountant" class="role-section hidden">
+                <div class="section-header">
+                    <h2><i class="fa-solid fa-calculator"></i> النظام المحاسبي</h2>
+                </div>
+                
+                <!-- Accounting Dashboard -->
+                <div class="stats-grid">
+                    <div class="card stat-card">
+                        <div class="icon blue"><i class="fa-solid fa-coins"></i></div>
+                        <div class="info">
+                            <h3>الرصيد المحاسبي</h3>
+                            <p>$125,000.00</p>
+                        </div>
+                    </div>
+                    <div class="card stat-card">
+                        <div class="icon green"><i class="fa-solid fa-arrow-trend-up"></i></div>
+                        <div class="info">
+                            <h3>إيرادات اليوم</h3>
+                            <p>$8,500.00</p>
+                        </div>
+                    </div>
+                    <div class="card stat-card">
+                        <div class="icon orange"><i class="fa-solid fa-arrow-trend-down"></i></div>
+                        <div class="info">
+                            <h3>مصاريف اليوم</h3>
+                            <p>$2,300.00</p>
+                        </div>
+                    </div>
+                    <div class="card stat-card">
+                        <div class="icon purple"><i class="fa-solid fa-file-invoice-dollar"></i></div>
+                        <div class="info">
+                            <h3>الفواتير المعلقة</h3>
+                            <p>12</p>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="card">
                     <div class="card-header"><h3>سجل الحركات اليومي</h3></div>
                     <table class="data-table">
@@ -722,30 +660,412 @@
                             <tr>
                                 <th>التاريخ</th>
                                 <th>الوصف</th>
-                                <th>وارد</th>
-                                <th>صادر</th>
+                                <th>نوع العملية</th>
+                                <th>المبلغ</th>
                                 <th>الرصيد</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr>
-                                <td>24 أكتوبر</td>
+                                <td>24 أكتوبر 2025</td>
                                 <td>رصيد افتتاحي</td>
+                                <td><span class="status-badge status-active">افتتاح</span></td>
                                 <td>-</td>
-                                <td>-</td>
-                                <td>$120,000</td>
+                                <td>$120,000.00</td>
                             </tr>
                             <tr>
-                                <td>24 أكتوبر</td>
-                                <td>إيداع وكيل #04</td>
-                                <td class="green-text">+$5,000</td>
-                                <td>-</td>
-                                <td>$125,000</td>
+                                <td>24 أكتوبر 2025</td>
+                                <td>إيرادات حوالات - مكتب دمشق</td>
+                                <td><span class="status-badge status-active">إيراد</span></td>
+                                <td class="green-text">+$5,000.00</td>
+                                <td>$125,000.00</td>
+                            </tr>
+                            <tr>
+                                <td>24 أكتوبر 2025</td>
+                                <td>مصاريف تشغيلية</td>
+                                <td><span class="status-badge status-inactive">مصروف</span></td>
+                                <td class="red-text">-$2,300.00</td>
+                                <td>$122,700.00</td>
+                            </tr>
+                            <tr>
+                                <td>24 أكتوبر 2025</td>
+                                <td>عمولة وكلاء</td>
+                                <td><span class="status-badge status-pending">عمولة</span></td>
+                                <td class="red-text">-$1,200.00</td>
+                                <td>$121,500.00</td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
             </div>
+
+            <!-- Fund Box Section - Super Admin Only -->
+            <div id="role-fund-box" class="role-section hidden">
+                <div class="section-header">
+                    <h2><i class="fa-solid fa-box-open"></i> صندوق التداول (Buy/Sell)</h2>
+                </div>
+
+                <!-- Fund Box Stats -->
+                <div class="stats-grid">
+                    <div class="card stat-card">
+                        <div class="icon blue"><i class="fa-solid fa-sack-dollar"></i></div>
+                        <div class="info">
+                            <h3>رصيد الصندوق</h3>
+                            <p>$75,000.00</p>
+                        </div>
+                    </div>
+                    <div class="card stat-card">
+                        <div class="icon green"><i class="fa-solid fa-cart-shopping"></i></div>
+                        <div class="info">
+                            <h3>إجمالي المشتريات</h3>
+                            <p>$125,000.00</p>
+                        </div>
+                    </div>
+                    <div class="card stat-card">
+                        <div class="icon orange"><i class="fa-solid fa-hand-holding-dollar"></i></div>
+                        <div class="info">
+                            <h3>إجمالي المبيعات</h3>
+                            <p>$50,000.00</p>
+                        </div>
+                    </div>
+                    <div class="card stat-card">
+                        <div class="icon purple"><i class="fa-solid fa-chart-line"></i></div>
+                        <div class="info">
+                            <h3>متوسط سعر الصرف</h3>
+                            <p>12,550 SYP</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid-2-1">
+                    <!-- Buy/Sell Form -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3><i class="fa-solid fa-exchange-alt"></i> عملية جديدة</h3>
+                        </div>
+                        <form id="fund-box-form">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>نوع العملية</label>
+                                    <div style="display: flex; gap: 10px;">
+                                        <label style="flex: 1; padding: 10px; border: 2px solid var(--border); border-radius: 8px; cursor: pointer; text-align: center;" class="transaction-type-label" data-type="buy">
+                                            <input type="radio" name="transaction_type" value="buy" checked style="display: none;">
+                                            <i class="fa-solid fa-cart-shopping" style="color: var(--success);"></i>
+                                            <div style="margin-top: 5px; font-weight: 600;">شراء</div>
+                                        </label>
+                                        <label style="flex: 1; padding: 10px; border: 2px solid var(--border); border-radius: 8px; cursor: pointer; text-align: center;" class="transaction-type-label" data-type="sell">
+                                            <input type="radio" name="transaction_type" value="sell" style="display: none;">
+                                            <i class="fa-solid fa-hand-holding-dollar" style="color: var(--warning);"></i>
+                                            <div style="margin-top: 5px; font-weight: 600;">بيع</div>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="fund-amount">المبلغ (USD)</label>
+                                    <input type="number" id="fund-amount" placeholder="0.00" step="0.01" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="fund-rate">سعر الصرف (SYP)</label>
+                                    <input type="number" id="fund-rate" placeholder="12500" step="1" required>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="fund-total">الإجمالي (SYP)</label>
+                                    <input type="text" id="fund-total" readonly style="background: #f8f9fa; font-weight: 600;">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="fund-notes">ملاحظات</label>
+                                <textarea id="fund-notes" placeholder="ملاحظات إضافية..." rows="2"></textarea>
+                            </div>
+                            <button type="submit" class="btn-primary full-width">
+                                <i class="fa-solid fa-check"></i> تنفيذ العملية
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Recent Transactions -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3><i class="fa-solid fa-clock-rotate-left"></i> آخر المعاملات</h3>
+                        </div>
+                        <div id="fund-transactions-list" style="max-height: 400px; overflow-y: auto;">
+                            <div class="mini-list">
+                                <div class="mini-item" style="display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid var(--border);">
+                                    <div>
+                                        <div style="font-weight: 600; color: var(--success);"><i class="fa-solid fa-cart-shopping"></i> شراء</div>
+                                        <div style="font-size: 12px; color: var(--text-secondary);">24 أكتوبر 2025 - 10:30 ص</div>
+                                    </div>
+                                    <div style="text-align: left;">
+                                        <div style="font-weight: 600;">$50,000.00</div>
+                                        <div style="font-size: 12px; color: var(--text-secondary);">@ 12,500 = 625,000,000 SYP</div>
+                                    </div>
+                                </div>
+                                <div class="mini-item" style="display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid var(--border);">
+                                    <div>
+                                        <div style="font-weight: 600; color: var(--warning);"><i class="fa-solid fa-hand-holding-dollar"></i> بيع</div>
+                                        <div style="font-size: 12px; color: var(--text-secondary);">23 أكتوبر 2025 - 14:15 م</div>
+                                    </div>
+                                    <div style="text-align: left;">
+                                        <div style="font-weight: 600;">$25,000.00</div>
+                                        <div style="font-size: 12px; color: var(--text-secondary);">@ 12,600 = 315,000,000 SYP</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- Representative Search Section -->
+            <div id="role-representatives" class="role-section hidden">
+                <div class="section-header">
+                    <h2><i class="fa-solid fa-users-rectangle"></i> البحث عن الممثلين (Delegates)</h2>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-search"></i> البحث مع الفلتر</h3>
+                    </div>
+                    
+                    <!-- Virtual Office Toggle -->
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="representative-virtual-toggle" class="toggle-label">
+                                <span>المكتب الافتراضي (دولي)</span>
+                                <label class="switch">
+                                    <input type="checkbox" id="representative-virtual-toggle">
+                                    <span class="slider round"></span>
+                                </label>
+                            </label>
+                            <p class="help-text">تفعيل الفلتر للبحث عن ممثلين في دول محددة فقط</p>
+                        </div>
+                        
+                        <!-- Country Filter (shown when toggle is ON) -->
+                        <div class="form-group" id="representative-country-label" style="display: none;">
+                            <label for="representative-country-filter">اختر الدولة</label>
+                            <select id="representative-country-filter" disabled>
+                                <option value="">اختر الدولة...</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Search Input -->
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="representative-search">البحث بالاسم أو رقم الهاتف</label>
+                            <input type="text" id="representative-search" placeholder="ابحث عن ممثل...">
+                        </div>
+                        <div class="form-group" style="display: flex; align-items: flex-end;">
+                            <button type="button" class="btn-primary" id="representative-search-btn">
+                                <i class="fa-solid fa-search"></i> بحث
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Results Container -->
+                    <div id="representative-results" class="representative-results">
+                        <p class="help-text">قم بتفعيل "المكتب الافتراضي" واختر الدولة للفلترة، أو ابحث مباشرة</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reports Section (التقارير) -->
+            <div id="role-reports" class="role-section hidden">
+                <div class="section-header">
+                    <h2><i class="fa-solid fa-chart-line"></i> التقارير والإحصائيات</h2>
+                    <div class="date-filter">
+                        <input type="date" id="report-start-date" value="2025-01-01">
+                        <span>إلى</span>
+                        <input type="date" id="report-end-date" value="2025-12-31">
+                        <button class="btn-primary" onclick="fetchReportsData()">
+                            <i class="fa-solid fa-filter"></i> تصفية
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Summary Cards -->
+                <div class="summary-cards">
+                    <div class="summary-card">
+                        <div class="icon green">
+                            <i class="fa-solid fa-sack-dollar"></i>
+                        </div>
+                        <div class="info">
+                            <h4>إجمالي الإيرادات</h4>
+                            <p id="total-revenue">$1,245,000</p>
+                        </div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="icon blue">
+                            <i class="fa-solid fa-users"></i>
+                        </div>
+                        <div class="info">
+                            <h4>إجمالي الموظفين</h4>
+                            <p id="total-employees">24</p>
+                        </div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="icon orange">
+                            <i class="fa-solid fa-building"></i>
+                        </div>
+                        <div class="info">
+                            <h4>المكاتب النشطة</h4>
+                            <p id="active-offices">11</p>
+                        </div>
+                    </div>
+                    <div class="summary-card">
+                        <div class="icon purple">
+                            <i class="fa-solid fa-money-bill-transfer"></i>
+                        </div>
+                        <div class="info">
+                            <h4>إجمالي الحوالات</h4>
+                            <p id="total-transfers">3,847</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Activities Table -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-clock-rotate-left"></i> آخر النشاطات</h3>
+                    </div>
+                    <table class="data-table" id="recent-activities-table">
+                        <thead>
+                            <tr>
+                                <th>التاريخ</th>
+                                <th>النوع</th>
+                                <th>الوصف</th>
+                                <th>المستخدم</th>
+                                <th>المبلغ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recent-activities-body">
+                            <tr>
+                                <td>24 أكتوبر 2025</td>
+                                <td><span class="status-tag completed"><i class="fa-solid fa-check"></i> حوالة</span></td>
+                                <td>تحويل من دمشق إلى دبي</td>
+                                <td>أحمد علي</td>
+                                <td class="green-text">+$5,000</td>
+                            </tr>
+                            <tr>
+                                <td>24 أكتوبر 2025</td>
+                                <td><span class="status-tag pending"><i class="fa-solid fa-clock"></i> معلق</span></td>
+                                <td>طلب تغذية رصيد</td>
+                                <td>خالد العلي</td>
+                                <td>+$2,500</td>
+                            </tr>
+                            <tr>
+                                <td>23 أكتوبر 2025</td>
+                                <td><span class="status-tag completed"><i class="fa-solid fa-user-plus"></i> موظف</span></td>
+                                <td>إضافة موظف جديد</td>
+                                <td>المدير العام</td>
+                                <td>-</td>
+                            </tr>
+                            <tr>
+                                <td>23 أكتوبر 2025</td>
+                                <td><span class="status-tag cancelled"><i class="fa-solid fa-xmark"></i> ملغي</span></td>
+                                <td>إلغاء حوالة #TRX-8842</td>
+                                <td>سارة أحمد</td>
+                                <td class="red-text">-$1,200</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Transfers Section (الحوالات) - View Only -->
+            <div id="role-transfers" class="role-section hidden">
+                <div class="section-header">
+                    <h2><i class="fa-solid fa-money-bill-transfer"></i> إدارة الحوالات</h2>
+                </div>
+
+
+                <!-- Search and Filter Bar -->
+                <div class="card">
+                    <div class="search-bar">
+                        <input type="text" id="transfer-search-id" placeholder="البحث برقم الحوالة...">
+                        <select id="transfer-status-filter">
+                            <option value="all">جميع الحالات</option>
+                            <option value="pending">معلقة</option>
+                            <option value="completed">مكتملة</option>
+                            <option value="cancelled">ملغية</option>
+                        </select>
+                        <button class="btn-primary" onclick="searchTransfers()">
+                            <i class="fa-solid fa-search"></i> بحث
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Filter Tabs -->
+                <div class="filter-tabs">
+                    <button class="filter-tab active" data-status="all">الكل <span class="count">(3,847)</span></button>
+                    <button class="filter-tab" data-status="pending">معلقة <span class="count">(14)</span></button>
+                    <button class="filter-tab" data-status="completed">مكتملة <span class="count">(3,820)</span></button>
+                    <button class="filter-tab" data-status="cancelled">ملغية <span class="count">(13)</span></button>
+                </div>
+
+                <!-- Transfers Table -->
+                <div class="card">
+                    <table class="data-table" id="transfers-table">
+                        <thead>
+                            <tr>
+                                <th>رقم الحوالة</th>
+                                <th>المرسل</th>
+                                <th>المستلم</th>
+                                <th>المبلغ</th>
+                                <th>الحالة</th>
+                                <th>التاريخ</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="transfers-table-body">
+                            <tr>
+                                <td><strong>#TRX-9981</strong></td>
+                                <td>أحمد محمد<br><small>+963 955 123 456</small></td>
+                                <td>خالد العلي<br><small>دبي - الإمارات</small></td>
+                                <td class="green-text">$5,000.00</td>
+                                <td><span class="status-tag pending"><i class="fa-solid fa-clock"></i> معلقة</span></td>
+                                <td>24 أكتوبر 2025</td>
+                                <td>
+                                    <button class="icon-btn" title="عرض التفاصيل"><i class="fa-solid fa-eye"></i></button>
+                                    <button class="icon-btn text-success" title="موافقة"><i class="fa-solid fa-check"></i></button>
+                                    <button class="icon-btn text-danger" title="إلغاء"><i class="fa-solid fa-xmark"></i></button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>#TRX-9980</strong></td>
+                                <td>سارة أحمد<br><small>+963 955 234 567</small></td>
+                                <td>مكتب حلب<br><small>حلب - سوريا</small></td>
+                                <td class="green-text">$2,500.00</td>
+                                <td><span class="status-tag completed"><i class="fa-solid fa-check"></i> مكتملة</span></td>
+                                <td>24 أكتوبر 2025</td>
+                                <td>
+                                    <button class="icon-btn" title="عرض التفاصيل"><i class="fa-solid fa-eye"></i></button>
+                                    <button class="icon-btn" title="طباعة"><i class="fa-solid fa-print"></i></button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>#TRX-9979</strong></td>
+                                <td>فادي محمد<br><small>+963 955 345 678</small></td>
+                                <td>مريم غالي<br><small>بيروت - لبنان</small></td>
+                                <td class="green-text">$1,200.00</td>
+                                <td><span class="status-tag cancelled"><i class="fa-solid fa-xmark"></i> ملغية</span></td>
+                                <td>23 أكتوبر 2025</td>
+                                <td>
+                                    <button class="icon-btn" title="عرض التفاصيل"><i class="fa-solid fa-eye"></i></button>
+                                    <button class="icon-btn" title="إعادة فتح"><i class="fa-solid fa-rotate-left"></i></button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+
 
         </div>
 
@@ -760,11 +1080,32 @@
         </footer>
     </main>
 
-  <script src="js/auth.js"></script>
-    <script src="js/customer.js"></script>
-    <script src="js/agent.js"></script>
+    <!-- Laravel API Services (Load First) -->
+    <script src="js/services/laravel-api.js"></script>
+    <script src="js/services/auth-service.js"></script>
+    
+    <!-- Data Layer -->
+    <script src="js/data/mock-data.js"></script>
+    
+    <!-- Core Application - RBAC must load first -->
+    <script src="js/rbac.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/navigation.js"></script>
+    <script src="js/api-service.js"></script>
+    
+    <!-- Forms -->
+    <script src="js/forms/office-form.js"></script>
+    <script src="js/forms/employee-form.js"></script>
+    
+    <!-- Admin Module -->
     <script src="js/admin.js"></script>
 
+
+
+
+
+
+   
     <script>
         // Mobile menu toggle function
         function toggleMobileMenu() {
@@ -772,11 +1113,97 @@
             nav.classList.toggle('active');
         }
         
-        // تشغيل الحالة الابتدائية
-        window.onload = () => {
-            switchRole('super_admin');
-        };
+        // Office change handler
+        function onOfficeChange(officeId) {
+            if (!isSuperAdmin()) {
+                showNotification('غير مصرح: لا يمكنك تبديل المكتب', 'error');
+                return;
+            }
+            
+            const officeName = officeId === 'all' ? 'جميع المكاتب' : 
+                document.querySelector(`#office-selector option[value="${officeId}"]`)?.textContent || 'مكتب محدد';
+            
+            setOfficeContext(officeId === 'all' ? null : parseInt(officeId), officeName);
+            showNotification(`تم تبديل السياق إلى: ${officeName}`, 'success');
+            
+            // Refresh current section data
+            const currentHash = window.location.hash.substring(1);
+            if (currentHash) {
+                // Trigger data refresh for the current section
+                window.dispatchEvent(new CustomEvent('officeContextChanged', {
+                    detail: getOfficeContext()
+                }));
+            }
+        }
+        
+        // Fund Box form handler
+        document.getElementById('fund-box-form')?.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const type = document.querySelector('input[name="transaction_type"]:checked')?.value;
+            const amount = parseFloat(document.getElementById('fund-amount')?.value || 0);
+            const rate = parseFloat(document.getElementById('fund-rate')?.value || 0);
+            const notes = document.getElementById('fund-notes')?.value || '';
+            
+            if (!amount || !rate) {
+                showNotification('يرجى إدخال المبلغ وسعر الصرف', 'error');
+                return;
+            }
+            
+            const total = amount * rate;
+            
+            // In real app, send to API
+            console.log('Fund Box Transaction:', { type, amount, rate, total, notes });
+            showNotification(`تم ${type === 'buy' ? 'الشراء' : 'البيع'} بنجاح: ${amount.toLocaleString()} USD`, 'success');
+            
+            // Reset form
+            this.reset();
+        });
+        
+        // Calculate total on input change
+        document.getElementById('fund-amount')?.addEventListener('input', calculateFundTotal);
+        document.getElementById('fund-rate')?.addEventListener('input', calculateFundTotal);
+        
+        function calculateFundTotal() {
+            const amount = parseFloat(document.getElementById('fund-amount')?.value || 0);
+            const rate = parseFloat(document.getElementById('fund-rate')?.value || 0);
+            const total = amount * rate;
+            
+            const totalInput = document.getElementById('fund-total');
+            if (totalInput) {
+                totalInput.value = total > 0 ? total.toLocaleString() + ' SYP' : '';
+            }
+        }
+        
+        // Transaction type selection styling
+        document.querySelectorAll('.transaction-type-label').forEach(label => {
+            label.addEventListener('click', function() {
+                document.querySelectorAll('.transaction-type-label').forEach(l => {
+                    l.style.borderColor = 'var(--border)';
+                    l.style.background = 'white';
+                });
+                this.style.borderColor = 'var(--primary)';
+                this.style.background = 'rgba(13, 139, 188, 0.05)';
+            });
+        });
+        
+        // Initialize first option as selected
+        document.querySelector('.transaction-type-label[data-type="buy"]')?.click();
+        
+        // NOTE: Initialization is now handled by rbac.js initApp() function
+        // which runs on DOMContentLoaded with proper loading states
+        // rbac.js will:
+        // 1. Show loading screen
+        // 2. Initialize RBAC system
+        // 3. Generate dynamic sidebar based on role
+        // 4. Show correct default route for the role
+        // 5. Hide loading screen
+        
+        // This inline script is kept for any additional page-specific initialization
+        console.log('Dashboard HTML loaded - waiting for rbac.js initialization');
+
     </script>
 
+
+
 </body>
-</html>

@@ -1,0 +1,1117 @@
+/**
+ * Polymorphic Remittance System - Custom Styles
+ * ============================================
+ * Additional styles for:
+ * - Toggle switches
+ * - Searchable dropdowns
+ * - Location-based form sections
+ * - Transfer routing UI
+ */
+
+/* ==========================================
+   TOGGLE SWITCH
+   ========================================== */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 26px;
+    margin-right: 10px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .4s;
+}
+
+input:checked + .slider {
+    background-color: var(--primary);
+}
+
+input:focus + .slider {
+    box-shadow: 0 0 1px var(--primary);
+}
+
+input:checked + .slider:before {
+    transform: translateX(24px);
+}
+
+.slider.round {
+    border-radius: 34px;
+}
+
+.slider.round:before {
+    border-radius: 50%;
+}
+
+.toggle-label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.toggle-label span:first-child {
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+/* ==========================================
+   SEARCHABLE DROPDOWN
+   ========================================== */
+.dropdown-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    max-height: 250px;
+    overflow-y: auto;
+    z-index: 1000;
+    display: none;
+    margin-top: 4px;
+}
+
+.dropdown-menu.show {
+    display: block;
+}
+
+.dropdown-item {
+    padding: 12px 16px;
+    cursor: pointer;
+    border-bottom: 1px solid #f0f0f0;
+    transition: background-color 0.2s;
+}
+
+.dropdown-item:last-child {
+    border-bottom: none;
+}
+
+.dropdown-item:hover {
+    background-color: #f8f9fa;
+}
+
+.dropdown-item.no-results {
+    color: #999;
+    cursor: default;
+    text-align: center;
+    padding: 16px;
+}
+
+.manager-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.manager-name {
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.manager-phone {
+    font-size: 13px;
+    color: #666;
+}
+
+.manager-role {
+    font-size: 12px;
+    color: var(--primary);
+    background: rgba(13, 139, 188, 0.1);
+    padding: 2px 8px;
+    border-radius: 4px;
+    display: inline-block;
+    width: fit-content;
+}
+
+.clear-manager-btn {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #999;
+    cursor: pointer;
+    padding: 4px;
+}
+
+.clear-manager-btn:hover {
+    color: #dc3545;
+}
+
+/* ==========================================
+   HELP TEXT
+   ========================================== */
+.help-text {
+    font-size: 12px;
+    color: #888;
+    margin-top: 4px;
+    font-style: italic;
+}
+
+/* ==========================================
+   LOCATION-BASED FORM SECTIONS
+   ========================================== */
+#emp-location-fields,
+#office-location-fields {
+    margin-top: 16px;
+}
+
+#emp-office-section,
+#emp-governorate-group,
+#emp-city-group,
+#office-governorate-group,
+#office-city-group {
+    margin-top: 16px;
+}
+
+.form-group.hidden {
+    display: none !important;
+}
+
+/* ==========================================
+   TRANSFER ROUTING UI
+   ========================================== */
+.transfer-routing-section {
+    padding: 20px;
+}
+
+.routing-step {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.routing-step .step-number {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    flex-shrink: 0;
+}
+
+.routing-step .step-content {
+    flex: 1;
+}
+
+.routing-arrow {
+    text-align: center;
+    color: #999;
+    margin: 8px 0;
+}
+
+.receiver-info-box {
+    background: rgba(13, 139, 188, 0.1);
+    border: 1px solid var(--primary);
+    border-radius: 8px;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.receiver-info-box i {
+    color: var(--primary);
+}
+
+.receiver-info-box span {
+    color: var(--text-color);
+    font-weight: 500;
+}
+
+/* ==========================================
+   TRANSFER TYPE INDICATOR
+   ========================================== */
+.transfer-type-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.transfer-type-badge.office {
+    background: rgba(40, 167, 69, 0.1);
+    color: #28a745;
+}
+
+.transfer-type-badge.user {
+    background: rgba(255, 193, 7, 0.1);
+    color: #ffc107;
+}
+
+.transfer-type-badge i {
+    font-size: 14px;
+}
+
+/* ==========================================
+   CONFIRMATION DIALOG
+   ========================================== */
+.transfer-confirmation {
+    text-align: right;
+}
+
+.transfer-confirmation p {
+    margin-bottom: 8px;
+    line-height: 1.6;
+}
+
+.transfer-confirmation strong {
+    color: var(--text-color);
+}
+
+/* ==========================================
+   OPTGROUP STYLING
+   ========================================== */
+optgroup {
+    font-weight: 600;
+    color: var(--primary);
+}
+
+optgroup option {
+    padding: 8px 12px;
+    font-weight: 400;
+}
+
+/* ==========================================
+   SECTION TRANSITIONS & ANIMATIONS
+   ========================================== */
+
+/* Smooth section switching */
+.role-section {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    display: none;
+}
+
+.role-section.active {
+    display: block;
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Fade in animation */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fade-in {
+    animation: fadeIn 0.4s ease forwards;
+}
+
+/* Loading spinner animation */
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.fa-spinner {
+    animation: spin 1s linear infinite;
+}
+
+/* Button loading state */
+button:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+/* ==========================================
+   SUMMARY CARDS STYLES
+   ========================================== */
+
+.summary-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.summary-card {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.summary-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.12);
+}
+
+.summary-card .icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    color: white;
+}
+
+.summary-card .icon.green { background: linear-gradient(135deg, #28a745, #20c997); }
+.summary-card .icon.blue { background: linear-gradient(135deg, #0d8abc, #17a2b8); }
+.summary-card .icon.orange { background: linear-gradient(135deg, #fd7e14, #ffc107); }
+.summary-card .icon.purple { background: linear-gradient(135deg, #6f42c1, #e83e8c); }
+
+.summary-card .info h4 {
+    font-size: 13px;
+    color: #6c757d;
+    margin-bottom: 5px;
+    font-weight: 600;
+}
+
+.summary-card .info p {
+    font-size: 22px;
+    font-weight: 700;
+    color: #2c3e50;
+    margin: 0;
+}
+
+/* ==========================================
+   STATUS TAGS
+   ========================================== */
+
+.status-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.status-tag.pending {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.status-tag.completed {
+    background: #d4edda;
+    color: #155724;
+}
+
+.status-tag.cancelled {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.status-tag.transfer {
+    background: #d1ecf1;
+    color: #0c5460;
+}
+
+.status-tag.employee {
+    background: #e2e3e5;
+    color: #383d41;
+}
+
+/* ==========================================
+   FILTER TABS
+   ========================================== */
+
+.filter-tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.filter-tab {
+    padding: 10px 20px;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    background: white;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-weight: 500;
+    color: #6c757d;
+}
+
+.filter-tab:hover {
+    border-color: #0d8abc;
+    color: #0d8abc;
+}
+
+.filter-tab.active {
+    background: #0d8abc;
+    border-color: #0d8abc;
+    color: white;
+}
+
+.filter-tab .count {
+    font-size: 12px;
+    opacity: 0.8;
+    margin-right: 5px;
+}
+
+/* ==========================================
+   SEARCH BAR
+   ========================================== */
+
+.search-bar {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.search-bar input {
+    flex: 1;
+    min-width: 200px;
+    padding: 10px 15px;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: border-color 0.2s ease;
+}
+
+.search-bar input:focus {
+    outline: none;
+    border-color: #0d8abc;
+}
+
+.search-bar select {
+    padding: 10px 15px;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    font-size: 14px;
+    background: white;
+    cursor: pointer;
+}
+
+/* ==========================================
+   DATE FILTER
+   ========================================== */
+
+.date-filter {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.date-filter input[type="date"] {
+    padding: 8px 12px;
+    border: 2px solid #e9ecef;
+    border-radius: 6px;
+    font-size: 14px;
+}
+
+.date-filter span {
+    color: #6c757d;
+    font-weight: 500;
+}
+
+/* ==========================================
+   SECTION HEADER
+   ========================================== */
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.section-header h2 {
+    font-size: 24px;
+    color: #2c3e50;
+    margin: 0;
+}
+
+/* ==========================================
+   RESPONSIVE ADJUSTMENTS
+   ========================================== */
+
+@media (max-width: 768px) {
+    .toggle-label {
+        flex-direction: row;
+        align-items: center;
+    }
+    
+    .switch {
+        width: 44px;
+        height: 24px;
+    }
+    
+    .slider:before {
+        height: 16px;
+        width: 16px;
+    }
+    
+    input:checked + .slider:before {
+        transform: translateX(20px);
+    }
+    
+    .dropdown-menu {
+        max-height: 200px;
+    }
+}
+
+/* ==========================================
+   ANIMATIONS
+   ========================================== */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fade-in {
+    animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        max-height: 0;
+        opacity: 0;
+    }
+    to {
+        max-height: 500px;
+        opacity: 1;
+    }
+}
+
+.slide-down {
+    overflow: hidden;
+    animation: slideDown 0.3s ease-out;
+}
+
+/* ==========================================
+   FORM VALIDATION STATES
+   ========================================== */
+.form-group.error input,
+.form-group.error select {
+    border-color: #dc3545;
+}
+
+.form-group.success input,
+.form-group.success select {
+    border-color: #28a745;
+}
+
+.error-message {
+    color: #dc3545;
+    font-size: 12px;
+    margin-top: 4px;
+}
+
+/* ==========================================
+   LOADING STATES
+   ========================================== */
+.loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    border-radius: 8px;
+}
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid var(--primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* ==========================================
+   NOTIFICATIONS (Enhanced)
+   ========================================== */
+.notification {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    animation: slideIn 0.3s ease-out;
+}
+
+.notification-info {
+    background: #0d8bbc;
+    color: white;
+}
+
+.notification-success {
+    background: #28a745;
+    color: white;
+}
+
+.notification-warning {
+    background: #ffc107;
+    color: #333;
+}
+
+.notification-error {
+    background: #dc3545;
+    color: white;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(-50%) translateY(-20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(-50%) translateY(0);
+        opacity: 1;
+    }
+}
+
+/* ==========================================
+   RTL SPECIFIC ADJUSTMENTS
+   ========================================== */
+[dir="rtl"] .switch {
+    margin-right: 0;
+    margin-left: 10px;
+}
+
+[dir="rtl"] .slider:before {
+    left: auto;
+    right: 4px;
+}
+
+[dir="rtl"] input:checked + .slider:before {
+    transform: translateX(-24px);
+}
+
+[dir="rtl"] .dropdown-menu {
+    left: auto;
+    right: 0;
+}
+
+[dir="rtl"] .clear-manager-btn {
+    left: auto;
+    right: 10px;
+}
+
+[dir="rtl"] .routing-step {
+    flex-direction: row-reverse;
+}
+
+/* ==========================================
+   NAVIGATION SMOOTH SLIDE ANIMATION
+   ========================================== */
+/* Section visibility transitions */
+.role-section,
+#section-stats {
+    transition: opacity 0.4s ease-in-out, transform 0.4s ease-in-out;
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.role-section.hidden,
+#section-stats.hidden {
+    display: none !important;
+    opacity: 0;
+    transform: translateY(20px);
+}
+
+/* Smooth slide animation when showing */
+.role-section:not(.hidden),
+#section-stats:not(.hidden) {
+    animation: slideInUp 0.4s ease-out;
+}
+
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ==========================================
+   SIDEBAR NAVIGATION ACTIVE STATE
+   ========================================== */
+/* Active navigation item styling */
+.sidebar nav ul li {
+    position: relative;
+    transition: all 0.3s ease;
+    border-radius: 8px;
+    margin: 4px 8px;
+}
+
+.sidebar nav ul li a {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    color: #666;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    border-radius: 8px;
+}
+
+/* Hover state */
+.sidebar nav ul li:hover a {
+    background: rgba(13, 139, 188, 0.1);
+    color: var(--primary);
+}
+
+/* Active state - highlighted button */
+.sidebar nav ul li.active {
+    background: rgba(13, 139, 188, 0.15);
+}
+
+.sidebar nav ul li.active a {
+    color: var(--primary);
+    font-weight: 600;
+    background: rgba(13, 139, 188, 0.1);
+}
+
+/* Active indicator bar on the right (RTL) */
+.sidebar nav ul li.active::before {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 4px;
+    height: 60%;
+    background: var(--primary);
+    border-radius: 2px;
+}
+
+/* Icon color in active state */
+.sidebar nav ul li.active a i {
+    color: var(--primary);
+}
+
+/* Smooth transition for icon */
+.sidebar nav ul li a i {
+    transition: transform 0.3s ease, color 0.3s ease;
+    font-size: 18px;
+    width: 24px;
+    text-align: center;
+}
+
+/* Icon animation on hover */
+.sidebar nav ul li:hover a i {
+    transform: scale(1.1);
+}
+
+/* Active icon animation */
+.sidebar nav ul li.active:hover a i {
+    transform: scale(1.15);
+}
+
+/* ==========================================
+   Z-INDEX MANAGEMENT
+   ========================================== */
+/* Ensure sidebar is above content */
+.sidebar {
+    z-index: 1000;
+}
+
+/* Ensure modals are above everything */
+.modal {
+    z-index: 2000;
+}
+
+/* Ensure mobile menu is above content but below modals */
+#mobile-nav {
+    z-index: 1500;
+}
+
+/* Ensure header is above content */
+header {
+    z-index: 900;
+}
+
+/* ==========================================
+   CLICK PROTECTION
+   ========================================== */
+/* Ensure nav items are clickable */
+.sidebar nav ul li a {
+    position: relative;
+    z-index: 10;
+    pointer-events: auto;
+}
+
+/* Prevent overlapping elements from blocking clicks */
+.sidebar nav {
+    position: relative;
+    z-index: 100;
+}
+
+/* Ensure main content doesn't block sidebar */
+.main-content {
+    position: relative;
+    z-index: 1;
+}
+
+/* ==========================================
+   FIELD-LEVEL VALIDATION ERRORS
+   ========================================== */
+.field-error {
+    display: none;
+    color: #dc3545;
+    font-size: 12px;
+    margin-top: 4px;
+    font-weight: 500;
+    padding-right: 4px;
+}
+
+.field-error::before {
+    content: '⚠ ';
+    margin-left: 4px;
+}
+
+input.error,
+select.error,
+textarea.error {
+    border-color: #dc3545 !important;
+    background-color: rgba(220, 53, 69, 0.05);
+}
+
+input.valid,
+select.valid,
+textarea.valid {
+    border-color: #28a745 !important;
+    background-color: rgba(40, 167, 69, 0.05);
+}
+
+.form-group {
+    position: relative;
+}
+
+/* Shake animation for error state */
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+    20%, 40%, 60%, 80% { transform: translateX(5px); }
+}
+
+input.error:focus,
+select.error:focus {
+    animation: shake 0.4s ease-in-out;
+}
+
+/* Loading button state */
+button:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+button .fa-spinner {
+    margin-left: 8px;
+}
+
+/* ==========================================
+   REPORTS & TRANSFERS SECTIONS
+   ========================================== */
+/* Summary Cards for Reports */
+.summary-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.summary-card {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.summary-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+}
+
+.summary-card .icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+}
+
+.summary-card .icon.blue {
+    background: rgba(13, 139, 188, 0.1);
+    color: #0d8bbc;
+}
+
+.summary-card .icon.green {
+    background: rgba(40, 167, 69, 0.1);
+    color: #28a745;
+}
+
+.summary-card .icon.orange {
+    background: rgba(253, 126, 20, 0.1);
+    color: #fd7e14;
+}
+
+.summary-card .icon.purple {
+    background: rgba(111, 66, 193, 0.1);
+    color: #6f42c1;
+}
+
+.summary-card .info h4 {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 4px;
+}
+
+.summary-card .info p {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text-color);
+}
+
+/* Status Tags */
+.status-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.status-tag.pending {
+    background: rgba(255, 193, 7, 0.15);
+    color: #856404;
+}
+
+.status-tag.completed {
+    background: rgba(40, 167, 69, 0.15);
+    color: #155724;
+}
+
+.status-tag.cancelled {
+    background: rgba(220, 53, 69, 0.15);
+    color: #721c24;
+}
+
+/* Search Bar Styling */
+.search-bar {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.search-bar input {
+    flex: 1;
+    padding: 12px 16px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+.search-bar button {
+    padding: 12px 24px;
+    white-space: nowrap;
+}
+
+/* Filter Tabs */
+.filter-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.filter-tab {
+    padding: 8px 16px;
+    border: 1px solid #ddd;
+    border-radius: 20px;
+    background: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 13px;
+}
+
+.filter-tab:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+.filter-tab.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}

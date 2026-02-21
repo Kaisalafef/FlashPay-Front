@@ -1,11 +1,11 @@
-// js/admin.js - Super Admin Functionality (REFACTORED)
-// ==========================================
-// Security: Input sanitization, XSS protection added
-// Robustness: Null checks, error handling added
-// UX: Loading states, confirmation dialogs added
+/**
+ * Admin Module - Business Logic Only
+ * ==================================
+ * Office Management, Employee Management, Exchange Rates
+ * NOTE: Navigation is handled by navigation.js and rbac.js
+ */
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Initialize all functionality
     initOfficeManagement();
     initExchangeRate();
     initEmployeeManagement();
@@ -13,150 +13,45 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ==========================================
-// UTILITY FUNCTIONS (Security: XSS Protection)
+// UTILITY FUNCTIONS
 // ==========================================
-function sanitizeInput(str) {
-    if (!str) return '';
-    const div = document.createElement('div');
-    div.textContent = str;
-    return div.innerHTML;
-}
+// NOTE: sanitizeInput, escapeHtml, showNotification, showConfirmDialog
+// are now defined in auth.js and available globally
 
-function escapeHtml(text) {
-    const map = {
-        '&': '&amp;',
-        '<': '<',
-        '>': '>',
-        '"': '"',
-        "'": '&#039;'
-    };
-    return text.replace(/[&<>"']/g, m => map[m]);
-}
-
-function showNotification(message, type = 'info') {
-    // Remove existing notifications first
-    const existing = document.querySelectorAll('.notification');
-    existing.forEach(el => el.remove());
-
-    const notification = document.createElement('div');
-    notification.className = `notification notification-${type}`;
-    notification.innerHTML = `
-        <i class="fa-solid fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
-        <span>${escapeHtml(message)}</span>
-    `;
-
-    notification.style.cssText = `
-        position: fixed;
-        top: 20px;
-        left: 50%;
-        transform: translateX(-50%);
-        background: ${type === 'success' ? '#28a745' : type === 'error' ? '#dc3545' : '#0056b3'};
-        color: white;
-        padding: 15px 25px;
-        border-radius: 8px;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        z-index: 9999;
-        animation: slideDown 0.3s ease;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    `;
-
-    const style = document.createElement('style');
-    style.textContent = `
-        @keyframes slideDown {
-            from { top: -100px; opacity: 0; }
-            to { top: 20px; opacity: 1; }
-        }
-        @keyframes slideUp {
-            from { top: 20px; opacity: 1; }
-            to { top: -100px; opacity: 0; }
-        }
-    `;
-    document.head.appendChild(style);
-    document.body.appendChild(notification);
-
-    setTimeout(() => {
-        notification.style.animation = 'slideUp 0.3s ease forwards';
-        setTimeout(() => notification.remove(), 300);
-    }, 3000);
-}
-
-function showConfirmDialog(title, message, onConfirm) {
-    const overlay = document.createElement('div');
-    overlay.className = 'confirm-overlay';
-    overlay.style.cssText = `
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0,0,0,0.5);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 10000;
-    `;
-
-    overlay.innerHTML = `
-        <div class="confirm-dialog" style="
-            background: white;
-            padding: 25px;
-            border-radius: 12px;
-            max-width: 400px;
-            text-align: center;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-        ">
-            <h3 style="margin-bottom: 15px; color: #2c3e50;">${escapeHtml(title)}</h3>
-            <p style="color: #6c757d; margin-bottom: 20px;">${escapeHtml(message)}</p>
-            <div style="display: flex; gap: 10px; justify-content: center;">
-                <button class="btn-secondary" id="confirm-cancel">إلغاء</button>
-                <button class="btn-primary" id="confirm-ok" style="background: #dc3545;">تأكيد</button>
-            </div>
-        </div>
-    `;
-
-    document.body.appendChild(overlay);
-
-    document.getElementById('confirm-cancel').onclick = () => overlay.remove();
-    document.getElementById('confirm-ok').onclick = () => {
-        onConfirm();
-        overlay.remove();
-    };
-}
 
 // ==========================================
 // OFFICE MANAGEMENT
 // ==========================================
+
 function initOfficeManagement() {
     const officeManagerSelect = document.getElementById('office-manager');
     const newManagerFields = document.getElementById('new-manager-fields');
     const saveOfficeBtn = document.getElementById('save-office-btn');
 
-    // Robust null check
-    if (!officeManagerSelect || !saveOfficeBtn) {
+    if (!saveOfficeBtn) {
         console.warn('Office management elements not found');
         return;
     }
 
-    officeManagerSelect.addEventListener('change', function() {
-        if (newManagerFields) {
-            newManagerFields.style.display = this.value === 'new' ? 'block' : 'none';
-        }
-    });
+    if (officeManagerSelect) {
+        officeManagerSelect.addEventListener('change', function() {
+            if (newManagerFields) {
+                newManagerFields.style.display = this.value === 'new' ? 'block' : 'none';
+            }
+        });
+    }
 
     saveOfficeBtn.addEventListener('click', function(e) {
         e.preventDefault();
         
-        // Input validation
         const officeName = document.getElementById('office-name')?.value.trim();
         const officeAddress = document.getElementById('office-address')?.value.trim();
-        const officeManager = officeManagerSelect.value;
+        const officeManager = officeManagerSelect?.value;
         const newManagerName = document.getElementById('new-manager-name')?.value.trim();
         const officeBalance = document.getElementById('office-balance')?.value;
         const officePhone = document.getElementById('office-phone')?.value.trim();
 
-        // Validation checks
+        // Validation
         if (!officeName || officeName.length < 2) {
             showNotification('يرجى إدخال اسم المكتب (أقل رمزين)', 'error');
             return;
@@ -172,13 +67,11 @@ function initOfficeManagement() {
             return;
         }
 
-        // Phone validation (basic)
         if (officePhone && !/^\+?[\d\s-]{10,}$/.test(officePhone)) {
             showNotification('يرجى إدخال رقم هاتف صحيح', 'error');
             return;
         }
 
-        // Balance validation
         if (officeBalance && (isNaN(officeBalance) || parseFloat(officeBalance) < 0)) {
             showNotification('يرجى إدخال رصيد صحيح', 'error');
             return;
@@ -211,7 +104,6 @@ function addOfficeToTable(name, manager, phone) {
     }
 
     const row = document.createElement('tr');
-    // Security: Use textContent for user data
     row.innerHTML = `
         <td class="office-name"></td>
         <td class="office-manager"></td>
@@ -223,7 +115,6 @@ function addOfficeToTable(name, manager, phone) {
         </td>
     `;
     
-    // Security: Set textContent instead of innerHTML
     row.querySelector('.office-name').textContent = name;
     row.querySelector('.office-manager').textContent = manager;
     row.querySelector('.office-phone').textContent = phone || 'غير محدد';
@@ -231,7 +122,6 @@ function addOfficeToTable(name, manager, phone) {
     tbody.appendChild(row);
 }
 
-// Global function for delete button
 function deleteOffice(btn) {
     showConfirmDialog(
         'حذف المكتب',
@@ -249,6 +139,7 @@ function deleteOffice(btn) {
 // ==========================================
 // EXCHANGE RATE MANAGEMENT
 // ==========================================
+
 function initExchangeRate() {
     const rateFrom = document.getElementById('rate-from');
     const rateTo = document.getElementById('rate-to');
@@ -259,7 +150,6 @@ function initExchangeRate() {
         return;
     }
     
-    // Exchange rates (in real app, this would come from API)
     const exchangeRates = {
         'USD-SYP': 12500,
         'USD-EUR': 0.92,
@@ -288,7 +178,6 @@ function initExchangeRate() {
         } else if (exchangeRates[key]) {
             rate = exchangeRates[key];
         } else {
-            // Calculate via USD
             const toUSD = exchangeRates[`${to}-USD`] || (1 / exchangeRates[`USD-${to}`]);
             const fromUSD = exchangeRates[`USD-${from}`] || (1 / exchangeRates[`${from}-USD`]);
             rate = toUSD * fromUSD;
@@ -324,8 +213,6 @@ function initExchangeRate() {
             }
 
             const rateValue = parseFloat(newRate);
-            
-            // Update the rate
             exchangeRates[`${from}-${to}`] = rateValue;
             exchangeRates[`${to}-${from}`] = 1 / rateValue;
 
@@ -359,6 +246,7 @@ function initExchangeRate() {
 // ==========================================
 // EMPLOYEE MANAGEMENT
 // ==========================================
+
 function initEmployeeManagement() {
     const addEmployeeBtn = document.getElementById('add-employee-btn');
     const employeeModal = document.getElementById('employee-modal');
@@ -549,7 +437,6 @@ function addEmployeeToTable(name, phone, type, office) {
         </td>
     `;
     
-    // Security: Set textContent
     row.querySelector('.emp-name').textContent = name;
     row.querySelector('.emp-phone').textContent = phone;
     row.querySelector('.emp-office').textContent = office;
@@ -566,7 +453,6 @@ function deleteEmployee(btn) {
             if (row) {
                 row.remove();
                 showNotification('تم حذف الموظف بنجاح', 'success');
-                // Renumber rows
                 const rows = document.querySelectorAll('#employees-table-body tr');
                 rows.forEach((r, i) => {
                     r.cells[0].textContent = i + 1;
@@ -579,6 +465,7 @@ function deleteEmployee(btn) {
 // ==========================================
 // EMPLOYEES NAVIGATION
 // ==========================================
+
 function initEmployeesNavigation() {
     const navEmployees = document.getElementById('nav-employees');
     
@@ -586,10 +473,14 @@ function initEmployeesNavigation() {
         navEmployees.addEventListener('click', function(e) {
             e.preventDefault();
             
-            // Switch to employees section
-            showSection('role-employees');
+            // Use showSection from navigation.js (not defined here)
+            if (typeof showSection === 'function') {
+                showSection('role-employees');
+            } else {
+                console.error('showSection not available - navigation.js not loaded');
+            }
             
-            // Update active nav - fix the navigation highlighting
+            // Update active nav
             document.querySelectorAll('.sidebar nav li').forEach(li => {
                 li.classList.remove('active');
             });
@@ -604,20 +495,16 @@ function initEmployeesNavigation() {
     }
 }
 
-function showSection(sectionId) {
-    // Hide all sections
-    document.querySelectorAll('.role-section').forEach(section => {
-        section.classList.add('hidden');
-    });
-    
-    const statsSection = document.getElementById('section-stats');
-    if (statsSection) {
-        statsSection.classList.add('hidden');
-    }
-    
-    // Show requested section
-    const section = document.getElementById(sectionId);
-    if (section) {
-        section.classList.remove('hidden');
-    }
+// ==========================================
+// EXPORTS
+// ==========================================
+
+if (typeof window !== 'undefined') {
+    window.initOfficeManagement = initOfficeManagement;
+    window.initExchangeRate = initExchangeRate;
+    window.initEmployeeManagement = initEmployeeManagement;
+    window.addOfficeToTable = addOfficeToTable;
+    window.deleteOffice = deleteOffice;
+    window.addEmployeeToTable = addEmployeeToTable;
+    window.deleteEmployee = deleteEmployee;
 }
