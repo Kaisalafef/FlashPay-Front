@@ -318,6 +318,67 @@ document.getElementById('add-employee-form')?.addEventListener('submit', async (
         alert('خطأ في الاتصال بالخادم');
     }
 });
+
+
+
+async function loadEmployees() {
+    try {
+
+        const res = await fetch(`${API_URL}/users`, {
+            headers: getHeaders()
+        });
+
+        const json = await res.json();
+        const tbody = document.getElementById('employees-list');
+
+        if (!tbody) return;
+
+        tbody.innerHTML = '';
+
+        json.data.forEach((user, index) => {
+
+            tbody.innerHTML += `
+                <tr>
+                    <td>${index + 1}</td>
+                    <td>${user.name}</td>
+                    <td>${user.email}</td>
+                    <td>${user.phone}</td>
+                    <td><span class="role-badge">${user.role}</span></td>
+                    <td>${user.office ? user.office.name : '-'}</td>
+                    <td>
+                        <button class="btn-edit" onclick="editUser(${user.id})">
+                            <i class="fa-solid fa-pen"></i>
+                        </button>
+
+                        <button class="btn-delete" onclick="deleteUser(${user.id})">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+        });
+
+    } catch (e) {
+        console.error(e);
+    }
+}
+
+async function deleteUser(id) {
+
+    if (!confirm("هل تريد حذف الموظف؟")) return;
+
+    await fetch(`${API_URL}/users/${id}`, {
+        method:'DELETE',
+        headers:getHeaders()
+    });
+
+    loadEmployees();
+}
+
+function editUser(id){
+    alert("قريباً: تعديل المستخدم " + id);
+}
+
 /* =========================
    Update Currency Price
 ========================= */
@@ -395,4 +456,5 @@ document.addEventListener('DOMContentLoaded', async () => {
     await initOfficeCities();
     await initAgentLocation();
     await loadCurrencies();
+    await   loadEmployees();
 });     

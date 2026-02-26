@@ -180,15 +180,7 @@ body{
 
 /* HEADER */
 
-header{
-    background:var(--white);
-    padding:18px 35px;
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    border-bottom:1px solid var(--border);
-    animation:fadeDown .5s ease;
-}
+
 
 @keyframes fadeDown{
     from{opacity:0;transform:translateY(-15px);}
@@ -383,4 +375,131 @@ select:focus{
     height:1px;
     background:var(--border);
     margin:30px 0;
+}
+/* ================= HEADER PRO ================= */
+
+.app-header{
+    background:var(--white);
+    padding:14px 30px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    border-bottom:1px solid var(--border);
+    position:sticky;
+    top:0;
+    z-index:50;
+    -webkit-backdrop-filter:blur(10px);
+    backdrop-filter:blur(10px);
+}
+
+.page-title{
+    display:flex;
+    align-items:center;
+    gap:10px;
+}
+
+.page-title i{
+    font-size:20px;
+    color:var(--primary);
+}
+
+.header-right{
+    display:flex;
+    align-items:center;
+    gap:20px;
+}
+
+/* search */
+
+.header-search{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    background:#f1f4f9;
+    padding:8px 12px;
+    border-radius:10px;
+}
+
+.header-search input{
+    border:none;
+    background:transparent;
+    outline:none;
+}
+
+/* actions */
+
+.icon-btn{
+    width:38px;
+    height:38px;
+    border:none;
+    border-radius:10px;
+    background:#f3f6fb;
+    cursor:pointer;
+    transition:.25s;
+}
+
+.icon-btn:hover{
+    background:var(--primary);
+    color:white;
+    transform:translateY(-2px);
+}
+
+/* profile */
+
+.profile-box{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:6px 12px;
+    border-radius:12px;
+    transition:.25s;
+}
+
+.profile-box:hover{
+    background:#f4f7fc;
+}
+
+.avatar{
+    width:38px;
+    height:38px;
+    background:var(--primary);
+    color:white;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:50%;
+}
+
+.role-badge{
+    background:#eef3ff;
+    color:#3b5bdb;
+    padding:4px 10px;
+    border-radius:20px;
+    font-size:12px;
+    font-weight:600;
+}
+
+.btn-edit,
+.btn-delete{
+    border:none;
+    padding:7px 10px;
+    border-radius:8px;
+    cursor:pointer;
+    margin-left:5px;
+    transition:.25s;
+}
+
+.btn-edit{
+    background:#e7f1ff;
+    color:#0d6efd;
+}
+
+.btn-delete{
+    background:#ffe9e9;
+    color:#dc3545;
+}
+
+.btn-edit:hover,
+.btn-delete:hover{
+    transform:translateY(-2px);
 }
