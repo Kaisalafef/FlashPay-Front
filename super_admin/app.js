@@ -1,13 +1,41 @@
 const API_URL = 'http://127.0.0.1:8000/api';
-const token = localStorage.getItem('auth_token');
+
 
 /* =========================
    Auth Check
 ========================= */
-if (!token) {
-    window.location.href = '/FlashPay-Front/login/index.html';
-}
 
+async function checkAuth() {
+    const token = localStorage.getItem('auth_token');
+
+    if (!token) {
+        window.location.href = '/FlashPay-Front/login/index.html';
+        return null;
+    }
+
+    try {
+        const res = await fetch(`${API_URL}/me`, {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Accept': 'application/json'
+            }
+        });
+
+        // التوكن غير صالح (بعد migrate:fresh مثلاً)
+        if (!res.ok) {
+            localStorage.clear();
+            window.location.href = '/FlashPay-Front/login/index.html';
+            return null;
+        }
+
+        return token;
+
+    } catch (e) {
+        localStorage.clear();
+        window.location.href = '/FlashPay-Front/login/index.html';
+        return null;
+    }
+}
 /* =========================
    Helpers
 ========================= */
@@ -28,10 +56,10 @@ async function fetchCurrencies() {
             console.error("Currencies HTTP Error:", res.status);
             return [];
         }
-
+        console.log("Currencies response status:", res.status);
         const json = await res.json();
         return json.data || [];
-
+       // للتأكد
     } catch (error) {
         console.error("Error fetching currencies:", error);
         return [];
@@ -342,10 +370,15 @@ async function handleLogout() {
 /* =========================
    Init App
 ========================= */
+let token = null;
+
 document.addEventListener('DOMContentLoaded', async () => {
+
+    token = await checkAuth();
+    if (!token) return;
+
     await loadOffices();
     await initOfficeCities();
     await initAgentLocation();
     await loadCurrencies();
-    
-});
+});     
