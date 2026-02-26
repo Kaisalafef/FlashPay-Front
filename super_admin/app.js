@@ -45,23 +45,27 @@ function getHeaders() {
         'Authorization': `Bearer ${token}`
     };
 }
-
 async function fetchCurrencies() {
     try {
         const res = await fetch(`${API_URL}/currencies`, {
             headers: getHeaders()
         });
 
-        if (!res.ok) {
-            console.error("Currencies HTTP Error:", res.status);
+        console.log("Currencies status:", res.status);
+
+        if (res.status === 401) {
+            localStorage.clear();
+            window.location.href = '/FlashPay-Front/login/index.html';
             return [];
         }
-        console.log("Currencies response status:", res.status);
+
         const json = await res.json();
-        return json.data || [];
-       // للتأكد
+        console.log("Currencies RAW:", json);
+
+        return Array.isArray(json) ? json : (json.data ?? []);
+
     } catch (error) {
-        console.error("Error fetching currencies:", error);
+        console.error("Currencies Fetch Error:", error);
         return [];
     }
 }
