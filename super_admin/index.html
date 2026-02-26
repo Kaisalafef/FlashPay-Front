@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>FlashPay - Super Admin</title>
+        <link
+            href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap"
+            rel="stylesheet">
+        <link rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+        <link rel="stylesheet" href="style.css">
+    </head>
+    <body>
+        <aside class="sidebar">
+            <div class="logo">
+                <i class="fa-solid fa-wallet"></i><span>FlashPay</span>
+            </div>
+            <nav>
+                <ul>
+                    <li class="active"><a href="#"
+                            onclick="showSection('dashboard')"><i
+                                class="fa-solid fa-chart-pie"></i>
+                            الرئيسية</a></li>
+                    <li><a href="#" onclick="showSection('offices')"><i
+                                class="fa-solid fa-building"></i>
+                            المكاتب</a></li>
+                    <li><a href="#" onclick="showSection('employees')"><i
+                                class="fa-solid fa-users"></i> الموظفين
+                            والمندوبين</a></li>
+                    <li><a href="#" onclick="showSection('exchange')"><i
+                                class="fa-solid fa-exchange-alt"></i> أسعار
+                            الصرف</a></li>
+                </ul>
+            </nav>
+            <div class="logout">
+                <a href="#" onclick="handleLogout()"><i
+                        class="fa-solid fa-arrow-right-from-bracket"></i> تسجيل
+                    الخروج</a>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <header>
+                <div class="header-title">
+                    <h2>الإدارة العليا (Super Admin)</h2>
+                </div>
+                <div class="profile">
+                    <div class="profile-info">
+                        <span class="name" id="user-name">جاري التحميل...</span>
+                        <span class="role">المدير العام</span>
+                    </div>
+                </div>
+            </header>
+
+            <div class="content-body">
+                <div id="offices-section" class="card">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-plus"></i> إضافة مكتب
+                            جديد</h3>
+                    </div>
+                    <form id="add-office-form">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>اسم المكتب</label>
+                                <input type="text" id="office-name" required>
+                            </div>
+                            <div class="form-group">
+                                <label>المدينة (في سوريا فقط)</label>
+                                <select id="office-city-select">
+                                    <option value="">اختر المدينة</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>الرصيد الافتتاحي للصندوق (USD)</label>
+                                <input type="number" id="office-balance"
+                                    required>
+                            </div>
+                            <div class="form-group">
+                                <label>العنوان التفصيلي</label>
+                                <input type="text" id="office-address">
+                            </div>
+                        </div>
+                        <button type="submit" class="btn-primary">حفظ
+                            المكتب</button>
+                    </form>
+
+                    <hr class="section-divider">
+
+                    <h3>المكاتب الحالية</h3>
+                    <table class="data-table">
+                        <thead>
+                            <tr><th>الاسم</th><th>المدينة</th><th>العنوان</th><th>رصيد
+                                    الصندوق الرئيسي</th></tr>
+                        </thead>
+                        <tbody id="offices-list"></tbody>
+                    </table>
+                </div>
+
+                <div id="employees-section" class="card hidden">
+                    <div class="card-header">
+                        <h3><i class="fa-solid fa-user-plus"></i> إضافة موظف /
+                            مندوب جديد</h3>
+                    </div>
+                    <form id="add-employee-form">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>الاسم الكامل</label>
+                                <input type="text" id="emp-name" required>
+                            </div>
+                            <div class="form-group">
+                                <label>البريد الإلكتروني</label>
+                                <input type="email" id="emp-email" required>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>رقم الهاتف</label>
+                                <input type="tel" id="emp-phone" required autocomplete="tel">
+                            </div>
+                            <div class="form-group">
+                                <label>كلمة المرور</label>
+                                <input type="password" id="emp-password" required autocomplete="new-password">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>الصلاحية (الرول)</label>
+                                <select id="emp-role"
+                                    onchange="handleRoleChange()" required>
+                                    <option value="admin">مدير مكتب
+                                        (Admin)</option>
+                                    <option value="cashier">كاشير
+                                        (Cashier)</option>
+                                    <option value="accountant">محاسب
+                                        (Accountant)</option>
+                                    <option value="agent">مندوب دولي
+                                        (Agent)</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group" id="office-select-group">
+                                <label>تحديد المكتب التابع له</label>
+                                <select id="emp-office"></select>
+                            </div>
+                        </div>
+
+                        <div class="form-row hidden" id="agent-fields">
+                            <div class="form-group">
+                                <label>دولة المندوب</label>
+                                <select id="agent-country-select">
+                                    <option value>اختر الدولة</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>مدينة المندوب</label>
+
+                                <select id="agent-city-select">
+                                    <option value>اختر المدينة</option>
+                                </select> </div>
+                            <div class="form-group">
+                                <label>الرصيد الافتتاحي لصندوق المندوب</label>
+                                <input type="number" id="emp-balance">
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn-primary">تسجيل
+                            الموظف</button>
+                    </form>
+                </div>
+
+                <div id="exchange-section" class="card hidden">
+                    <h3>تحديث أسعار الصرف</h3>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>العملة</label>
+                            <select id="currency-select"></select>
+                        </div>
+                        <div class="form-group">
+                            <label>السعر الجديد (مقابل الدولار)</label>
+                            <input type="number" id="new-price">
+                        </div>
+                    </div>
+                    <button class="btn-primary" onclick="updatePrice()">تحديث
+                        السعر</button>
+                </div>
+
+            </div>
+        </main>
+        <script src="app.js"></script>
+
+    </body>
+</html>

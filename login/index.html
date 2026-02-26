@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FlashPay - تسجيل الدخول</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="login.css">
+</head>
+<body>
+
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">جاري التحقق من البيانات...</div>
+    </div>
+
+    <div class="login-container">
+        <div class="logo-section">
+            <div class="logo">
+                <i class="fa-solid fa-wallet"></i>
+            </div>
+            <h1>FlashPay</h1>
+            <p>نظام إدارة الحوالات المالية</p>
+        </div>
+
+        <div class="error-message" id="errorMessage">
+            <i class="fa-solid fa-circle-exclamation"></i>
+            <span id="errorText"></span>
+        </div>
+
+        <form id="login-form">
+            <div class="form-group">
+                <label for="email">البريد الإلكتروني <span class="required">*</span></label>
+                <div class="input-wrapper">
+                    <i class="fa-solid fa-envelope"></i>
+                    <input type="email" id="email" class="form-control" placeholder="example@flashpay.com" required>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="password">كلمة المرور <span class="required">*</span></label>
+                <div class="input-wrapper">
+                    <i class="fa-solid fa-lock"></i>
+                    <input type="password" id="password" class="form-control" placeholder="أدخل كلمة المرور" required>
+                </div>
+            </div>
+            <button type="submit" class="btn-login" id="loginBtn">
+                <span>تسجيل الدخول</span>
+            </button>
+        </form>
+
+        <div class="footer-links">
+            <a href="#" onclick="alert('يرجى مراجعة الإدارة لاستعادة كلمة المرور'); return false;">نسيت كلمة المرور؟</a>
+        </div>
+
+        <div class="copyright">
+            &copy; 2025 FlashPay. جميع الحقوق محفوظة.
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
