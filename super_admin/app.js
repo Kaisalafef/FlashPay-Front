@@ -9,7 +9,7 @@ async function checkAuth() {
     const token = localStorage.getItem('auth_token');
 
     if (!token) {
-        window.location.href = '/FlashPay-Front/login/index.html';
+        window.location.href = '/FLASHPAY-FRONT/login/index.html';
         return null;
     }
 
