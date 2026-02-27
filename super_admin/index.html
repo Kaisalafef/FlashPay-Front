@@ -41,17 +41,42 @@
         </aside>
 
         <main class="main-content">
-            <header>
-                <div class="header-title">
-                    <h2>الإدارة العليا (Super Admin)</h2>
+            <header class="app-header">
+
+    <div class="header-left">
+        <div class="page-title">
+            <i class="fa-solid fa-shield-halved"></i>
+            <h2>لوحة الإدارة العليا</h2>
+        </div>
+    </div>
+
+    <div class="header-right">
+
+        <div class="header-search">
+            <i class="fa-solid fa-search"></i>
+            <input type="text" placeholder="بحث سريع...">
+        </div>
+ 
+            <button class="icon-btn" type="button" aria-label="الإشعارات" title="الإشعارات">
+                <i class="fa-regular fa-bell"></i>
+            </button>
+        </div>
+        <div class="header-actions">
+
+            <div class="profile-box">
+                <div class="avatar">
+                    <i class="fa-solid fa-user"></i>
                 </div>
-                <div class="profile">
-                    <div class="profile-info">
-                        <span class="name" id="user-name">جاري التحميل...</span>
-                        <span class="role">المدير العام</span>
-                    </div>
+                <div class="profile-info">
+                    <span id="user-name">جاري التحميل...</span>
+                    <small>Super Admin</small>
                 </div>
-            </header>
+            </div>
+           
+
+    </div>
+
+</header>
 
             <div class="content-body">
                 <div id="offices-section" class="card">
@@ -169,6 +194,34 @@
                         <button type="submit" class="btn-primary">تسجيل
                             الموظف</button>
                     </form>
+
+                    <hr class="section-divider">
+
+<h3>
+    <i class="fa-solid fa-users"></i>
+    قائمة الموظفين
+</h3>
+
+<table class="data-table">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>الاسم</th>
+            <th>البريد</th>
+            <th>الهاتف</th>
+            <th>الصلاحية</th>
+            <th>المكتب</th>
+            <th>الإجراءات</th>
+        </tr>
+    </thead>
+    <tbody id="employees-list">
+        <tr>
+            <td colspan="7">
+                <div class="skeleton" style="height:35px"></div>
+            </td>
+        </tr>
+    </tbody>
+</table>
                 </div>
 
                 <div id="exchange-section" class="card hidden">

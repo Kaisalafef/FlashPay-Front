@@ -40,6 +40,7 @@ async function checkAuth() {
    Helpers
 ========================= */
 function getHeaders() {
+    const token = localStorage.getItem('auth_token');
     return {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`
@@ -272,41 +273,111 @@ document.getElementById('add-employee-form')?.addEventListener('submit', async (
     const role = document.getElementById('emp-role').value;
 
     let data = {
-        name: document.getElementById('emp-name').value,
-        email: document.getElementById('emp-email').value,
-        phone: document.getElementById('emp-phone').value,
+        name: document.getElementById('emp-name').value.trim(),
+        email: document.getElementById('emp-email').value.trim(),
+        phone: document.getElementById('emp-phone').value.trim(),
         password: document.getElementById('emp-password').value,
         role: role
     };
 
     if (role === 'agent') {
-        data.country_id = document.getElementById('agent-country-select').value;
-        data.city_id = document.getElementById('agent-city-select').value;
-        data.balance = document.getElementById('emp-balance').value;
+        data.country_id = document.getElementById('agent-country-select').value || null;
+        data.city_id = document.getElementById('agent-city-select').value || null;
+        data.balance = document.getElementById('emp-balance').value || 0;
     } else {
-        data.office_id = document.getElementById('emp-office').value;
+        data.office_id = document.getElementById('emp-office').value || null;
     }
 
+    console.log("Employee Data:", data);
+
     try {
+
         const res = await fetch(`${API_URL}/register`, {
             method: 'POST',
-            headers: getHeaders(),
+            headers: {
+                ...getHeaders(),
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
             body: JSON.stringify(data)
         });
+
+        const responseData = await res.json();
+        console.log("Server Response:", responseData);
 
         if (res.ok) {
             alert('تم إضافة الموظف بنجاح');
             e.target.reset();
             handleRoleChange();
         } else {
-            const errorData = await res.json();
-            alert('خطأ: ' + (errorData.message || 'تأكد من إدخال البيانات بشكل صحيح'));
+            alert('خطأ: ' + (responseData.message || 'فشل الإضافة'));
         }
 
     } catch (error) {
+        console.error(error);
         alert('خطأ في الاتصال بالخادم');
     }
 });
+
+
+
+async function loadEmployees() {
+    try {
+
+        const res = await fetch(`${API_URL}/users`, {
+            headers: getHeaders()
+        });
+
+        const json = await res.json();
+        const tbody = document.getElementById('employees-list');
+
+        if (!tbody) return;
+
+        tbody.innerHTML = '';
+
+        json.data.forEach((user, index) => {
+
+            tbody.innerHTML += `
+                <tr>
+                    <td>${index + 1}</td>
+                    <td>${user.name}</td>
+                    <td>${user.email}</td>
+                    <td>${user.phone}</td>
+                    <td><span class="role-badge">${user.role}</span></td>
+                    <td>${user.office ? user.office.name : '-'}</td>
+                    <td>
+                        <button class="btn-edit" onclick="editUser(${user.id})">
+                            <i class="fa-solid fa-pen"></i>
+                        </button>
+
+                        <button class="btn-delete" onclick="deleteUser(${user.id})">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+        });
+
+    } catch (e) {
+        console.error(e);
+    }
+}
+
+async function deleteUser(id) {
+
+    if (!confirm("هل تريد حذف الموظف؟")) return;
+
+    await fetch(`${API_URL}/users/${id}`, {
+        method:'DELETE',
+        headers:getHeaders()
+    });
+
+    loadEmployees();
+}
+
+function editUser(id){
+    alert("قريباً: تعديل المستخدم " + id);
+}
 
 /* =========================
    Update Currency Price
@@ -385,4 +456,5 @@ document.addEventListener('DOMContentLoaded', async () => {
     await initOfficeCities();
     await initAgentLocation();
     await loadCurrencies();
+    await   loadEmployees();
 });     
