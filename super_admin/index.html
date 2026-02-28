@@ -52,11 +52,7 @@
 
     <div class="header-right">
 
-        <div class="header-search">
-            <i class="fa-solid fa-search"></i>
-            <input type="text" placeholder="بحث سريع...">
-        </div>
- 
+       
             <button class="icon-btn" type="button" aria-label="الإشعارات" title="الإشعارات">
                 <i class="fa-regular fa-bell"></i>
             </button>
@@ -210,7 +206,8 @@
             <th>البريد</th>
             <th>الهاتف</th>
             <th>الصلاحية</th>
-            <th>المكتب</th>
+            <th>المكتب / الموقع</th>
+
             <th>الإجراءات</th>
         </tr>
     </thead>
@@ -244,6 +241,52 @@
 
             </div>
         </main>
+<div id="delete-modal" class="modal-overlay hidden">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fa-solid fa-triangle-exclamation"></i> تأكيد الحذف</h3>
+        </div>
+        <div class="modal-body">
+            <p>هل أنت متأكد من حذف هذا المستخدم نهائياً؟</p>
+        </div>
+        <div class="modal-actions">
+            <button class="btn-cancel" onclick="closeDeleteModal()">إلغاء</button>
+            <button class="btn-danger" id="confirm-delete-btn">حذف الآن</button>
+        </div>
+    </div>
+</div>
+<div id="edit-modal" class="modal-overlay hidden">
+    <div class="modal-content modal-lg">
+        <div class="modal-header">
+            <h3><i class="fa-solid fa-user-pen"></i> تعديل بيانات الموظف</h3>
+            <button class="close-btn" onclick="closeEditModal()">&times;</button>
+        </div>
+        <form id="edit-user-form">
+            <input type="hidden" id="edit-user-id">
+            <div class="form-row">
+                <div class="form-group">
+                    <label>الاسم الكامل</label>
+                    <input type="text" id="edit-user-name" required>
+                </div>
+                <div class="form-group">
+                    <label>الهاتف</label>
+                    <input type="text" id="edit-user-phone" required>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>البريد الإلكتروني</label>
+                    <input type="email" id="edit-user-email" required>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn-cancel" onclick="closeEditModal()">إلغاء</button>
+                <button type="submit" class="btn-primary">حفظ التعديلات</button>
+            </div>
+        </form>
+    </div>
+</div>
+</div>
         <script src="app.js"></script>
 
     </body>

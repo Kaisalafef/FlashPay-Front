@@ -320,22 +320,30 @@ document.getElementById('add-employee-form')?.addEventListener('submit', async (
 });
 
 
-
+/* =========================
+   Load Employees & Agents
+========================= */
+/* =========================
+   Load Employees (Updated)
+========================= */
 async function loadEmployees() {
     try {
-
-        const res = await fetch(`${API_URL}/users`, {
-            headers: getHeaders()
-        });
-
+        const res = await fetch(`${API_URL}/users`, { headers: getHeaders() });
         const json = await res.json();
         const tbody = document.getElementById('employees-list');
-
         if (!tbody) return;
 
         tbody.innerHTML = '';
-
         json.data.forEach((user, index) => {
+            // منطق عرض الموقع للمندوب أو المكتب للموظف
+            let locationInfo = '-';
+            if (user.role === 'agent') {
+                const country = user.country ? user.country.name : 'بدون دولة';
+                const city = user.city ? user.city.name : 'بدون مدينة';
+                locationInfo = `<span class="location-tag"><i class="fa-solid fa-location-dot"></i> ${country}, ${city}</span>`;
+            } else {
+                locationInfo = user.office ? user.office.name : '-';
+            }
 
             tbody.innerHTML += `
                 <tr>
@@ -344,41 +352,113 @@ async function loadEmployees() {
                     <td>${user.email}</td>
                     <td>${user.phone}</td>
                     <td><span class="role-badge">${user.role}</span></td>
-                    <td>${user.office ? user.office.name : '-'}</td>
+                    <td>${locationInfo}</td>
                     <td>
-                        <button class="btn-edit" onclick="editUser(${user.id})">
+                        <button class="btn-edit" onclick="openEditModal(${JSON.stringify(user).replace(/"/g, '&quot;')})">
                             <i class="fa-solid fa-pen"></i>
                         </button>
-
-                        <button class="btn-delete" onclick="deleteUser(${user.id})">
+                        <button class="btn-delete" onclick="openDeleteModal(${user.id})">
                             <i class="fa-solid fa-trash"></i>
                         </button>
                     </td>
-                </tr>
-            `;
+                </tr>`;
         });
-
-    } catch (e) {
-        console.error(e);
-    }
+    } catch (e) { console.error(e); }
 }
 
-async function deleteUser(id) {
+/* =========================
+   Delete Logic (Custom Dialog)
+========================= */
+let currentUserIdToDelete = null;
+function openDeleteModal(id) {
+    currentUserIdToDelete = id;
+    document.getElementById('delete-modal').classList.remove('hidden');
+}
+function closeDeleteModal() {
+    document.getElementById('delete-modal').classList.add('hidden');
+}
+document.getElementById('confirm-delete-btn').onclick = async () => {
+    if (!currentUserIdToDelete) return;
+    await fetch(`${API_URL}/users/${currentUserIdToDelete}`, {
+        method: 'DELETE',
+        headers: getHeaders()
+    });
+    closeDeleteModal();
+    loadEmployees();
+};
 
-    if (!confirm("هل تريد حذف الموظف؟")) return;
+/* =========================
+   Edit Logic (Custom Dialog)
+========================= */
+function openEditModal(user) {
+    document.getElementById('edit-user-id').value = user.id;
+    document.getElementById('edit-user-name').value = user.name;
+    document.getElementById('edit-user-email').value = user.email;
+    document.getElementById('edit-user-phone').value = user.phone;
+    document.getElementById('edit-modal').classList.remove('hidden');
+}
 
-    await fetch(`${API_URL}/users/${id}`, {
-        method:'DELETE',
-        headers:getHeaders()
+function closeEditModal() {
+    document.getElementById('edit-modal').classList.add('hidden');
+}
+
+document.getElementById('edit-user-form').onsubmit = async (e) => {
+    e.preventDefault();
+    const id = document.getElementById('edit-user-id').value;
+    const data = {
+        name: document.getElementById('edit-user-name').value,
+        email: document.getElementById('edit-user-email').value,
+        phone: document.getElementById('edit-user-phone').value,
+    };
+
+    const res = await fetch(`${API_URL}/users/${id}`, {
+        method: 'PUT',
+        headers: getHeaders(),
+        body: JSON.stringify(data)
     });
 
-    loadEmployees();
-}
+    if (res.ok) {
+        alert("تم التحديث بنجاح");
+        closeEditModal();
+        loadEmployees();
+    }
+};
+// xử معالجة إرسال فورم التعديل
+document.getElementById('edit-employee-form')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
 
-function editUser(id){
-    alert("قريباً: تعديل المستخدم " + id);
-}
+    const id = document.getElementById('edit-emp-id').value;
+    const passwordField = document.getElementById('edit-emp-password').value;
+    
+    const data = {
+        name: document.getElementById('edit-emp-name').value.trim(),
+        phone: document.getElementById('edit-emp-phone').value.trim(),
+        email: document.getElementById('edit-emp-email').value.trim(),
+    };
 
+    if (passwordField) {
+        data.password = passwordField; // لا نرسل الباسورد إلا إذا تم إدخال قيمة جديدة
+    }
+
+    try {
+        const res = await fetch(`${API_URL}/users/${id}`, {
+            method: 'PUT', // أو PATCH حسب إعدادات الـ Backend عندك
+            headers: getHeaders(),
+            body: JSON.stringify(data)
+        });
+
+        if (res.ok) {
+            closeEditModal();
+            loadEmployees(); // تحديث الجدول فوراً
+        } else {
+            const error = await res.json();
+            alert("خطأ: " + (error.message || "فشل تعديل البيانات"));
+        }
+    } catch (error) {
+        console.error(error);
+        alert('تعذر الاتصال بالخادم أثناء التعديل');
+    }
+});
 /* =========================
    Update Currency Price
 ========================= */
