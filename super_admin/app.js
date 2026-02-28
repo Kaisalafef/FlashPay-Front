@@ -342,7 +342,7 @@ async function loadEmployees() {
                 const city = user.city ? user.city.name : 'بدون مدينة';
                 locationInfo = `<span class="location-tag"><i class="fa-solid fa-location-dot"></i> ${country}, ${city}</span>`;
             } else {
-                locationInfo = user.office ? user.office.name : '-';
+                locationInfo = `<span class="location-tag"  > ${user.office ? user.office.name : 'بدون مكتب'}</span>`;
             }
 
             tbody.innerHTML += `
@@ -377,39 +377,95 @@ function openDeleteModal(id) {
 function closeDeleteModal() {
     document.getElementById('delete-modal').classList.add('hidden');
 }
+/* =========================
+   Logic: Delete & Edit
+========================= */
+
+// دالة الحذف المحدثة
 document.getElementById('confirm-delete-btn').onclick = async () => {
     if (!currentUserIdToDelete) return;
-    await fetch(`${API_URL}/users/${currentUserIdToDelete}`, {
-        method: 'DELETE',
-        headers: getHeaders()
-    });
-    closeDeleteModal();
-    loadEmployees();
+    try {
+        const res = await fetch(`${API_URL}/users/${currentUserIdToDelete}`, {
+            method: 'DELETE',
+            headers: getHeaders()
+        });
+        if (res.ok) {
+            closeDeleteModal();
+            loadEmployees();
+        } else {
+            alert("فشل الحذف: ربما لا تملك صلاحية Super Admin");
+        }
+    } catch (e) { console.error(e); }
 };
 
-/* =========================
-   Edit Logic (Custom Dialog)
-========================= */
-function openEditModal(user) {
+// دالة معالجة تغيير دولة المندوب في التعديل
+async function handleEditCountryChange() {
+    const countryId = document.getElementById('edit-user-country').value;
+    const citySelect = document.getElementById('edit-user-city');
+    if (countryId) {
+        const cities = await fetchCitiesByCountry(countryId);
+        fillSelect(citySelect, cities, "اختر المدينة");
+    }
+}
+
+// دالة فتح نافذة التعديل مع تعبئة البيانات
+async function openEditModal(user) {
     document.getElementById('edit-user-id').value = user.id;
+    document.getElementById('edit-user-role').value = user.role;
     document.getElementById('edit-user-name').value = user.name;
     document.getElementById('edit-user-email').value = user.email;
     document.getElementById('edit-user-phone').value = user.phone;
+    document.getElementById('edit-user-password').value = "";
+
+    const officeGroup = document.getElementById('edit-office-group');
+    const agentGroup = document.getElementById('edit-agent-group');
+
+    if (user.role === 'agent') {
+        officeGroup.classList.add('hidden');
+        agentGroup.classList.remove('hidden');
+        
+        const countrySelect = document.getElementById('edit-user-country');
+        const countries = await fetchCountries();
+        fillSelect(countrySelect, countries, "اختر الدولة");
+        countrySelect.value = user.country_id || "";
+        
+        await handleEditCountryChange();
+        document.getElementById('edit-user-city').value = user.city_id || "";
+    } else {
+        officeGroup.classList.remove('hidden');
+        agentGroup.classList.add('hidden');
+        
+        const officeSelect = document.getElementById('edit-user-office');
+        const res = await fetch(`${API_URL}/offices`, { headers: getHeaders() });
+        const offices = await res.json();
+        fillSelect(officeSelect, offices.data, "اختر المكتب");
+        officeSelect.value = user.office_id || "";
+    }
+
     document.getElementById('edit-modal').classList.remove('hidden');
 }
 
-function closeEditModal() {
-    document.getElementById('edit-modal').classList.add('hidden');
-}
-
+// إرسال التعديل
 document.getElementById('edit-user-form').onsubmit = async (e) => {
     e.preventDefault();
     const id = document.getElementById('edit-user-id').value;
+    const role = document.getElementById('edit-user-role').value;
+    
     const data = {
         name: document.getElementById('edit-user-name').value,
         email: document.getElementById('edit-user-email').value,
         phone: document.getElementById('edit-user-phone').value,
     };
+
+    const pass = document.getElementById('edit-user-password').value;
+    if (pass) data.password = pass;
+
+    if (role === 'agent') {
+        data.country_id = document.getElementById('edit-user-country').value;
+        data.city_id = document.getElementById('edit-user-city').value;
+    } else {
+        data.office_id = document.getElementById('edit-user-office').value;
+    }
 
     const res = await fetch(`${API_URL}/users/${id}`, {
         method: 'PUT',
@@ -421,44 +477,14 @@ document.getElementById('edit-user-form').onsubmit = async (e) => {
         alert("تم التحديث بنجاح");
         closeEditModal();
         loadEmployees();
+    } else {
+        alert("خطأ في التحديث");
     }
 };
-// xử معالجة إرسال فورم التعديل
-document.getElementById('edit-employee-form')?.addEventListener('submit', async (e) => {
-    e.preventDefault();
+function closeEditModal() {
+    document.getElementById('edit-modal').classList.add('hidden');
+}
 
-    const id = document.getElementById('edit-emp-id').value;
-    const passwordField = document.getElementById('edit-emp-password').value;
-    
-    const data = {
-        name: document.getElementById('edit-emp-name').value.trim(),
-        phone: document.getElementById('edit-emp-phone').value.trim(),
-        email: document.getElementById('edit-emp-email').value.trim(),
-    };
-
-    if (passwordField) {
-        data.password = passwordField; // لا نرسل الباسورد إلا إذا تم إدخال قيمة جديدة
-    }
-
-    try {
-        const res = await fetch(`${API_URL}/users/${id}`, {
-            method: 'PUT', // أو PATCH حسب إعدادات الـ Backend عندك
-            headers: getHeaders(),
-            body: JSON.stringify(data)
-        });
-
-        if (res.ok) {
-            closeEditModal();
-            loadEmployees(); // تحديث الجدول فوراً
-        } else {
-            const error = await res.json();
-            alert("خطأ: " + (error.message || "فشل تعديل البيانات"));
-        }
-    } catch (error) {
-        console.error(error);
-        alert('تعذر الاتصال بالخادم أثناء التعديل');
-    }
-});
 /* =========================
    Update Currency Price
 ========================= */
