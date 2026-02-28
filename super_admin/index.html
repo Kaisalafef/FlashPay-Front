@@ -43,36 +43,35 @@
         <main class="main-content">
             <header class="app-header">
 
-    <div class="header-left">
-        <div class="page-title">
-            <i class="fa-solid fa-shield-halved"></i>
-            <h2>لوحة الإدارة العليا</h2>
-        </div>
-    </div>
-
-    <div class="header-right">
-
-       
-            <button class="icon-btn" type="button" aria-label="الإشعارات" title="الإشعارات">
-                <i class="fa-regular fa-bell"></i>
-            </button>
-        </div>
-        <div class="header-actions">
-
-            <div class="profile-box">
-                <div class="avatar">
-                    <i class="fa-solid fa-user"></i>
+                <div class="header-left">
+                    <div class="page-title">
+                        <i class="fa-solid fa-shield-halved"></i>
+                        <h2>لوحة الإدارة العليا</h2>
+                    </div>
                 </div>
-                <div class="profile-info">
-                    <span id="user-name">جاري التحميل...</span>
-                    <small>Super Admin</small>
+
+                <div class="header-right">
+
+                    <button class="icon-btn" type="button"
+                        aria-label="الإشعارات" title="الإشعارات">
+                        <i class="fa-regular fa-bell"></i>
+                    </button>
                 </div>
-            </div>
-           
+                <div class="header-actions">
 
-    </div>
+                    <div class="profile-box">
+                        <div class="avatar">
+                            <i class="fa-solid fa-user"></i>
+                        </div>
+                        <div class="profile-info">
+                            <span id="user-name">جاري التحميل...</span>
+                            <small>Super Admin</small>
+                        </div>
+                    </div>
 
-</header>
+                </div>
+
+            </header>
 
             <div class="content-body">
                 <div id="offices-section" class="card">
@@ -89,7 +88,7 @@
                             <div class="form-group">
                                 <label>المدينة (في سوريا فقط)</label>
                                 <select id="office-city-select">
-                                    <option value="">اختر المدينة</option>
+                                    <option value>اختر المدينة</option>
                                 </select>
                             </div>
                         </div>
@@ -114,7 +113,7 @@
                     <table class="data-table">
                         <thead>
                             <tr><th>الاسم</th><th>المدينة</th><th>العنوان</th><th>رصيد
-                                    الصندوق الرئيسي</th></tr>
+                                    الصندوق الرئيسي</th></tr><tbody id="offices-list"></tbody>
                         </thead>
                         <tbody id="offices-list"></tbody>
                     </table>
@@ -139,11 +138,13 @@
                         <div class="form-row">
                             <div class="form-group">
                                 <label>رقم الهاتف</label>
-                                <input type="tel" id="emp-phone" required autocomplete="tel">
+                                <input type="tel" id="emp-phone" required
+                                    autocomplete="tel">
                             </div>
                             <div class="form-group">
                                 <label>كلمة المرور</label>
-                                <input type="password" id="emp-password" required autocomplete="new-password">
+                                <input type="password" id="emp-password"
+                                    required autocomplete="new-password">
                             </div>
                         </div>
                         <div class="form-row">
@@ -172,14 +173,14 @@
                             <div class="form-group">
                                 <label>دولة المندوب</label>
                                 <select id="agent-country-select">
-                                    <option value="">اختر الدولة</option>
+                                    <option value>اختر الدولة</option>
                                 </select>
                             </div>
                             <div class="form-group">
                                 <label>مدينة المندوب</label>
 
                                 <select id="agent-city-select">
-                                    <option value="">اختر المدينة</option>
+                                    <option value>اختر المدينة</option>
                                 </select> </div>
                             <div class="form-group">
                                 <label>الرصيد الافتتاحي لصندوق المندوب</label>
@@ -193,32 +194,33 @@
 
                     <hr class="section-divider">
 
-<h3>
-    <i class="fa-solid fa-users"></i>
-    قائمة الموظفين
-</h3>
+                    <h3>
+                        <i class="fa-solid fa-users"></i>
+                        قائمة الموظفين
+                    </h3>
 
-<table class="data-table">
-    <thead>
-        <tr>
-            <th>#</th>
-            <th>الاسم</th>
-            <th>البريد</th>
-            <th>الهاتف</th>
-            <th>الصلاحية</th>
-            <th>المكتب / الموقع</th>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>الاسم</th>
+                                <th>البريد</th>
+                                <th>الهاتف</th>
+                                <th>الصلاحية</th>
+                                <th>المكتب / الموقع</th>
 
-            <th>الإجراءات</th>
-        </tr>
-    </thead>
-    <tbody id="employees-list">
-        <tr>
-            <td colspan="7">
-                <div class="skeleton" style="height:35px"></div>
-            </td>
-        </tr>
-    </tbody>
-</table>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="employees-list">
+                            <tr>
+                                <td colspan="7">
+                                    <div class="skeleton"
+                                        style="height:35px"></div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
 
                 <div id="exchange-section" class="card hidden">
@@ -226,8 +228,8 @@
                     <div class="form-row">
                         <div class="form-group">
                             <label>العملة</label>
-                            <select id="currency-select" >
-                                <option value="">اختر العملة</option>
+                            <select id="currency-select">
+                                <option value>اختر العملة</option>
                             </select>
                         </div>
                         <div class="form-group">
@@ -241,76 +243,133 @@
 
             </div>
         </main>
-<div id="delete-modal" class="modal-overlay hidden">
+        <div id="delete-modal" class="modal-overlay hidden">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3><i class="fa-solid fa-triangle-exclamation"></i> تأكيد
+                        الحذف</h3>
+                </div>
+                <div class="modal-body">
+                    <p>هل أنت متأكد من حذف هذا المستخدم نهائياً؟</p>
+                </div>
+                <div class="modal-actions">
+                    <button class="btn-cancel"
+                        onclick="closeDeleteModal()">إلغاء</button>
+                    <button class="btn-danger" id="confirm-delete-btn">حذف
+                        الآن</button>
+                </div>
+            </div>
+        </div>
+        <div id="edit-modal" class="modal-overlay hidden">
+            <div class="modal-content modal-lg">
+                <div class="modal-header">
+                    <h3><i class="fa-solid fa-user-pen"></i> تعديل بيانات
+                        الموظف</h3>
+                    <button class="close-btn"
+                        onclick="closeEditModal()">&times;</button>
+                </div>
+                <form id="edit-user-form">
+                    <input type="hidden" id="edit-user-id">
+                    <input type="hidden" id="edit-user-role">
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>الاسم الكامل</label>
+                            <input type="text" id="edit-user-name" required>
+                        </div>
+                        <div class="form-group">
+                            <label>الهاتف</label>
+                            <input type="text" id="edit-user-phone" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>البريد الإلكتروني</label>
+                            <input type="email" id="edit-user-email" required>
+                        </div>
+                        <div class="form-group">
+                            <label>كلمة المرور (اتركها فارغة لعدم
+                                التغيير)</label>
+                            <input type="password" id="edit-user-password">
+                        </div>
+                    </div>
+
+                    <div class="form-group" id="edit-office-group">
+                        <label>المكتب</label>
+                        <select id="edit-user-office"></select>
+                    </div>
+
+                    <div id="edit-agent-group" class="hidden">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>الدولة</label>
+                                <select id="edit-user-country"
+                                    onchange="handleEditCountryChange()"></select>
+                            </div>
+                            <div class="form-group">
+                                <label>المدينة</label>
+                                <select id="edit-user-city"></select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="modal-actions">
+                        <button type="button" class="btn-cancel"
+                            onclick="closeEditModal()">إلغاء</button>
+                        <button type="submit" class="btn-primary">حفظ
+                            التعديلات</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+
+        <div id="delete-office-modal" class="modal-overlay hidden">
     <div class="modal-content">
         <div class="modal-header">
             <h3><i class="fa-solid fa-triangle-exclamation"></i> تأكيد الحذف</h3>
         </div>
         <div class="modal-body">
-            <p>هل أنت متأكد من حذف هذا المستخدم نهائياً؟</p>
+            <p>هل أنت متأكد من حذف هذا المكتب نهائياً؟ سيؤدي هذا إلى حذف الصناديق المرتبطة به!</p>
         </div>
         <div class="modal-actions">
-            <button class="btn-cancel" onclick="closeDeleteModal()">إلغاء</button>
-            <button class="btn-danger" id="confirm-delete-btn">حذف الآن</button>
+            <button class="btn-cancel" onclick="closeDeleteOfficeModal()">إلغاء</button>
+            <button class="btn-danger" id="confirm-delete-office-btn">حذف الآن</button>
         </div>
     </div>
 </div>
-<div id="edit-modal" class="modal-overlay hidden">
-    <div class="modal-content modal-lg">
+
+<div id="edit-office-modal" class="modal-overlay hidden">
+    <div class="modal-content">
         <div class="modal-header">
-            <h3><i class="fa-solid fa-user-pen"></i> تعديل بيانات الموظف</h3>
-            <button class="close-btn" onclick="closeEditModal()">&times;</button>
+            <h3><i class="fa-solid fa-building"></i> تعديل بيانات المكتب</h3>
+            <button class="close-btn" onclick="closeEditOfficeModal()">&times;</button>
         </div>
-        <form id="edit-user-form">
-            <input type="hidden" id="edit-user-id">
-            <input type="hidden" id="edit-user-role">
-            
+        <form id="edit-office-form">
+            <input type="hidden" id="edit-office-id">
             <div class="form-row">
                 <div class="form-group">
-                    <label>الاسم الكامل</label>
-                    <input type="text" id="edit-user-name" required>
+                    <label>اسم المكتب</label>
+                    <input type="text" id="edit-office-name" required>
                 </div>
                 <div class="form-group">
-                    <label>الهاتف</label>
-                    <input type="text" id="edit-user-phone" required>
+                    <label>المدينة</label>
+                    <select id="edit-office-city-select" required></select>
                 </div>
             </div>
             <div class="form-row">
                 <div class="form-group">
-                    <label>البريد الإلكتروني</label>
-                    <input type="email" id="edit-user-email" required>
-                </div>
-                <div class="form-group">
-                    <label>كلمة المرور (اتركها فارغة لعدم التغيير)</label>
-                    <input type="password" id="edit-user-password">
+                    <label>العنوان التفصيلي</label>
+                    <input type="text" id="edit-office-address">
                 </div>
             </div>
-
-            <div class="form-group" id="edit-office-group">
-                <label>المكتب</label>
-                <select id="edit-user-office"></select>
-            </div>
-
-            <div id="edit-agent-group" class="hidden">
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>الدولة</label>
-                        <select id="edit-user-country" onchange="handleEditCountryChange()"></select>
-                    </div>
-                    <div class="form-group">
-                        <label>المدينة</label>
-                        <select id="edit-user-city"></select>
-                    </div>
-                </div>
-            </div>
-
             <div class="modal-actions">
-                <button type="button" class="btn-cancel" onclick="closeEditModal()">إلغاء</button>
+                <button type="button" class="btn-cancel" onclick="closeEditOfficeModal()">إلغاء</button>
                 <button type="submit" class="btn-primary">حفظ التعديلات</button>
             </div>
         </form>
     </div>
-</div>
+</div>      
         <script src="app.js"></script>
 
     </body>

@@ -177,41 +177,136 @@ async function initAgentLocation() {
 /* =========================
    Load Offices
 ========================= */
+/* =========================
+   Load Offices
+========================= */
 async function loadOffices() {
     try {
-        const res = await fetch(`${API_URL}/offices`, {
-            headers: getHeaders()
-        });
+        // 1. جلب بيانات المستخدم الحالي أولاً لمعرفة صلاحياته
+        const userRes = await fetch(`${API_URL}/me`, { headers: getHeaders() });
+        const userData = await userRes.json();
+        const isSuperAdmin = userData.user.role === 'super_admin';
 
+        const res = await fetch(`${API_URL}/offices`, { headers: getHeaders() });
         const json = await res.json();
-
         const tbody = document.getElementById('offices-list');
-        const officeSelect = document.getElementById('emp-office');
-
-        if (!tbody || !officeSelect) return;
 
         tbody.innerHTML = '';
-        officeSelect.innerHTML = '<option value="">اختر المكتب...</option>';
 
         json.data.forEach(office => {
+            // نتحقق: إذا كان آدمن نُظهر الأزرار، وإذا لا نترك الخانة فارغة أو نخفي العمود
+            const actionsHtml = isSuperAdmin ? `
+                <td>
+                    <button class="btn-edit" onclick='openEditOfficeModal(${JSON.stringify(office)})'>
+                        <i class="fa-solid fa-pen"></i>
+                    </button>
+                    <button class="btn-delete" onclick="openDeleteOfficeModal(${office.id})">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                </td>
+            ` : `<td>-</td>`; // إذا لم يكن آدمن يظهر شرطة أو لا يظهر شيء
+
             tbody.innerHTML += `
                 <tr>
                     <td>${office.name}</td>
                     <td>${office.city ? office.city.name : 'غير محدد'}</td>
                     <td>${office.address || '-'}</td>
                     <td>$${office.main_safe ? office.main_safe.balance : '0.00'}</td>
+                    ${actionsHtml}
                 </tr>
             `;
-
-            officeSelect.innerHTML += `
-                <option value="${office.id}">${office.name}</option>
-            `;
         });
-
     } catch (error) {
-        console.error("Error loading offices:", error);
+        console.error("Error:", error);
     }
 }
+
+
+/* =========================
+   Logic: Delete Office
+========================= */
+let currentOfficeIdToDelete = null;
+
+function openDeleteOfficeModal(id) {
+    currentOfficeIdToDelete = id;
+    document.getElementById('delete-office-modal').classList.remove('hidden');
+}
+
+function closeDeleteOfficeModal() {
+    document.getElementById('delete-office-modal').classList.add('hidden');
+}
+
+document.getElementById('confirm-delete-office-btn').onclick = async () => {
+    if (!currentOfficeIdToDelete) return;
+    try {
+        const res = await fetch(`${API_URL}/offices/${currentOfficeIdToDelete}`, {
+            method: 'DELETE',
+            headers: getHeaders()
+        });
+        if (res.ok) {
+            closeDeleteOfficeModal();
+            loadOffices();
+            alert("تم حذف المكتب بنجاح");
+        } else {
+            alert("حدث خطأ أثناء الحذف");
+        }
+    } catch (e) { console.error(e); }
+};
+
+/* =========================
+   Logic: Edit Office
+========================= */
+async function openEditOfficeModal(office) {
+    document.getElementById('edit-office-id').value = office.id;
+    document.getElementById('edit-office-name').value = office.name;
+    document.getElementById('edit-office-address').value = office.address || '';
+    
+    // جلب المدن وتعبئتها
+    const citySelect = document.getElementById('edit-office-city-select');
+    const cities = await fetchCitiesByCountry(1); // 1 هي سوريا حسب الكود الخاص بك
+    fillSelect(citySelect, cities, "اختر المدينة");
+    
+    // تحديد المدينة الحالية للمكتب
+    citySelect.value = office.city_id || "";
+
+    document.getElementById('edit-office-modal').classList.remove('hidden');
+}
+
+function closeEditOfficeModal() {
+    document.getElementById('edit-office-modal').classList.add('hidden');
+}
+
+document.getElementById('edit-office-form').onsubmit = async (e) => {
+    e.preventDefault();
+    const id = document.getElementById('edit-office-id').value;
+    
+    const data = {
+        name: document.getElementById('edit-office-name').value,
+        city_id: parseInt(document.getElementById('edit-office-city-select').value),
+        address: document.getElementById('edit-office-address').value,
+    };
+
+    try {
+        const res = await fetch(`${API_URL}/offices/${id}`, {
+            method: 'PUT',
+            headers: getHeaders(),
+            body: JSON.stringify(data)
+        });
+
+        const result = await res.json();
+
+        if (res.ok) {
+            alert("تم تحديث بيانات المكتب بنجاح");
+            closeEditOfficeModal();
+            loadOffices(); // تحديث الجدول
+        } else {
+            alert("خطأ: " + (result.message || "فشل التحديث"));
+        }
+    } catch (error) {
+        console.error(error);
+        alert("خطأ في الاتصال بالخادم");
+    }
+};
 
 /* =========================
    Add Office
