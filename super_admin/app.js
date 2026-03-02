@@ -81,12 +81,15 @@ async function loadCurrencies() {
 
     select.innerHTML = `<option value="">اختر العملة</option>`;
 
-    currencies.forEach(currency => {
-        const option = document.createElement("option");
-        option.value = currency.id;
-        option.textContent = currency.name + " (" + currency.code + ")";
-        select.appendChild(option);
-    });
+   currencies.forEach(currency => {
+
+    if (currency.code === 'USD') return; // اخفاء الدولار
+
+    const option = document.createElement("option");
+    option.value = currency.id;
+    option.textContent = currency.name;
+    select.appendChild(option);
+});
 }
 function fillSelect(select, data, placeholder = "اختر من القائمة") {
     if (!select) return;
@@ -100,6 +103,55 @@ function fillSelect(select, data, placeholder = "اختر من القائمة") 
     });
 }
 
+async function loadSafes() {
+    const tbody = document.getElementById('safes-table-body');
+    if (!tbody) return;
+
+    try {
+        const res = await fetch(`${API_URL}/safes`, {
+            headers: getHeaders()
+        });
+
+        const json = await res.json();
+
+     const sortedSafes = json.data.sort((a, b) =>
+  (a.owner || '').localeCompare(b.owner || '')
+);
+
+        tbody.innerHTML = '';
+
+        // 2️⃣ استخدم sortedSafes بدل json.data
+        sortedSafes.forEach((safe, index) => {
+            let typeLabel = '';
+
+            switch (safe.type) {
+                case 'office_main':
+                    typeLabel = 'صندوق مكتب';
+                    break;
+                case 'agent_main':
+                    typeLabel = 'صندوق مندوب';
+                    break;
+                case 'trading':
+                    typeLabel = ' صندوق مبيعات المكتب';
+                    break;
+            }
+
+            tbody.innerHTML += `
+                <tr>
+                    <td>${index + 1}</td>
+                    <td>${typeLabel}</td>
+                    <td>${safe.owner}</td>
+                    <td>${safe.currency ?? '-'}</td>
+                    <td>$${parseFloat(safe.balance).toFixed(2)}</td>
+                    <td>${safe.cost ?? '-'}</td>
+                </tr>
+            `;
+        });
+
+    } catch (e) {
+        console.error(e);
+    }
+}
 /* =========================
    API Calls
 ========================= */
@@ -580,45 +632,13 @@ function closeEditModal() {
     document.getElementById('edit-modal').classList.add('hidden');
 }
 
-/* =========================
-   Update Currency Price
-========================= */
-// 1. دالة الحساب اللحظي أثناء الكتابة
-async function calculateFromSyp(sypValue) {
-    const currencySelect = document.getElementById('currency-select');
-    const priceInput = document.getElementById('new-price');
-    const selectedOptionText = currencySelect.options[currencySelect.selectedIndex].text;
-    
-    if (!sypValue || sypValue <= 0) {
-        priceInput.value = '';
-        return;
-    }
 
-    // جلب جميع العملات لمعرفة سعر الليرة الحالي في النظام
-    const currencies = await fetchCurrencies();
-    const sypInSystem = currencies.find(c => c.code === 'SYP');
-    const sypRate = sypInSystem ? parseFloat(sypInSystem.price) : 0;
-
-    if (selectedOptionText.includes('SYP') || selectedOptionText.includes('الليرة السورية')) {
-        // إذا كنا نعدل الليرة نفسها
-        priceInput.value = (1 / parseFloat(sypValue)).toFixed(10);
-    } else {
-        // إذا كنا نعدل أي عملة أخرى بناءً على قيمتها بالليرة
-        if (sypRate > 0) {
-            const calculatedUsdPrice = parseFloat(sypValue) * sypRate;
-            priceInput.value = calculatedUsdPrice.toFixed(6);
-        } else {
-            alert("يرجى ضبط سعر الليرة السورية أولاً في النظام");
-        }
-    }
-}
-// 2. تحديث دالة إرسال السعر (تعديل على الدالة الموجودة لديك)
 async function updatePrice() {
     const currencyId = document.getElementById('currency-select').value;
-    const priceInUsd = document.getElementById('new-price').value; // نأخذ القيمة المحسوبة بالدولار
+    const newPrice = document.getElementById('new-price').value;
 
-    if (!currencyId || !priceInUsd) {
-        alert("يرجى اختيار العملة وإدخال السعر");
+    if (!currencyId || !newPrice) {
+        alert("يرجى اختيار العملة وإدخال السعر الجديد");
         return;
     }
 
@@ -626,32 +646,22 @@ async function updatePrice() {
         const res = await fetch(`${API_URL}/currencies/update-price/${currencyId}`, {
             method: 'PUT',
             headers: getHeaders(),
-            body: JSON.stringify({ price: priceInUsd }) // ترسل للباك إند كقيمة دولار
+            body: JSON.stringify({ price: newPrice })
         });
 
         const data = await res.json();
+
         if (data.status === 'success') {
-            alert("تم التحديث بنجاح");
-            // تنظيف الحقول
-            document.getElementById('new-price').value = '';
-            document.getElementById('syp-calculator').value = '';
-            
-            // تحديث الجدول الذي صممناه سابقاً
-            if (typeof renderCurrenciesTable === "function") renderCurrenciesTable();
+            alert("تم تحديث السعر بنجاح");
         } else {
             alert("خطأ: " + data.message);
         }
+
     } catch (error) {
-        console.error(error);
         alert("تعذر الاتصال بالسيرفر");
     }
 }
-/* =========================
-   Load Currencies Table
-========================= */
-/* =========================
-   Load Currencies Table
-========================= */
+
 /* =========================
    Load Currencies Table
 ========================= */
@@ -706,13 +716,64 @@ async function renderCurrenciesTable() {
     });
 }
 
+let cachedCurrencies = [];
 
+async function initPricePreview() {
+
+    cachedCurrencies = await fetchCurrencies();
+
+    const priceInput = document.getElementById("new-price");
+    const currencySelect = document.getElementById("currency-select");
+    const preview = document.getElementById("syp-preview");
+    const box = document.querySelector(".syp-preview-box");
+
+    function calculate() {
+
+        const price = parseFloat(priceInput.value);
+        if (!price) {
+            preview.textContent = "0";
+            box.classList.remove("active");
+            return;
+        }
+
+        // سعر الليرة السورية
+        const sypCurrency = cachedCurrencies.find(c => c.code === 'SYP');
+
+        if (!sypCurrency) return;
+
+        const sypPriceInUsd = parseFloat(sypCurrency.price);
+
+        if (sypPriceInUsd <= 0) return;
+
+        // نفس المعادلة المستخدمة بالجدول
+        const result = price / sypPriceInUsd;
+
+        const formatted = new Intl.NumberFormat('en-US', {
+            maximumFractionDigits: 2
+        }).format(result);
+
+        preview.textContent = formatted;
+        box.classList.add("active");
+    }
+
+    priceInput.addEventListener("input", calculate);
+    currencySelect.addEventListener("change", calculate);
+}
 /* =========================
    UI Helpers
 ========================= */
 function showSection(sectionId) {
-    document.querySelectorAll('.card').forEach(el => el.classList.add('hidden'));
-    document.getElementById(`${sectionId}-section`)?.classList.remove('hidden');
+
+    // اخفاء كل الاقسام
+    document.querySelectorAll('.card').forEach(card => {
+        card.classList.add('hidden');
+    });
+
+    // اظهار القسم المطلوب فقط
+    const activeSection = document.getElementById(`${sectionId}-section`);
+    if (activeSection) {
+        activeSection.classList.remove('hidden');
+    }
 }
 
 function handleRoleChange() {
@@ -752,6 +813,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     await initOfficeCities();
     await initAgentLocation();
     await loadCurrencies();
-    await   loadEmployees();
+    await loadEmployees();
     await renderCurrenciesTable();
+    await initPricePreview();
+    await loadSafes();
 });     

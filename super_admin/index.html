@@ -9,7 +9,7 @@
             rel="stylesheet">
         <link rel="stylesheet"
             href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-        <link rel="stylesheet" href="style.css">
+        <link rel="stylesheet" href="style_super.css">
     </head>
     <body>
         <aside class="sidebar">
@@ -31,7 +31,14 @@
                     <li><a href="#" onclick="showSection('exchange')"><i
                                 class="fa-solid fa-exchange-alt"></i> أسعار
                             الصرف</a></li>
+                            <li>
+    <a href="#" onclick="showSection('safes')">
+        <i class="fa-solid fa-vault"></i>
+        الصناديق
+    </a>
+</li>
                 </ul>
+                
             </nav>
             <div class="logout">
                 <a href="#" onclick="handleLogout()"><i
@@ -74,6 +81,28 @@
             </header>
 
             <div class="content-body">
+                <div id="safes-section" class="card hidden">
+
+    <div class="card-header">
+        <h3><i class="fa-solid fa-vault"></i> جميع الصناديق</h3>
+    </div>
+
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>نوع الصندوق</th>
+                <th>المالك</th>
+                <th>العملة</th>
+                <th>الرصيد</th>
+                <th>Cost</th>
+            </tr>
+        </thead>
+
+        <tbody id="safes-table-body"></tbody>
+    </table>
+
+</div>
                 <div id="offices-section" class="card">
                     <div class="card-header">
                         <h3><i class="fa-solid fa-plus"></i> إضافة مكتب
@@ -223,51 +252,59 @@
                     </table>
                 </div>
 
-                <div id="exchange-section" class="card hidden">
-                    <h3>تحديث أسعار الصرف</h3>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>العملة</label>
-                            <select id="currency-select">
-                                <option value>اختر العملة</option>
-                            </select>
-                        </div>
-                        
-    <div class="form-group">
-        <label>السعر مقابل 1 دولار (النظام)</label>
-        <input type="number" id="new-price" step="0.00000001" placeholder="مثال: 0.000067">
+           <div id="exchange-section" class="card hidden">
+
+    <!-- ✅ كل ما يخص اسعار الصرف -->
+    <div class="exchange-wrapper">
+
+        <h3>تحديث أسعار الصرف</h3>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label>العملة</label>
+                <select id="currency-select"></select>
+            </div>
+
+            <div class="form-group">
+                <label>السعر الجديد (مقابل الدولار)</label>
+                <input type="number" id="new-price" inputmode="decimal">
+            </div>
+
+            <div class="form-group">
+                <label>القيمة بالليرة السورية</label>
+                <div class="syp-preview-box">
+                    <i class="fa-solid fa-coins"></i>
+                    <span id="syp-preview">0</span>
+                    <small>ل.س</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- زر التحديث -->
+        <button class="btn-update-price" onclick="updatePrice()">
+            <i class="fa-solid fa-rotate"></i>
+            تحديث السعر
+        </button>
+
+        <hr class="section-divider">
+
+        <h3><i class="fa-solid fa-coins"></i> أسعار الصرف الحالية</h3>
+
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>العملة</th>
+                    <th>الرمز</th>
+                    <th>السعر (مقابل الدولار)</th>
+                    <th>السعر (بالليرة السورية)</th>
+                </tr>
+            </thead>
+            <tbody id="currencies-table-body"></tbody>
+        </table>
+
     </div>
-
-    <div class="form-group">
-        <label>كم ليرة سورية تساوي هذه العملة؟</label>
-        <input type="number" id="syp-calculator" placeholder="مثال: 15000" oninput="calculateFromSyp(this.value)">
-        <small style="color: var(--gray);">سيتم التحويل تلقائياً للدولار عند الإرسال</small>
-    </div>
-
-                    </div><button class="btn-primary" onclick="updatePrice()">تحديث السعر</button>
-
-<hr class="section-divider">
-
-<h3><i class="fa-solid fa-coins"></i> أسعار الصرف الحالية</h3>
-<table class="data-table">
-    <thead>
-        <tr>
-            <th>#</th>
-            <th>العملة</th>
-            <th>الرمز</th>
-            <th>السعر (مقابل الدولار)</th>
-            <th>السعر (بالليرة السورية)</th>
-        </tr>
-    </thead>
-    <tbody id="currencies-table-body">
-        <tr>
-            <td colspan="5 ">
-                <div class="skeleton" style="height:35px"></div>
-            </td>
-        </tr>
-    </tbody>
-</table> </div>
-
+</div>
             </div>
         </main>
         <div id="delete-modal" class="modal-overlay hidden">

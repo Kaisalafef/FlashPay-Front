@@ -696,7 +696,95 @@ input:focus, select:focus {
     );
     animation: skeleton-loading 1.5s infinite;
 }
+/* ================= SYP PREVIEW BOX ================= */
 
+.syp-preview-box {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+
+    height: 48px;
+    padding: 0 16px;
+
+    background: linear-gradient(
+        135deg,
+        var(--secondary-bg),
+        #ffffff
+    );
+
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+
+    font-weight: 800;
+    font-size: 16px;
+    color: var(--secondary);
+
+    box-shadow: var(--shadow-sm);
+    transition: var(--transition);
+}
+
+.syp-preview-box i {
+    color: var(--warning);
+    font-size: 18px;
+}
+
+.syp-preview-box small {
+    font-size: 13px;
+    color: var(--gray);
+    font-weight: 700;
+}
+
+.syp-preview-box.active {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow);
+    border-color: var(--secondary);
+}
+
+/* ================= UPDATE PRICE BUTTON ================= */
+
+.btn-update-price {
+    margin-top: 10px;
+    padding: 14px 26px;
+
+    background: linear-gradient(
+        135deg,
+        var(--secondary),
+        #2563eb
+    );
+
+    color: white;
+    border: none;
+    border-radius: var(--radius-sm);
+
+    font-size: 15px;
+    font-weight: 800;
+    cursor: pointer;
+
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+
+    transition: var(--transition);
+    box-shadow: 0 6px 14px rgba(59,130,246,0.25);
+}
+
+.btn-update-price i {
+    transition: 0.4s;
+}
+
+.btn-update-price:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(59,130,246,0.35);
+}
+
+.btn-update-price:hover i {
+    transform: rotate(180deg);
+}
+
+.btn-update-price:active {
+    transform: scale(0.97);
+}
 @keyframes skeleton-loading {
     0% { transform: translateX(-100%); }
     100% { transform: translateX(100%); }
