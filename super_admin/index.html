@@ -232,14 +232,41 @@
                                 <option value>اختر العملة</option>
                             </select>
                         </div>
-                        <div class="form-group">
-                            <label>السعر الجديد (مقابل الدولار)</label>
-                            <input type="number" id="new-price">
-                        </div>
-                    </div>
-                    <button class="btn-primary" onclick="updatePrice()">تحديث
-                        السعر</button>
-                </div>
+                        
+    <div class="form-group">
+        <label>السعر مقابل 1 دولار (النظام)</label>
+        <input type="number" id="new-price" step="0.00000001" placeholder="مثال: 0.000067">
+    </div>
+
+    <div class="form-group">
+        <label>كم ليرة سورية تساوي هذه العملة؟</label>
+        <input type="number" id="syp-calculator" placeholder="مثال: 15000" oninput="calculateFromSyp(this.value)">
+        <small style="color: var(--gray);">سيتم التحويل تلقائياً للدولار عند الإرسال</small>
+    </div>
+
+                    </div><button class="btn-primary" onclick="updatePrice()">تحديث السعر</button>
+
+<hr class="section-divider">
+
+<h3><i class="fa-solid fa-coins"></i> أسعار الصرف الحالية</h3>
+<table class="data-table">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>العملة</th>
+            <th>الرمز</th>
+            <th>السعر (مقابل الدولار)</th>
+            <th>السعر (بالليرة السورية)</th>
+        </tr>
+    </thead>
+    <tbody id="currencies-table-body">
+        <tr>
+            <td colspan="5 ">
+                <div class="skeleton" style="height:35px"></div>
+            </td>
+        </tr>
+    </tbody>
+</table> </div>
 
             </div>
         </main>

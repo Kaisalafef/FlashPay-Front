@@ -583,12 +583,42 @@ function closeEditModal() {
 /* =========================
    Update Currency Price
 ========================= */
+// 1. دالة الحساب اللحظي أثناء الكتابة
+async function calculateFromSyp(sypValue) {
+    const currencySelect = document.getElementById('currency-select');
+    const priceInput = document.getElementById('new-price');
+    const selectedOptionText = currencySelect.options[currencySelect.selectedIndex].text;
+    
+    if (!sypValue || sypValue <= 0) {
+        priceInput.value = '';
+        return;
+    }
+
+    // جلب جميع العملات لمعرفة سعر الليرة الحالي في النظام
+    const currencies = await fetchCurrencies();
+    const sypInSystem = currencies.find(c => c.code === 'SYP');
+    const sypRate = sypInSystem ? parseFloat(sypInSystem.price) : 0;
+
+    if (selectedOptionText.includes('SYP') || selectedOptionText.includes('الليرة السورية')) {
+        // إذا كنا نعدل الليرة نفسها
+        priceInput.value = (1 / parseFloat(sypValue)).toFixed(10);
+    } else {
+        // إذا كنا نعدل أي عملة أخرى بناءً على قيمتها بالليرة
+        if (sypRate > 0) {
+            const calculatedUsdPrice = parseFloat(sypValue) * sypRate;
+            priceInput.value = calculatedUsdPrice.toFixed(6);
+        } else {
+            alert("يرجى ضبط سعر الليرة السورية أولاً في النظام");
+        }
+    }
+}
+// 2. تحديث دالة إرسال السعر (تعديل على الدالة الموجودة لديك)
 async function updatePrice() {
     const currencyId = document.getElementById('currency-select').value;
-    const newPrice = document.getElementById('new-price').value;
+    const priceInUsd = document.getElementById('new-price').value; // نأخذ القيمة المحسوبة بالدولار
 
-    if (!currencyId || !newPrice) {
-        alert("يرجى اختيار العملة وإدخال السعر الجديد");
+    if (!currencyId || !priceInUsd) {
+        alert("يرجى اختيار العملة وإدخال السعر");
         return;
     }
 
@@ -596,21 +626,86 @@ async function updatePrice() {
         const res = await fetch(`${API_URL}/currencies/update-price/${currencyId}`, {
             method: 'PUT',
             headers: getHeaders(),
-            body: JSON.stringify({ price: newPrice })
+            body: JSON.stringify({ price: priceInUsd }) // ترسل للباك إند كقيمة دولار
         });
 
         const data = await res.json();
-
         if (data.status === 'success') {
-            alert("تم تحديث السعر بنجاح");
+            alert("تم التحديث بنجاح");
+            // تنظيف الحقول
+            document.getElementById('new-price').value = '';
+            document.getElementById('syp-calculator').value = '';
+            
+            // تحديث الجدول الذي صممناه سابقاً
+            if (typeof renderCurrenciesTable === "function") renderCurrenciesTable();
         } else {
             alert("خطأ: " + data.message);
         }
-
     } catch (error) {
+        console.error(error);
         alert("تعذر الاتصال بالسيرفر");
     }
 }
+/* =========================
+   Load Currencies Table
+========================= */
+/* =========================
+   Load Currencies Table
+========================= */
+/* =========================
+   Load Currencies Table
+========================= */
+async function renderCurrenciesTable() {
+    const tbody = document.getElementById('currencies-table-body');
+    if (!tbody) return;
+
+    const currencies = await fetchCurrencies(); 
+    tbody.innerHTML = '';
+
+    if (!currencies || currencies.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">لا توجد بيانات للعملات</td></tr>';
+        return;
+    }
+
+    // 1. استخراج سعر الليرة السورية مقابل الدولار لإجراء العملية الحسابية
+    const sypCurrency = currencies.find(c => c.code === 'SYP');
+    const sypPriceInUsd = sypCurrency ? parseFloat(sypCurrency.price) : 0;
+
+    currencies.forEach((currency, index) => {
+        // تنسيق السعر بالدولار
+        const priceInUsd = parseFloat(currency.price);
+        const formattedPriceUsd = priceInUsd.toFixed(6).replace(/\.?0+$/, '');
+
+        // 2. حساب السعر بالليرة السورية وتنسيقه (Frontend Only)
+        let priceInSypHtml = "-";
+        if (sypPriceInUsd > 0) {
+            // المعادلة: سعر العملة / سعر الليرة السورية
+            const calculatedSyp = priceInUsd / sypPriceInUsd; 
+            
+            // تنسيق الرقم ليحتوي على فواصل الألوف (مثال: 15,000)
+            const formattedSyp = new Intl.NumberFormat('en-US', { 
+                maximumFractionDigits: 2 
+            }).format(calculatedSyp);
+
+            priceInSypHtml = formattedSyp;
+        }
+
+        tbody.innerHTML += `
+            <tr>
+                <td>${index + 1}</td>
+                <td><strong>${currency.name}</strong></td>
+                <td><span class="role-badge" style="background: var(--primary-bg); color: var(--primary-dark);">${currency.code}</span></td>
+                <td style="font-weight: bold; color: var(--success); direction: ltr; text-align: right;">
+                    ${formattedPriceUsd}
+                </td>
+                <td style="font-weight: bold; color: var(--secondary); direction: ltr; text-align: right;">
+                    ${priceInSypHtml}
+                </td>
+            </tr>
+        `;
+    });
+}
+
 
 /* =========================
    UI Helpers
@@ -658,4 +753,5 @@ document.addEventListener('DOMContentLoaded', async () => {
     await initAgentLocation();
     await loadCurrencies();
     await   loadEmployees();
+    await renderCurrenciesTable();
 });     
