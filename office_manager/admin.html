@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FlashPay - Cashier</title>
+    <title>FlashPay - Office Manager</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style_admin.css">
 </head>
 <body>
     <aside class="sidebar">
@@ -14,7 +14,7 @@
         </div>
         <nav>
             <ul>
-                <li class="active"><a href="#"><i class="fa-solid fa-money-bill-transfer"></i> الحوالات الواردة الجديدة</a></li>
+                <li class="active"><a href="#"><i class="fa-solid fa-list-check"></i> الحوالات المعلقة (بانتظار الموافقة)</a></li>
             </ul>
         </nav>
         <div class="logout">
@@ -24,29 +24,30 @@
 
     <main class="main-content">
         <header>
-            <div class="header-title"><h2>شاشة الصندوق (Cashier)</h2></div>
+            <div class="header-title"><h2>إدارة المكتب (Admin)</h2></div>
         </header>
 
         <div class="content-body">
             <div class="card">
                 <div class="card-header">
-                    <h3>طلبات الحوالات الجديدة (Pending)</h3>
+                    <h3>الحوالات المقبولة من الكاشير (تحتاج موافقة نهائية)</h3>
                 </div>
                 <table class="data-table">
                     <thead>
                         <tr>
                             <th>رقم الحوالة</th>
-                            <th>المرسل</th>
                             <th>المبلغ</th>
+                            <th>المستلم</th>
+                            <th>الحالة الحالية</th>
                             <th>الإجراء</th>
                         </tr>
                     </thead>
-                    <tbody id="new-transfers-list">
-                    </tbody>
+                    <tbody id="transfers-list">
+                        </tbody>
                 </table>
             </div>
         </div>
     </main>
-    <script src="app.js"></script>
+    <script src="admin.js"></script>
 </body>
 </html>

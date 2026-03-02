@@ -434,7 +434,31 @@
         </form>
     </div>
 </div>      
-        <script src="app.js"></script>
+
+<div id="safe-details-modal" class="modal-overlay hidden safe-details-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fa-solid fa-vault"></i> تفاصيل الصندوق</h3>
+            <button class="close-btn" onclick="closeSafeDetails()">&times;</button>
+        </div>
+
+        <div class="modal-body">
+            <div class="safe-details-list">
+                <div>نوع الصندوق: <span id="detail-type"></span></div>
+                <div>المالك: <span id="detail-owner"></span></div>
+                <div>العملة: <span id="detail-currency"></span></div>
+                <div>الرصيد: <span id="detail-balance"></span></div>
+                <div>Cost: <span id="detail-cost"></span></div>
+            </div>
+        </div>
+
+        <div class="modal-actions">
+            <button class="btn-cancel" onclick="closeSafeDetails()">إغلاق</button>
+        </div>
+    </div>
+</div>
+
+        <script src="super.js"></script>
 
     </body>
 </html>

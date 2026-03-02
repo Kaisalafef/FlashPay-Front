@@ -9,7 +9,7 @@ async function checkAuth() {
     const token = localStorage.getItem('auth_token');
 
     if (!token) {
-        window.location.href = '/FlashPay-Front/login/index.html';
+        window.location.href = '/FlashPay-Front/login/login.html';
         return null;
     }
 
@@ -24,7 +24,7 @@ async function checkAuth() {
         // التوكن غير صالح (بعد migrate:fresh مثلاً)
         if (!res.ok) {
             localStorage.clear();
-            window.location.href = '/FlashPay-Front/login/index.html';
+            window.location.href = '/FlashPay-Front/login/login.html';
             return null;
         }
 
@@ -32,7 +32,7 @@ async function checkAuth() {
 
     } catch (e) {
         localStorage.clear();
-        window.location.href = '/FlashPay-Front/login/index.html';
+        window.location.href = '/FlashPay-Front/login/login.html';
         return null;
     }
 }
@@ -56,7 +56,7 @@ async function fetchCurrencies() {
 
         if (res.status === 401) {
             localStorage.clear();
-            window.location.href = '/FlashPay-Front/login/index.html';
+            window.location.href = '/FlashPay-Front/login/login.html';
             return [];
         }
 
@@ -136,22 +136,43 @@ async function loadSafes() {
                     break;
             }
 
-            tbody.innerHTML += `
-                <tr>
-                    <td>${index + 1}</td>
-                    <td>${typeLabel}</td>
-                    <td>${safe.owner}</td>
-                    <td>${safe.currency ?? '-'}</td>
-                    <td>$${parseFloat(safe.balance).toFixed(2)}</td>
-                    <td>${safe.cost ?? '-'}</td>
-                </tr>
-            `;
+           tbody.innerHTML += `
+    <tr>
+        <td>${index + 1}</td>
+        <td>${typeLabel}</td>
+        <td>${safe.owner}</td>
+        <td>${safe.currency ?? '-'}</td>
+        <td>$${parseFloat(safe.balance).toFixed(2)}</td>
+        <td>${safe.cost ?? '-'}</td>
+        <td>
+            <button class="safes-view-btn" onclick='openSafeDetails(${JSON.stringify(safe)})'>
+                <i class="fa-solid fa-eye"></i> عرض
+            </button>
+        </td>
+    </tr>
+`;
+
         });
 
     } catch (e) {
         console.error(e);
     }
 }
+
+function openSafeDetails(safe) {
+    document.getElementById("detail-type").textContent = safe.type;
+    document.getElementById("detail-owner").textContent = safe.owner;
+    document.getElementById("detail-currency").textContent = safe.currency ?? "-";
+    document.getElementById("detail-balance").textContent = "$" + parseFloat(safe.balance).toFixed(2);
+    document.getElementById("detail-cost").textContent = safe.cost ?? "-";
+
+    document.getElementById("safe-details-modal").classList.remove("hidden");
+}
+
+function closeSafeDetails() {
+    document.getElementById("safe-details-modal").classList.add("hidden");
+}
+
 /* =========================
    API Calls
 ========================= */
@@ -797,7 +818,7 @@ async function handleLogout() {
     });
 
     localStorage.removeItem('auth_token');
-    window.location.href = '../login/index.html';
+    window.location.href = '../login/login.html';
 }
 /* =========================
    Init App

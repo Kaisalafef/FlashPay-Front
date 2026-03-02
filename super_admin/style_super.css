@@ -38,6 +38,10 @@
 }
 
 /* ================= RESET & TYPOGRAPHY ================= */
+html {
+    font-size: 16px; /* الحجم الأساسي الذي تبنى عليه وحدات الـ rem */
+}
+
 * {
     margin: 0;
     padding: 0;
@@ -53,6 +57,8 @@ body {
     overflow: hidden;
     direction: rtl;
     -webkit-font-smoothing: antialiased;
+    font-size: 0.875rem; /* تقريباً 14px للنص الأساسي بدلاً من 16px */
+    line-height: 1.6; /* تحسين راحة القراءة */
 }
 
 /* تخصيص شريط التمرير (Scrollbar) */
@@ -85,7 +91,7 @@ body {
 }
 
 .logo {
-    font-size: 26px;
+    font-size: 1.25rem; /* كانت 26px أصبحت تقريباً 20px */
     font-weight: 800;
     margin-bottom: 50px;
     display: flex;
@@ -95,7 +101,7 @@ body {
 
 .logo i {
     color: var(--primary);
-    font-size: 28px;
+    font-size: 1.375rem; /* كانت 28px أصبحت تقريباً 22px */
     filter: drop-shadow(0 2px 4px rgba(234, 88, 12, 0.3));
 }
 
@@ -127,11 +133,11 @@ body {
     border-radius: var(--radius-sm);
     transition: var(--transition);
     font-weight: 600;
-    font-size: 15px;
+    font-size: 0.875rem; /* كانت 15px أصبحت تقريباً 14px */
 }
 
 .sidebar nav a i {
-    font-size: 18px;
+    font-size: 1rem; /* كانت 18px أصبحت 16px */
     width: 24px;
     text-align: center;
     transition: var(--transition);
@@ -216,7 +222,7 @@ body {
 }
 
 .page-title i {
-    font-size: 22px;
+    font-size: 1.125rem; /* كانت 22px أصبحت تقريباً 18px */
     color: var(--primary);
     background: var(--primary-bg);
     padding: 10px;
@@ -224,7 +230,7 @@ body {
 }
 
 .page-title h2 {
-    font-size: 20px;
+    font-size: 1.125rem; /* كانت 20px أصبحت تقريباً 18px */
     font-weight: 700;
     color: var(--dark);
 }
@@ -242,7 +248,7 @@ body {
     border-radius: 12px;
     background: var(--white);
     color: var(--gray);
-    font-size: 18px;
+    font-size: 1rem; /* كانت 18px أصبحت 16px */
     cursor: pointer;
     transition: var(--transition);
     display: flex;
@@ -284,7 +290,7 @@ body {
     align-items: center;
     justify-content: center;
     border-radius: 50%;
-    font-size: 16px;
+    font-size: 0.875rem; /* كانت 16px أصبحت تقريباً 14px */
 }
 
 .profile-info {
@@ -293,13 +299,13 @@ body {
 }
 
 .profile-info span {
-    font-size: 14px;
+    font-size: 0.8125rem; /* كانت 14px أصبحت تقريباً 13px */
     font-weight: 700;
     color: var(--dark);
 }
 
 .profile-info small {
-    font-size: 11px;
+    font-size: 0.625rem; /* كانت 11px أصبحت تقريباً 10px */
     color: var(--gray);
 }
 
@@ -325,7 +331,7 @@ body {
 }
 
 .card h3 {
-    font-size: 18px;
+    font-size: 1rem; /* كانت 18px أصبحت 16px */
     color: var(--dark);
     display: flex;
     align-items: center;
@@ -334,7 +340,7 @@ body {
 .card h3 i {
     color: var(--primary);
     margin-left: 10px;
-    font-size: 20px;
+    font-size: 1.125rem; /* كانت 20px أصبحت تقريباً 18px */
     transition: var(--transition);
 }
 
@@ -384,7 +390,7 @@ body {
 }
 
 label {
-    font-size: 14px;
+    font-size: 0.8125rem; /* كانت 14px أصبحت تقريباً 13px */
     font-weight: 700;
     color: var(--dark);
 }
@@ -395,7 +401,7 @@ input, select {
     border-radius: var(--radius-sm);
     background-color: #f8fafc;
     color: var(--dark);
-    font-size: 14px;
+    font-size: 0.8125rem; /* كانت 14px أصبحت تقريباً 13px */
     outline: none;
     transition: var(--transition);
 }
@@ -419,7 +425,7 @@ input:focus, select:focus {
     border: none;
     border-radius: var(--radius-sm);
     cursor: pointer;
-    font-size: 15px;
+    font-size: 0.875rem; /* كانت 15px أصبحت تقريباً 14px */
     font-weight: 700;
     transition: var(--transition);
     display: inline-flex;
@@ -456,7 +462,7 @@ input:focus, select:focus {
     background: #f8fafc;
     color: var(--text-muted);
     font-weight: 700;
-    font-size: 13px;
+    font-size: 0.75rem; /* كانت 13px أصبحت 12px */
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
@@ -476,7 +482,7 @@ input:focus, select:focus {
 }
 
 .data-table td {
-    font-size: 14px;
+    font-size: 0.8125rem; /* كانت 14px أصبحت تقريباً 13px */
     font-weight: 600;
     color: var(--dark);
     vertical-align: middle;
@@ -488,13 +494,13 @@ input:focus, select:focus {
     color: var(--secondary);
     padding: 6px 14px;
     border-radius: var(--radius-full);
-    font-size: 12px;
+    font-size: 0.6875rem; /* كانت 12px أصبحت 11px */
     font-weight: 700;
     display: inline-block;
 }
 
 .location-tag {
-    font-size: 12px;
+    font-size: 0.6875rem; /* كانت 12px أصبحت 11px */
     background: var(--primary-bg);
     color: var(--primary-dark);
     padding: 6px 12px;
@@ -510,7 +516,7 @@ input:focus, select:focus {
     color: var(--primary-dark);
     padding: 6px 14px;
     border-radius: var(--radius-full);
-    font-size: 12px;
+    font-size: 0.6875rem; /* كانت 12px أصبحت 11px */
     font-weight: 700;
     white-space: nowrap;
 }
@@ -523,7 +529,7 @@ input:focus, select:focus {
     cursor: pointer;
     margin-left: 8px;
     transition: var(--transition);
-    font-size: 14px;
+    font-size: 0.8125rem; /* كانت 14px أصبحت تقريباً 13px */
 }
 
 .btn-edit {
@@ -594,7 +600,7 @@ input:focus, select:focus {
 }
 
 .modal-header h3 {
-    font-size: 18px;
+    font-size: 1.0625rem; /* كانت 18px أصبحت تقريباً 17px */
     color: var(--dark);
     display: flex;
     align-items: center;
@@ -611,7 +617,7 @@ input:focus, select:focus {
 .close-btn {
     background: none;
     border: none;
-    font-size: 24px;
+    font-size: 1.25rem; /* كانت 24px أصبحت تقريباً 20px */
     color: var(--gray);
     cursor: pointer;
     transition: var(--transition);
@@ -633,7 +639,7 @@ input:focus, select:focus {
     margin-bottom: 28px;
     color: var(--text-muted);
     line-height: 1.7;
-    font-size: 15px;
+    font-size: 0.875rem; /* كانت 15px أصبحت تقريباً 14px */
     font-weight: 600;
 }
 
@@ -717,7 +723,7 @@ input:focus, select:focus {
     border-radius: var(--radius-sm);
 
     font-weight: 800;
-    font-size: 16px;
+    font-size: 0.9375rem; /* كانت 16px أصبحت تقريباً 15px */
     color: var(--secondary);
 
     box-shadow: var(--shadow-sm);
@@ -726,11 +732,11 @@ input:focus, select:focus {
 
 .syp-preview-box i {
     color: var(--warning);
-    font-size: 18px;
+    font-size: 1.0625rem; /* كانت 18px أصبحت تقريباً 17px */
 }
 
 .syp-preview-box small {
-    font-size: 13px;
+    font-size: 0.75rem; /* كانت 13px أصبحت 12px */
     color: var(--gray);
     font-weight: 700;
 }
@@ -757,7 +763,7 @@ input:focus, select:focus {
     border: none;
     border-radius: var(--radius-sm);
 
-    font-size: 15px;
+    font-size: 0.875rem; /* كانت 15px أصبحت تقريباً 14px */
     font-weight: 800;
     cursor: pointer;
 
@@ -785,6 +791,56 @@ input:focus, select:focus {
 .btn-update-price:active {
     transform: scale(0.97);
 }
+
+/* ================= SAFES TABLE CUSTOM STYLE ================= */
+
+.safes-view-btn {
+    background: var(--secondary-bg);
+    color: var(--secondary);
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 0.75rem; /* كانت 13px أصبحت 12px */
+    font-weight: 700;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    transition: var(--transition);
+}
+
+.safes-view-btn:hover {
+    background: var(--secondary);
+    color: white;
+    transform: translateY(-2px);
+}
+
+/* Modal for Safe Details */
+.safe-details-modal .modal-content {
+    max-width: 520px;
+    border-top: 6px solid var(--primary);
+}
+
+.safe-details-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 10px 0;
+}
+
+.safe-details-list div {
+    background: var(--light);
+    padding: 12px 16px;
+    border-radius: var(--radius-sm);
+    font-size: 0.875rem; /* كانت 15px أصبحت تقريباً 14px */
+    font-weight: 700;
+    color: var(--dark);
+    display: flex;
+    justify-content: space-between;
+}
+
+.safe-details-list div span {
+    color: var(--primary);
+    font-weight: 800;
+}
+
 @keyframes skeleton-loading {
     0% { transform: translateX(-100%); }
     100% { transform: translateX(100%); }

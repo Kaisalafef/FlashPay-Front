@@ -3,7 +3,7 @@ async function checkAuth() {
     const token = localStorage.getItem('auth_token');
 
     if (!token) {
-        window.location.href = '/FlashPay-Front/login/index.html';
+        window.location.href = '/FlashPay-Front/login/login.html';
         return null;
     }
 
@@ -18,7 +18,7 @@ async function checkAuth() {
         // التوكن غير صالح (بعد migrate:fresh مثلاً)
         if (!res.ok) {
             localStorage.clear();
-            window.location.href = '/FlashPay-Front/login/index.html';
+            window.location.href = '/FlashPay-Front/login/login.html';
             return null;
         }
 
@@ -26,7 +26,7 @@ async function checkAuth() {
 
     } catch (e) {
         localStorage.clear();
-        window.location.href = '/FlashPay-Front/login/index.html';
+        window.location.href = '/FlashPay-Front/login/login.html';
         return null;
     }
 }
@@ -80,7 +80,7 @@ async function acceptTransfer(transferId) {
 async function handleLogout() {
     await fetch(`${API_URL}/logout`, { method: 'POST', headers: { 'Authorization': `Bearer ${token}` } });
     localStorage.removeItem('auth_token');
-    window.location.href = '../login/index.html';
+    window.location.href = '../login/login.html';
 }
 document.addEventListener('DOMContentLoaded', async () => {
 
