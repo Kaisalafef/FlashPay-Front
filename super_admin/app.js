@@ -177,41 +177,136 @@ async function initAgentLocation() {
 /* =========================
    Load Offices
 ========================= */
+/* =========================
+   Load Offices
+========================= */
 async function loadOffices() {
     try {
-        const res = await fetch(`${API_URL}/offices`, {
-            headers: getHeaders()
-        });
+        // 1. جلب بيانات المستخدم الحالي أولاً لمعرفة صلاحياته
+        const userRes = await fetch(`${API_URL}/me`, { headers: getHeaders() });
+        const userData = await userRes.json();
+        const isSuperAdmin = userData.user.role === 'super_admin';
 
+        const res = await fetch(`${API_URL}/offices`, { headers: getHeaders() });
         const json = await res.json();
-
         const tbody = document.getElementById('offices-list');
-        const officeSelect = document.getElementById('emp-office');
-
-        if (!tbody || !officeSelect) return;
 
         tbody.innerHTML = '';
-        officeSelect.innerHTML = '<option value="">اختر المكتب...</option>';
 
         json.data.forEach(office => {
+            // نتحقق: إذا كان آدمن نُظهر الأزرار، وإذا لا نترك الخانة فارغة أو نخفي العمود
+            const actionsHtml = isSuperAdmin ? `
+                <td>
+                    <button class="btn-edit" onclick='openEditOfficeModal(${JSON.stringify(office)})'>
+                        <i class="fa-solid fa-pen"></i>
+                    </button>
+                    <button class="btn-delete" onclick="openDeleteOfficeModal(${office.id})">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                </td>
+            ` : `<td>-</td>`; // إذا لم يكن آدمن يظهر شرطة أو لا يظهر شيء
+
             tbody.innerHTML += `
                 <tr>
                     <td>${office.name}</td>
                     <td>${office.city ? office.city.name : 'غير محدد'}</td>
                     <td>${office.address || '-'}</td>
                     <td>$${office.main_safe ? office.main_safe.balance : '0.00'}</td>
+                    ${actionsHtml}
                 </tr>
             `;
-
-            officeSelect.innerHTML += `
-                <option value="${office.id}">${office.name}</option>
-            `;
         });
-
     } catch (error) {
-        console.error("Error loading offices:", error);
+        console.error("Error:", error);
     }
 }
+
+
+/* =========================
+   Logic: Delete Office
+========================= */
+let currentOfficeIdToDelete = null;
+
+function openDeleteOfficeModal(id) {
+    currentOfficeIdToDelete = id;
+    document.getElementById('delete-office-modal').classList.remove('hidden');
+}
+
+function closeDeleteOfficeModal() {
+    document.getElementById('delete-office-modal').classList.add('hidden');
+}
+
+document.getElementById('confirm-delete-office-btn').onclick = async () => {
+    if (!currentOfficeIdToDelete) return;
+    try {
+        const res = await fetch(`${API_URL}/offices/${currentOfficeIdToDelete}`, {
+            method: 'DELETE',
+            headers: getHeaders()
+        });
+        if (res.ok) {
+            closeDeleteOfficeModal();
+            loadOffices();
+            alert("تم حذف المكتب بنجاح");
+        } else {
+            alert("حدث خطأ أثناء الحذف");
+        }
+    } catch (e) { console.error(e); }
+};
+
+/* =========================
+   Logic: Edit Office
+========================= */
+async function openEditOfficeModal(office) {
+    document.getElementById('edit-office-id').value = office.id;
+    document.getElementById('edit-office-name').value = office.name;
+    document.getElementById('edit-office-address').value = office.address || '';
+    
+    // جلب المدن وتعبئتها
+    const citySelect = document.getElementById('edit-office-city-select');
+    const cities = await fetchCitiesByCountry(1); // 1 هي سوريا حسب الكود الخاص بك
+    fillSelect(citySelect, cities, "اختر المدينة");
+    
+    // تحديد المدينة الحالية للمكتب
+    citySelect.value = office.city_id || "";
+
+    document.getElementById('edit-office-modal').classList.remove('hidden');
+}
+
+function closeEditOfficeModal() {
+    document.getElementById('edit-office-modal').classList.add('hidden');
+}
+
+document.getElementById('edit-office-form').onsubmit = async (e) => {
+    e.preventDefault();
+    const id = document.getElementById('edit-office-id').value;
+    
+    const data = {
+        name: document.getElementById('edit-office-name').value,
+        city_id: parseInt(document.getElementById('edit-office-city-select').value),
+        address: document.getElementById('edit-office-address').value,
+    };
+
+    try {
+        const res = await fetch(`${API_URL}/offices/${id}`, {
+            method: 'PUT',
+            headers: getHeaders(),
+            body: JSON.stringify(data)
+        });
+
+        const result = await res.json();
+
+        if (res.ok) {
+            alert("تم تحديث بيانات المكتب بنجاح");
+            closeEditOfficeModal();
+            loadOffices(); // تحديث الجدول
+        } else {
+            alert("خطأ: " + (result.message || "فشل التحديث"));
+        }
+    } catch (error) {
+        console.error(error);
+        alert("خطأ في الاتصال بالخادم");
+    }
+};
 
 /* =========================
    Add Office
@@ -320,22 +415,30 @@ document.getElementById('add-employee-form')?.addEventListener('submit', async (
 });
 
 
-
+/* =========================
+   Load Employees & Agents
+========================= */
+/* =========================
+   Load Employees (Updated)
+========================= */
 async function loadEmployees() {
     try {
-
-        const res = await fetch(`${API_URL}/users`, {
-            headers: getHeaders()
-        });
-
+        const res = await fetch(`${API_URL}/users`, { headers: getHeaders() });
         const json = await res.json();
         const tbody = document.getElementById('employees-list');
-
         if (!tbody) return;
 
         tbody.innerHTML = '';
-
         json.data.forEach((user, index) => {
+            // منطق عرض الموقع للمندوب أو المكتب للموظف
+            let locationInfo = '-';
+            if (user.role === 'agent') {
+                const country = user.country ? user.country.name : 'بدون دولة';
+                const city = user.city ? user.city.name : 'بدون مدينة';
+                locationInfo = `<span class="location-tag"><i class="fa-solid fa-location-dot"></i> ${country}, ${city}</span>`;
+            } else {
+                locationInfo = `<span class="location-tag"  > ${user.office ? user.office.name : 'بدون مكتب'}</span>`;
+            }
 
             tbody.innerHTML += `
                 <tr>
@@ -344,39 +447,137 @@ async function loadEmployees() {
                     <td>${user.email}</td>
                     <td>${user.phone}</td>
                     <td><span class="role-badge">${user.role}</span></td>
-                    <td>${user.office ? user.office.name : '-'}</td>
+                    <td>${locationInfo}</td>
                     <td>
-                        <button class="btn-edit" onclick="editUser(${user.id})">
+                        <button class="btn-edit" onclick="openEditModal(${JSON.stringify(user).replace(/"/g, '&quot;')})">
                             <i class="fa-solid fa-pen"></i>
                         </button>
-
-                        <button class="btn-delete" onclick="deleteUser(${user.id})">
+                        <button class="btn-delete" onclick="openDeleteModal(${user.id})">
                             <i class="fa-solid fa-trash"></i>
                         </button>
                     </td>
-                </tr>
-            `;
+                </tr>`;
         });
+    } catch (e) { console.error(e); }
+}
 
-    } catch (e) {
-        console.error(e);
+/* =========================
+   Delete Logic (Custom Dialog)
+========================= */
+let currentUserIdToDelete = null;
+function openDeleteModal(id) {
+    currentUserIdToDelete = id;
+    document.getElementById('delete-modal').classList.remove('hidden');
+}
+function closeDeleteModal() {
+    document.getElementById('delete-modal').classList.add('hidden');
+}
+/* =========================
+   Logic: Delete & Edit
+========================= */
+
+// دالة الحذف المحدثة
+document.getElementById('confirm-delete-btn').onclick = async () => {
+    if (!currentUserIdToDelete) return;
+    try {
+        const res = await fetch(`${API_URL}/users/${currentUserIdToDelete}`, {
+            method: 'DELETE',
+            headers: getHeaders()
+        });
+        if (res.ok) {
+            closeDeleteModal();
+            loadEmployees();
+        } else {
+            alert("فشل الحذف: ربما لا تملك صلاحية Super Admin");
+        }
+    } catch (e) { console.error(e); }
+};
+
+// دالة معالجة تغيير دولة المندوب في التعديل
+async function handleEditCountryChange() {
+    const countryId = document.getElementById('edit-user-country').value;
+    const citySelect = document.getElementById('edit-user-city');
+    if (countryId) {
+        const cities = await fetchCitiesByCountry(countryId);
+        fillSelect(citySelect, cities, "اختر المدينة");
     }
 }
 
-async function deleteUser(id) {
+// دالة فتح نافذة التعديل مع تعبئة البيانات
+async function openEditModal(user) {
+    document.getElementById('edit-user-id').value = user.id;
+    document.getElementById('edit-user-role').value = user.role;
+    document.getElementById('edit-user-name').value = user.name;
+    document.getElementById('edit-user-email').value = user.email;
+    document.getElementById('edit-user-phone').value = user.phone;
+    document.getElementById('edit-user-password').value = "";
 
-    if (!confirm("هل تريد حذف الموظف؟")) return;
+    const officeGroup = document.getElementById('edit-office-group');
+    const agentGroup = document.getElementById('edit-agent-group');
 
-    await fetch(`${API_URL}/users/${id}`, {
-        method:'DELETE',
-        headers:getHeaders()
-    });
+    if (user.role === 'agent') {
+        officeGroup.classList.add('hidden');
+        agentGroup.classList.remove('hidden');
+        
+        const countrySelect = document.getElementById('edit-user-country');
+        const countries = await fetchCountries();
+        fillSelect(countrySelect, countries, "اختر الدولة");
+        countrySelect.value = user.country_id || "";
+        
+        await handleEditCountryChange();
+        document.getElementById('edit-user-city').value = user.city_id || "";
+    } else {
+        officeGroup.classList.remove('hidden');
+        agentGroup.classList.add('hidden');
+        
+        const officeSelect = document.getElementById('edit-user-office');
+        const res = await fetch(`${API_URL}/offices`, { headers: getHeaders() });
+        const offices = await res.json();
+        fillSelect(officeSelect, offices.data, "اختر المكتب");
+        officeSelect.value = user.office_id || "";
+    }
 
-    loadEmployees();
+    document.getElementById('edit-modal').classList.remove('hidden');
 }
 
-function editUser(id){
-    alert("قريباً: تعديل المستخدم " + id);
+// إرسال التعديل
+document.getElementById('edit-user-form').onsubmit = async (e) => {
+    e.preventDefault();
+    const id = document.getElementById('edit-user-id').value;
+    const role = document.getElementById('edit-user-role').value;
+    
+    const data = {
+        name: document.getElementById('edit-user-name').value,
+        email: document.getElementById('edit-user-email').value,
+        phone: document.getElementById('edit-user-phone').value,
+    };
+
+    const pass = document.getElementById('edit-user-password').value;
+    if (pass) data.password = pass;
+
+    if (role === 'agent') {
+        data.country_id = document.getElementById('edit-user-country').value;
+        data.city_id = document.getElementById('edit-user-city').value;
+    } else {
+        data.office_id = document.getElementById('edit-user-office').value;
+    }
+
+    const res = await fetch(`${API_URL}/users/${id}`, {
+        method: 'PUT',
+        headers: getHeaders(),
+        body: JSON.stringify(data)
+    });
+
+    if (res.ok) {
+        alert("تم التحديث بنجاح");
+        closeEditModal();
+        loadEmployees();
+    } else {
+        alert("خطأ في التحديث");
+    }
+};
+function closeEditModal() {
+    document.getElementById('edit-modal').classList.add('hidden');
 }
 
 /* =========================
