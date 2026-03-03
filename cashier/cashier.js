@@ -29,10 +29,10 @@ async function checkAuth() {
         window.location.href = '/FlashPay-Front/login/login.html';
         return null;
     }
-}
-async function loadNewTransfers() {
+}async function loadNewTransfers() {
     try {
-        const res = await fetch(`${API_URL}/transfers?status=pending`, {
+        // تعديل: جلب الحوالات التي وافق عليها الإدارة فقط
+        const res = await fetch(`${API_URL}/transfers?status=ready`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
         const json = await res.json();
@@ -40,42 +40,98 @@ async function loadNewTransfers() {
         tbody.innerHTML = '';
 
         json.data.forEach(transfer => {
-            tbody.innerHTML += `
-                <tr>
-                    <td>#${transfer.id}</td>
-                    <td>${transfer.sender_name}</td>
-                    <td>$${transfer.amount}</td>
-                    <td>
-                        <button class="btn-primary" onclick="acceptTransfer(${transfer.id})">تأكيد الاستلام (Accept)</button>
-                    </td>
-                </tr>
-            `;
-        });
+    tbody.innerHTML += `
+        <tr>
+            <td>#${transfer.id}</td>
+            <td>${transfer.sender?.name ?? ''}</td>
+            <td>$${transfer.amount}</td>
+            <td>
+               <div class="upload-wrapper">
+    <label class="custom-file-upload">
+        <input type="file" 
+               id="id_image_${transfer.id}" 
+               accept="image/*"
+               onchange="previewImage(event, ${transfer.id})">
+        <i class="fa-solid fa-id-card"></i>
+        اختيار صورة الهوية
+    </label>
+
+    <span class="file-name" id="file_name_${transfer.id}">
+        لم يتم اختيار ملف
+    </span>
+
+    <img id="preview_${transfer.id}" class="preview-img hidden">
+</div>
+
+<button class="btn-primary"
+        onclick="acceptTransfer(${transfer.id})">
+    تأكيد التسليم
+</button>
+                
+            </td>
+        </tr>
+    `;
+});
     } catch (error) {
         console.error("Error loading transfers:", error);
     }
 }
 
-async function acceptTransfer(transferId) {
+function previewImage(event, id) {
+    const file = event.target.files[0];
+
+    if (!file) return;
+
+    document.getElementById(`file_name_${id}`).textContent = file.name;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const img = document.getElementById(`preview_${id}`);
+        img.src = e.target.result;
+        img.classList.remove("hidden");
+    };
+    reader.readAsDataURL(file);
+}async function acceptTransfer(transferId) {
+
+    const fileInput = document.getElementById(`id_image_${transferId}`);
+    const file = fileInput.files[0];
+
+    if (!file) {
+        alert("يرجى اختيار صورة الهوية أولاً");
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('_method', 'PATCH'); // 👈 هذا السطر السحري
+    formData.append('status', 'completed');
+    formData.append('receiver_id_image', file);
+
     try {
         const res = await fetch(`${API_URL}/transfers/${transferId}/update-status`, {
-            method: 'PATCH',
+            method: 'POST', // 👈 أصبحت POST
             headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
+                'Authorization': `Bearer ${token}`,
+                'Accept': 'application/json'
             },
-            body: JSON.stringify({ status: 'cashier_accepted' }) // تغيير الحالة حسب متطلبات الباك إند
+            body: formData
         });
+
+        const data = await res.json();
+        console.log(data);
+
         if (res.ok) {
-            alert('تم تأكيد الحوالة وإرسالها لمدير المكتب للموافقة');
-            loadNewTransfers(); 
+            alert('تم تأكيد التسليم بنجاح');
+            loadNewTransfers();
         } else {
-            alert('حدث خطأ أثناء التأكيد');
+            alert(data.message || "فشل التحديث");
         }
+
     } catch (error) {
+        console.error(error);
         alert('خطأ في الاتصال');
     }
 }
+
 
 async function handleLogout() {
     await fetch(`${API_URL}/logout`, { method: 'POST', headers: { 'Authorization': `Bearer ${token}` } });
@@ -88,5 +144,5 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!token) return;
 
 loadNewTransfers();
-loadPendingTransfers();
+
 });     

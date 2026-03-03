@@ -432,6 +432,30 @@ console.log(data);
     }
 });
 
+async function loadOfficesForSelect() {
+    try {
+        const res = await fetch(`${API_URL}/offices`, {
+            headers: getHeaders()
+        });
+
+        const json = await res.json();
+
+        const officeSelect = document.getElementById('emp-office');
+        if (!officeSelect) return;
+
+        officeSelect.innerHTML = `<option value="">اختر المكتب</option>`;
+
+        json.data.forEach(office => {
+            const option = document.createElement('option');
+            option.value = office.id;
+            option.textContent = office.name;
+            officeSelect.appendChild(option);
+        });
+
+    } catch (error) {
+        console.error("Error loading offices for select:", error);
+    }
+}
 /* =========================
    Add Employee / Agent
 ========================= */
@@ -454,6 +478,7 @@ document.getElementById('add-employee-form')?.addEventListener('submit', async (
         data.balance = document.getElementById('emp-balance').value || 0;
     } else {
         data.office_id = document.getElementById('emp-office').value || null;
+        
     }
 
     console.log("Employee Data:", data);
@@ -831,7 +856,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!token) return;
 
     await loadOffices();
+    await loadOfficesForSelect();
     await initOfficeCities();
+    
     await initAgentLocation();
     await loadCurrencies();
     await loadEmployees();

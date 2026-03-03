@@ -33,50 +33,71 @@ async function checkAuth() {
 
 async function loadPendingTransfers() {
     try {
-        // افتراض وجود نقطة نهاية تجلب حوالات المكتب الحالي
-        const res = await fetch(`${API_URL}/transfers?status=cashier_accepted`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+        const res = await fetch(`${API_URL}/transfers?status=pending`, {
+            method: 'GET',
+            headers: { 
+                'Authorization': `Bearer ${token}`,
+                'Accept': 'application/json' 
+            }
         });
+        
+        if (!res.ok) {
+            console.error("Server Error:", res.status);
+            return;
+        }
+
         const json = await res.json();
         const tbody = document.getElementById('transfers-list');
         tbody.innerHTML = '';
 
-        json.data.forEach(transfer => {
-            tbody.innerHTML += `
-                <tr>
-                    <td>#${transfer.id}</td>
-                    <td>$${transfer.amount}</td>
-                    <td>${transfer.receiver_name}</td>
-                    <td><span style="color: orange;">مقبولة من الكاشير</span></td>
-                    <td>
-                        <button class="btn-success-sm" onclick="approveTransfer(${transfer.id}, 'admin_approved')">موافقة نهائية</button>
-                        <button class="btn-danger-sm" onclick="approveTransfer(${transfer.id}, 'rejected')">رفض</button>
-                    </td>
-                </tr>
-            `;
-        });
+        // ملاحظة: الـ Controller يرجع البيانات داخل كائن اسمه data
+        if (json.status === 'success' && Array.isArray(json.data)) {
+            json.data.forEach(transfer => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td>#${transfer.id}</td>
+                        <td>$${transfer.amount}</td>
+                        <td>${transfer.receiver_name}</td>
+                        <td><span style="color: orange;">بانتظار الموافقة</span></td>
+                        <td>
+                            <button class="btn-approve" onclick="approveTransfer(${transfer.id}, 'admin_approved')">موافقة</button>
+                            <button class="btn-reject" onclick="approveTransfer(${transfer.id}, 'rejected')">رفض</button>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
     } catch (error) {
         console.error("Error loading transfers:", error);
     }
 }
-
 async function approveTransfer(transferId, newStatus) {
     try {
         const res = await fetch(`${API_URL}/transfers/${transferId}/update-status`, {
             method: 'PATCH',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
+                'Authorization': `Bearer ${token}`,
+                'Accept': 'application/json'
             },
-            body: JSON.stringify({ status: newStatus })
+            body: JSON.stringify({ 
+                status: 'ready',
+                fee: 0
+            })
         });
+
+        const data = await res.json();
+
         if (res.ok) {
             alert('تم تحديث حالة الحوالة بنجاح');
-            loadPendingTransfers(); // إعادة تحميل الجدول
+            loadPendingTransfers();
         } else {
-            alert('حدث خطأ أثناء التحديث');
+            console.log(data);
+            alert('حدث خطأ');
         }
+
     } catch (error) {
+        console.error(error);
         alert('خطأ في الاتصال');
     }
 }
