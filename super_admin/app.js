@@ -5,7 +5,7 @@ const token = localStorage.getItem('auth_token');
    Auth Check
 ========================= */
 if (!token) {
-    window.location.href = '/FlashPay-Front/login/index.html';
+    window.location.href = '../login/index.html';
 }
 
 /* =========================
