@@ -41,13 +41,13 @@ document.getElementById('login-form').addEventListener('submit', async function(
 
             switch (role) {
                 case 'super_admin':
-                    window.location.href = '../super_admin/index.html';
+                    window.location.href = '../super_admin/super.html';
                     break;
                 case 'admin':
-                    window.location.href = '../office_manager/index.html';
+                    window.location.href = '../office_manager/admin.html';
                     break;
                 case 'cashier':
-                    window.location.href = '../cashier/index.html';
+                    window.location.href = '../cashier/cashier.html';
                     break;
                 case 'accountant':
                     window.location.href = '../accountant/index.html'; // إذا كان لديك مجلد للمحاسب
@@ -73,20 +73,36 @@ document.getElementById('login-form').addEventListener('submit', async function(
         console.error('Login Error:', error);
     }
 });
+window.onload = async function() {
 
-// إذا كان المستخدم مسجل دخول بالفعل، نوجهه تلقائياً حسب الرول
-window.onload = function() {
     const token = localStorage.getItem('auth_token');
-    const userDataStr = localStorage.getItem('user_data');
-    
-    if (token && userDataStr) {
-        try {
-            const user = JSON.parse(userDataStr);
-            if(user.role === 'super_admin') window.location.href = '../super_admin/index.html';
-            else if(user.role === 'admin') window.location.href = '../office_manager/index.html';
-            else if(user.role === 'cashier') window.location.href = '../cashier/index.html';
-        } catch (e) {
+
+    if (!token) return;
+
+    try {
+        const response = await fetch(`${API_URL}/me`, {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Accept': 'application/json'
+            }
+        });
+
+        if (!response.ok) {
             localStorage.clear();
+            return;
         }
+
+        const data = await response.json();
+        const user = data.user;
+
+        if(user.role === 'super_admin')
+            window.location.href = '../super_admin/super.html';
+        else if(user.role === 'admin')
+            window.location.href = '../office_manager/admin.html';
+        else if(user.role === 'cashier')
+            window.location.href = '../cashier/cashier.html';
+
+    } catch {
+        localStorage.clear();
     }
 };
