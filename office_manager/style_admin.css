@@ -247,7 +247,28 @@ button{
     padding:8px 14px;
     border-radius:8px;
 }
+.status-badge{
+    padding:6px 12px;
+    border-radius:50px;
+    font-size:12px;
+    font-weight:700;
+    display:inline-block;
+}
 
+.status-pending{
+    background:#fef3c7;
+    color:#b45309;
+}
+
+.status-approved{
+    background:#dcfce7;
+    color:#166534;
+}
+
+.status-rejected{
+    background:#fee2e2;
+    color:#991b1b;
+}   
 /* ================= ANIMATION ================= */
 @keyframes fadeUp{
     from{

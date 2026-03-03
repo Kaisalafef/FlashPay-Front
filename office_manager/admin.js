@@ -30,7 +30,138 @@ async function checkAuth() {
         return null;
     }
 }
+async function showAllTransfers() {
 
+    document.querySelector('.card').style.display = 'none';
+    document.getElementById('all-transfers-card').style.display = 'block';
+
+    try {
+        const res = await fetch(`${API_URL}/transfers`, {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Accept': 'application/json'
+            }
+        });
+
+        const json = await res.json();
+        const tbody = document.getElementById('all-transfers-list');
+        tbody.innerHTML = '';
+
+        if (json.status === 'success' && Array.isArray(json.data)) {
+
+            json.data.forEach(transfer => {
+
+                let statusClass = '';
+                let statusText = '';
+
+                switch(transfer.status){
+                    case 'pending':
+                        statusClass = 'status-badge status-pending';
+                        statusText = 'بانتظار الموافقة';
+                        break;
+                    case 'ready':
+                        statusClass = 'status-badge status-approved';
+                        statusText = 'تمت الموافقة';
+                        break;
+                    case 'rejected':
+                        statusClass = 'status-badge status-rejected';
+                        statusText = 'مرفوضة';
+                        break;
+                    default:
+                        statusClass = 'status-badge';
+                        statusText = transfer.status;
+                }
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td>#${transfer.id}</td>
+                        <td>$${transfer.amount}</td>
+                        <td>${transfer.sender_name ?? '-'}</td>
+                        <td>${transfer.receiver_name}</td>
+                        <td><span class="${statusClass}">${statusText}</span></td>
+                        <td>${new Date(transfer.created_at).toLocaleString()}</td>
+                    </tr>
+                `;
+            });
+        }
+
+    } catch (error) {
+        console.error("Error loading all transfers:", error);
+    }
+}
+function showPendingTransfers(){
+    document.getElementById('pending-transfers-card').style.display = 'block';
+    document.getElementById('all-transfers-card').style.display = 'none';
+}
+function showAllTransfers(){
+    document.getElementById('pending-transfers-card').style.display = 'none';
+    document.getElementById('all-transfers-card').style.display = 'block';
+
+    loadAllTransfers(); // فصل التحميل عن العرض (أفضل تنظيم)
+}
+
+function setActive(element){
+    document.querySelectorAll('.sidebar nav li')
+        .forEach(li => li.classList.remove('active'));
+
+    element.parentElement.classList.add('active');
+}
+async function loadAllTransfers(){
+
+    try {
+        const res = await fetch(`${API_URL}/transfers`, {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Accept': 'application/json'
+            }
+        });
+
+        const json = await res.json();
+        const tbody = document.getElementById('all-transfers-list');
+        tbody.innerHTML = '';
+
+        if (json.status === 'success' && Array.isArray(json.data)) {
+
+            json.data.forEach(transfer => {
+
+                let statusClass = '';
+                let statusText = '';
+
+                switch(transfer.status){
+                    case 'pending':
+                        statusClass = 'status-badge status-pending';
+                        statusText = 'بانتظار الموافقة';
+                        break;
+                    case 'ready':
+                        statusClass = 'status-badge status-approved';
+                        statusText = 'تمت الموافقة';
+                        break;
+                    case 'rejected':
+                        statusClass = 'status-badge status-rejected';
+                        statusText = 'مرفوضة';
+                        break;
+                    default:
+                        statusClass = 'status-badge';
+                        statusText = transfer.status;
+                }
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td>#${transfer.id}</td>
+                        <td>$${transfer.amount}</td>
+                        <td>${transfer.sender_name ?? '-'}</td>
+                        <td>${transfer.receiver_name}</td>
+                        <td><span class="${statusClass}">${statusText}</span></td>
+                        <td>${new Date(transfer.created_at).toLocaleString()}</td>
+                    </tr>
+                `;
+            });
+        }
+
+    } catch (error) {
+        console.error(error);
+    }
+}
 async function loadPendingTransfers() {
     try {
         const res = await fetch(`${API_URL}/transfers?status=pending`, {

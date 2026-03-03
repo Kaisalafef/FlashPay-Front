@@ -13,10 +13,22 @@
             <i class="fa-solid fa-wallet"></i><span>FlashPay</span>
         </div>
         <nav>
-            <ul>
-                <li class="active"><a href="#"><i class="fa-solid fa-list-check"></i> الحوالات المعلقة (بانتظار الموافقة)</a></li>
-            </ul>
-        </nav>
+    <ul>
+        <li class="active">
+            <a href="#" onclick="setActive(this); showPendingTransfers();">
+                <i class="fa-solid fa-list-check"></i>
+                الحوالات المعلقة (بانتظار الموافقة)
+            </a>
+        </li>
+
+        <li>
+            <a href="#" onclick="setActive(this); showAllTransfers();">
+                <i class="fa-solid fa-clock-rotate-left"></i>
+                سجل جميع الحوالات
+            </a>
+        </li>
+    </ul>
+</nav>
         <div class="logout">
             <a href="#" onclick="handleLogout()"><i class="fa-solid fa-arrow-right-from-bracket"></i> تسجيل الخروج</a>
         </div>
@@ -28,7 +40,26 @@
         </header>
 
         <div class="content-body">
-            <div class="card">
+<div class="card" id="all-transfers-card" style="display:none;">
+        <div class="card-header">
+        <h3>سجل جميع الحوالات</h3>
+    </div>
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>رقم الحوالة</th>
+                <th>المبلغ</th>
+                <th>المرسل</th>
+                <th>المستلم</th>
+                <th>الحالة</th>
+                <th>التاريخ</th>
+            </tr>
+        </thead>
+        <tbody id="all-transfers-list">
+        </tbody>
+    </table>
+</div>
+            <div class="card" id="pending-transfers-card">
                 <div class="card-header">
                   <h3>الحوالات الجديدة (بانتظار الموافقة)</h3>
                 </div>

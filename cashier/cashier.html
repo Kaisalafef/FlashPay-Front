@@ -1,52 +1,57 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FlashPay - Cashier</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="cashier.css">
-</head>
-<body>
-    <aside class="sidebar">
-        <div class="logo">
-            <i class="fa-solid fa-wallet"></i><span>FlashPay</span>
-        </div>
-        <nav>
-            <ul>
-                <li class="active"><a href="#"><i class="fa-solid fa-money-bill-transfer"></i> الحوالات الواردة الجديدة</a></li>
-            </ul>
-        </nav>
-        <div class="logout">
-            <a href="#" onclick="handleLogout()"><i class="fa-solid fa-arrow-right-from-bracket"></i> تسجيل الخروج</a>
-        </div>
-    </aside>
-
-    <main class="main-content">
-        <header>
-            <div class="header-title"><h2>شاشة الصندوق (Cashier)</h2></div>
-        </header>
-
-        <div class="content-body">
-            <div class="card">
-                <div class="card-header">
-                    <h3>الحوالات الجاهزة للتسليم (مقبولة إدارياً)</h3>
-                </div>
-                <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th>رقم الحوالة</th>
-                            <th>المرسل</th>
-                            <th>المبلغ</th>
-                            <th>الإجراء</th>
-                        </tr>
-                    </thead>
-                    <tbody id="new-transfers-list">
-                    </tbody>
-                </table>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>FlashPay - Cashier</title>
+        <link rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+        <link rel="stylesheet" href="cashier.css">
+    </head>
+    <body>
+        <aside class="sidebar">
+            <div class="logo">
+                <i class="fa-solid fa-wallet"></i><span>FlashPay</span>
             </div>
-        </div>
-    </main>
-    <script src="cashier.js"></script>
-</body>
+            <nav>
+                <ul>
+                    <li class="active"><a href="#"><i
+                                class="fa-solid fa-money-bill-transfer"></i>
+                            الحوالات الواردة الجديدة</a></li>
+                </ul>
+            </nav>
+            <div class="logout">
+                <a href="#" onclick="handleLogout()"><i
+                        class="fa-solid fa-arrow-right-from-bracket"></i> تسجيل
+                    الخروج</a>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <header>
+                <div class="header-title"><h2>شاشة الصندوق (Cashier)</h2></div>
+            </header>
+
+            <div class="content-body">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>الحوالات الجاهزة للتسليم (مقبولة إدارياً)</h3>
+                    </div>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>رقم الحوالة</th>
+                                <th>المرسل</th>
+                                <th>المبلغ</th>
+                                <th>الإجراء</th>
+                            </tr>
+                        </thead>
+                        <tbody id="new-transfers-list">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+        <script src="cashier.js"></script>
+    </body>
 </html>
