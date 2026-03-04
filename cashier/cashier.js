@@ -1,8 +1,14 @@
 const API_URL = "http://127.0.0.1:8000/api";
-async function checkAuth() {
-  const token = localStorage.getItem("auth_token");
+let token = null;
 
-  if (!token) {
+/* ============================= */
+/*            AUTH              */
+/* ============================= */
+
+async function checkAuth() {
+  const storedToken = localStorage.getItem("auth_token");
+
+  if (!storedToken) {
     window.location.href = "/FlashPay-Front/login/login.html";
     return null;
   }
@@ -10,76 +16,102 @@ async function checkAuth() {
   try {
     const res = await fetch(`${API_URL}/me`, {
       headers: {
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${storedToken}`,
         Accept: "application/json",
       },
     });
 
-    // التوكن غير صالح (بعد migrate:fresh مثلاً)
     if (!res.ok) {
       localStorage.clear();
       window.location.href = "/FlashPay-Front/login/login.html";
       return null;
     }
 
-    return token;
+    return storedToken;
   } catch (e) {
     localStorage.clear();
     window.location.href = "/FlashPay-Front/login/login.html";
     return null;
   }
 }
+
+/* ============================= */
+/*      LOAD READY TRANSFERS    */
+/* ============================= */
+
 async function loadNewTransfers() {
   try {
-    // تعديل: جلب الحوالات التي وافق عليها الإدارة فقط
     const res = await fetch(`${API_URL}/transfers?status=ready`, {
-      headers: { Authorization: `Bearer ${token}` },
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/json",
+      },
     });
+
     const json = await res.json();
     const tbody = document.getElementById("new-transfers-list");
     tbody.innerHTML = "";
 
+    if (json.status === "success" && Array.isArray(json.data)) {
     json.data.forEach((transfer) => {
-      tbody.innerHTML += `
-        <tr>
-            <td>#${transfer.id}</td>
-            <td>${transfer.sender?.name ?? ""}</td>
-            <td>$${transfer.amount}</td>
-            <td>
-               <div class="upload-wrapper">
-    <label class="custom-file-upload">
-        <input type="file" 
-               id="id_image_${transfer.id}" 
-               accept="image/*"
-               onchange="previewImage(event, ${transfer.id})">
-        <i class="fa-solid fa-id-card"></i>
-        اختيار صورة الهوية
-    </label>
 
-    <span class="file-name" id="file_name_${transfer.id}">
-        لم يتم اختيار ملف
-    </span>
+    const amount = Number(transfer.amount);
+    
 
-    <img id="preview_${transfer.id}" class="preview-img hidden">
-</div>
+   const currencyPrice = Number(transfer.currency?.price ?? 1);
+const currencyCode = transfer.currency?.code ?? "USD";
+    const deliveryPrice = amount * currencyPrice;
 
-<button class="btn-primary"
-        onclick="acceptTransfer(${transfer.id})">
-    تأكيد التسليم
-</button>
-                
-            </td>
-        </tr>
+    tbody.innerHTML += `
+      <tr>
+          <td>#${transfer.id}</td>
+          <td>${transfer.sender?.name ?? "-"}</td>
+          <td>$${amount.toFixed(2)}</td>
+          <td>${currencyCode}</td>
+          <td style="font-weight:bold; color:#1e3c72;">
+              ${deliveryPrice.toFixed(2)} ${currencyCode}
+          </td>
+          <td>
+    <div class="upload-wrapper">
+
+        <label class="custom-file-upload">
+            <input type="file"
+                   id="id_image_${transfer.id}"
+                   accept="image/*"
+                   onchange="previewImage(event, ${transfer.id})">
+            <i class="fa-solid fa-id-card"></i>
+            اختيار صورة الهوية
+        </label>
+
+        <span class="file-name" id="file_name_${transfer.id}">
+            لم يتم اختيار ملف
+        </span>
+
+        <img id="preview_${transfer.id}" class="preview-img hidden">
+
+    </div>
+
+    <button id="btn_${transfer.id}"
+            onclick="acceptTransfer(${transfer.id})"
+            class="btn-primary">
+        تأكيد التسليم
+    </button>
+</td>
+      </tr>
     `;
-    });
+});
+    }
+
   } catch (error) {
     console.error("Error loading transfers:", error);
   }
 }
 
+/* ============================= */
+/*        IMAGE PREVIEW         */
+/* ============================= */
 function previewImage(event, id) {
   const file = event.target.files[0];
-
   if (!file) return;
 
   document.getElementById(`file_name_${id}`).textContent = file.name;
@@ -92,8 +124,15 @@ function previewImage(event, id) {
   };
   reader.readAsDataURL(file);
 }
+
+/* ============================= */
+/*      COMPLETE TRANSFER       */
+/* ============================= */
+
 async function acceptTransfer(transferId) {
+
   const fileInput = document.getElementById(`id_image_${transferId}`);
+  const button = document.getElementById(`btn_${transferId}`);
   const file = fileInput.files[0];
 
   if (!file) {
@@ -101,8 +140,12 @@ async function acceptTransfer(transferId) {
     return;
   }
 
+  // منع الضغط المكرر
+  button.disabled = true;
+  button.innerText = "جاري المعالجة...";
+
   const formData = new FormData();
-  formData.append("_method", "PATCH"); // 👈 هذا السطر السحري
+  formData.append("_method", "PATCH");
   formData.append("status", "completed");
   formData.append("receiver_id_image", file);
 
@@ -110,38 +153,48 @@ async function acceptTransfer(transferId) {
     const res = await fetch(
       `${API_URL}/transfers/${transferId}/update-status`,
       {
-        method: "POST", // 👈 أصبحت POST
+        method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
           Accept: "application/json",
         },
         body: formData,
-      },
+      }
     );
 
     const data = await res.json();
-    console.log(data);
 
     if (res.ok) {
-      alert("تم تأكيد التسليم بنجاح");
+      alert("تم تسليم الحوالة بنجاح");
       loadNewTransfers();
     } else {
       alert(data.message || "فشل التحديث");
+      button.disabled = false;
+      button.innerText = "تأكيد التسليم";
     }
+
   } catch (error) {
     console.error(error);
     alert("خطأ في الاتصال");
+    button.disabled = false;
+    button.innerText = "تأكيد التسليم";
   }
 }
+
+/* ============================= */
 
 async function handleLogout() {
   await fetch(`${API_URL}/logout`, {
     method: "POST",
     headers: { Authorization: `Bearer ${token}` },
   });
+
   localStorage.removeItem("auth_token");
   window.location.href = "../login/login.html";
 }
+
+/* ============================= */
+
 document.addEventListener("DOMContentLoaded", async () => {
   token = await checkAuth();
   if (!token) return;

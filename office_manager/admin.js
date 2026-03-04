@@ -30,6 +30,36 @@ async function checkAuth() {
         return null;
     }
 }
+
+
+async function rejectTransfer(transferId) {
+    try {
+        const res = await fetch(`${API_URL}/transfers/${transferId}/update-status`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({ 
+                status: 'rejected'
+            })
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+            alert('تم رفض الحوالة');
+            loadPendingTransfers();
+        } else {
+            alert(data.message || 'حدث خطأ');
+        }
+
+    } catch (error) {
+        console.error(error);
+        alert('خطأ في الاتصال');
+    }
+}
 async function showAllTransfers() {
 
     document.querySelector('.card').style.display = 'none';
@@ -128,7 +158,7 @@ async function loadAllTransfers(){
                 let statusText = '';
 
                 switch(transfer.status){
-                    case 'pending':
+                    case 'waiting':
                         statusClass = 'status-badge status-pending';
                         statusText = 'بانتظار الموافقة';
                         break;
@@ -164,7 +194,7 @@ async function loadAllTransfers(){
 }
 async function loadPendingTransfers() {
     try {
-        const res = await fetch(`${API_URL}/transfers?status=pending`, {
+        const res = await fetch(`${API_URL}/transfers?status=waiting`, {
             method: 'GET',
             headers: { 
                 'Authorization': `Bearer ${token}`,
@@ -184,47 +214,69 @@ async function loadPendingTransfers() {
         // ملاحظة: الـ Controller يرجع البيانات داخل كائن اسمه data
         if (json.status === 'success' && Array.isArray(json.data)) {
             json.data.forEach(transfer => {
-                tbody.innerHTML += `
-                    <tr>
-                        <td>#${transfer.id}</td>
-                        <td>$${transfer.amount}</td>
-                        <td>${transfer.receiver_name}</td>
-                        <td><span style="color: orange;">بانتظار الموافقة</span></td>
-                        <td>
-                            <button class="btn-approve" onclick="approveTransfer(${transfer.id}, 'admin_approved')">موافقة</button>
-                            <button class="btn-reject" onclick="approveTransfer(${transfer.id}, 'rejected')">رفض</button>
-                        </td>
-                    </tr>
-                `;
-            });
+    tbody.innerHTML += `
+        <tr>
+            <td>#${transfer.id}</td>
+            <td>$${transfer.amount}</td>
+            <td>${transfer.receiver_name}</td>
+            <td><span style="color: orange;">بانتظار الموافقة</span></td>
+            <td>
+                <input type="number"
+                       id="fee_${transfer.id}"
+                       placeholder="الرسوم"
+                       min="0" inputmode="decimal"
+                       style="width:80px; margin-bottom:5px;">
+                <br>
+                <button class="btn-approve"
+                        onclick="approveTransfer(${transfer.id})">
+                        موافقة
+                </button>
+                <button class="btn-reject"
+                        onclick="rejectTransfer(${transfer.id})">
+                        رفض
+                </button>
+            </td>
+        </tr>
+    `;
+});
         }
     } catch (error) {
         console.error("Error loading transfers:", error);
     }
-}
-async function approveTransfer(transferId, newStatus) {
+}async function approveTransfer(transferId) {
+
+    const feeInput = document.getElementById(`fee_${transferId}`);
+    const feeValue = feeInput.value;
+
+    if (feeValue === "" || feeValue < 0) {
+        alert("يرجى إدخال رسوم صحيحة");
+        return;
+    }
+
     try {
-        const res = await fetch(`${API_URL}/transfers/${transferId}/update-status`, {
-            method: 'PATCH',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`,
-                'Accept': 'application/json'
-            },
-            body: JSON.stringify({ 
-                status: 'ready',
-                fee: 0
-            })
-        });
+        const res = await fetch(
+            `${API_URL}/transfers/${transferId}/update-status`,
+            {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    status: 'ready',
+                    fee: Number(feeValue)
+                })
+            }
+        );
 
         const data = await res.json();
 
         if (res.ok) {
-            alert('تم تحديث حالة الحوالة بنجاح');
+            alert('تمت الموافقة وتحويلها إلى جاهزة للتسليم');
             loadPendingTransfers();
         } else {
-            console.log(data);
-            alert('حدث خطأ');
+            alert(data.message || 'حدث خطأ');
         }
 
     } catch (error) {
@@ -232,7 +284,6 @@ async function approveTransfer(transferId, newStatus) {
         alert('خطأ في الاتصال');
     }
 }
-
 async function handleLogout() {
     await fetch(`${API_URL}/logout`, { method: 'POST', headers: { 'Authorization': `Bearer ${token}` } });
     localStorage.removeItem('auth_token');

@@ -527,15 +527,23 @@ async function loadEmployees() {
         if (!tbody) return;
 
         tbody.innerHTML = '';
-        json.data.forEach((user, index) => {
-            // منطق عرض الموقع للمندوب أو المكتب للموظف
+
+        // فلترة المستخدمين واستبعاد الـ costumer
+        const filteredUsers = json.data.filter(user => user.role !== 'customer');
+
+        filteredUsers.forEach((user, index) => {
             let locationInfo = '-';
+
             if (user.role === 'agent') {
                 const country = user.country ? user.country.name : 'بدون دولة';
                 const city = user.city ? user.city.name : 'بدون مدينة';
-                locationInfo = `<span class="location-tag"><i class="fa-solid fa-location-dot"></i> ${country}, ${city}</span>`;
+                locationInfo = `<span class="location-tag">
+                    <i class="fa-solid fa-location-dot"></i> ${country}, ${city}
+                </span>`;
             } else {
-                locationInfo = `<span class="location-tag"  > ${user.office ? user.office.name : 'بدون مكتب'}</span>`;
+                locationInfo = `<span class="location-tag">
+                    ${user.office ? user.office.name : 'بدون مكتب'}
+                </span>`;
             }
 
             tbody.innerHTML += `
@@ -556,9 +564,11 @@ async function loadEmployees() {
                     </td>
                 </tr>`;
         });
-    } catch (e) { console.error(e); }
-}
 
+    } catch (e) {
+        console.error(e);
+    }
+}   
 /* =========================
    Delete Logic (Custom Dialog)
 ========================= */

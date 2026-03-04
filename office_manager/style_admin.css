@@ -259,7 +259,181 @@ button{
     background:#fef3c7;
     color:#b45309;
 }
+/* ====== TABLE STYLE ====== */
 
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: #ffffff;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+}
+
+thead {
+  background: linear-gradient(90deg, #1e3c72, #2a5298);
+  color: white;
+}
+
+thead th {
+  padding: 14px;
+  text-align: center;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+tbody td {
+  padding: 14px;
+  text-align: center;
+  border-bottom: 1px solid #f1f1f1;
+  font-size: 14px;
+}
+
+tbody tr:hover {
+  background-color: #f8f9ff;
+  transition: 0.2s ease;
+}
+
+/* ====== INPUT FEE ====== */
+
+input[type="number"] {
+  width: 90px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  border: 1px solid #dcdcdc;
+  outline: none;
+  text-align: center;
+  transition: 0.2s ease;
+}
+
+input[type="number"]:focus {
+  border-color: #2a5298;
+  box-shadow: 0 0 4px rgba(42,82,152,0.3);
+}
+
+/* ====== BUTTONS ====== */
+
+.btn-approve,
+.btn-reject {
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  margin: 3px;
+  transition: 0.2s ease;
+}
+
+.btn-approve {
+  background-color: #28a745;
+  color: white;
+}
+
+.btn-approve:hover {
+  background-color: #218838;
+  transform: scale(1.05);
+}
+
+.btn-reject {
+  background-color: #dc3545;
+  color: white;
+}
+
+.btn-reject:hover {
+  background-color: #c82333;
+  transform: scale(1.05);
+}
+
+/* ====== STATUS BADGE ====== */
+
+.status-waiting {
+  background-color: #fff3cd;
+  color: #856404;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* ====== RESPONSIVE ====== */
+
+@media (max-width: 768px) {
+  table {
+    font-size: 12px;
+  }
+
+  input[type="number"] {
+    width: 70px;
+  }
+
+  .btn-approve,
+  .btn-reject {
+    padding: 5px 8px;
+    font-size: 11px;
+  }
+}
+
+/* ===== Upload Wrapper ===== */
+
+.upload-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+/* Hide default input */
+.custom-file-upload input[type="file"] {
+  display: none;
+}
+
+/* Custom button */
+.custom-file-upload {
+  background: linear-gradient(90deg, #1e3c72, #2a5298);
+  color: white;
+  padding: 8px 14px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: 0.2s ease;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.custom-file-upload:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 14px rgba(0,0,0,0.15);
+}
+
+/* File name */
+.file-name {
+  font-size: 12px;
+  color: #555;
+}
+
+/* Image preview */
+.preview-img {
+  width: 100px;
+  height: 100px;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 2px solid #2a5298;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  transition: 0.3s ease;
+}
+
+.preview-img:hover {
+  transform: scale(1.05);
+}
+
+/* Hidden class */
+.hidden {
+  display: none;
+}   
 .status-approved{
     background:#dcfce7;
     color:#166534;
