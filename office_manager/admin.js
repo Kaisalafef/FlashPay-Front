@@ -156,14 +156,16 @@ async function showOfficeSection() {
     try {
         // 1. جلب بيانات المستخدم الحالي لمعرفة مكتبه
         const meRes = await fetch(`${API_URL}/me`, { headers: { 'Authorization': `Bearer ${token}` } });
+        console.log("Me Response:", meRes);
         const meData = await meRes.json();
         const myOfficeId = meData.user.office_id;
-
+         console.log("My Office ID:", myOfficeId);
         // 2. جلب بيانات المكتب
         const officeRes = await fetch(`${API_URL}/offices`, { headers: { 'Authorization': `Bearer ${token}` } });
+       console.log("Offices Response:", officeRes);
         const officesJson = await officeRes.json();
         const myOffice = officesJson.data.find(o => o.id === myOfficeId);
-
+        console.log("myOffice",myOffice)
         if (myOffice) {
             document.getElementById('office-details').innerHTML = `
                 <p><strong>اسم المكتب:</strong> ${myOffice.name}</p>
@@ -202,21 +204,53 @@ async function showSafesSection() {
         const meData = await meRes.json();
         
         // فلترة الصناديق الخاصة بمكتبي فقط
-        const mySafes = json.data.filter(s => s.owner === meData.user.office?.name || s.type === 'trading');
+    const myOfficeId = meData.user.office_id;
+
+const mySafes = json.data.filter(s => 
+    s.office_id === myOfficeId
+);
+console.log("My Safes:", mySafes);
 
         const container = document.getElementById('safes-container');
-        container.innerHTML = mySafes.map(safe => `
-            <div style="padding:20px; border-radius:12px; border:2px solid #eee; background:${safe.type === 'trading' ? '#fff9f0' : '#f0f9ff'}">
-                <h4 style="color:#1e3c72; margin-bottom:10px;">
-                    <i class="fa-solid ${safe.type === 'trading' ? 'fa-chart-line' : 'fa-vault'}"></i> 
-                    ${safe.type === 'trading' ? 'صندوق التداول (المبيعات)' : 'الصندوق الرئيسي'}
-                </h4>
-                <div style="font-size:24px; font-weight:bold; color:#222;">
-                    ${parseFloat(safe.balance).toLocaleString()} <small>${safe.currency}</small>
-                </div>
-                ${safe.cost ? `<div style="font-size:12px; color:gray; margin-top:5px;">متوسط التكلفة: ${safe.cost}</div>` : ''}
-            </div>
-        `).join('');
+
+container.innerHTML = mySafes.map(safe => {
+
+let title = '';
+let icon = '';
+let bg = '';
+
+if(safe.type === 'office_main'){
+    title = 'الصندوق الرئيسي';
+    icon = 'fa-vault';
+    bg = '#f0f9ff';
+}
+
+if(safe.type === 'trading'){
+    title = 'صندوق المبيعات / التداول';
+    icon = 'fa-chart-line';
+    bg = '#fff9f0';
+}
+
+return `
+<div style="padding:20px;border-radius:12px;border:2px solid #eee;background:${bg}">
+    <h4 style="color:#1e3c72;margin-bottom:10px;">
+        <i class="fa-solid ${icon}"></i> ${title}
+    </h4>
+
+    <div style="font-size:24px;font-weight:bold;color:#222;">
+        ${parseFloat(safe.balance).toLocaleString()} 
+        <small>${safe.currency}</small>
+    </div>
+
+    ${safe.cost ? `
+        <div style="font-size:12px;color:gray;margin-top:5px;">
+            متوسط التكلفة: ${safe.cost}
+        </div>` : ''}
+
+</div>
+`;
+
+}).join('');
     } catch (e) { console.error("Error loading safes:", e); }
 }
 
