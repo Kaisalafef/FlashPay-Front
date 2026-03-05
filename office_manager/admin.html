@@ -27,6 +27,18 @@
                 سجل جميع الحوالات
             </a>
         </li>
+        <li>
+    <a href="#" onclick="setActive(this); showOfficeSection();">
+        <i class="fa-solid fa-building"></i>
+        معلومات المكتب والموظفين
+    </a>
+</li>
+<li>
+    <a href="#" onclick="setActive(this); showSafesSection();">
+        <i class="fa-solid fa-vault"></i>
+        صناديق المكتب المالية
+    </a>
+</li>
     </ul>
 </nav>
         <div class="logout">
@@ -40,6 +52,33 @@
         </header>
 
         <div class="content-body">
+
+            <div class="card" id="office-info-card" style="display:none;">
+    <div class="card-header">
+        <h3>بيانات المكتب وطاقم العمل</h3>
+    </div>
+    <div id="office-details" style="margin-bottom: 20px; padding: 15px; background: #f8fafc; border-radius: 8px;">
+        </div>
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>الموظف</th>
+                <th>الدور</th>
+                <th>رقم الهاتف</th>
+                <th>الحالة</th>
+            </tr>
+        </thead>
+        <tbody id="staff-list"></tbody>
+    </table>
+</div>
+
+<div class="card" id="safes-card" style="display:none;">
+    <div class="card-header">
+        <h3>خزينة المكتب (الرئيسي والمبيعات)</h3>
+    </div>
+    <div class="safes-grid" id="safes-container" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 15px;">
+        </div>
+</div>
 <div class="card" id="all-transfers-card" style="display:none;">
         <div class="card-header">
         <h3>سجل جميع الحوالات</h3>

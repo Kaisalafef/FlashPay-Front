@@ -60,7 +60,7 @@ async function loadNewTransfers() {
 
    const currencyPrice = Number(transfer.currency?.price ?? 1);
 const currencyCode = transfer.currency?.code ?? "USD";
-    const deliveryPrice = amount * currencyPrice;
+    const deliveryPrice = amount / currencyPrice;
 
     tbody.innerHTML += `
       <tr>
