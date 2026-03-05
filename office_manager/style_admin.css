@@ -425,7 +425,28 @@ input[type="number"]:focus {
   box-shadow: 0 4px 12px rgba(0,0,0,0.1);
   transition: 0.3s ease;
 }
+/* تنسيق كروت الصناديق */
+.safes-grid div {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    cursor: default;
+}
 
+.safes-grid div:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 15px rgba(0,0,0,0.1);
+}
+
+#office-details p {
+    margin-bottom: 8px;
+    font-size: 15px;
+    color: #444;
+}
+
+/* أيقونات القائمة الجانبية */
+.sidebar nav a i {
+    width: 20px;
+    text-align: center;
+}
 .preview-img:hover {
   transform: scale(1.05);
 }

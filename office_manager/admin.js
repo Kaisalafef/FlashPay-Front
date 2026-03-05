@@ -192,6 +192,99 @@ async function loadAllTransfers(){
         console.error(error);
     }
 }
+
+// --- وظائف عرض الأقسام الجديدة ---
+
+function hideAllCards() {
+    document.getElementById('pending-transfers-card').style.display = 'none';
+    document.getElementById('all-transfers-card').style.display = 'none';
+    document.getElementById('office-info-card').style.display = 'none';
+    document.getElementById('safes-card').style.display = 'none';
+}
+
+async function showOfficeSection() {
+    hideAllCards();
+    document.getElementById('office-info-card').style.display = 'block';
+    
+    try {
+        // 1. جلب بيانات المستخدم الحالي لمعرفة مكتبه
+        const meRes = await fetch(`${API_URL}/me`, { headers: { 'Authorization': `Bearer ${token}` } });
+        const meData = await meRes.json();
+        const myOfficeId = meData.user.office_id;
+
+        // 2. جلب بيانات المكتب
+        const officeRes = await fetch(`${API_URL}/offices`, { headers: { 'Authorization': `Bearer ${token}` } });
+        const officesJson = await officeRes.json();
+        const myOffice = officesJson.data.find(o => o.id === myOfficeId);
+
+        if (myOffice) {
+            document.getElementById('office-details').innerHTML = `
+                <p><strong>اسم المكتب:</strong> ${myOffice.name}</p>
+                <p><strong>العنوان:</strong> ${myOffice.address || 'غير محدد'}</p>
+                <p><strong>المدينة:</strong> ${myOffice.city?.name || '-'}</p>
+            `;
+        }
+
+        // 3. جلب الموظفين وفلترتهم حسب المكتب
+        const usersRes = await fetch(`${API_URL}/users`, { headers: { 'Authorization': `Bearer ${token}` } });
+        const usersJson = await usersRes.json();
+const staff = usersJson.data.filter(u => u.office_id === myOfficeId && (u.role === 'cashier' || u.role === 'accountant'));
+        const tbody = document.getElementById('staff-list');
+        tbody.innerHTML = staff.map(user => `
+            <tr>
+                <td>${user.name}</td>
+                <td>${user.role === 'cashier' ? 'كاشير' : 'محاسب'}</td>
+                <td>${user.phone}</td>
+                <td><span class="status-badge status-approved">نشط</span></td>
+            </tr>
+        `).join('');
+
+    } catch (e) { console.error("Error loading office info:", e); }
+}
+
+async function showSafesSection() {
+    hideAllCards();
+    document.getElementById('safes-card').style.display = 'block';
+
+    try {
+        const res = await fetch(`${API_URL}/safes`, { headers: { 'Authorization': `Bearer ${token}` } });
+        const json = await res.json();
+        
+        // جلب بياناتي فقط (بناءً على اسم المكتب)
+        const meRes = await fetch(`${API_URL}/me`, { headers: { 'Authorization': `Bearer ${token}` } });
+        const meData = await meRes.json();
+        
+        // فلترة الصناديق الخاصة بمكتبي فقط
+        const mySafes = json.data.filter(s => s.owner === meData.user.office?.name || s.type === 'trading');
+
+        const container = document.getElementById('safes-container');
+        container.innerHTML = mySafes.map(safe => `
+            <div style="padding:20px; border-radius:12px; border:2px solid #eee; background:${safe.type === 'trading' ? '#fff9f0' : '#f0f9ff'}">
+                <h4 style="color:#1e3c72; margin-bottom:10px;">
+                    <i class="fa-solid ${safe.type === 'trading' ? 'fa-chart-line' : 'fa-vault'}"></i> 
+                    ${safe.type === 'trading' ? 'صندوق التداول (المبيعات)' : 'الصندوق الرئيسي'}
+                </h4>
+                <div style="font-size:24px; font-weight:bold; color:#222;">
+                    ${parseFloat(safe.balance).toLocaleString()} <small>${safe.currency}</small>
+                </div>
+                ${safe.cost ? `<div style="font-size:12px; color:gray; margin-top:5px;">متوسط التكلفة: ${safe.cost}</div>` : ''}
+            </div>
+        `).join('');
+    } catch (e) { console.error("Error loading safes:", e); }
+}
+
+// تعديل الوظائف القديمة لتعمل مع النظام الجديد
+function showPendingTransfers() {
+    hideAllCards();
+    document.getElementById('pending-transfers-card').style.display = 'block';
+    loadPendingTransfers();
+}
+
+function showAllTransfers() {
+    hideAllCards();
+    document.getElementById('all-transfers-card').style.display = 'block';
+    loadAllTransfers();
+}
 async function loadPendingTransfers() {
     try {
         const res = await fetch(`${API_URL}/transfers?status=waiting`, {
