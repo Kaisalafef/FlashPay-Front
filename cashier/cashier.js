@@ -9,7 +9,7 @@ async function checkAuth() {
   const storedToken = localStorage.getItem("auth_token");
 
   if (!storedToken) {
-    window.location.href = "/FlashPay-Front/login/login.html";
+    window.location.href = "../login/login.html";
     return null;
   }
 
@@ -23,14 +23,14 @@ async function checkAuth() {
 
     if (!res.ok) {
       localStorage.clear();
-      window.location.href = "/FlashPay-Front/login/login.html";
+      window.location.href = "../login/login.html";
       return null;
     }
 
     return storedToken;
   } catch (e) {
     localStorage.clear();
-    window.location.href = "/FlashPay-Front/login/login.html";
+    window.location.href = "../login/login.html";
     return null;
   }
 }
