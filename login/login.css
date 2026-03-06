@@ -1,5 +1,7 @@
+/* --- الإعدادات الأساسية --- */
 html {
-    font-size: 16px; /* الحجم الأساسي لضبط وحدة الـ rem */
+    font-size: 16px;
+    height: 100%;
 }
 
 * { 
@@ -12,16 +14,17 @@ html {
 body {
     background: linear-gradient(135deg, rgba(26, 26, 46, 0.85) 0%, rgba(22, 33, 62, 0.9) 20%, rgba(15, 52, 96, 0.85) 50%),
                 url('https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=1920&q=80') center/cover no-repeat fixed;
-    min-height: 100vh;
+    height: 100vh; /* استخدام height بدلاً من min-height لمنع السكرول */
+    width: 100vw;
     display: flex; 
     align-items: center; 
     justify-content: center;
     padding: 20px; 
     position: relative; 
-    overflow: hidden; 
+    overflow: hidden; /* يمنع ظهور شريط التمرير */
     direction: rtl;
-    line-height: 1.6; /* تحسين المسافة بين السطور */
-    font-size: 0.875rem; /* ~14px للنص الأساسي بدلاً من 16px */
+    line-height: 1.6;
+    font-size: 0.875rem;
 }
 
 .login-container {
@@ -29,58 +32,62 @@ body {
     border-radius: 24px;
     box-shadow: 0 25px 80px rgba(0, 0, 0, 0.4);
     width: 100%; 
-    max-width: 460px; 
-    padding: 50px 45px;
+    max-width: 440px; /* تقليل العرض قليلاً ليتناسب مع كافة الشاشات */
+    padding: 40px 35px; /* موازنة الحواف الداخلية */
     position: relative; 
     z-index: 10;
+    max-height: 95vh; /* ضمان عدم خروج الحاوية عن الشاشة */
+    overflow-y: auto; /* يسمح بالسكرول داخل الكارت فقط إذا كانت الشاشة صغيرة جداً */
 }
 
+/* --- شعار النظام --- */
 .logo-section { 
     text-align: center; 
-    margin-bottom: 35px; 
+    margin-bottom: 25px; 
 }
 
 .logo {
-    width: 90px; 
-    height: 90px;
+    width: 80px; 
+    height: 80px;
     background: linear-gradient(135deg, hsl(28, 95%, 40%) 0%, hsl(28, 95%, 55%) 100%);
-    border-radius: 24px; 
+    border-radius: 20px; 
     display: flex; 
     align-items: center; 
     justify-content: center;
-    margin: 0 auto 20px; 
+    margin: 0 auto 15px; 
     box-shadow: 0 15px 40px rgba(198, 105, 0, 0.35);
 }
 
 .logo i { 
-    font-size: 2.125rem; /* كانت 42px أصبحت تقريباً 34px */
+    font-size: 2rem;
     color: white; 
 }
 
 .logo-section h1 { 
     color: #1f2937; 
-    font-size: 1.625rem; /* كانت 32px أصبحت تقريباً 26px */
+    font-size: 1.5rem;
     font-weight: 700; 
-    margin-bottom: 8px; 
+    margin-bottom: 5px; 
 }
 
 .logo-section p { 
     color: #6b7280; 
-    font-size: 0.875rem; /* كانت 15px أصبحت تقريباً 14px */
+    font-size: 0.85rem;
     font-weight: 500; 
 }
 
+/* --- الحقول والنصوص --- */
 .form-group { 
-    margin-bottom: 24px; 
+    margin-bottom: 20px; 
     position: relative; 
 }
 
 .form-group label { 
     display: block; 
-    margin-bottom: 10px; 
+    margin-bottom: 8px; 
     color: #1f2937; 
     font-weight: 600; 
-    font-size: 0.8125rem; /* كانت 14px أصبحت تقريباً 13px */
+    font-size: 0.85rem;
 }
 
 .form-group label .required { 
@@ -97,17 +104,17 @@ body {
     top: 50%; 
     transform: translateY(-50%); 
     color: hsl(28, 95%, 40%); 
-    font-size: 1rem; /* كانت 18px أصبحت 16px */
+    font-size: 1rem;
 }
 
 .form-control {
     width: 100%; 
-    padding: 16px 50px 16px 18px;
+    padding: 14px 45px 14px 15px;
     border: 2px solid #e5e7eb; 
     border-radius: 12px;
-    font-size: 0.875rem; /* كانت 15px أصبحت تقريباً 14px */
+    font-size: 0.9rem;
     background: #f9fafb; 
-    transition: all 0.3s;
+    transition: all 0.3s ease;
 }
 
 .form-control:focus { 
@@ -117,55 +124,78 @@ body {
     box-shadow: 0 0 0 4px rgba(198, 105, 0, 0.12); 
 }
 
+/* --- نظام التنبيهات المطور (الدمج والإصلاح) --- */
+.error-message {
+    position: relative;
+    background: #fff5f5;
+    border-right: 5px solid #ff4d4d;
+    color: #c53030;
+    padding: 14px 18px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    display: none; /* يتم إظهاره عبر JS */
+    align-items: center;
+    gap: 12px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    box-shadow: 0 10px 20px rgba(220, 38, 38, 0.1);
+    animation: slideDownFade 0.4s ease forwards, shake 0.4s ease-in-out;
+}
+
+.error-message.show {
+    display: flex;
+}
+
+.error-message i {
+    font-size: 1.1rem;
+    color: #ff4d4d;
+}
+
+/* تأثير الحقل المخطئ */
+.form-control.is-invalid {
+    border-color: #ff4d4d !important;
+    background-color: #fffafa !important;
+    box-shadow: 0 0 8px rgba(255, 77, 77, 0.2) !important;
+    animation: shake 0.4s ease-in-out;
+}
+
+/* زر تسجيل الدخول */
 .btn-login {
     width: 100%; 
-    padding: 16px;
+    padding: 15px;
     background: linear-gradient(135deg, hsl(28, 95%, 40%) 0%, hsl(28, 95%, 35%) 100%);
     color: white; 
     border: none; 
     border-radius: 12px;
-    font-size: 0.9375rem; /* كانت 17px أصبحت تقريباً 15px */
+    font-size: 1rem;
     font-weight: 600; 
     cursor: pointer; 
     transition: all 0.3s;
-    margin-top: 15px; 
+    margin-top: 10px; 
     box-shadow: 0 4px 15px rgba(198, 105, 0, 0.3);
 }
 
 .btn-login:hover { 
-    transform: translateY(-3px); 
-    box-shadow: 0 12px 35px rgba(198, 105, 0, 0.45); 
+    transform: translateY(-2px); 
+    box-shadow: 0 8px 25px rgba(198, 105, 0, 0.45); 
 }
 
-.error-message {
-    background: #fef2f2; 
-    border: 1px solid #fecaca; 
-    color: #dc2626;
-    padding: 14px; 
-    border-radius: 10px; 
-    margin-bottom: 24px;
-    display: none; 
-    align-items: center; 
-    gap: 10px; 
-    font-size: 0.8125rem; /* كانت 14px أصبحت تقريباً 13px */
-    font-weight: 500;
+.btn-login:active {
+    transform: translateY(0);
 }
 
-.error-message.show { 
-    display: flex; 
-}
-
+/* الروابط السفلية */
 .footer-links { 
     text-align: center; 
-    margin-top: 30px; 
-    padding-top: 25px; 
+    margin-top: 25px; 
+    padding-top: 20px; 
     border-top: 1px solid #e5e7eb; 
 }
 
 .footer-links a { 
     color: hsl(28, 95%, 40%); 
     text-decoration: none; 
-    font-size: 0.8125rem; /* كانت 14px أصبحت تقريباً 13px */
+    font-size: 0.85rem;
     font-weight: 600; 
 }
 
@@ -175,24 +205,21 @@ body {
 
 .copyright { 
     text-align: center; 
-    margin-top: 20px; 
+    margin-top: 15px; 
     color: #6b7280; 
-    font-size: 0.6875rem; /* كانت 12px أصبحت تقريباً 11px */
+    font-size: 0.75rem;
 }
 
-/* Loading Overlay */
+/* --- التحميل (Loading Overlay) --- */
 .loading-overlay {
     position: fixed; 
-    top: 0; 
-    left: 0; 
-    right: 0; 
-    bottom: 0;
-    background: rgba(255, 255, 255, 0.9); 
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(255, 255, 255, 0.95); 
     display: none;
+    flex-direction: column;
     align-items: center; 
     justify-content: center; 
     z-index: 9999; 
-    flex-direction: column; 
     gap: 20px;
 }
 
@@ -201,21 +228,50 @@ body {
 }
 
 .loading-spinner {
-    width: 60px; 
-    height: 60px; 
+    width: 50px; 
+    height: 50px; 
     border: 4px solid #f3f3f3;
     border-top: 4px solid hsl(28, 95%, 40%); 
     border-radius: 50%;
     animation: spin 1s linear infinite;
 }
 
-.loading-text { 
-    color: #1f2937; 
-    font-weight: 600; 
-    font-size: 0.875rem; 
-}
-
+/* --- Animations --- */
 @keyframes spin { 
     0% { transform: rotate(0deg); } 
     100% { transform: rotate(360deg); } 
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    50% { transform: translateX(5px); }
+    75% { transform: translateX(-5px); }
+}
+
+@keyframes slideDownFade {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-out {
+    animation: fadeOut 0.4s ease forwards;
+}
+
+@keyframes fadeOut {
+    from { opacity: 1; transform: translateY(0); }
+    to { opacity: 0; transform: translateY(-10px); }
+}
+
+/* استجابة الشاشات الصغيرة جداً */
+@media (max-height: 600px) {
+    body {
+        align-items: flex-start;
+        overflow-y: auto;
+        padding: 10px;
+    }
+    .login-container {
+        margin-top: 10px;
+        padding: 25px 20px;
+    }
 }

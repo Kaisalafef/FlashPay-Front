@@ -387,51 +387,99 @@ document.getElementById('edit-office-form').onsubmit = async (e) => {
 document.getElementById('add-office-form')?.addEventListener('submit', async (e) => {
     e.preventDefault();
 
-    const name = document.getElementById('office-name').value.trim();
-    const cityId = document.getElementById('office-city-select').value;
-    const balance1 = document.getElementById('office-balance').value;
-  
-    if (!name || !cityId || !balance1) {
-        alert("يرجى تعبئة جميع الحقول المطلوبة واختيار المدينة");
+    // إعداد مكتبة التنبيهات Notyf بستايلك الخاص
+    const notyf = new Notyf({
+        duration: 4000,
+        position: { x: 'left', y: 'bottom' },
+        types: [
+            { type: 'error', background: '#ef4444', icon: { className: 'fa-solid fa-circle-exclamation', color: 'white' } },
+            { type: 'success', background: '#10b981', icon: { className: 'fa-solid fa-check-circle', color: 'white' } }
+        ]
+    });
+
+    // دالة مساعدة للتعامل مع الأخطاء والتركيز
+    const triggerFieldError = (elementId, message) => {
+        const el = document.getElementById(elementId);
+        el.classList.add('input-error');
+        el.focus();
+        // إزالة اللون الأحمر بمجرد أن يبدأ المستخدم بالكتابة أو الاختيار
+        el.addEventListener('input', () => el.classList.remove('input-error'), { once: true });
+        el.addEventListener('change', () => el.classList.remove('input-error'), { once: true });
+        notyf.error(message);
+    };
+
+    // جلب العناصر
+    const nameEl = document.getElementById('office-name');
+    const cityEl = document.getElementById('office-city-select');
+    const balanceEl = document.getElementById('office-balance');
+    const addressEl = document.getElementById('office-address');
+
+    // --- عملية التحقق (Validation) ---
+
+    if (!nameEl.value.trim()) {
+        triggerFieldError('office-name', 'يرجى إدخال اسم المكتب');
         return;
     }
 
+    if (!cityEl.value) {
+        triggerFieldError('office-city-select', 'يرجى اختيار المدينة التابع لها المكتب');
+        return;
+    }
+
+    if (balanceEl.value === "" || parseFloat(balanceEl.value) < 0) {
+        triggerFieldError('office-balance', 'يرجى تحديد رصيد افتتاحي صحيح (0 أو أكثر)');
+        return;
+    }
+
+    // تجهيز البيانات
     const data = {
-        name: name,
-        city_id: parseInt(cityId),
-        address: document.getElementById('office-address').value,
+        name: nameEl.value.trim(),
+        city_id: parseInt(cityEl.value),
+        address: addressEl.value.trim(),
         status: 1,
-        balance: balance1 ? parseFloat(balance1) : 0, 
+        balance: parseFloat(balanceEl.value) || 0,
     };
 
     try {
-        
+        // إظهار حالة تحميل بسيطة (اختياري)
+        const btn = e.target.querySelector('button[type="submit"]');
+        const originalText = btn.innerText;
+        btn.innerText = 'جاري الحفظ...';
+        btn.disabled = true;
+
         const res = await fetch(`${API_URL}/offices`, {
             method: 'POST',
-            headers: getHeaders(),
+            headers: {
+                ...getHeaders(),
+                'Content-Type': 'application/json'
+            },
             body: JSON.stringify(data)
         });
 
         const result = await res.json();
 
         if (res.ok) {
-            alert('تم إضافة المكتب بنجاح');
-            loadOffices();
-            e.target.reset();
+            notyf.success('تم إنشاء المكتب الجديد بنجاح');
+            loadOffices(); // تحديث القائمة
+            e.target.reset(); // تفريغ النموذج
         } else {
-           console.log(cityId);
-console.log(data);
-            alert(result.message || "حدث خطأ");
+            notyf.error(result.message || "فشل في حفظ البيانات");
         }
 
+        // إعادة الزر لحالته
+        btn.innerText = originalText;
+        btn.disabled = false;
+
     } catch (error) {
-        console.log(cityId);
-console.log(data);
-        alert('خطأ في الاتصال بالخادم');
+        notyf.error('حدث خطأ في الاتصال بالخادم');
         console.error(error);
+        
+        // إعادة الزر لحالته في حال الخطأ
+        const btn = e.target.querySelector('button[type="submit"]');
+        btn.innerText = 'حفظ المكتب';
+        btn.disabled = false;
     }
 });
-
 async function loadOfficesForSelect() {
     try {
         const res = await fetch(`${API_URL}/offices`, {
@@ -462,13 +510,57 @@ async function loadOfficesForSelect() {
 document.getElementById('add-employee-form')?.addEventListener('submit', async (e) => {
     e.preventDefault();
 
-    const role = document.getElementById('emp-role').value;
+    const notyf = new Notyf({
+        duration: 4000,
+        position: { x: 'left', y: 'bottom' },
+        types: [
+            { type: 'error', background: '#ef4444', icon: { className: 'fa-solid fa-circle-exclamation', color: 'white' } },
+            { type: 'success', background: '#10b981', icon: { className: 'fa-solid fa-check-circle', color: 'white' } } // اللون الأخضر الجميل
+        ]
+    });
 
+    // دالة مساعدة للتركيز على الخطأ
+    const triggerError = (elementId, message) => {
+        const el = document.getElementById(elementId);
+        el.classList.add('input-error');
+        el.focus();
+        // إزالة الخطأ عند الكتابة
+        el.addEventListener('input', () => el.classList.remove('input-error'), { once: true });
+        notyf.error(message);
+    };
+
+    const role = document.getElementById('emp-role').value;
+    const emailEl = document.getElementById('emp-email');
+    const phoneEl = document.getElementById('emp-phone');
+    const passEl = document.getElementById('emp-password');
+
+    // 1. البريد الإلكتروني
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(emailEl.value.trim())) {
+        triggerError('emp-email', 'يرجى إدخال بريد إلكتروني صحيح');
+        return;
+    }
+
+    // 2. الهاتف
+    const phoneRegex = /^\d{10}$/;
+    if (!phoneRegex.test(phoneEl.value.trim())) {
+        triggerError('emp-phone', 'رقم الهاتف يجب أن يتكون من 10 أرقام');
+        return;
+    }
+
+    // 3. كلمة المرور
+    const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/;
+    if (!passwordRegex.test(passEl.value)) {
+        triggerError('emp-password', 'كلمة المرور يجب أن تكون 8 خانات مع أرقام وحروف');
+        return;
+    }
+
+    /* ================= إرسال البيانات ================= */
     let data = {
         name: document.getElementById('emp-name').value.trim(),
-        email: document.getElementById('emp-email').value.trim(),
-        phone: document.getElementById('emp-phone').value.trim(),
-        password: document.getElementById('emp-password').value,
+        email: emailEl.value.trim(),
+        phone: phoneEl.value.trim(),
+        password: passEl.value,
         role: role
     };
 
@@ -478,41 +570,26 @@ document.getElementById('add-employee-form')?.addEventListener('submit', async (
         data.balance = document.getElementById('emp-balance').value || 0;
     } else {
         data.office_id = document.getElementById('emp-office').value || null;
-        
     }
 
-    console.log("Employee Data:", data);
-
     try {
-
         const res = await fetch(`${API_URL}/register`, {
             method: 'POST',
-            headers: {
-                ...getHeaders(),
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            },
+            headers: { ...getHeaders(), 'Content-Type': 'application/json' },
             body: JSON.stringify(data)
         });
 
-        const responseData = await res.json();
-        console.log("Server Response:", responseData);
-
         if (res.ok) {
-            alert('تم إضافة الموظف بنجاح');
+            notyf.success('تم إضافة الموظف بنجاح إلى النظام');
             e.target.reset();
             handleRoleChange();
         } else {
-            alert('خطأ: ' + (responseData.message || 'فشل الإضافة'));
+            notyf.error('حدث خطأ في التسجيل، يرجى المحاولة لاحقاً');
         }
-
     } catch (error) {
-        console.error(error);
-        alert('خطأ في الاتصال بالخادم');
+        notyf.error('خطأ في الاتصال بالسيرفر');
     }
 });
-
-
 /* =========================
    Load Employees & Agents
 ========================= */
