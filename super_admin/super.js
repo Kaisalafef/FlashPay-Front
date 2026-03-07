@@ -255,44 +255,69 @@ async function initAgentLocation() {
 ========================= */
 async function loadOffices() {
     try {
-        // 1. جلب بيانات المستخدم الحالي أولاً لمعرفة صلاحياته
-        const userRes = await fetch(`${API_URL}/me`, { headers: getHeaders() });
+        const userRes  = await fetch(`${API_URL}/me`, { headers: getHeaders() });
         const userData = await userRes.json();
         const isSuperAdmin = userData.user.role === 'super_admin';
 
-        const res = await fetch(`${API_URL}/offices`, { headers: getHeaders() });
+        const res  = await fetch(`${API_URL}/offices`, { headers: getHeaders() });
         const json = await res.json();
         const tbody = document.getElementById('offices-list');
+        if (!tbody) return;
 
         tbody.innerHTML = '';
 
-        json.data.forEach(office => {
-            // نتحقق: إذا كان آدمن نُظهر الأزرار، وإذا لا نترك الخانة فارغة أو نخفي العمود
+        const offices = json.data || [];
+
+        // تحديث الإحصائيات
+        const totalBalance = offices.reduce((sum, o) => sum + parseFloat(o.main_safe?.balance || 0), 0);
+        const countEl = document.getElementById('stat-offices-count');
+        const balEl   = document.getElementById('stat-offices-balance');
+        if (countEl) countEl.textContent = offices.length;
+        if (balEl)   balEl.textContent   = '$' + totalBalance.toFixed(2);
+
+        if (offices.length === 0) {
+            document.getElementById('offices-empty')?.classList.remove('hidden');
+            return;
+        }
+        document.getElementById('offices-empty')?.classList.add('hidden');
+
+        offices.forEach((office, index) => {
+            const balance  = parseFloat(office.main_safe?.balance || 0).toFixed(2);
+            const cityName = office.city?.name || 'غير محدد';
+            const initials = (office.name || '?').charAt(0).toUpperCase();
+
             const actionsHtml = isSuperAdmin ? `
-                <td>
-                    <button class="btn-edit" onclick='openEditOfficeModal(${JSON.stringify(office)})'>
+                <div class="row-actions">
+                    <button class="action-btn edit-btn" title="تعديل" onclick='openEditOfficeModal(${JSON.stringify(office)})'>
                         <i class="fa-solid fa-pen"></i>
                     </button>
-                    <button class="btn-delete" onclick="openDeleteOfficeModal(${office.id})">
+                    <button class="action-btn delete-btn" title="حذف" onclick="openDeleteOfficeModal(${office.id})">
                         <i class="fa-solid fa-trash"></i>
                     </button>
-                </td>
-            ` : `<td>-</td>`; // إذا لم يكن آدمن يظهر شرطة أو لا يظهر شيء
+                </div>` : `<span style="color:var(--gray);font-size:12px;">—</span>`;
 
             tbody.innerHTML += `
                 <tr>
-                    <td>${office.name}</td>
-                    <td>${office.city ? office.city.name : 'غير محدد'}</td>
-                    <td>${office.address || '-'}</td>
-                    <td>$${office.main_safe ? office.main_safe.balance : '0.00'}</td>
-                    ${actionsHtml}
-                </tr>
-            `;
+                    <td style="color:var(--gray);font-size:12px;">${index + 1}</td>
+                    <td>
+                        <div class="emp-cell">
+                            <div class="emp-avatar" style="background:#dbeafe;color:#1d4ed8;">${initials}</div>
+                            <div style="font-weight:700;font-size:13px;">${office.name}</div>
+                        </div>
+                    </td>
+                    <td><span class="location-tag"><i class="fa-solid fa-city"></i> ${cityName}</span></td>
+                    <td style="font-size:12px;color:var(--gray);">${office.address || '—'}</td>
+                    <td>
+                        <span style="font-weight:800;color:var(--success);">$${balance}</span>
+                    </td>
+                    <td>${actionsHtml}</td>
+                </tr>`;
         });
     } catch (error) {
         console.error("Error:", error);
     }
 }
+
 
 
 /* =========================
@@ -311,6 +336,7 @@ function closeDeleteOfficeModal() {
 
 document.getElementById('confirm-delete-office-btn').onclick = async () => {
     if (!currentOfficeIdToDelete) return;
+    const notyf = new Notyf({ duration: 3000, position: { x: 'left', y: 'bottom' } });
     try {
         const res = await fetch(`${API_URL}/offices/${currentOfficeIdToDelete}`, {
             method: 'DELETE',
@@ -318,10 +344,10 @@ document.getElementById('confirm-delete-office-btn').onclick = async () => {
         });
         if (res.ok) {
             closeDeleteOfficeModal();
-            loadOffices();
-            alert("تم حذف المكتب بنجاح");
+            await loadOffices();
+            notyf.success('تم حذف المكتب بنجاح');
         } else {
-            alert("حدث خطأ أثناء الحذف");
+            notyf.error('حدث خطأ أثناء الحذف');
         }
     } catch (e) { console.error(e); }
 };
@@ -460,7 +486,7 @@ document.getElementById('add-office-form')?.addEventListener('submit', async (e)
 
         if (res.ok) {
             notyf.success('تم إنشاء المكتب الجديد بنجاح');
-            loadOffices(); // تحديث القائمة
+            await loadOffices(); // تحديث القائمة
             e.target.reset(); // تفريغ النموذج
         } else {
             notyf.error(result.message || "فشل في حفظ البيانات");
@@ -583,6 +609,7 @@ document.getElementById('add-employee-form')?.addEventListener('submit', async (
             notyf.success('تم إضافة الموظف بنجاح إلى النظام');
             e.target.reset();
             handleRoleChange();
+            await loadEmployees();
         } else {
             notyf.error('حدث خطأ في التسجيل، يرجى المحاولة لاحقاً');
         }
@@ -598,54 +625,16 @@ document.getElementById('add-employee-form')?.addEventListener('submit', async (
 ========================= */
 async function loadEmployees() {
     try {
-        const res = await fetch(`${API_URL}/users`, { headers: getHeaders() });
+        const res  = await fetch(`${API_URL}/users`, { headers: getHeaders() });
         const json = await res.json();
-        const tbody = document.getElementById('employees-list');
-        if (!tbody) return;
-
-        tbody.innerHTML = '';
-
-        // فلترة المستخدمين واستبعاد الـ costumer
-        const filteredUsers = json.data.filter(user => user.role !== 'customer');
-
-        filteredUsers.forEach((user, index) => {
-            let locationInfo = '-';
-
-            if (user.role === 'agent') {
-                const country = user.country ? user.country.name : 'بدون دولة';
-                const city = user.city ? user.city.name : 'بدون مدينة';
-                locationInfo = `<span class="location-tag">
-                    <i class="fa-solid fa-location-dot"></i> ${country}, ${city}
-                </span>`;
-            } else {
-                locationInfo = `<span class="location-tag">
-                    ${user.office ? user.office.name : 'بدون مكتب'}
-                </span>`;
-            }
-
-            tbody.innerHTML += `
-                <tr>
-                    <td>${index + 1}</td>
-                    <td>${user.name}</td>
-                    <td>${user.email}</td>
-                    <td>${user.phone}</td>
-                    <td><span class="role-badge">${user.role}</span></td>
-                    <td>${locationInfo}</td>
-                    <td>
-                        <button class="btn-edit" onclick="openEditModal(${JSON.stringify(user).replace(/"/g, '&quot;')})">
-                            <i class="fa-solid fa-pen"></i>
-                        </button>
-                        <button class="btn-delete" onclick="openDeleteModal(${user.id})">
-                            <i class="fa-solid fa-trash"></i>
-                        </button>
-                    </td>
-                </tr>`;
-        });
-
+        _allEmployees = json.data || [];
+        renderEmployeesStats();
+        renderEmployeesTable();
     } catch (e) {
         console.error(e);
     }
-}   
+}
+
 /* =========================
    Delete Logic (Custom Dialog)
 ========================= */
@@ -664,6 +653,7 @@ function closeDeleteModal() {
 // دالة الحذف المحدثة
 document.getElementById('confirm-delete-btn').onclick = async () => {
     if (!currentUserIdToDelete) return;
+    const notyf = new Notyf({ duration: 3000, position: { x: 'left', y: 'bottom' } });
     try {
         const res = await fetch(`${API_URL}/users/${currentUserIdToDelete}`, {
             method: 'DELETE',
@@ -671,9 +661,10 @@ document.getElementById('confirm-delete-btn').onclick = async () => {
         });
         if (res.ok) {
             closeDeleteModal();
-            loadEmployees();
+            await loadEmployees();
+            notyf.success('تم حذف الموظف بنجاح');
         } else {
-            alert("فشل الحذف: ربما لا تملك صلاحية Super Admin");
+            notyf.error('فشل الحذف: تأكد من صلاحياتك');
         }
     } catch (e) { console.error(e); }
 };
@@ -896,28 +887,205 @@ async function initPricePreview() {
    UI Helpers
 ========================= */
 function showSection(sectionId) {
+    document.querySelectorAll('.card').forEach(card => card.classList.add('hidden'));
 
-    // اخفاء كل الاقسام
-    document.querySelectorAll('.card').forEach(card => {
-        card.classList.add('hidden');
+    const activeSection = document.getElementById(`${sectionId}-section`);
+    if (activeSection) activeSection.classList.remove('hidden');
+
+    // تحديث الـ active في الـ sidebar
+    document.querySelectorAll('.sidebar nav li').forEach(li => li.classList.remove('active'));
+    const activeLink = document.querySelector(`.sidebar nav a[onclick*="${sectionId}"]`);
+    if (activeLink) activeLink.closest('li').classList.add('active');
+
+    if (sectionId === 'trading-profits') initTradingProfitsSection();
+    if (sectionId === 'customers') loadCustomers();
+    if (sectionId === 'employees') renderEmployeesStats();
+    if (sectionId === 'offices') renderOfficesStats();
+}
+
+/* =========================
+   Offices – UI helpers
+========================= */
+let _addOfficeOpen = false;
+
+function toggleAddOfficeForm() {
+    _addOfficeOpen = !_addOfficeOpen;
+    const body    = document.getElementById('add-office-body');
+    const chevron = document.getElementById('add-office-chevron');
+    if (_addOfficeOpen) {
+        body.style.maxHeight = body.scrollHeight + 'px';
+        body.classList.add('open');
+        chevron.style.transform = 'rotate(180deg)';
+    } else {
+        body.style.maxHeight = '0';
+        body.classList.remove('open');
+        chevron.style.transform = '';
+    }
+}
+
+function resetOfficeForm() {
+    document.getElementById('add-office-form')?.reset();
+}
+
+function renderOfficesStats() {
+    // يُحدَّث بعد loadOffices
+}
+
+/* =========================
+   Offices – filter table
+========================= */
+function filterOfficesTable() {
+    const q = document.getElementById('offices-search')?.value.trim().toLowerCase() || '';
+    const rows = document.querySelectorAll('#offices-list tr');
+    let visible = 0;
+    rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        const show = text.includes(q);
+        row.style.display = show ? '' : 'none';
+        if (show) visible++;
+    });
+    const empty = document.getElementById('offices-empty');
+    if (empty) empty.classList.toggle('hidden', visible > 0);
+}
+
+/* =========================
+   Employees – UI helpers
+========================= */
+let _addEmpOpen = false;
+let _empFilter  = 'all';
+let _allEmployees = [];
+
+function toggleAddEmpForm() {
+    _addEmpOpen = !_addEmpOpen;
+    const body    = document.getElementById('add-emp-body');
+    const chevron = document.getElementById('add-emp-chevron');
+    if (_addEmpOpen) {
+        body.style.maxHeight = body.scrollHeight + 600 + 'px';
+        body.classList.add('open');
+        chevron.style.transform = 'rotate(180deg)';
+    } else {
+        body.style.maxHeight = '0';
+        body.classList.remove('open');
+        chevron.style.transform = '';
+    }
+}
+
+function setEmpFilter(role, btn) {
+    _empFilter = role;
+    document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+    btn.classList.add('active');
+    renderEmployeesTable();
+}
+
+function filterEmployeesTable() {
+    renderEmployeesTable();
+}
+
+function renderEmployeesStats() {
+    if (!_allEmployees.length) return;
+    const nonCustomers = _allEmployees.filter(u => u.role !== 'customer');
+    document.getElementById('stat-emp-total')?.textContent && (document.getElementById('stat-emp-total').textContent    = nonCustomers.length);
+    document.getElementById('stat-emp-admins')?.textContent && (document.getElementById('stat-emp-admins').textContent  = nonCustomers.filter(u => u.role === 'admin').length);
+    document.getElementById('stat-emp-agents')?.textContent && (document.getElementById('stat-emp-agents').textContent  = nonCustomers.filter(u => u.role === 'agent').length);
+    document.getElementById('stat-emp-cashiers')?.textContent && (document.getElementById('stat-emp-cashiers').textContent = nonCustomers.filter(u => u.role === 'cashier').length);
+}
+
+const ROLE_LABELS = {
+    super_admin: { label: 'سوبر أدمن', color: '#7c3aed', bg: '#ede9fe' },
+    admin:       { label: 'مدير مكتب',  color: '#1d4ed8', bg: '#dbeafe' },
+    cashier:     { label: 'كاشير',       color: '#0f766e', bg: '#ccfbf1' },
+    accountant:  { label: 'محاسب',       color: '#b45309', bg: '#fef3c7' },
+    agent:       { label: 'مندوب',       color: '#166534', bg: '#dcfce7' },
+    customer:    { label: 'زبون',        color: '#64748b', bg: '#f1f5f9' },
+};
+
+function renderEmployeesTable() {
+    const q      = (document.getElementById('emp-search')?.value || '').trim().toLowerCase();
+    const tbody  = document.getElementById('employees-list');
+    const emptyEl = document.getElementById('employees-empty');
+    if (!tbody) return;
+
+    const filtered = _allEmployees.filter(u => {
+        if (u.role === 'customer') return false;
+        if (_empFilter !== 'all' && u.role !== _empFilter) return false;
+        if (q && !`${u.name}${u.email}${u.phone}`.toLowerCase().includes(q)) return false;
+        return true;
     });
 
-    // اظهار القسم المطلوب فقط
-    const activeSection = document.getElementById(`${sectionId}-section`);
-    if (activeSection) {
-        activeSection.classList.remove('hidden');
-    }
+    tbody.innerHTML = '';
 
-    // تهيئة خاصة لقسم أرباح التداول
-    if (sectionId === 'trading-profits') {
-        initTradingProfitsSection();
+    if (filtered.length === 0) {
+        emptyEl?.classList.remove('hidden');
+        return;
+    }
+    emptyEl?.classList.add('hidden');
+
+    filtered.forEach((user, index) => {
+        const roleInfo = ROLE_LABELS[user.role] || { label: user.role, color: '#64748b', bg: '#f1f5f9' };
+
+        let locationHtml = '';
+        if (user.role === 'agent') {
+            const country = user.country?.name || '—';
+            const city    = user.city?.name    || '—';
+            locationHtml = `<span class="location-tag"><i class="fa-solid fa-earth-americas"></i> ${country} ← ${city}</span>`;
+        } else {
+            locationHtml = user.office
+                ? `<span class="location-tag"><i class="fa-solid fa-building"></i> ${user.office.name}</span>`
+                : `<span style="color:var(--gray); font-size:12px;">بدون مكتب</span>`;
+        }
+
+        // أول حرف من الاسم للأفاتار
+        const initials = (user.name || '?').charAt(0).toUpperCase();
+
+        tbody.innerHTML += `
+            <tr class="emp-row" data-id="${user.id}">
+                <td style="color:var(--gray); font-size:12px;">${index + 1}</td>
+                <td>
+                    <div class="emp-cell">
+                        <div class="emp-avatar" style="background:${roleInfo.bg}; color:${roleInfo.color};">${initials}</div>
+                        <div>
+                            <div style="font-weight:700; font-size:13px;">${user.name}</div>
+                        </div>
+                    </div>
+                </td>
+                <td style="font-size:12px; color:var(--gray);">${user.email}</td>
+                <td style="font-size:12px; direction:ltr; text-align:right;">${user.phone}</td>
+                <td>
+                    <span class="role-badge-new" style="background:${roleInfo.bg}; color:${roleInfo.color};">
+                        ${roleInfo.label}
+                    </span>
+                </td>
+                <td>${locationHtml}</td>
+                <td>
+                    <div class="row-actions">
+                        <button class="action-btn edit-btn" title="تعديل" onclick="openEditModal(${JSON.stringify(user).replace(/"/g, '&quot;')})">
+                            <i class="fa-solid fa-pen"></i>
+                        </button>
+                        <button class="action-btn delete-btn" title="حذف" onclick="openDeleteModal(${user.id})">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
+                </td>
+            </tr>`;
+    });
+}
+
+function togglePasswordVisibility(inputId, btn) {
+    const input = document.getElementById(inputId);
+    if (!input) return;
+    if (input.type === 'password') {
+        input.type = 'text';
+        btn.innerHTML = '<i class="fa-solid fa-eye-slash"></i>';
+    } else {
+        input.type = 'password';
+        btn.innerHTML = '<i class="fa-solid fa-eye"></i>';
     }
 }
 
 function handleRoleChange() {
     const role = document.getElementById('emp-role').value;
     const officeGroup = document.getElementById('office-select-group');
-    const agentGroup = document.getElementById('agent-fields');
+    const agentGroup  = document.getElementById('agent-fields');
 
     if (role === 'agent') {
         officeGroup.classList.add('hidden');
@@ -927,6 +1095,8 @@ function handleRoleChange() {
         agentGroup.classList.add('hidden');
     }
 }
+
+
 
 /* =========================
    أرباح التداول - السوبر أدمن
@@ -1121,6 +1291,258 @@ async function loadSuperTradingReport() {
     }
 }
 
+/* =========================
+   قسم الزبائن
+========================= */
+let allCustomers = [];
+let allTransfers = [];
+
+async function loadCustomers() {
+    try {
+        // جلب جميع المستخدمين وتصفية الزبائن فقط
+        const [usersRes, transfersRes] = await Promise.all([
+            fetch(`${API_URL}/users`, { headers: getHeaders() }),
+            fetch(`${API_URL}/transfers`, { headers: getHeaders() })
+        ]);
+
+        const usersJson = await usersRes.json();
+        const transfersJson = await transfersRes.json();
+
+        allTransfers = transfersJson.data || [];
+        allCustomers = (usersJson.data || []).filter(u => u.role === 'customer');
+
+        renderCustomersTable(allCustomers);
+        renderCustomersStats(allCustomers);
+
+    } catch (e) {
+        console.error('Error loading customers:', e);
+    }
+}
+
+function renderCustomersStats(customers) {
+    const statsEl = document.getElementById('customers-stats');
+    if (!statsEl) return;
+
+    const totalCustomers = customers.length;
+    const activeCustomers = customers.filter(c =>
+        allTransfers.some(t => t.sender_id === c.id)
+    ).length;
+    const totalTransfersCount = allTransfers.filter(t =>
+        customers.some(c => c.id === t.sender_id)
+    ).length;
+    const completedCount = allTransfers.filter(t =>
+        customers.some(c => c.id === t.sender_id) && t.status === 'completed'
+    ).length;
+
+    const cardS = `background:var(--white); border-radius:10px; padding:18px 20px; box-shadow:0 4px 12px rgba(0,0,0,.06); border:1px solid var(--border);`;
+
+    statsEl.innerHTML = `
+        <div style="${cardS}">
+            <div style="font-size:11px;font-weight:700;color:var(--gray);text-transform:uppercase;margin-bottom:8px;">إجمالي الزبائن</div>
+            <div style="font-size:26px;font-weight:800;color:#1e3c72;">${totalCustomers}</div>
+        </div>
+        <div style="${cardS}">
+            <div style="font-size:11px;font-weight:700;color:var(--gray);text-transform:uppercase;margin-bottom:8px;">زبائن لديهم حوالات</div>
+            <div style="font-size:26px;font-weight:800;color:#f59e0b;">${activeCustomers}</div>
+        </div>
+        <div style="${cardS}">
+            <div style="font-size:11px;font-weight:700;color:var(--gray);text-transform:uppercase;margin-bottom:8px;">إجمالي الحوالات</div>
+            <div style="font-size:26px;font-weight:800;color:#6f42c1;">${totalTransfersCount}</div>
+        </div>
+        <div style="${cardS}">
+            <div style="font-size:11px;font-weight:700;color:var(--gray);text-transform:uppercase;margin-bottom:8px;">حوالات مكتملة</div>
+            <div style="font-size:26px;font-weight:800;color:#10b981;">${completedCount}</div>
+        </div>
+    `;
+}
+
+function renderCustomersTable(customers) {
+    const tbody = document.getElementById('customers-tbody');
+    const emptyEl = document.getElementById('customers-empty');
+    if (!tbody) return;
+
+    tbody.innerHTML = '';
+
+    if (customers.length === 0) {
+        emptyEl.style.display = 'block';
+        document.getElementById('customers-table').style.display = 'none';
+        return;
+    }
+
+    emptyEl.style.display = 'none';
+    document.getElementById('customers-table').style.display = 'table';
+
+    customers.forEach((customer, index) => {
+        const customerTransfers = allTransfers.filter(t => t.sender_id === customer.id);
+        const transferCount = customerTransfers.length;
+        const badgeColor = transferCount > 0 ? '#dcfce7' : '#f1f5f9';
+        const badgeText  = transferCount > 0 ? '#166534' : '#64748b';
+        const regDate = customer.created_at
+            ? new Date(customer.created_at).toLocaleDateString('ar-SY')
+            : '—';
+
+        tbody.innerHTML += `
+            <tr>
+                <td>${index + 1}</td>
+                <td><strong>${customer.name}</strong></td>
+                <td style="direction:ltr; text-align:right;">${customer.phone || '—'}</td>
+                <td style="font-size:12px; color:var(--gray);">${customer.email || '—'}</td>
+                <td>${customer.city?.name || '—'}</td>
+                <td>${customer.country?.name || '—'}</td>
+                <td style="font-size:12px;">${regDate}</td>
+                <td>
+                    <span style="background:${badgeColor}; color:${badgeText}; padding:4px 12px; border-radius:20px; font-size:12px; font-weight:700;">
+                        ${transferCount} حوالة
+                    </span>
+                </td>
+                <td>
+                    <button class="btn-edit" onclick="openCustomerModal(${customer.id})" title="عرض التفاصيل">
+                        <i class="fa-solid fa-eye"></i>
+                    </button>
+                </td>
+            </tr>
+        `;
+    });
+}
+
+function filterCustomers() {
+    const q = document.getElementById('customer-search').value.trim().toLowerCase();
+    if (!q) {
+        renderCustomersTable(allCustomers);
+        return;
+    }
+    const filtered = allCustomers.filter(c =>
+        (c.name || '').toLowerCase().includes(q) ||
+        (c.phone || '').toLowerCase().includes(q) ||
+        (c.email || '').toLowerCase().includes(q)
+    );
+    renderCustomersTable(filtered);
+}
+
+function openCustomerModal(customerId) {
+    const customer = allCustomers.find(c => c.id === customerId);
+    if (!customer) return;
+
+    const customerTransfers = allTransfers.filter(t => t.sender_id === customerId);
+
+    // ===== رأس المودال =====
+    document.getElementById('cd-name').textContent  = customer.name  || '—';
+    document.getElementById('cd-phone').textContent = customer.phone || '—';
+    document.getElementById('cd-email').textContent = customer.email || '—';
+
+    // ===== بطاقات المعلومات =====
+    document.getElementById('cd-location').textContent =
+        [customer.city?.name, customer.country?.name].filter(Boolean).join(' ← ') || '—';
+    document.getElementById('cd-date').textContent = customer.created_at
+        ? new Date(customer.created_at).toLocaleDateString('ar-SY')
+        : '—';
+    document.getElementById('cd-total').textContent  = customerTransfers.length + ' حوالة';
+
+    // حساب إجمالي الدولار
+    let totalAmountUsd = 0;
+    const statusCounts = { pending: 0, approved: 0, waiting: 0, ready: 0, completed: 0, rejected: 0 };
+
+    customerTransfers.forEach(t => {
+        if (statusCounts.hasOwnProperty(t.status)) statusCounts[t.status]++;
+        totalAmountUsd += parseFloat(t.amount_in_usd || 0);
+    });
+
+    document.getElementById('cd-usd-total').textContent = '$' + totalAmountUsd.toFixed(2);
+
+    // ===== ملخص الحالات (chips) =====
+    const statusLabels = {
+        pending:   { label: 'قيد الانتظار',    color: '#92400e', bg: '#fef3c7', border: '#fcd34d', icon: 'fa-clock' },
+        approved:  { label: 'موافق عليها',      color: '#065f46', bg: '#d1fae5', border: '#6ee7b7', icon: 'fa-circle-check' },
+        waiting:   { label: 'في الانتظار',      color: '#3730a3', bg: '#ede9fe', border: '#a5b4fc', icon: 'fa-hourglass-half' },
+        ready:     { label: 'جاهزة للتسليم',   color: '#0c4a6e', bg: '#e0f2fe', border: '#7dd3fc', icon: 'fa-box-open' },
+        completed: { label: 'مكتملة',           color: '#14532d', bg: '#bbf7d0', border: '#4ade80', icon: 'fa-flag-checkered' },
+        rejected:  { label: 'مرفوضة',           color: '#7f1d1d', bg: '#fee2e2', border: '#fca5a5', icon: 'fa-ban' },
+    };
+
+    const summaryEl = document.getElementById('cd-summary');
+    summaryEl.innerHTML = '';
+
+    let hasAny = false;
+    Object.entries(statusCounts).forEach(([key, count]) => {
+        if (count === 0) return;
+        hasAny = true;
+        const s = statusLabels[key];
+        summaryEl.innerHTML += `
+            <div class="cmodal-status-chip"
+                 style="background:${s.bg}; color:${s.color}; border-color:${s.border};">
+                <i class="fa-solid ${s.icon}" style="font-size:13px;"></i>
+                <span>${s.label}</span>
+                <strong style="font-size:14px; margin-right:4px;">${count}</strong>
+            </div>
+        `;
+    });
+
+    if (!hasAny) {
+        summaryEl.innerHTML = `<span style="font-size:12px; color:var(--gray);">لا توجد حوالات بعد</span>`;
+    }
+
+    // ===== جدول الحوالات =====
+    const tbody      = document.getElementById('cd-transfers-tbody');
+    const noTransfers = document.getElementById('cd-no-transfers');
+    tbody.innerHTML  = '';
+
+    if (customerTransfers.length === 0) {
+        noTransfers.style.display = 'block';
+    } else {
+        noTransfers.style.display = 'none';
+        customerTransfers.forEach(t => {
+            const s    = statusLabels[t.status] || { label: t.status, color: '#64748b', bg: '#f1f5f9', border: '#e2e8f0', icon: 'fa-circle' };
+            const date = t.created_at ? new Date(t.created_at).toLocaleDateString('ar-SY') : '—';
+
+            tbody.innerHTML += `
+                <tr>
+                    <td style="font-family:monospace; font-size:11px; direction:ltr; color:var(--gray);">${t.tracking_code || '—'}</td>
+                    <td style="font-weight:800; color:var(--dark);">${parseFloat(t.amount).toLocaleString()}</td>
+                    <td>
+                        <span class="role-badge">${t.currency?.code || '—'}</span>
+                    </td>
+                    <td>${t.receiver_name || '—'}</td>
+                    <td>
+                        <span style="background:${s.bg}; color:${s.color}; border:1px solid ${s.border}; padding:3px 10px; border-radius:20px; font-size:11px; font-weight:700; display:inline-flex; align-items:center; gap:5px;">
+                            <i class="fa-solid ${s.icon}" style="font-size:9px;"></i>${s.label}
+                        </span>
+                    </td>
+                    <td style="font-size:12px; color:var(--gray);">${date}</td>
+                </tr>
+            `;
+        });
+    }
+
+    // إظهار المودال
+    document.getElementById('customer-detail-modal').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeCustomerModal() {
+    document.getElementById('customer-detail-modal').classList.add('hidden');
+    document.body.style.overflow = '';
+}
+
+// الإغلاق بالنقر على الخلفية
+function handleCustomerModalBackdrop(e) {
+    if (e.target === document.getElementById('customer-detail-modal')) {
+        closeCustomerModal();
+    }
+}
+
+
+
+
+// إغلاق مودال الزبون بـ ESC
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        const modal = document.getElementById('customer-detail-modal');
+        if (modal && !modal.classList.contains('hidden')) {
+            closeCustomerModal();
+        }
+    }
+});
+
 async function handleLogout() {
     await fetch(`${API_URL}/logout`, {
         method: 'POST',
@@ -1143,7 +1565,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     await loadOffices();
     await loadOfficesForSelect();
     await initOfficeCities();
-    
+     await loadCustomers();
     await initAgentLocation();
     await loadCurrencies();
     await loadEmployees();
