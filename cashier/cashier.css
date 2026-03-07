@@ -273,7 +273,56 @@ select:focus {
     gap: 8px;
     margin-bottom: 10px;
 }
+/* ====== SAFES & TRADING ====== */
+.safes-grid div {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
 
+.safes-grid div:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+}
+
+.trading-input {
+    width: 35%;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    outline: none;
+    font-size: 13px;
+    transition: 0.3s ease;
+    background: var(--white);
+}
+
+.trading-input:focus {
+    border-color: #f59e0b;
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
+}
+
+.btn-approve {
+    background: var(--success);
+    color: white;
+    border: none;
+    padding: 8px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: 0.2s ease;
+}
+
+.btn-reject {
+    background: var(--danger);
+    color: white;
+    border: none;
+    padding: 8px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: 0.2s ease;
+}
+
+.btn-approve:hover { background: #218838; }
+.btn-reject:hover { background: #c82333; }
 .custom-file-upload {
     display: inline-flex;
     align-items: center;

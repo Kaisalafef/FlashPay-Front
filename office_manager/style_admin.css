@@ -324,7 +324,22 @@ input[type="number"]:focus {
   margin: 3px;
   transition: 0.2s ease;
 }
+/* ====== TRADING INPUTS ====== */
+.trading-input {
+    width: 35%;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    outline: none;
+    font-size: 13px;
+    transition: var(--transition);
+    background: var(--white);
+}
 
+.trading-input:focus {
+    border-color: #f59e0b;
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
+}
 .btn-approve {
   background-color: #28a745;
   color: white;

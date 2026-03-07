@@ -1,12 +1,12 @@
 /* ================= ROOT & VARIABLES ================= */
 :root {
-    /* الألوان الأساسية */
-    --primary: hsl(28, 95%, 45%);
-    --primary-dark: hsl(28, 95%, 35%);
-    --primary-light: hsl(28, 95%, 58%);
-    --primary-bg: hsla(28, 95%, 50%, 0.08);
+    /* الألوان الأساسية (أخضر مالي احترافي) */
+    --primary: #16a34a;
+    --primary-dark: #15803d;
+    --primary-light: #22c55e;
+    --primary-bg: rgba(22, 163, 74, 0.08);
 
-    /* ألوان ثانوية وتكميلية للجمالية */
+    /* ألوان ثانوية */
     --secondary: #3b82f6;
     --secondary-bg: #eff6ff;
 
@@ -24,17 +24,17 @@
     --white: #ffffff;
     --border: #e5e7eb;
 
-    /* الأبعاد والحواف */
+    /* الأبعاد */
     --radius: 16px;
     --radius-sm: 10px;
     --radius-full: 9999px;
 
-    /* التأثيرات والظلال */
+    /* التأثيرات */
     --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
-    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -1px rgba(0, 0, 0, 0.04);
-    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-    --shadow-hover: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+    --shadow: 0 4px 6px -1px rgba(0,0,0,0.08), 0 2px 4px -1px rgba(0,0,0,0.04);
+    --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+    --shadow-hover: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
 }
 
 /* ================= RESET & TYPOGRAPHY ================= */
@@ -107,14 +107,14 @@ body {
 }
 
 .logo i {
-    color: var(--primary);
+    color: rgb(115, 197, 115);
     font-size: 1.375rem;
     /* كانت 28px أصبحت تقريباً 22px */
-    filter: drop-shadow(0 2px 4px rgba(234, 88, 12, 0.3));
+    filter: drop-shadow(0 2px 4px rgb(224, 230, 224));
 }
 
 .logo span {
-    background: linear-gradient(135deg, var(--primary), var(--warning));
+    background: linear-gradient(135deg, green,rgb(115, 197, 115));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
 }
@@ -462,7 +462,7 @@ select:focus {
 
 .btn-primary:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 16px rgba(234, 88, 12, 0.3);
+    box-shadow: 0 8px 16px rgba(22,163,74,0.15);;
 }
 
 .btn-primary:active {

@@ -39,6 +39,12 @@
         صناديق المكتب المالية
     </a>
 </li>
+<li>
+    <a href="#" onclick="setActive(this); showProfitsSection();">
+        <i class="fa-solid fa-chart-line"></i>
+        أرباح التداول
+    </a>
+</li>
     </ul>
 </nav>
         <div class="logout">
@@ -98,6 +104,51 @@
         </tbody>
     </table>
 </div>
+<!-- قسم أرباح التداول -->
+<div class="card" id="profits-card" style="display:none;">
+    <div class="card-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+        <h3><i class="fa-solid fa-chart-line" style="color:var(--primary);"></i> تقرير أرباح التداول</h3>
+        <div style="display:flex; align-items:center; gap:10px;">
+            <label style="font-size:13px; color:var(--gray); font-weight:600;">التاريخ:</label>
+            <input type="date" id="report-date"
+                   style="padding:8px 12px; border:1px solid var(--border); border-radius:8px; outline:none; font-size:13px; font-family:'Cairo',sans-serif;">
+            <button class="btn-approve" onclick="loadTradingReport()"
+                    style="padding:8px 18px; border-radius:8px; font-size:13px; display:flex; align-items:center; gap:6px;">
+                <i class="fa-solid fa-magnifying-glass"></i> عرض
+            </button>
+        </div>
+    </div>
+
+    <!-- بطاقات الملخص -->
+    <div id="profits-summary"
+         style="display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:16px; margin-bottom:24px;"></div>
+
+    <!-- جدول العمليات -->
+    <table class="data-table" id="profits-table" style="display:none;">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>النوع</th>
+                <th>العملة</th>
+                <th>الكمية</th>
+                <th>السعر</th>
+                <th>متوسط التكلفة</th>
+                <th>الربح / الخسارة</th>
+                <th>التاريخ</th>
+                <th>المنفذ</th>
+            </tr>
+        </thead>
+        <tbody id="profits-list"></tbody>
+    </table>
+
+    <div id="profits-empty"
+         style="text-align:center; padding:50px; color:var(--gray); display:none;">
+        <i class="fa-solid fa-inbox"
+           style="font-size:48px; display:block; margin-bottom:12px; opacity:0.25;"></i>
+        لا توجد عمليات تداول في هذا التاريخ
+    </div>
+</div>
+
             <div class="card" id="pending-transfers-card">
                 <div class="card-header">
                   <h3>الحوالات الجديدة (بانتظار الموافقة)</h3>
