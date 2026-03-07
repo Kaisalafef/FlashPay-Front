@@ -147,6 +147,7 @@ function hideAllCards() {
     document.getElementById('all-transfers-card').style.display = 'none';
     document.getElementById('office-info-card').style.display = 'none';
     document.getElementById('safes-card').style.display = 'none';
+    document.getElementById('profits-card').style.display = 'none';
 }
 
 async function showOfficeSection() {
@@ -212,48 +213,125 @@ const mySafes = json.data.filter(s =>
 console.log("My Safes:", mySafes);
 
         const container = document.getElementById('safes-container');
-
 container.innerHTML = mySafes.map(safe => {
+    let title = '';
+    let icon = '';
+    let bg = '';
+    let tradingUI = '';
 
-let title = '';
-let icon = '';
-let bg = '';
+    if(safe.type === 'office_main'){
+        title = 'الصندوق الرئيسي';
+        icon = 'fa-vault';
+        bg = '#f0f9ff';
+    }
 
-if(safe.type === 'office_main'){
-    title = 'الصندوق الرئيسي';
-    icon = 'fa-vault';
-    bg = '#f0f9ff';
-}
+    if(safe.type === 'trading'){
+        title = 'صندوق المبيعات / التداول';
+        icon = 'fa-chart-line';
+        bg = '#fff9f0';
+        
+        // واجهة التداول الخاصة بالصندوق
+        tradingUI = `
+            <div style="margin-top: 20px; padding-top: 15px; border-top: 1px dashed #cbd5e1;">
+                <h5 style="color: #475569; margin-bottom: 12px; font-size: 13px;">إدارة عمليات التداول</h5>
+                
+                <div style="display: flex; gap: 8px; margin-bottom: 10px; align-items: center;">
+                    <input type="number" id="buy_amount_${safe.currency_id}" class="trading-input" placeholder="الكمية" min="0" step="any">
+                    <input type="number" id="buy_price_${safe.currency_id}" class="trading-input" placeholder="سعر الشراء" min="0" step="any">
+                    <button class="btn-approve" style="flex: 1;" onclick="executeTrade('buy', ${safe.office_id}, ${safe.currency_id})">
+                        <i class="fa-solid fa-arrow-down"></i> شراء
+                    </button>
+                </div>
 
-if(safe.type === 'trading'){
-    title = 'صندوق المبيعات / التداول';
-    icon = 'fa-chart-line';
-    bg = '#fff9f0';
-}
+                <div style="display: flex; gap: 8px; align-items: center;">
+                    <input type="number" id="sell_amount_${safe.currency_id}" class="trading-input" placeholder="الكمية" min="0" step="any">
+                    <input type="number" id="sell_price_${safe.currency_id}" class="trading-input" placeholder="سعر البيع" min="0" step="any">
+                    <button class="btn-reject" style="flex: 1;" onclick="executeTrade('sell', ${safe.office_id}, ${safe.currency_id})">
+                        <i class="fa-solid fa-arrow-up"></i> بيع
+                    </button>
+                </div>
+            </div>
+        `;
+    }
 
-return `
-<div style="padding:20px;border-radius:12px;border:2px solid #eee;background:${bg}">
-    <h4 style="color:#1e3c72;margin-bottom:10px;">
-        <i class="fa-solid ${icon}"></i> ${title}
-    </h4>
+    return `
+    <div style="padding:20px;border-radius:12px;border:2px solid #eee;background:${bg}; display:flex; flex-direction:column;">
+        <h4 style="color:#1e3c72;margin-bottom:10px;">
+            <i class="fa-solid ${icon}"></i> ${title}
+        </h4>
 
-    <div style="font-size:24px;font-weight:bold;color:#222;">
-        ${parseFloat(safe.balance).toLocaleString()} 
-        <small>${safe.currency}</small>
+        <div style="font-size:24px;font-weight:bold;color:#222;">
+            ${parseFloat(safe.balance).toLocaleString()} 
+            <small>${safe.currency}</small>
+        </div>
+
+        ${safe.cost !== null ? `
+            <div style="font-size:13px;color:#64748b;margin-top:5px;font-weight:600;">
+                متوسط التكلفة: <span style="color:#1e3c72;">${parseFloat(safe.cost).toFixed(2)}</span>
+            </div>` : ''}
+
+        ${tradingUI}
     </div>
-
-    ${safe.cost ? `
-        <div style="font-size:12px;color:gray;margin-top:5px;">
-            متوسط التكلفة: ${safe.cost}
-        </div>` : ''}
-
-</div>
-`;
-
+    `;
 }).join('');
     } catch (e) { console.error("Error loading safes:", e); }
 }
 
+
+async function executeTrade(type, officeId, currencyId) {
+    const amountInput = document.getElementById(`${type}_amount_${currencyId}`);
+    const priceInput = document.getElementById(`${type}_price_${currencyId}`);
+
+    const amount = parseFloat(amountInput.value);
+    const price = parseFloat(priceInput.value);
+
+    if (!amount || amount <= 0 || !price || price <= 0) {
+        alert('يرجى إدخال كمية وسعر صحيحين');
+        return;
+    }
+
+    // تجهيز البيانات للإرسال
+    const payload = {
+        office_id: officeId,
+        currency_id: currencyId,
+        amount: amount
+    };
+
+    if (type === 'buy') payload.buy_price = price;
+    if (type === 'sell') payload.sell_price = price;
+
+    try {
+        const res = await fetch(`${API_URL}/trading/${type}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+            if(type === 'sell'){
+                alert(`تمت عملية البيع بنجاح!\nالربح المحقق: ${parseFloat(data.profit).toFixed(2)}`);
+            } else {
+                alert('تمت عملية الشراء بنجاح ودمج متوسط التكلفة!');
+            }
+            // إعادة تفريغ الحقول وتحديث عرض الصناديق
+            amountInput.value = '';
+            priceInput.value = '';
+            showSafesSection(); 
+        } else {
+            alert(data.message || 'حدث خطأ أثناء العملية');
+        }
+
+    } catch (error) {
+        console.error(error);
+        alert('حدث خطأ في الاتصال بالخادم');
+    }
+}
 // تعديل الوظائف القديمة لتعمل مع النظام الجديد
 function showPendingTransfers() {
     hideAllCards();
@@ -358,6 +436,131 @@ async function loadPendingTransfers() {
         alert('خطأ في الاتصال');
     }
 }
+/* ============================= */
+/* أرباح التداول - الأدمن        */
+/* ============================= */
+
+function showProfitsSection() {
+    hideAllCards();
+    document.getElementById('profits-card').style.display = 'block';
+
+    // تعيين تاريخ اليوم كافتراضي إن لم يكن محدداً
+    const dateInput = document.getElementById('report-date');
+    if (!dateInput.value) {
+        dateInput.value = new Date().toISOString().split('T')[0];
+    }
+    loadTradingReport();
+}
+
+async function loadTradingReport() {
+    const dateInput  = document.getElementById('report-date');
+    const date       = dateInput.value || new Date().toISOString().split('T')[0];
+    const summaryEl  = document.getElementById('profits-summary');
+    const tableEl    = document.getElementById('profits-table');
+    const emptyEl    = document.getElementById('profits-empty');
+    const tbodyEl    = document.getElementById('profits-list');
+
+    // حالة التحميل
+    summaryEl.innerHTML = '<p style="color:var(--gray);font-size:13px;padding:10px 0;">جاري التحميل...</p>';
+    tableEl.style.display = 'none';
+    emptyEl.style.display  = 'none';
+    tbodyEl.innerHTML = '';
+
+    try {
+        const res = await fetch(`${API_URL}/trading/report/details?date=${date}`, {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Accept': 'application/json'
+            }
+        });
+
+        const json = await res.json();
+
+        if (!res.ok) {
+            summaryEl.innerHTML = `<p style="color:var(--danger);">${json.message || 'فشل تحميل البيانات'}</p>`;
+            return;
+        }
+
+        const transactions = json.transactions || [];
+        const summary      = json.summary     || {};
+
+        // ===== بطاقات الملخص =====
+        const totalProfit = parseFloat(summary.total_net_profit || 0);
+        const profitColor = totalProfit >= 0 ? 'var(--success)' : 'var(--danger)';
+        const profitIcon  = totalProfit >= 0 ? 'fa-arrow-trend-up' : 'fa-arrow-trend-down';
+
+        const cardStyle = 'background:var(--white);border-radius:var(--radius-sm);padding:20px;box-shadow:var(--shadow);border:1px solid var(--border);';
+
+        summaryEl.innerHTML = `
+            <div style="${cardStyle}">
+                <div style="font-size:12px;color:var(--gray);margin-bottom:6px;font-weight:700;text-transform:uppercase;">إجمالي المشتريات</div>
+                <div style="font-size:22px;font-weight:800;color:#1e3c72;">
+                    ${parseFloat(summary.total_bought || 0).toFixed(2)}
+                </div>
+            </div>
+            <div style="${cardStyle}">
+                <div style="font-size:12px;color:var(--gray);margin-bottom:6px;font-weight:700;text-transform:uppercase;">إجمالي المبيعات</div>
+                <div style="font-size:22px;font-weight:800;color:#fd7e14;">
+                    ${parseFloat(summary.total_sold || 0).toFixed(2)}
+                </div>
+            </div>
+            <div style="${cardStyle}">
+                <div style="font-size:12px;color:var(--gray);margin-bottom:6px;font-weight:700;text-transform:uppercase;">صافي الربح / الخسارة</div>
+                <div style="font-size:22px;font-weight:800;color:${profitColor};">
+                    <i class="fa-solid ${profitIcon}" style="font-size:16px;"></i>
+                    ${totalProfit >= 0 ? '+' : ''}${totalProfit.toFixed(2)}
+                </div>
+            </div>
+            <div style="${cardStyle}">
+                <div style="font-size:12px;color:var(--gray);margin-bottom:6px;font-weight:700;text-transform:uppercase;">عدد العمليات</div>
+                <div style="font-size:22px;font-weight:800;color:#6f42c1;">
+                    ${transactions.length}
+                </div>
+            </div>
+        `;
+
+        if (transactions.length === 0) {
+            emptyEl.style.display = 'block';
+            return;
+        }
+
+        // ===== صفوف الجدول =====
+        transactions.forEach((tx, index) => {
+            const isBuy   = tx.type === 'buy';
+            const profit  = parseFloat(tx.profit || 0);
+            const pColor  = profit > 0 ? 'var(--success)' : profit < 0 ? 'var(--danger)' : 'var(--gray)';
+
+            const typeBadge = isBuy
+                ? `<span class="status-badge" style="background:#dcfce7;color:#166534;">شراء</span>`
+                : `<span class="status-badge" style="background:#fee2e2;color:#991b1b;">بيع</span>`;
+
+            const profitCell = isBuy
+                ? `<span style="color:var(--gray);font-size:12px;">—</span>`
+                : `<span style="color:${pColor};font-weight:700;">${profit >= 0 ? '+' : ''}${profit.toFixed(2)}</span>`;
+
+            tbodyEl.innerHTML += `
+                <tr>
+                    <td>${index + 1}</td>
+                    <td>${typeBadge}</td>
+                    <td>${tx.currency?.code ?? '—'}</td>
+                    <td>${parseFloat(tx.amount).toFixed(2)}</td>
+                    <td>${parseFloat(tx.price).toFixed(2)}</td>
+                    <td style="color:#64748b;">${parseFloat(tx.cost_at_time || 0).toFixed(2)}</td>
+                    <td>${profitCell}</td>
+                    <td>${tx.transaction_date ?? '—'}</td>
+                    <td>${tx.user?.name ?? '—'}</td>
+                </tr>
+            `;
+        });
+
+        tableEl.style.display = 'table';
+
+    } catch (error) {
+        console.error('Error loading trading report:', error);
+        summaryEl.innerHTML = '<p style="color:var(--danger);">خطأ في الاتصال بالسيرفر</p>';
+    }
+}
+
 async function handleLogout() {
     await fetch(`${API_URL}/logout`, { method: 'POST', headers: { 'Authorization': `Bearer ${token}` } });
     localStorage.removeItem('auth_token');
@@ -372,4 +575,4 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!token) return;
 
 loadPendingTransfers();
-});     
+});

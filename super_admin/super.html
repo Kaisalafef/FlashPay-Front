@@ -16,7 +16,7 @@
     <body>
         <aside class="sidebar">
             <div class="logo">
-                <i class="fa-solid fa-wallet"></i><span>FlashPay</span>
+                <i class="fa-solid fa-wallet"></i><span >FlashPay</span>
             </div>
             <nav>
                 <ul>
@@ -37,6 +37,12 @@
     <a href="#" onclick="showSection('safes')">
         <i class="fa-solid fa-vault"></i>
         الصناديق
+    </a>
+</li>
+                    <li>
+    <a href="#" onclick="showSection('trading-profits')">
+        <i class="fa-solid fa-chart-line"></i>
+        أرباح التداول
     </a>
 </li>
                 </ul>
@@ -105,6 +111,83 @@
     </table>
 
 </div>
+<!-- ===== قسم أرباح التداول ===== -->
+<div id="trading-profits-section" class="card hidden">
+
+    <div class="card-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px;">
+        <h3><i class="fa-solid fa-chart-line" style="color:var(--primary);"></i> تقرير أرباح التداول</h3>
+    </div>
+
+    <!-- فلاتر البحث -->
+    <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap; padding:16px 0 20px; border-bottom:1px solid var(--border); margin-bottom:24px;">
+
+        <div style="display:flex; flex-direction:column; gap:6px; flex:1; min-width:180px;">
+            <label style="font-size:12px; font-weight:700; color:var(--gray); text-transform:uppercase;">المكتب</label>
+            <select id="profits-office-select"
+                    onchange="onProfitsOfficeChange()"
+                    style="padding:10px 14px; border:1px solid var(--border); border-radius:10px; outline:none; font-family:'Cairo',sans-serif; font-size:13px; background:#fff;">
+                <option value="">اختر المكتب</option>
+            </select>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:6px; flex:1; min-width:160px;">
+            <label style="font-size:12px; font-weight:700; color:var(--gray); text-transform:uppercase;">التاريخ</label>
+            <input type="date" id="profits-date"
+                   style="padding:10px 14px; border:1px solid var(--border); border-radius:10px; outline:none; font-family:'Cairo',sans-serif; font-size:13px;">
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:6px; justify-content:flex-end; padding-top:20px;">
+            <button onclick="loadSuperTradingReport()"
+                    class="btn-primary"
+                    style="padding:10px 22px; border-radius:10px; display:flex; align-items:center; gap:8px; font-size:13px;">
+                <i class="fa-solid fa-magnifying-glass"></i> عرض التقرير
+            </button>
+        </div>
+
+    </div>
+
+    <!-- اسم المكتب المختار -->
+    <div id="profits-office-label" style="display:none; margin-bottom:16px;">
+        <span style="font-size:13px; color:var(--gray);">المكتب المختار: </span>
+        <span id="profits-office-name" style="font-weight:700; color:var(--primary); font-size:14px;"></span>
+    </div>
+
+    <!-- بطاقات الملخص -->
+    <div id="profits-summary"
+         style="display:grid; grid-template-columns:repeat(auto-fit,minmax(175px,1fr)); gap:16px; margin-bottom:24px;"></div>
+
+    <!-- جدول العمليات -->
+    <table class="data-table" id="profits-table" style="display:none;">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>النوع</th>
+                <th>العملة</th>
+                <th>الكمية</th>
+                <th>السعر</th>
+                <th>متوسط التكلفة</th>
+                <th>الربح / الخسارة</th>
+                <th>التاريخ</th>
+                <th>المنفذ</th>
+            </tr>
+        </thead>
+        <tbody id="profits-list"></tbody>
+    </table>
+
+    <!-- حالة فارغة -->
+    <div id="profits-empty" style="display:none; text-align:center; padding:60px 20px; color:var(--gray);">
+        <i class="fa-solid fa-inbox" style="font-size:52px; display:block; margin-bottom:14px; opacity:0.2;"></i>
+        <p style="font-size:15px;">لا توجد عمليات تداول في هذا التاريخ للمكتب المختار</p>
+    </div>
+
+    <!-- حالة: لم يختر مكتباً بعد -->
+    <div id="profits-placeholder" style="text-align:center; padding:60px 20px; color:var(--gray);">
+        <i class="fa-solid fa-building-circle-arrow-right" style="font-size:52px; display:block; margin-bottom:14px; opacity:0.2;"></i>
+        <p style="font-size:15px;">اختر مكتباً وتاريخاً ثم اضغط "عرض التقرير"</p>
+    </div>
+
+</div>
+
                 <div id="offices-section" class="card">
                     <div class="card-header">
                         <h3><i class="fa-solid fa-plus"></i> إضافة مكتب

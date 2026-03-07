@@ -907,6 +907,11 @@ function showSection(sectionId) {
     if (activeSection) {
         activeSection.classList.remove('hidden');
     }
+
+    // تهيئة خاصة لقسم أرباح التداول
+    if (sectionId === 'trading-profits') {
+        initTradingProfitsSection();
+    }
 }
 
 function handleRoleChange() {
@@ -920,6 +925,199 @@ function handleRoleChange() {
     } else {
         officeGroup.classList.remove('hidden');
         agentGroup.classList.add('hidden');
+    }
+}
+
+/* =========================
+   أرباح التداول - السوبر أدمن
+========================= */
+
+/**
+ * عند فتح القسم: نملأ قائمة المكاتب ونضع تاريخ اليوم
+ */
+async function initTradingProfitsSection() {
+    // تاريخ اليوم افتراضياً
+    const dateInput = document.getElementById('profits-date');
+    if (!dateInput.value) {
+        dateInput.value = new Date().toISOString().split('T')[0];
+    }
+
+    // ملء قائمة المكاتب من الـ API
+    try {
+        const res = await fetch(`${API_URL}/offices`, { headers: getHeaders() });
+        const json = await res.json();
+        const select = document.getElementById('profits-office-select');
+        select.innerHTML = '<option value="">اختر المكتب</option>';
+
+        if (json.status === 'success' && Array.isArray(json.data)) {
+            json.data.forEach(office => {
+                const opt = document.createElement('option');
+                opt.value = office.id;
+                opt.textContent = office.name;
+                select.appendChild(opt);
+            });
+        }
+    } catch (e) {
+        console.error('Error loading offices for profits:', e);
+    }
+
+    // إظهار placeholder وإخفاء باقي العناصر
+    _resetProfitsUI();
+}
+
+function onProfitsOfficeChange() {
+    const officeId = document.getElementById('profits-office-select').value;
+    const labelDiv = document.getElementById('profits-office-label');
+    const nameSpan = document.getElementById('profits-office-name');
+    const select   = document.getElementById('profits-office-select');
+
+    if (officeId) {
+        nameSpan.textContent = select.options[select.selectedIndex].text;
+        labelDiv.style.display = 'block';
+    } else {
+        labelDiv.style.display = 'none';
+    }
+}
+
+function _resetProfitsUI() {
+    document.getElementById('profits-summary').innerHTML   = '';
+    document.getElementById('profits-list').innerHTML      = '';
+    document.getElementById('profits-table').style.display = 'none';
+    document.getElementById('profits-empty').style.display = 'none';
+    document.getElementById('profits-placeholder').style.display = 'block';
+}
+
+async function loadSuperTradingReport() {
+    const officeId   = document.getElementById('profits-office-select').value;
+    const date       = document.getElementById('profits-date').value;
+    const summaryEl  = document.getElementById('profits-summary');
+    const tableEl    = document.getElementById('profits-table');
+    const emptyEl    = document.getElementById('profits-empty');
+    const placeholderEl = document.getElementById('profits-placeholder');
+    const tbodyEl    = document.getElementById('profits-list');
+
+    if (!officeId) {
+        alert('يرجى اختيار المكتب أولاً');
+        return;
+    }
+    if (!date) {
+        alert('يرجى تحديد التاريخ');
+        return;
+    }
+
+    // حالة التحميل
+    placeholderEl.style.display = 'none';
+    emptyEl.style.display       = 'none';
+    tableEl.style.display       = 'none';
+    tbodyEl.innerHTML           = '';
+    summaryEl.innerHTML = `
+        <div style="padding:16px; color:var(--gray); font-size:13px; grid-column:1/-1;">
+            <i class="fa-solid fa-spinner fa-spin"></i> جاري تحميل البيانات...
+        </div>`;
+
+    try {
+        const res = await fetch(
+            `${API_URL}/trading/report/details?date=${date}&office_id=${officeId}`,
+            { headers: getHeaders() }
+        );
+        const json = await res.json();
+
+        if (!res.ok) {
+            summaryEl.innerHTML = `<p style="color:var(--danger); grid-column:1/-1;">${json.message || 'فشل تحميل البيانات'}</p>`;
+            return;
+        }
+
+        const transactions = json.transactions || [];
+        const summary      = json.summary     || {};
+
+        // ===== بطاقات الملخص =====
+        const totalProfit = parseFloat(summary.total_net_profit || 0);
+        const profitColor = totalProfit >= 0 ? '#10b981' : '#ef4444';
+        const profitIcon  = totalProfit >= 0 ? 'fa-arrow-trend-up' : 'fa-arrow-trend-down';
+
+        const cardS = `
+            background:var(--white);
+            border-radius:var(--radius-sm,10px);
+            padding:20px 22px;
+            box-shadow:0 4px 12px rgba(0,0,0,.06);
+            border:1px solid var(--border);
+        `;
+
+        summaryEl.innerHTML = `
+            <div style="${cardS}">
+                <div style="font-size:11px;font-weight:700;color:var(--gray);text-transform:uppercase;margin-bottom:8px;letter-spacing:.5px;">
+                    إجمالي المشتريات
+                </div>
+                <div style="font-size:24px;font-weight:800;color:#1e3c72;">
+                    ${parseFloat(summary.total_bought || 0).toFixed(2)}
+                </div>
+            </div>
+            <div style="${cardS}">
+                <div style="font-size:11px;font-weight:700;color:var(--gray);text-transform:uppercase;margin-bottom:8px;letter-spacing:.5px;">
+                    إجمالي المبيعات
+                </div>
+                <div style="font-size:24px;font-weight:800;color:#f59e0b;">
+                    ${parseFloat(summary.total_sold || 0).toFixed(2)}
+                </div>
+            </div>
+            <div style="${cardS}">
+                <div style="font-size:11px;font-weight:700;color:var(--gray);text-transform:uppercase;margin-bottom:8px;letter-spacing:.5px;">
+                    صافي الربح / الخسارة
+                </div>
+                <div style="font-size:24px;font-weight:800;color:${profitColor};">
+                    <i class="fa-solid ${profitIcon}" style="font-size:18px;"></i>
+                    ${totalProfit >= 0 ? '+' : ''}${totalProfit.toFixed(2)}
+                </div>
+            </div>
+            <div style="${cardS}">
+                <div style="font-size:11px;font-weight:700;color:var(--gray);text-transform:uppercase;margin-bottom:8px;letter-spacing:.5px;">
+                    عدد العمليات
+                </div>
+                <div style="font-size:24px;font-weight:800;color:#6f42c1;">
+                    ${transactions.length}
+                </div>
+            </div>
+        `;
+
+        if (transactions.length === 0) {
+            emptyEl.style.display = 'block';
+            return;
+        }
+
+        // ===== صفوف الجدول =====
+        transactions.forEach((tx, index) => {
+            const isBuy  = tx.type === 'buy';
+            const profit = parseFloat(tx.profit || 0);
+            const pColor = profit > 0 ? '#10b981' : profit < 0 ? '#ef4444' : 'var(--gray)';
+
+            const typeBadge = isBuy
+                ? `<span style="background:#dcfce7;color:#166534;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700;">شراء</span>`
+                : `<span style="background:#fee2e2;color:#991b1b;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700;">بيع</span>`;
+
+            const profitCell = isBuy
+                ? `<span style="color:var(--gray);font-size:12px;">—</span>`
+                : `<span style="color:${pColor};font-weight:700;">${profit >= 0 ? '+' : ''}${profit.toFixed(2)}</span>`;
+
+            tbodyEl.innerHTML += `
+                <tr>
+                    <td>${index + 1}</td>
+                    <td>${typeBadge}</td>
+                    <td>${tx.currency?.code ?? '—'}</td>
+                    <td>${parseFloat(tx.amount).toFixed(2)}</td>
+                    <td>${parseFloat(tx.price).toFixed(2)}</td>
+                    <td style="color:#64748b;">${parseFloat(tx.cost_at_time || 0).toFixed(2)}</td>
+                    <td>${profitCell}</td>
+                    <td>${tx.transaction_date ?? '—'}</td>
+                    <td>${tx.user?.name ?? '—'}</td>
+                </tr>
+            `;
+        });
+
+        tableEl.style.display = 'table';
+
+    } catch (error) {
+        console.error('Error loading trading report:', error);
+        summaryEl.innerHTML = '<p style="color:var(--danger); grid-column:1/-1;">خطأ في الاتصال بالسيرفر</p>';
     }
 }
 
@@ -952,4 +1150,4 @@ document.addEventListener('DOMContentLoaded', async () => {
     await renderCurrenciesTable();
     await initPricePreview();
     await loadSafes();
-});     
+});
