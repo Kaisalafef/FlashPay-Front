@@ -1614,6 +1614,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     await initPricePreview();
     await loadSafes();
 
+    // تحميل بيانات المستخدم الحالي
+    await loadCurrentUser();
+
     // تهيئة الرئيسية
     showSection('dashboard');
 
@@ -1622,6 +1625,145 @@ document.addEventListener('DOMContentLoaded', async () => {
         const timeEl = document.getElementById('dash-time');
         if (timeEl) timeEl.textContent = new Date().toLocaleTimeString('ar-SY');
     }, 60000);
+
+    // إغلاق الـ dropdown عند الضغط خارجه
+    document.addEventListener('click', (e) => {
+        const wrapper = document.getElementById('profile-toggle-btn')?.closest('.profile-wrapper');
+        if (wrapper && !wrapper.contains(e.target)) {
+            closeProfileDropdown();
+        }
+    });
+});
+
+/* =========================
+   Profile: Load Current User
+========================= */
+async function loadCurrentUser() {
+    try {
+        const res = await fetch(`${API_URL}/me`, { headers: getHeaders() });
+        if (!res.ok) return;
+        const json = await res.json();
+        const user = json.data ?? json;
+
+        // تحديث الاسم في الهيدر
+        const nameEl = document.getElementById('user-name');
+        if (nameEl) nameEl.textContent = user.name ?? '—';
+
+        // تحديث الـ dropdown
+        const dnName = document.getElementById('dropdown-user-name');
+        const dnEmail = document.getElementById('dropdown-user-email');
+        if (dnName) dnName.textContent = user.name ?? '—';
+        if (dnEmail) dnEmail.textContent = user.email ?? '—';
+
+        // تخزين البيانات لملء النموذج لاحقاً
+        window._currentUser = user;
+    } catch (e) {
+        console.error('Failed to load current user:', e);
+    }
+}
+
+/* =========================
+   Profile Dropdown Toggle
+========================= */
+function toggleProfileDropdown() {
+    const dropdown = document.getElementById('profile-dropdown');
+    const chevron = document.getElementById('profile-chevron');
+    const profileBtn = document.getElementById('profile-toggle-btn');
+    const isHidden = dropdown.classList.contains('hidden');
+
+    if (isHidden) {
+        dropdown.classList.remove('hidden');
+        chevron.classList.add('rotated');
+        profileBtn.classList.add('active');
+    } else {
+        closeProfileDropdown();
+    }
+}
+
+function closeProfileDropdown() {
+    const dropdown = document.getElementById('profile-dropdown');
+    const chevron = document.getElementById('profile-chevron');
+    const profileBtn = document.getElementById('profile-toggle-btn');
+    dropdown?.classList.add('hidden');
+    chevron?.classList.remove('rotated');
+    profileBtn?.classList.remove('active');
+}
+
+/* =========================
+   Profile Modal
+========================= */
+function openProfileModal() {
+    const modal = document.getElementById('profile-modal');
+    modal?.classList.remove('hidden');
+
+    // ملء النموذج بالبيانات الحالية
+    const user = window._currentUser;
+    if (user) {
+        const nameEl = document.getElementById('profile-edit-name');
+        const emailEl = document.getElementById('profile-edit-email');
+        const phoneEl = document.getElementById('profile-edit-phone');
+        const displayName = document.getElementById('profile-modal-name-display');
+        const displayEmail = document.getElementById('profile-modal-email-display');
+
+        if (nameEl) nameEl.value = user.name ?? '';
+        if (emailEl) emailEl.value = user.email ?? '';
+        if (phoneEl) phoneEl.value = user.phone ?? '';
+        if (displayName) displayName.textContent = user.name ?? '—';
+        if (displayEmail) displayEmail.textContent = user.email ?? '—';
+    }
+}
+
+function closeProfileModal() {
+    document.getElementById('profile-modal')?.classList.add('hidden');
+}
+
+// معالجة حفظ الملف الشخصي
+document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('profile-edit-form');
+    if (!form) return;
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const body = {};
+        const name = document.getElementById('profile-edit-name').value.trim();
+        const email = document.getElementById('profile-edit-email').value.trim();
+        const phone = document.getElementById('profile-edit-phone').value.trim();
+        const password = document.getElementById('profile-edit-password').value;
+
+        if (name) body.name = name;
+        if (email) body.email = email;
+        if (phone) body.phone = phone;
+        if (password) body.password = password;
+
+        try {
+            const res = await fetch(`${API_URL}/profile`, {
+                method: 'PUT',
+                headers: getHeaders(),
+                body: JSON.stringify(body)
+            });
+
+            const json = await res.json();
+
+            if (res.ok) {
+                window._currentUser = json.data ?? json;
+                await loadCurrentUser();
+                closeProfileModal();
+                if (typeof notyf !== 'undefined') {
+                    notyf.success('تم تحديث الملف الشخصي بنجاح');
+                }
+            } else {
+                if (typeof notyf !== 'undefined') {
+                    notyf.error(json.message ?? 'فشل التحديث');
+                }
+            }
+        } catch (err) {
+            console.error('Profile update error:', err);
+            if (typeof notyf !== 'undefined') {
+                notyf.error('حدث خطأ أثناء التحديث');
+            }
+        }
+    });
 });
 // ===== وظائف إضافية للواجهة المحسّنة =====
 
