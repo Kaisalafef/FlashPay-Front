@@ -886,6 +886,36 @@ async function initPricePreview() {
 /* =========================
    UI Helpers
 ========================= */
+/* =========================
+   Mobile Sidebar Toggle
+========================= */
+function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebar-overlay');
+    const btn = document.getElementById('hamburger-btn');
+    const isOpen = sidebar.classList.contains('open');
+
+    if (isOpen) {
+        closeSidebar();
+    } else {
+        sidebar.classList.add('open');
+        overlay.classList.add('active');
+        btn.querySelector('i').className = 'fa-solid fa-xmark';
+        document.body.style.overflow = 'hidden';
+    }
+}
+
+function closeSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebar-overlay');
+    const btn = document.getElementById('hamburger-btn');
+
+    sidebar.classList.remove('open');
+    overlay.classList.remove('active');
+    if (btn) btn.querySelector('i').className = 'fa-solid fa-bars';
+    document.body.style.overflow = '';
+}
+
 function showSection(sectionId) {
     // إخفاء كل الأقسام
     document.querySelectorAll('.card').forEach(card => card.classList.add('hidden'));
@@ -904,6 +934,9 @@ function showSection(sectionId) {
     document.querySelectorAll('.sidebar nav li').forEach(li => li.classList.remove('active'));
     const activeLink = document.querySelector(`.sidebar nav a[onclick*="${sectionId}"]`);
     if (activeLink) activeLink.closest('li').classList.add('active');
+
+    // إغلاق القائمة على الموبايل بعد الاختيار
+    if (window.innerWidth <= 768) closeSidebar();
 
     if (sectionId === 'trading-profits') initTradingProfitsSection();
     if (sectionId === 'customers') loadCustomers();
