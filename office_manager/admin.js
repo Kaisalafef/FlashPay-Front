@@ -22,6 +22,15 @@ async function checkAuth() {
             return null;
         }
 
+        // تحديث اسم المستخدم في الهيدر
+        try {
+            const meR = await fetch(`${API_URL}/me`, { headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' } });
+            if (meR.ok) {
+                const meD = await meR.json();
+                const nameEl = document.getElementById('admin-name');
+                if (nameEl) nameEl.textContent = meD.user?.name || 'Admin';
+            }
+        } catch(_) {}
         return token;
 
     } catch (e) {
@@ -169,10 +178,20 @@ async function showOfficeSection() {
         console.log("myOffice",myOffice)
         if (myOffice) {
             document.getElementById('office-details').innerHTML = `
-                <p><strong>اسم المكتب:</strong> ${myOffice.name}</p>
-                <p><strong>العنوان:</strong> ${myOffice.address || 'غير محدد'}</p>
-                <p><strong>المدينة:</strong> ${myOffice.city?.name || '-'}</p>
+                <div class="office-info-item">
+                    <i class="fa-solid fa-building"></i>
+                    <div><span class="info-label">اسم المكتب</span><span class="info-value">${myOffice.name}</span></div>
+                </div>
+                <div class="office-info-item">
+                    <i class="fa-solid fa-city"></i>
+                    <div><span class="info-label">المدينة</span><span class="info-value">${myOffice.city?.name || '—'}</span></div>
+                </div>
+                <div class="office-info-item">
+                    <i class="fa-solid fa-map-marker-alt"></i>
+                    <div><span class="info-label">العنوان</span><span class="info-value">${myOffice.address || 'غير محدد'}</span></div>
+                </div>
             `;
+            const statStaff = document.getElementById('stat-staff-count');
         }
 
         // 3. جلب الموظفين وفلترتهم حسب المكتب
@@ -254,22 +273,24 @@ container.innerHTML = mySafes.map(safe => {
         `;
     }
 
+    const cardClass = safe.type === 'trading' ? 'safe-card safe-card-trading' : 'safe-card safe-card-main';
     return `
-    <div style="padding:20px;border-radius:12px;border:2px solid #eee;background:${bg}; display:flex; flex-direction:column;">
-        <h4 style="color:#1e3c72;margin-bottom:10px;">
-            <i class="fa-solid ${icon}"></i> ${title}
-        </h4>
-
-        <div style="font-size:24px;font-weight:bold;color:#222;">
-            ${parseFloat(safe.balance).toLocaleString()} 
-            <small>${safe.currency}</small>
+    <div class="${cardClass}">
+        <div class="safe-card-header">
+            <div class="safe-card-icon">
+                <i class="fa-solid ${icon}"></i>
+            </div>
+            <div>
+                <div class="safe-card-title">${title}</div>
+                <div class="safe-card-subtitle">${safe.currency || 'USD'}</div>
+            </div>
         </div>
-
-        ${safe.cost !== null ? `
-            <div style="font-size:13px;color:#64748b;margin-top:5px;font-weight:600;">
-                متوسط التكلفة: <span style="color:#1e3c72;">${parseFloat(safe.cost).toFixed(2)}</span>
+        <div class="safe-card-balance">${parseFloat(safe.balance).toLocaleString()}</div>
+        <div class="safe-card-currency">${safe.currency || 'USD'}</div>
+        ${safe.cost !== null && safe.cost !== undefined ? `
+            <div style="font-size:12px;color:var(--gray);margin-top:8px;font-weight:600;padding:8px 12px;background:var(--light);border-radius:8px;">
+                متوسط التكلفة: <span style="color:var(--primary);font-weight:800;">${parseFloat(safe.cost).toFixed(2)}</span>
             </div>` : ''}
-
         ${tradingUI}
     </div>
     `;
@@ -521,6 +542,7 @@ async function loadTradingReport() {
 
         if (transactions.length === 0) {
             emptyEl.style.display = 'block';
+            const _pph = document.getElementById('profits-placeholder'); if(_pph) _pph.style.display='none';
             return;
         }
 
@@ -554,6 +576,7 @@ async function loadTradingReport() {
         });
 
         tableEl.style.display = 'table';
+        const _ptwS = document.getElementById('profits-table-wrapper'); if(_ptwS) _ptwS.style.display='block';
 
     } catch (error) {
         console.error('Error loading trading report:', error);

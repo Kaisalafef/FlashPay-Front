@@ -1,6 +1,6 @@
 /* ================= ROOT & VARIABLES ================= */
 :root {
-    /* الألوان الأساسية (أخضر مالي احترافي) */
+    /* ألوان Super Admin — أخضر مالي */
     --primary: #16a34a;
     --primary-dark: #15803d;
     --primary-light: #22c55e;
@@ -12,9 +12,11 @@
 
     /* ألوان الحالات */
     --success: #10b981;
+    --success-bg: #dcfce7;
     --danger: #ef4444;
     --danger-bg: #fef2f2;
     --warning: #f59e0b;
+    --warning-bg: #fef3c7;
 
     /* درجات الرمادي والخلفيات */
     --dark: #111827;
@@ -36,7 +38,6 @@
     --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
     --shadow-hover: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
 }
-
 /* ================= RESET & TYPOGRAPHY ================= */
 html {
     font-size: 16px;
@@ -98,25 +99,28 @@ body {
 
 .logo {
     font-size: 1.25rem;
-    /* كانت 26px أصبحت تقريباً 20px */
     font-weight: 800;
     margin-bottom: 50px;
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 2px;
 }
 
 .logo i {
-    color: rgb(115, 197, 115);
-    font-size: 1.375rem;
-    /* كانت 28px أصبحت تقريباً 22px */
+    color: #e4ca3a;
+    font-size: 1.2rem;
+    padding: 5px;
     filter: drop-shadow(0 2px 4px rgb(224, 230, 224));
 }
 
-.logo span {
-    background: linear-gradient(135deg, green,rgb(115, 197, 115));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+.logo .flash {
+    color: var(--primary);
+    font-weight: bold;
+}
+
+.logo .pay {
+    color: #ecb651;
+    font-weight: bold;
 }
 
 .sidebar nav {
@@ -142,12 +146,10 @@ body {
     transition: var(--transition);
     font-weight: 600;
     font-size: 0.875rem;
-    /* كانت 15px أصبحت تقريباً 14px */
 }
 
 .sidebar nav a i {
     font-size: 1rem;
-    /* كانت 18px أصبحت 16px */
     width: 24px;
     text-align: center;
     transition: var(--transition);
@@ -211,8 +213,8 @@ body {
 
 /* ================= HEADER ================= */
 .app-header {
-    background: rgba(255, 255, 255, 0.85);
-    padding: 18px 40px;
+    background: rgba(255, 255, 255, 0.92);
+    padding: 14px 40px;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -220,9 +222,23 @@ body {
     position: sticky;
     top: 0;
     z-index: 50;
-    -webkit-backdrop-filter: blur(12px);
-    backdrop-filter: blur(12px);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+    -webkit-backdrop-filter: blur(16px);
+    backdrop-filter: blur(16px);
+    box-shadow: 0 2px 16px rgba(0, 0, 0, 0.05);
+    gap: 16px;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    flex: 1;
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
 }
 
 .page-title {
@@ -232,8 +248,7 @@ body {
 }
 
 .page-title i {
-    font-size: 1.125rem;
-    /* كانت 22px أصبحت تقريباً 18px */
+    font-size: 1rem;
     color: var(--primary);
     background: var(--primary-bg);
     padding: 10px;
@@ -241,16 +256,10 @@ body {
 }
 
 .page-title h2 {
-    font-size: 1.125rem;
-    /* كانت 20px أصبحت تقريباً 18px */
+    font-size: 1.05rem;
     font-weight: 700;
     color: var(--dark);
-}
-
-.header-right {
-    display: flex;
-    align-items: center;
-    gap: 24px;
+    white-space: nowrap;
 }
 
 .icon-btn {
@@ -261,12 +270,12 @@ body {
     background: var(--white);
     color: var(--gray);
     font-size: 1rem;
-    /* كانت 18px أصبحت 16px */
     cursor: pointer;
     transition: var(--transition);
     display: flex;
     align-items: center;
     justify-content: center;
+    flex-shrink: 0;
 }
 
 .icon-btn:hover {
@@ -274,24 +283,32 @@ body {
     color: var(--white);
     border-color: var(--primary);
     transform: translateY(-2px);
-    box-shadow: 0 4px 10px rgba(234, 88, 12, 0.2);
+    box-shadow: 0 4px 10px rgba(22, 163, 74, 0.2);
+}
+
+/* Profile Wrapper & Dropdown */
+.profile-wrapper {
+    position: relative;
 }
 
 .profile-box {
     display: flex;
     align-items: center;
-    gap: 14px;
-    padding: 6px 16px 6px 8px;
+    gap: 10px;
+    padding: 6px 12px 6px 6px;
     border-radius: var(--radius-full);
     border: 1px solid var(--border);
     background: var(--white);
     transition: var(--transition);
     cursor: pointer;
+    user-select: none;
 }
 
-.profile-box:hover {
+.profile-box:hover,
+.profile-box.active {
     border-color: var(--primary-light);
-    box-shadow: var(--shadow-sm);
+    box-shadow: 0 0 0 3px rgba(22,163,74,0.08);
+    background: var(--primary-bg);
 }
 
 .avatar {
@@ -304,7 +321,8 @@ body {
     justify-content: center;
     border-radius: 50%;
     font-size: 0.875rem;
-    /* كانت 16px أصبحت تقريباً 14px */
+    flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(22,163,74,0.3);
 }
 
 .profile-info {
@@ -314,14 +332,195 @@ body {
 
 .profile-info span {
     font-size: 0.8125rem;
-    /* كانت 14px أصبحت تقريباً 13px */
     font-weight: 700;
     color: var(--dark);
+    line-height: 1.2;
 }
 
 .profile-info small {
     font-size: 0.625rem;
-    /* كانت 11px أصبحت تقريباً 10px */
+    color: var(--primary);
+    font-weight: 600;
+    letter-spacing: 0.3px;
+}
+
+.profile-chevron {
+    font-size: 0.65rem;
+    color: var(--gray);
+    transition: transform var(--transition);
+    margin-right: 2px;
+}
+
+.profile-chevron.rotated {
+    transform: rotate(180deg);
+}
+
+/* Dropdown */
+.profile-dropdown {
+    position: absolute;
+    top: calc(100% + 10px);
+    left: 0;
+    min-width: 240px;
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-lg);
+    z-index: 200;
+    overflow: hidden;
+    animation: dropdownFadeIn 0.18s ease;
+    transform-origin: top left;
+}
+
+@keyframes dropdownFadeIn {
+    from { opacity: 0; transform: translateY(-8px) scale(0.97); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.profile-dropdown.hidden {
+    display: none;
+}
+
+.profile-dropdown-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 18px;
+    background: linear-gradient(135deg, var(--primary-bg), transparent);
+}
+
+.profile-dropdown-avatar {
+    width: 42px;
+    height: 42px;
+    background: linear-gradient(135deg, var(--primary), var(--primary-light));
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+    box-shadow: 0 3px 10px rgba(22,163,74,0.3);
+}
+
+.profile-dropdown-header strong {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: var(--dark);
+}
+
+.profile-dropdown-header span {
+    display: block;
+    font-size: 0.72rem;
+    color: var(--gray);
+    margin-top: 2px;
+}
+
+.profile-dropdown-divider {
+    height: 1px;
+    background: var(--border);
+    margin: 0;
+}
+
+.profile-dropdown-item {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 13px 18px;
+    background: transparent;
+    border: none;
+    font-family: 'Cairo', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: var(--transition);
+    text-align: right;
+}
+
+.profile-dropdown-item i {
+    width: 18px;
+    text-align: center;
+    font-size: 0.9rem;
+    color: var(--primary);
+    transition: var(--transition);
+}
+
+.profile-dropdown-item:hover {
+    background: var(--primary-bg);
+    color: var(--primary);
+}
+
+.profile-dropdown-item:hover i {
+    transform: scale(1.2);
+}
+
+.profile-dropdown-logout {
+    color: var(--danger);
+}
+
+.profile-dropdown-logout i {
+    color: var(--danger);
+}
+
+.profile-dropdown-logout:hover {
+    background: var(--danger-bg);
+    color: var(--danger);
+}
+
+/* Profile Modal Hero */
+.profile-modal-hero {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    background: linear-gradient(135deg, var(--primary-bg), rgba(34,197,94,0.04));
+    border: 1px solid rgba(22,163,74,0.12);
+    border-radius: var(--radius-sm);
+    padding: 20px 24px;
+    margin-bottom: 24px;
+}
+
+.profile-modal-avatar-wrap {
+    position: relative;
+    flex-shrink: 0;
+}
+
+.profile-modal-avatar {
+    width: 64px;
+    height: 64px;
+    background: linear-gradient(135deg, var(--primary), var(--primary-light));
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.6rem;
+    box-shadow: 0 4px 16px rgba(22,163,74,0.3);
+}
+
+.profile-modal-badge {
+    position: absolute;
+    bottom: -4px;
+    right: -4px;
+    background: var(--primary);
+    color: white;
+    font-size: 0.55rem;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 30px;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+}
+
+.profile-modal-meta h4 {
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: var(--dark);
+}
+
+.profile-modal-meta span {
+    font-size: 0.8rem;
     color: var(--gray);
 }
 
@@ -348,7 +547,6 @@ body {
 
 .card h3 {
     font-size: 1rem;
-    /* كانت 18px أصبحت 16px */
     color: var(--dark);
     display: flex;
     align-items: center;
@@ -356,9 +554,8 @@ body {
 
 .card h3 i {
     color: var(--primary);
-    margin-left: 10px;
+    margin-right: 10px;
     font-size: 1.125rem;
-    /* كانت 20px أصبحت تقريباً 18px */
     transition: var(--transition);
 }
 
@@ -410,7 +607,6 @@ body {
 
 label {
     font-size: 0.8125rem;
-    /* كانت 14px أصبحت تقريباً 13px */
     font-weight: 700;
     color: var(--dark);
 }
@@ -423,9 +619,19 @@ select {
     background-color: #f8fafc;
     color: var(--dark);
     font-size: 0.8125rem;
-    /* كانت 14px أصبحت تقريباً 13px */
     outline: none;
     transition: var(--transition);
+    font-family: 'Cairo', sans-serif;
+    width: 100%;
+}
+
+/* الأرقام تُكتب من اليسار لليمين دائماً */
+input[type="number"],
+input[type="tel"],
+input[type="email"],
+input[type="password"] {
+    direction: ltr;
+    text-align: right;
 }
 
 input:hover,
@@ -438,11 +644,12 @@ input:focus,
 select:focus {
     background-color: var(--white);
     border-color: var(--primary);
-    box-shadow: 0 0 0 4px hsla(28, 95%, 50%, 0.15);
+    box-shadow: 0 0 0 4px rgba(22, 163, 74, 0.15);
 }
 
 /* ================= BUTTONS ================= */
 .btn-primary {
+    font-family: 'Cairo', sans-serif;
     background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
     color: var(--white);
     padding: 14px 28px;
@@ -450,19 +657,18 @@ select:focus {
     border-radius: var(--radius-sm);
     cursor: pointer;
     font-size: 0.875rem;
-    /* كانت 15px أصبحت تقريباً 14px */
     font-weight: 700;
     transition: var(--transition);
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 10px;
-    box-shadow: 0 4px 12px rgba(234, 88, 12, 0.2);
+    box-shadow: 0 4px 12px rgba(22, 163, 74, 0.2);
 }
 
 .btn-primary:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 16px rgba(22,163,74,0.15);;
+    box-shadow: 0 8px 16px rgba(22, 163, 74, 0.25);
 }
 
 .btn-primary:active {
@@ -489,7 +695,6 @@ select:focus {
     color: var(--text-muted);
     font-weight: 700;
     font-size: 0.75rem;
-    /* كانت 13px أصبحت 12px */
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
@@ -515,7 +720,6 @@ select:focus {
 
 .data-table td {
     font-size: 0.8125rem;
-    /* كانت 14px أصبحت تقريباً 13px */
     font-weight: 600;
     color: var(--dark);
     vertical-align: middle;
@@ -528,14 +732,12 @@ select:focus {
     padding: 6px 14px;
     border-radius: var(--radius-full);
     font-size: 0.6875rem;
-    /* كانت 12px أصبحت 11px */
     font-weight: 700;
     display: inline-block;
 }
 
 .location-tag {
     font-size: 0.6875rem;
-    /* كانت 12px أصبحت 11px */
     background: var(--primary-bg);
     color: var(--primary-dark);
     padding: 6px 12px;
@@ -552,7 +754,6 @@ select:focus {
     padding: 6px 14px;
     border-radius: var(--radius-full);
     font-size: 0.6875rem;
-    /* كانت 12px أصبحت 11px */
     font-weight: 700;
     white-space: nowrap;
 }
@@ -564,10 +765,9 @@ select:focus {
     padding: 8px 12px;
     border-radius: 8px;
     cursor: pointer;
-    margin-left: 8px;
+    margin-right: 8px;
     transition: var(--transition);
     font-size: 0.8125rem;
-    /* كانت 14px أصبحت تقريباً 13px */
 }
 
 .btn-edit {
@@ -649,7 +849,6 @@ select:focus {
 
 .modal-header h3 {
     font-size: 1.0625rem;
-    /* كانت 18px أصبحت تقريباً 17px */
     color: var(--dark);
     display: flex;
     align-items: center;
@@ -667,7 +866,6 @@ select:focus {
     background: none;
     border: none;
     font-size: 1.25rem;
-    /* كانت 24px أصبحت تقريباً 20px */
     color: var(--gray);
     cursor: pointer;
     transition: var(--transition);
@@ -690,7 +888,6 @@ select:focus {
     color: var(--text-muted);
     line-height: 1.7;
     font-size: 0.875rem;
-    /* كانت 15px أصبحت تقريباً 14px */
     font-weight: 600;
 }
 
@@ -772,7 +969,6 @@ select:focus {
 
     font-weight: 800;
     font-size: 0.9375rem;
-    /* كانت 16px أصبحت تقريباً 15px */
     color: var(--secondary);
 
     box-shadow: var(--shadow-sm);
@@ -782,12 +978,10 @@ select:focus {
 .syp-preview-box i {
     color: var(--warning);
     font-size: 1.0625rem;
-    /* كانت 18px أصبحت تقريباً 17px */
 }
 
 .syp-preview-box small {
     font-size: 0.75rem;
-    /* كانت 13px أصبحت 12px */
     color: var(--gray);
     font-weight: 700;
 }
@@ -813,7 +1007,6 @@ select:focus {
     border-radius: var(--radius-sm);
 
     font-size: 0.875rem;
-    /* كانت 15px أصبحت تقريباً 14px */
     font-weight: 800;
     cursor: pointer;
 
@@ -850,7 +1043,6 @@ select:focus {
     padding: 8px 14px;
     border-radius: 8px;
     font-size: 0.75rem;
-    /* كانت 13px أصبحت 12px */
     font-weight: 700;
     cursor: pointer;
     border: 1px solid var(--border);
@@ -891,7 +1083,6 @@ select:focus {
     padding: 12px 16px;
     border-radius: var(--radius-sm);
     font-size: 0.875rem;
-    /* كانت 15px أصبحت تقريباً 14px */
     font-weight: 700;
     color: var(--dark);
     display: flex;
@@ -1534,12 +1725,12 @@ select:focus {
 
 .input-with-icon input {
     width: 100%;
-    padding-left: 44px;
+    padding-right: 44px;
 }
 
 .toggle-pass-btn {
     position: absolute;
-    left: 12px;
+    right: 12px;
     background: none;
     border: none;
     cursor: pointer;
@@ -1989,4 +2180,4 @@ select:focus {
 .customers-hero {
     background: linear-gradient(135deg, #134e4a 0%, #0d9488 60%, #2dd4bf 100%);
     color: white;
-}
+}   

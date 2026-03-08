@@ -16,8 +16,9 @@
     <body>
         <aside class="sidebar">
             <div class="logo">
-                <i class="fa-solid fa-wallet"></i><span >FlashPay</span>
-            </div>
+    <i class="fa-solid fa-bolt-lightning"></i>
+   <span class="pay">Pay</span> <span class="flash">Flash</span>
+</div>
             <nav>
                 <ul>
                     <li class="active"><a href="#"
@@ -71,25 +72,47 @@
                     </div>
                 </div>
 
-                <div class="header-right">
-
+                <div class="header-actions">
                     <button class="icon-btn" type="button"
                         aria-label="الإشعارات" title="الإشعارات">
                         <i class="fa-regular fa-bell"></i>
                     </button>
-                </div>
-                <div class="header-actions">
 
-                    <div class="profile-box">
-                        <div class="avatar">
-                            <i class="fa-solid fa-user"></i>
+                    <div class="profile-wrapper">
+                        <div class="profile-box" id="profile-toggle-btn" onclick="toggleProfileDropdown()">
+                            <div class="avatar">
+                                <i class="fa-solid fa-user"></i>
+                            </div>
+                            <div class="profile-info">
+                                <span id="user-name">جاري التحميل...</span>
+                                <small>Super Admin</small>
+                            </div>
+                            <i class="fa-solid fa-chevron-down profile-chevron" id="profile-chevron"></i>
                         </div>
-                        <div class="profile-info">
-                            <span id="user-name">جاري التحميل...</span>
-                            <small>Super Admin</small>
+
+                        <!-- Profile Dropdown -->
+                        <div class="profile-dropdown hidden" id="profile-dropdown">
+                            <div class="profile-dropdown-header">
+                                <div class="profile-dropdown-avatar">
+                                    <i class="fa-solid fa-user-shield"></i>
+                                </div>
+                                <div>
+                                    <strong id="dropdown-user-name">—</strong>
+                                    <span id="dropdown-user-email">—</span>
+                                </div>
+                            </div>
+                            <div class="profile-dropdown-divider"></div>
+                            <button class="profile-dropdown-item" onclick="openProfileModal(); closeProfileDropdown()">
+                                <i class="fa-solid fa-user-pen"></i>
+                                تعديل الملف الشخصي
+                            </button>
+                            <div class="profile-dropdown-divider"></div>
+                            <button class="profile-dropdown-item profile-dropdown-logout" onclick="handleLogout()">
+                                <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                                تسجيل الخروج
+                            </button>
                         </div>
                     </div>
-
                 </div>
 
             </header>
@@ -1084,6 +1107,56 @@
         </div>
     </div>
 </div>
+
+        <!-- Profile Edit Modal -->
+        <div id="profile-modal" class="modal-overlay hidden">
+            <div class="modal-content modal-lg">
+                <div class="modal-header">
+                    <h3><i class="fa-solid fa-user-pen"></i> تعديل الملف الشخصي</h3>
+                    <button class="close-btn" onclick="closeProfileModal()">&times;</button>
+                </div>
+                <div class="profile-modal-hero">
+                    <div class="profile-modal-avatar-wrap">
+                        <div class="profile-modal-avatar">
+                            <i class="fa-solid fa-user-shield"></i>
+                        </div>
+                        <div class="profile-modal-badge">Super Admin</div>
+                    </div>
+                    <div class="profile-modal-meta">
+                        <h4 id="profile-modal-name-display">—</h4>
+                        <span id="profile-modal-email-display">—</span>
+                    </div>
+                </div>
+                <form id="profile-edit-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label><i class="fa-solid fa-user"></i> الاسم الكامل</label>
+                            <input type="text" id="profile-edit-name" placeholder="أدخل اسمك الكامل" required>
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fa-solid fa-phone"></i> رقم الهاتف</label>
+                            <input type="text" id="profile-edit-phone" placeholder="أدخل رقم الهاتف">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label><i class="fa-solid fa-envelope"></i> البريد الإلكتروني</label>
+                            <input type="email" id="profile-edit-email" placeholder="أدخل البريد الإلكتروني" required>
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fa-solid fa-lock"></i> كلمة المرور الجديدة</label>
+                            <input type="password" id="profile-edit-password" placeholder="اتركه فارغاً لعدم التغيير">
+                        </div>
+                    </div>
+                    <div class="modal-actions">
+                        <button type="button" class="btn-cancel" onclick="closeProfileModal()">إلغاء</button>
+                        <button type="submit" class="btn-primary">
+                            <i class="fa-solid fa-floppy-disk"></i> حفظ التعديلات
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
 
         <script src="super.js"></script>
 
