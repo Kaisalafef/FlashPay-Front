@@ -95,61 +95,318 @@
             </header>
 
             <div class="content-body">
+
+                <!-- ===== قسم الرئيسية (Dashboard) ===== -->
+                <div id="dashboard-section" class="">
+
+                    <!-- Hero Banner للرئيسية -->
+                    <div class="dashboard-hero">
+                        <div class="dashboard-hero-content">
+                            <div class="dashboard-hero-icon">
+                                <i class="fa-solid fa-shield-halved"></i>
+                            </div>
+                            <div>
+                                <h1>مرحباً بك في لوحة الإدارة العليا</h1>
+                                <p>نظرة شاملة على أداء النظام وجميع العمليات</p>
+                            </div>
+                        </div>
+                        <div class="dashboard-hero-date">
+                            <i class="fa-regular fa-calendar"></i>
+                            <span id="dashboard-date">—</span>
+                        </div>
+                    </div>
+
+                    <!-- بطاقات الإحصائيات الرئيسية -->
+                    <div class="dashboard-stats-grid">
+                        <div class="dash-stat-card dash-stat-offices">
+                            <div class="dash-stat-icon">
+                                <i class="fa-solid fa-building"></i>
+                            </div>
+                            <div class="dash-stat-body">
+                                <span class="dash-stat-value" id="dash-offices-count">—</span>
+                                <span class="dash-stat-label">إجمالي المكاتب</span>
+                            </div>
+                            <div class="dash-stat-trend">
+                                <i class="fa-solid fa-arrow-trend-up"></i>
+                            </div>
+                        </div>
+
+                        <div class="dash-stat-card dash-stat-employees">
+                            <div class="dash-stat-icon">
+                                <i class="fa-solid fa-users"></i>
+                            </div>
+                            <div class="dash-stat-body">
+                                <span class="dash-stat-value" id="dash-employees-count">—</span>
+                                <span class="dash-stat-label">الموظفون والمندوبون</span>
+                            </div>
+                            <div class="dash-stat-trend">
+                                <i class="fa-solid fa-arrow-trend-up"></i>
+                            </div>
+                        </div>
+
+                        <div class="dash-stat-card dash-stat-customers">
+                            <div class="dash-stat-icon">
+                                <i class="fa-solid fa-users-rectangle"></i>
+                            </div>
+                            <div class="dash-stat-body">
+                                <span class="dash-stat-value" id="dash-customers-count">—</span>
+                                <span class="dash-stat-label">إجمالي الزبائن</span>
+                            </div>
+                            <div class="dash-stat-trend">
+                                <i class="fa-solid fa-arrow-trend-up"></i>
+                            </div>
+                        </div>
+
+                        <div class="dash-stat-card dash-stat-safes">
+                            <div class="dash-stat-icon">
+                                <i class="fa-solid fa-vault"></i>
+                            </div>
+                            <div class="dash-stat-body">
+                                <span class="dash-stat-value" id="dash-safes-count">—</span>
+                                <span class="dash-stat-label">إجمالي الصناديق</span>
+                            </div>
+                            <div class="dash-stat-trend">
+                                <i class="fa-solid fa-circle-check"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- قسم الميزات والوصول السريع -->
+                    <div class="dashboard-features-grid">
+
+                        <!-- بطاقة الوصول السريع -->
+                        <div class="dash-feature-card">
+                            <div class="dash-feature-header">
+                                <i class="fa-solid fa-bolt"></i>
+                                <h3>وصول سريع</h3>
+                            </div>
+                            <div class="quick-access-grid">
+                                <button class="quick-btn" onclick="showSection('offices')">
+                                    <i class="fa-solid fa-building"></i>
+                                    <span>المكاتب</span>
+                                </button>
+                                <button class="quick-btn" onclick="showSection('employees')">
+                                    <i class="fa-solid fa-users"></i>
+                                    <span>الموظفين</span>
+                                </button>
+                                <button class="quick-btn" onclick="showSection('customers')">
+                                    <i class="fa-solid fa-users-rectangle"></i>
+                                    <span>الزبائن</span>
+                                </button>
+                                <button class="quick-btn" onclick="showSection('exchange')">
+                                    <i class="fa-solid fa-exchange-alt"></i>
+                                    <span>أسعار الصرف</span>
+                                </button>
+                                <button class="quick-btn" onclick="showSection('safes')">
+                                    <i class="fa-solid fa-vault"></i>
+                                    <span>الصناديق</span>
+                                </button>
+                                <button class="quick-btn" onclick="showSection('trading-profits')">
+                                    <i class="fa-solid fa-chart-line"></i>
+                                    <span>أرباح التداول</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- بطاقة ميزات النظام -->
+                        <div class="dash-feature-card dash-features-list-card">
+                            <div class="dash-feature-header">
+                                <i class="fa-solid fa-star"></i>
+                                <h3>مميزات النظام</h3>
+                            </div>
+                            <ul class="features-list">
+                                <li>
+                                    <div class="feature-icon-wrap feat-green">
+                                        <i class="fa-solid fa-shield-halved"></i>
+                                    </div>
+                                    <div>
+                                        <strong>إدارة مركزية شاملة</strong>
+                                        <span>تحكم كامل بجميع المكاتب والموظفين من مكان واحد</span>
+                                    </div>
+                                </li>
+                                <li>
+                                    <div class="feature-icon-wrap feat-blue">
+                                        <i class="fa-solid fa-chart-line"></i>
+                                    </div>
+                                    <div>
+                                        <strong>تقارير أرباح التداول</strong>
+                                        <span>تتبع الأرباح والخسائر لكل مكتب بشكل يومي</span>
+                                    </div>
+                                </li>
+                                <li>
+                                    <div class="feature-icon-wrap feat-orange">
+                                        <i class="fa-solid fa-coins"></i>
+                                    </div>
+                                    <div>
+                                        <strong>إدارة أسعار الصرف</strong>
+                                        <span>تحديث فوري لأسعار العملات مقابل الدولار</span>
+                                    </div>
+                                </li>
+                                <li>
+                                    <div class="feature-icon-wrap feat-purple">
+                                        <i class="fa-solid fa-vault"></i>
+                                    </div>
+                                    <div>
+                                        <strong>مراقبة الصناديق</strong>
+                                        <span>رصد شامل لجميع صناديق المكاتب والمندوبين</span>
+                                    </div>
+                                </li>
+                                <li>
+                                    <div class="feature-icon-wrap feat-teal">
+                                        <i class="fa-solid fa-users-rectangle"></i>
+                                    </div>
+                                    <div>
+                                        <strong>إدارة الزبائن</strong>
+                                        <span>سجل متكامل للزبائن وجميع حواlatهم</span>
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+
+                    </div>
+
+                    <!-- بطاقة النظام والحالة -->
+                    <div class="dashboard-system-card">
+                        <div class="system-status-header">
+                            <i class="fa-solid fa-circle-check" style="color:var(--success)"></i>
+                            <h3>حالة النظام</h3>
+                            <div class="system-status-badge">
+                                <span class="status-dot"></span>
+                                يعمل بشكل طبيعي
+                            </div>
+                        </div>
+                        <div class="system-info-row">
+                            <div class="sys-info-item">
+                                <i class="fa-solid fa-server"></i>
+                                <div>
+                                    <span>FlashPay</span>
+                                    <small>اسم النظام</small>
+                                </div>
+                            </div>
+                            <div class="sys-info-item">
+                                <i class="fa-solid fa-user-tie"></i>
+                                <div>
+                                    <span>Super Admin</span>
+                                    <small>مستوى الصلاحية</small>
+                                </div>
+                            </div>
+                            <div class="sys-info-item">
+                                <i class="fa-solid fa-clock"></i>
+                                <div>
+                                    <span id="dash-time">—</span>
+                                    <small>الوقت الحالي</small>
+                                </div>
+                            </div>
+                            <div class="sys-info-item">
+                                <i class="fa-solid fa-lock"></i>
+                                <div>
+                                    <span>محمي ومشفر</span>
+                                    <small>حالة الاتصال</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
                 <div id="safes-section" class="card hidden">
 
-    <div class="card-header">
-        <h3><i class="fa-solid fa-vault"></i> جميع الصناديق</h3>
+    <!-- Hero Banner للصناديق -->
+    <div class="section-hero safes-hero">
+        <div class="section-hero-text">
+            <h2><i class="fa-solid fa-vault"></i> إدارة الصناديق</h2>
+            <p>عرض وإدارة جميع صناديق المكاتب والمندوبين في النظام</p>
+        </div>
+        <div class="section-hero-stats">
+            <div class="hero-stat">
+                <span id="stat-safes-count">—</span>
+                <small>إجمالي الصناديق</small>
+            </div>
+            <div class="hero-stat">
+                <span id="stat-safes-balance">—</span>
+                <small>إجمالي الرصيد</small>
+            </div>
+        </div>
     </div>
 
-    <table class="data-table">
-        <thead>
-            <tr>
-                <th>#</th>
-                <th>نوع الصندوق</th>
-                <th>المالك</th>
-                <th>العملة</th>
-                <th>الرصيد</th>
-                <th>Cost</th>
-            </tr>
-        </thead>
+    <!-- شريط أدوات -->
+    <div class="table-toolbar">
+        <div class="toolbar-search">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="safes-search" placeholder="بحث بالمالك أو نوع الصندوق..." oninput="filterSafesTable()">
+        </div>
+        <div class="toolbar-actions">
+            <button class="toolbar-btn" onclick="loadSafes()" title="تحديث">
+                <i class="fa-solid fa-arrows-rotate"></i>
+            </button>
+        </div>
+    </div>
 
-        <tbody id="safes-table-body"></tbody>
-    </table>
+    <!-- جدول الصناديق -->
+    <div class="table-wrapper">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>نوع الصندوق</th>
+                    <th>المالك</th>
+                    <th>العملة</th>
+                    <th>الرصيد</th>
+                    <th>Cost</th>
+                </tr>
+            </thead>
+            <tbody id="safes-table-body"></tbody>
+        </table>
+        <div id="safes-empty" class="table-empty hidden">
+            <i class="fa-solid fa-vault"></i>
+            <p>لا توجد صناديق مسجلة بعد</p>
+        </div>
+    </div>
 
 </div>
 <!-- ===== قسم أرباح التداول ===== -->
 <div id="trading-profits-section" class="card hidden">
 
-    <div class="card-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px;">
-        <h3><i class="fa-solid fa-chart-line" style="color:var(--primary);"></i> تقرير أرباح التداول</h3>
+    <!-- Hero Banner لأرباح التداول -->
+    <div class="section-hero trading-hero">
+        <div class="section-hero-text">
+            <h2><i class="fa-solid fa-chart-line"></i> تقرير أرباح التداول</h2>
+            <p>تتبع وتحليل أرباح وخسائر التداول لكل مكتب على حدة</p>
+        </div>
+        <div class="section-hero-stats">
+            <div class="hero-stat" id="trading-hero-stat-profit" style="display:none">
+                <span id="trading-total-profit">—</span>
+                <small>إجمالي الربح</small>
+            </div>
+        </div>
     </div>
 
     <!-- فلاتر البحث -->
-    <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap; padding:16px 0 20px; border-bottom:1px solid var(--border); margin-bottom:24px;">
-
-        <div style="display:flex; flex-direction:column; gap:6px; flex:1; min-width:180px;">
-            <label style="font-size:12px; font-weight:700; color:var(--gray); text-transform:uppercase;">المكتب</label>
-            <select id="profits-office-select"
-                    onchange="onProfitsOfficeChange()"
-                    style="padding:10px 14px; border:1px solid var(--border); border-radius:10px; outline:none; font-family:'Cairo',sans-serif; font-size:13px; background:#fff;">
-                <option value="">اختر المكتب</option>
-            </select>
+    <div class="collapsible-form" style="margin-bottom:24px;">
+        <button class="collapse-toggle" style="cursor:default; pointer-events:none;">
+            <span><i class="fa-solid fa-filter"></i> فلاتر البحث</span>
+        </button>
+        <div class="collapse-body open" style="max-height:200px;">
+            <div class="styled-form" style="padding:20px 24px;">
+                <div class="form-row" style="margin-bottom:0;">
+                    <div class="form-group">
+                        <label><i class="fa-solid fa-building"></i> المكتب</label>
+                        <select id="profits-office-select" onchange="onProfitsOfficeChange()">
+                            <option value="">اختر المكتب</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fa-solid fa-calendar"></i> التاريخ</label>
+                        <input type="date" id="profits-date">
+                    </div>
+                    <div class="form-group" style="justify-content:flex-end; padding-top:22px;">
+                        <button onclick="loadSuperTradingReport()" class="btn-primary">
+                            <i class="fa-solid fa-magnifying-glass"></i> عرض التقرير
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
-
-        <div style="display:flex; flex-direction:column; gap:6px; flex:1; min-width:160px;">
-            <label style="font-size:12px; font-weight:700; color:var(--gray); text-transform:uppercase;">التاريخ</label>
-            <input type="date" id="profits-date"
-                   style="padding:10px 14px; border:1px solid var(--border); border-radius:10px; outline:none; font-family:'Cairo',sans-serif; font-size:13px;">
-        </div>
-
-        <div style="display:flex; flex-direction:column; gap:6px; justify-content:flex-end; padding-top:20px;">
-            <button onclick="loadSuperTradingReport()"
-                    class="btn-primary"
-                    style="padding:10px 22px; border-radius:10px; display:flex; align-items:center; gap:8px; font-size:13px;">
-                <i class="fa-solid fa-magnifying-glass"></i> عرض التقرير
-            </button>
-        </div>
-
     </div>
 
     <!-- اسم المكتب المختار -->
@@ -163,33 +420,35 @@
          style="display:grid; grid-template-columns:repeat(auto-fit,minmax(175px,1fr)); gap:16px; margin-bottom:24px;"></div>
 
     <!-- جدول العمليات -->
-    <table class="data-table" id="profits-table" style="display:none;">
-        <thead>
-            <tr>
-                <th>#</th>
-                <th>النوع</th>
-                <th>العملة</th>
-                <th>الكمية</th>
-                <th>السعر</th>
-                <th>متوسط التكلفة</th>
-                <th>الربح / الخسارة</th>
-                <th>التاريخ</th>
-                <th>المنفذ</th>
-            </tr>
-        </thead>
-        <tbody id="profits-list"></tbody>
-    </table>
+    <div class="table-wrapper" id="profits-table-wrapper" style="display:none; margin-bottom:0;">
+        <table class="data-table" id="profits-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>النوع</th>
+                    <th>العملة</th>
+                    <th>الكمية</th>
+                    <th>السعر</th>
+                    <th>متوسط التكلفة</th>
+                    <th>الربح / الخسارة</th>
+                    <th>التاريخ</th>
+                    <th>المنفذ</th>
+                </tr>
+            </thead>
+            <tbody id="profits-list"></tbody>
+        </table>
+    </div>
 
     <!-- حالة فارغة -->
-    <div id="profits-empty" style="display:none; text-align:center; padding:60px 20px; color:var(--gray);">
-        <i class="fa-solid fa-inbox" style="font-size:52px; display:block; margin-bottom:14px; opacity:0.2;"></i>
-        <p style="font-size:15px;">لا توجد عمليات تداول في هذا التاريخ للمكتب المختار</p>
+    <div id="profits-empty" style="display:none;" class="table-empty">
+        <i class="fa-solid fa-inbox"></i>
+        <p>لا توجد عمليات تداول في هذا التاريخ للمكتب المختار</p>
     </div>
 
     <!-- حالة: لم يختر مكتباً بعد -->
-    <div id="profits-placeholder" style="text-align:center; padding:60px 20px; color:var(--gray);">
-        <i class="fa-solid fa-building-circle-arrow-right" style="font-size:52px; display:block; margin-bottom:14px; opacity:0.2;"></i>
-        <p style="font-size:15px;">اختر مكتباً وتاريخاً ثم اضغط "عرض التقرير"</p>
+    <div id="profits-placeholder" class="table-empty">
+        <i class="fa-solid fa-building-circle-arrow-right"></i>
+        <p>اختر مكتباً وتاريخاً ثم اضغط "عرض التقرير"</p>
     </div>
 
 </div>
@@ -437,42 +696,72 @@
 
            <div id="exchange-section" class="card hidden">
 
-    <!-- ✅ كل ما يخص اسعار الصرف -->
-    <div class="exchange-wrapper">
-
-        <h3>تحديث أسعار الصرف</h3>
-
-        <div class="form-row">
-            <div class="form-group">
-                <label>العملة</label>
-                <select id="currency-select"></select>
+    <!-- Hero Banner لأسعار الصرف -->
+    <div class="section-hero exchange-hero">
+        <div class="section-hero-text">
+            <h2><i class="fa-solid fa-exchange-alt"></i> إدارة أسعار الصرف</h2>
+            <p>تحديث ومراقبة أسعار العملات مقابل الدولار الأمريكي</p>
+        </div>
+        <div class="section-hero-stats">
+            <div class="hero-stat">
+                <span id="stat-currencies-count">—</span>
+                <small>عدد العملات</small>
             </div>
+        </div>
+    </div>
 
-            <div class="form-group">
-                <label>السعر الجديد (مقابل الدولار)</label>
-                <input type="number" id="new-price" inputmode="decimal">
-            </div>
-
-            <div class="form-group">
-                <label>القيمة بالليرة السورية</label>
-                <div class="syp-preview-box">
-                    <i class="fa-solid fa-coins"></i>
-                    <span id="syp-preview">0</span>
-                    <small>ل.س</small>
+    <!-- فورم تحديث السعر -->
+    <div class="collapsible-form" style="margin-bottom:28px;">
+        <button class="collapse-toggle" style="cursor:default; pointer-events:none;">
+            <span><i class="fa-solid fa-rotate"></i> تحديث سعر الصرف</span>
+        </button>
+        <div class="collapse-body open" style="max-height:300px;">
+            <div class="styled-form" style="padding:24px;">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label><i class="fa-solid fa-coins"></i> العملة</label>
+                        <select id="currency-select"></select>
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fa-solid fa-dollar-sign"></i> السعر الجديد (مقابل الدولار)</label>
+                        <input type="number" id="new-price" inputmode="decimal" placeholder="0.00">
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fa-solid fa-money-bill-wave"></i> القيمة بالليرة السورية</label>
+                        <div class="syp-preview-box">
+                            <i class="fa-solid fa-coins"></i>
+                            <span id="syp-preview">0</span>
+                            <small>ل.س</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button class="btn-update-price" onclick="updatePrice()">
+                        <i class="fa-solid fa-rotate"></i>
+                        تحديث السعر
+                    </button>
                 </div>
             </div>
         </div>
+    </div>
 
-        <!-- زر التحديث -->
-        <button class="btn-update-price" onclick="updatePrice()">
-            <i class="fa-solid fa-rotate"></i>
-            تحديث السعر
-        </button>
+    <hr class="section-divider">
 
-        <hr class="section-divider">
+    <!-- شريط أدوات الجدول -->
+    <div class="table-toolbar" style="margin-bottom:16px;">
+        <div style="display:flex; align-items:center; gap:10px;">
+            <i class="fa-solid fa-coins" style="color:var(--warning); font-size:18px;"></i>
+            <h3 style="font-size:1rem; font-weight:800; color:var(--dark);">أسعار الصرف الحالية</h3>
+        </div>
+        <div class="toolbar-actions">
+            <button class="toolbar-btn" onclick="loadCurrencies()" title="تحديث">
+                <i class="fa-solid fa-arrows-rotate"></i>
+            </button>
+        </div>
+    </div>
 
-        <h3><i class="fa-solid fa-coins"></i> أسعار الصرف الحالية</h3>
-
+    <!-- جدول العملات -->
+    <div class="table-wrapper">
         <table class="data-table">
             <thead>
                 <tr>
@@ -485,45 +774,64 @@
             </thead>
             <tbody id="currencies-table-body"></tbody>
         </table>
-
     </div>
+
 </div>
 <!-- ===== قسم الزبائن ===== -->
 <div id="customers-section" class="card hidden">
 
-    <div class="card-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px;">
-        <h3><i class="fa-solid fa-users-rectangle" style="color:var(--primary);"></i> إدارة الزبائن</h3>
-        <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
-            <input type="text" id="customer-search" placeholder="🔍 بحث بالاسم أو الهاتف..."
-                oninput="filterCustomers()"
-                style="padding:9px 14px; border:1px solid var(--border); border-radius:10px; font-family:'Cairo',sans-serif; font-size:13px; min-width:220px; outline:none;">
+    <!-- Hero Banner للزبائن -->
+    <div class="section-hero customers-hero">
+        <div class="section-hero-text">
+            <h2><i class="fa-solid fa-users-rectangle"></i> إدارة الزبائن</h2>
+            <p>عرض وإدارة جميع الزبائن المسجلين وسجلات حوالاتهم</p>
+        </div>
+        <div class="section-hero-stats" id="customers-hero-stats">
+            <div class="hero-stat">
+                <span id="stat-customers-total">—</span>
+                <small>إجمالي الزبائن</small>
+            </div>
         </div>
     </div>
 
     <!-- إحصائيات سريعة -->
-    <div id="customers-stats" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:14px; margin:18px 0 24px;"></div>
+    <div id="customers-stats" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:14px; margin:0 0 24px;"></div>
+
+    <!-- شريط البحث والأدوات -->
+    <div class="table-toolbar">
+        <div class="toolbar-search">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="customer-search" placeholder="بحث بالاسم أو الهاتف..." oninput="filterCustomers()">
+        </div>
+        <div class="toolbar-actions">
+            <button class="toolbar-btn" onclick="loadCustomers()" title="تحديث">
+                <i class="fa-solid fa-arrows-rotate"></i>
+            </button>
+        </div>
+    </div>
 
     <!-- جدول الزبائن -->
-    <table class="data-table" id="customers-table">
-        <thead>
-            <tr>
-                <th>#</th>
-                <th>الاسم</th>
-                <th>الهاتف</th>
-                <th>البريد الإلكتروني</th>
-                <th>المدينة</th>
-                <th>الدولة</th>
-                <th>تاريخ التسجيل</th>
-                <th>الحوالات</th>
-                <th>الإجراءات</th>
-            </tr>
-        </thead>
-        <tbody id="customers-tbody"></tbody>
-    </table>
-
-    <div id="customers-empty" style="display:none; text-align:center; padding:60px 20px; color:var(--gray);">
-        <i class="fa-solid fa-users-slash" style="font-size:52px; display:block; margin-bottom:14px; opacity:0.2;"></i>
-        <p style="font-size:15px;">لا يوجد زبائن مسجلون حتى الآن</p>
+    <div class="table-wrapper">
+        <table class="data-table" id="customers-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>الاسم</th>
+                    <th>الهاتف</th>
+                    <th>البريد الإلكتروني</th>
+                    <th>المدينة</th>
+                    <th>الدولة</th>
+                    <th>تاريخ التسجيل</th>
+                    <th>الحوالات</th>
+                    <th>الإجراءات</th>
+                </tr>
+            </thead>
+            <tbody id="customers-tbody"></tbody>
+        </table>
+        <div id="customers-empty" style="display:none;" class="table-empty">
+            <i class="fa-solid fa-users-slash"></i>
+            <p>لا يوجد زبائن مسجلون حتى الآن</p>
+        </div>
     </div>
 </div>
 
