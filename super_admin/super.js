@@ -887,10 +887,18 @@ async function initPricePreview() {
    UI Helpers
 ========================= */
 function showSection(sectionId) {
+    // إخفاء كل الأقسام
     document.querySelectorAll('.card').forEach(card => card.classList.add('hidden'));
+    const dashSection = document.getElementById('dashboard-section');
+    if (dashSection) dashSection.style.display = 'none';
 
-    const activeSection = document.getElementById(`${sectionId}-section`);
-    if (activeSection) activeSection.classList.remove('hidden');
+    if (sectionId === 'dashboard') {
+        if (dashSection) dashSection.style.display = '';
+        updateDashboardStats();
+    } else {
+        const activeSection = document.getElementById(`${sectionId}-section`);
+        if (activeSection) activeSection.classList.remove('hidden');
+    }
 
     // تحديث الـ active في الـ sidebar
     document.querySelectorAll('.sidebar nav li').forEach(li => li.classList.remove('active'));
@@ -901,6 +909,35 @@ function showSection(sectionId) {
     if (sectionId === 'customers') loadCustomers();
     if (sectionId === 'employees') renderEmployeesStats();
     if (sectionId === 'offices') renderOfficesStats();
+}
+
+function updateDashboardStats() {
+    // تحديث التاريخ والوقت
+    const now = new Date();
+    const dateEl = document.getElementById('dashboard-date');
+    const timeEl = document.getElementById('dash-time');
+    if (dateEl) dateEl.textContent = now.toLocaleDateString('ar-SY', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+    if (timeEl) timeEl.textContent = now.toLocaleTimeString('ar-SY');
+
+    // عدد المكاتب
+    const offCount = document.getElementById('stat-offices-count')?.textContent;
+    const dashOff = document.getElementById('dash-offices-count');
+    if (dashOff && offCount && offCount !== '—') dashOff.textContent = offCount;
+
+    // عدد الموظفين
+    const empCount = document.getElementById('stat-emp-total')?.textContent;
+    const dashEmp = document.getElementById('dash-employees-count');
+    if (dashEmp && empCount && empCount !== '—') dashEmp.textContent = empCount;
+
+    // عدد الزبائن
+    const custCount = document.querySelectorAll('#customers-tbody tr').length;
+    const dashCust = document.getElementById('dash-customers-count');
+    if (dashCust && custCount > 0) dashCust.textContent = custCount;
+
+    // عدد الصناديق
+    const safesCount = document.querySelectorAll('#safes-table-body tr').length;
+    const dashSafes = document.getElementById('dash-safes-count');
+    if (dashSafes && safesCount > 0) dashSafes.textContent = safesCount;
 }
 
 /* =========================
@@ -1152,6 +1189,8 @@ function onProfitsOfficeChange() {
 function _resetProfitsUI() {
     document.getElementById('profits-summary').innerHTML   = '';
     document.getElementById('profits-list').innerHTML      = '';
+    const tw = document.getElementById('profits-table-wrapper');
+    if (tw) tw.style.display = 'none';
     document.getElementById('profits-table').style.display = 'none';
     document.getElementById('profits-empty').style.display = 'none';
     document.getElementById('profits-placeholder').style.display = 'block';
@@ -1284,6 +1323,8 @@ async function loadSuperTradingReport() {
         });
 
         tableEl.style.display = 'table';
+        const tw2 = document.getElementById('profits-table-wrapper');
+        if (tw2) tw2.style.display = 'block';
 
     } catch (error) {
         console.error('Error loading trading report:', error);
@@ -1572,4 +1613,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     await renderCurrenciesTable();
     await initPricePreview();
     await loadSafes();
+
+    // تهيئة الرئيسية
+    showSection('dashboard');
+
+    // تحديث الوقت كل دقيقة
+    setInterval(() => {
+        const timeEl = document.getElementById('dash-time');
+        if (timeEl) timeEl.textContent = new Date().toLocaleTimeString('ar-SY');
+    }, 60000);
 });
+// ===== وظائف إضافية للواجهة المحسّنة =====
+
+function filterSafesTable() {
+    const q = (document.getElementById('safes-search')?.value || '').toLowerCase();
+    const rows = document.querySelectorAll('#safes-table-body tr');
+    rows.forEach(row => {
+        row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+    });
+}
