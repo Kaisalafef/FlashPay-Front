@@ -12,9 +12,13 @@
         <link rel="stylesheet"
             href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
         <link rel="stylesheet" href="style_super.css">
+        <link rel="stylesheet" href="mobile_super.css">
     </head>
     <body>
-        <aside class="sidebar">
+        <!-- Mobile sidebar overlay -->
+        <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+        <aside class="sidebar" id="sidebar">
             <div class="logo">
     <i class="fa-solid fa-bolt-lightning"></i>
    <span class="pay">Pay</span> <span class="flash">Flash</span>
@@ -66,6 +70,9 @@
             <header class="app-header">
 
                 <div class="header-left">
+                    <button class="hamburger-btn" id="hamburger-btn" onclick="toggleSidebar()" aria-label="القائمة">
+                        <i class="fa-solid fa-bars"></i>
+                    </button>
                     <div class="page-title">
                         <i class="fa-solid fa-shield-halved"></i>
                         <h2>لوحة الإدارة العليا</h2>
@@ -613,7 +620,7 @@
                         <label><i class="fa-solid fa-lock"></i> كلمة المرور</label>
                         <div class="input-with-icon">
                             <input type="password" id="emp-password" placeholder="8 خانات على الأقل" required autocomplete="new-password">
-                            <button type="button" class="toggle-pass-btn" onclick="togglePasswordVisibility('emp-password', this)">
+                            <button type="button" class="toggle-pass-btn" onclick="togglePasswordVisibility('emp-password', this)" title="إظهار/إخفاء كلمة المرور">
                                 <i class="fa-solid fa-eye"></i>
                             </button>
                         </div>
@@ -1161,4 +1168,4 @@
         <script src="super.js"></script>
 
     </body>
-</html>
+</html> 

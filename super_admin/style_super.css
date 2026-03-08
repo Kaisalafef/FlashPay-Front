@@ -301,6 +301,7 @@ body {
     background: var(--white);
     transition: var(--transition);
     cursor: pointer;
+    -webkit-user-select: none;
     user-select: none;
 }
 
