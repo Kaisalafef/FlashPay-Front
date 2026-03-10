@@ -1058,6 +1058,7 @@ function renderEmployeesStats() {
     document.getElementById('stat-emp-admins')?.textContent && (document.getElementById('stat-emp-admins').textContent  = nonCustomers.filter(u => u.role === 'admin').length);
     document.getElementById('stat-emp-agents')?.textContent && (document.getElementById('stat-emp-agents').textContent  = nonCustomers.filter(u => u.role === 'agent').length);
     document.getElementById('stat-emp-cashiers')?.textContent && (document.getElementById('stat-emp-cashiers').textContent = nonCustomers.filter(u => u.role === 'cashier').length);
+    document.getElementById('stat-emp-accountant')?.textContent && (document.getElementById('stat-emp-accountant').textContent = nonCustomers.filter(u=>u.role === 'accountant').length);
 }
 
 const ROLE_LABELS = {
