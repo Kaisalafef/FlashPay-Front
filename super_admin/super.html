@@ -347,16 +347,7 @@
             <h2><i class="fa-solid fa-vault"></i> إدارة الصناديق</h2>
             <p>عرض وإدارة جميع صناديق المكاتب والمندوبين في النظام</p>
         </div>
-        <div class="section-hero-stats">
-            <div class="hero-stat">
-                <span id="stat-safes-count">—</span>
-                <small>إجمالي الصناديق</small>
-            </div>
-            <div class="hero-stat">
-                <span id="stat-safes-balance">—</span>
-                <small>إجمالي الرصيد</small>
-            </div>
-        </div>
+       
     </div>
 
     <!-- شريط أدوات -->
@@ -589,8 +580,11 @@
             <div class="hero-stat"><span id="stat-emp-total">—</span><small>إجمالي</small></div>
             <div class="hero-stat"><span id="stat-emp-admins">—</span><small>مدراء</small></div>
             <div class="hero-stat"><span id="stat-emp-agents">—</span><small>مندوبين</small></div>
-            <div class="hero-stat"><span id="stat-emp-cashiers">—</span><small>كاشير</small></div>
-        </div>
+            
+        <div class="hero-stat"><span id="stat-emp-cashiers">—</span><small>كاشير</small></div>
+                    <div class="hero-stat"><span id="stat-emp-accountant">—</span><small>محاسب</small></div>
+
+    </div>
     </div>
 
     <!-- ===== فورم الإضافة (قابل للطي) ===== -->
@@ -733,10 +727,7 @@
             <p>تحديث ومراقبة أسعار العملات مقابل الدولار الأمريكي</p>
         </div>
         <div class="section-hero-stats">
-            <div class="hero-stat">
-                <span id="stat-currencies-count">—</span>
-                <small>عدد العملات</small>
-            </div>
+            
         </div>
     </div>
 
@@ -817,10 +808,7 @@
             <p>عرض وإدارة جميع الزبائن المسجلين وسجلات حوالاتهم</p>
         </div>
         <div class="section-hero-stats" id="customers-hero-stats">
-            <div class="hero-stat">
-                <span id="stat-customers-total">—</span>
-                <small>إجمالي الزبائن</small>
-            </div>
+            
         </div>
     </div>
 
@@ -941,6 +929,7 @@
                             <th>المستلم</th>
                             <th>الحالة</th>
                             <th>التاريخ</th>
+                            <th>هوية المستلم</th>
                         </tr>
                     </thead>
                     <tbody id="cd-transfers-tbody"></tbody>
@@ -1167,5 +1156,23 @@
 
         <script src="super.js"></script>
 
-    </body>
-</html> 
+    
+<!-- ===== Modal عرض صورة الهوية ===== -->
+<div id="id-image-modal" class="modal-overlay hidden" onclick="closeIdImageModal(event)" style="z-index:1100;">
+    <div style="position:relative; max-width:90vw; max-height:90vh; display:flex; flex-direction:column; align-items:center;">
+        <button onclick="closeIdImageModal()" style="position:absolute; top:-14px; left:-14px; width:36px; height:36px; border-radius:50%; background:#1f2937; border:none; color:white; font-size:18px; cursor:pointer; display:flex; align-items:center; justify-content:center; z-index:10; box-shadow:0 4px 12px rgba(0,0,0,0.4);">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+        <img id="id-image-viewer"
+             src=""
+             alt="هوية المستلم"
+             style="max-width:88vw; max-height:85vh; border-radius:14px; box-shadow:0 20px 60px rgba(0,0,0,0.6); object-fit:contain; background:#111;">
+        <a id="id-image-download" href="" download target="_blank"
+           style="margin-top:14px; background:rgba(255,255,255,0.15); color:white; padding:8px 20px; border-radius:8px; text-decoration:none; font-size:13px; font-weight:600; backdrop-filter:blur(6px); border:1px solid rgba(255,255,255,0.2); display:flex; align-items:center; gap:8px;">
+            <i class="fa-solid fa-download"></i> تنزيل الصورة
+        </a>
+    </div>
+</div>
+
+</body>
+</html>

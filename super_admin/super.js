@@ -1,4 +1,5 @@
 const API_URL = 'http://127.0.0.1:8000/api';
+const STORAGE_URL = 'http://127.0.0.1:8000/storage';  // ✅ يُستخدم مع receiver_id_image مباشرة (مثال: receipts/filename.jpg)
 
 
 /* =========================
@@ -1058,6 +1059,7 @@ function renderEmployeesStats() {
     document.getElementById('stat-emp-admins')?.textContent && (document.getElementById('stat-emp-admins').textContent  = nonCustomers.filter(u => u.role === 'admin').length);
     document.getElementById('stat-emp-agents')?.textContent && (document.getElementById('stat-emp-agents').textContent  = nonCustomers.filter(u => u.role === 'agent').length);
     document.getElementById('stat-emp-cashiers')?.textContent && (document.getElementById('stat-emp-cashiers').textContent = nonCustomers.filter(u => u.role === 'cashier').length);
+    document.getElementById('stat-emp-accountant')?.textContent && (document.getElementById('stat-emp-accountant').textContent = nonCustomers.filter(u=>u.role === 'accountant').length);
 }
 
 const ROLE_LABELS = {
@@ -1582,6 +1584,18 @@ function openCustomerModal(customerId) {
                         </span>
                     </td>
                     <td style="font-size:12px; color:var(--gray);">${date}</td>
+                    <td>
+                        ${t.receiver_id_image
+                            ? `<button data-img-url="${STORAGE_URL}/${t.receiver_id_image}"
+                                       onclick="openIdImageModal(this.dataset.imgUrl)"
+                                       class="action-btn"
+                                       title="عرض هوية المستلم"
+                                       style="background:var(--primary-bg); color:var(--primary); border:1px solid var(--primary-light); width:34px; height:34px; border-radius:8px; cursor:pointer; font-size:13px; display:inline-flex; align-items:center; justify-content:center; transition:all 0.2s;">
+                                   <i class="fa-solid fa-id-card"></i>
+                               </button>`
+                            : '<span style="font-size:12px; color:var(--gray-light);">—</span>'
+                        }
+                    </td>
                 </tr>
             `;
         });
@@ -1590,6 +1604,25 @@ function openCustomerModal(customerId) {
     // إظهار المودال
     document.getElementById('customer-detail-modal').classList.remove('hidden');
     document.body.style.overflow = 'hidden';
+}
+
+
+function openIdImageModal(imageUrl) {
+    const modal    = document.getElementById('id-image-modal');
+    const img      = document.getElementById('id-image-viewer');
+    const dlBtn    = document.getElementById('id-image-download');
+    img.src        = imageUrl;
+    dlBtn.href     = imageUrl;
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeIdImageModal(e) {
+    // إغلاق بالزر أو بالنقر على الخلفية
+    if (e && e.target !== document.getElementById('id-image-modal') && e.type === 'click') return;
+    const modal = document.getElementById('id-image-modal');
+    modal.classList.add('hidden');
+    // لا نُعيد overflow هنا لأن customer modal لا يزال مفتوحاً
 }
 
 function closeCustomerModal() {

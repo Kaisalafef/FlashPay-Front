@@ -71,7 +71,7 @@ document.getElementById('login-form').addEventListener('submit', async function(
                 case 'super_admin': window.location.href = '../super_admin/super.html'; break;
                 case 'admin': window.location.href = '../office_manager/admin.html'; break;
                 case 'cashier': window.location.href = '../cashier/cashier.html'; break;
-                case 'accountant': window.location.href = '../accountant/index.html'; break;
+                case 'accountant': window.location.href = '../accountant/accountant.html'; break;
                 case 'agent': window.location.href = '../agent/index.html'; break;
                 default:
                     errorText.textContent = 'عفواً، لا تملك صلاحية الوصول لهذا النظام.';
@@ -117,6 +117,8 @@ window.onload = async function() {
             window.location.href = '../office_manager/admin.html';
         else if(user.role === 'cashier')
             window.location.href = '../cashier/cashier.html';
+        else if(user.role === 'accountant')
+            window.location.href = '../accountant/accountant.html';
 
     } catch {
         localStorage.clear();
