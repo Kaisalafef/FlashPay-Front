@@ -1,61 +1,162 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>FlashPay - Cashier</title>
-        <link rel="stylesheet"
-            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-        <link rel="stylesheet" href="cashier.css">
-    </head>
-    <body>
-        <aside class="sidebar">
-            <div class="logo">
-                <i class="fa-solid fa-wallet"></i><span>FlashPay</span>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FlashPay - Cashier</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="cashier.css">
+</head>
+<body>
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="logo">
+            <div class="logo-icon"><i class="fa-solid fa-wallet"></i></div>
+            <span>FlashPay</span>
+        </div>
+
+        <nav>
+            <ul>
+                <li class="active">
+                    <a href="#" onclick="setActive(this); showTransfersSection();">
+                        <span class="nav-icon"><i class="fa-solid fa-money-bill-transfer"></i></span>
+                        <span>الحوالات</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" onclick="setActive(this); showSafesSection();">
+                        <span class="nav-icon"><i class="fa-solid fa-vault"></i></span>
+                        <span>التداول</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" onclick="setActive(this); showProfitsSection();">
+                        <span class="nav-icon"><i class="fa-solid fa-chart-line"></i></span>
+                        <span>أرباح التداول</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+        <div class="sidebar-user">
+            <div class="user-avatar"><i class="fa-solid fa-user"></i></div>
+            <div class="user-info">
+                <span class="user-role">صندوق</span>
+                <span class="user-name" id="user-name">—</span>
             </div>
-            <nav>
-                <ul>
-        <li class="active"><a href="#" onclick="setActive(this); showTransfersSection();"><i class="fa-solid fa-money-bill-transfer"></i> الحوالات</a></li>
-        <li><a href="#" onclick="setActive(this); showSafesSection();"><i class="fa-solid fa-vault"></i> التداول</a></li>
-        <li><a href="#" onclick="setActive(this); showProfitsSection();"><i class="fa-solid fa-chart-line"></i> أرباح التداول</a></li>
-    </ul>
-            </nav>
+        </div>
 
-            <div class="logout">
-                <a href="#" onclick="handleLogout()"><i
-                        class="fa-solid fa-arrow-right-from-bracket"></i> تسجيل
-                    الخروج</a>
+        <div class="logout">
+            <a href="#" onclick="handleLogout()">
+                <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                <span>تسجيل الخروج</span>
+            </a>
+        </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="main-content">
+
+        <header>
+            <div class="header-left">
+                <div class="page-title">
+                    <span class="page-icon" id="page-icon"><i class="fa-solid fa-money-bill-transfer"></i></span>
+                    <div>
+                        <h2 id="page-heading">الحوالات</h2>
+                        <p class="page-sub">جاهزة للتسليم</p>
+                    </div>
+                </div>
             </div>
-        </aside>
+            <div class="header-right">
+                <div class="header-badge">
+                    <i class="fa-solid fa-circle-check"></i>
+                    <span id="transfers-count">0</span> حوالة
+                </div>
+                <div class="time-display" id="time-display">--:--</div>
+            </div>
+        </header>
 
-        <main class="main-content">
-            <header>
-                <div class="header-title"><h2>شاشة الصندوق (Cashier)</h2></div>
-            </header>
+        <div class="content-body">
 
-            <div class="content-body">
+            <!-- ===== قسم الحوالات ===== -->
+            <div id="section-transfers" class="section active-section">
+                <div class="card fade-in">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fa-solid fa-inbox"></i>
+                            <h3>الحوالات الجاهزة للتسليم</h3>
+                        </div>
+                        <button class="btn-refresh" onclick="loadNewTransfers()">
+                            <i class="fa-solid fa-rotate"></i> تحديث
+                        </button>
+                    </div>
+                    <div class="table-wrapper">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>رقم الحوالة</th>
+                                    <th>المرسل</th>
+                                    <th>المبلغ (USD)</th>
+                                    <th>العملة</th>
+                                    <th>سعر التسليم</th>
+                                    <th>صورة الهوية</th>
+                                    <th>الإجراء</th>
+                                </tr>
+                            </thead>
+                            <tbody id="new-transfers-list">
+                                <tr>
+                                    <td colspan="7" class="loading-row">
+                                        <div class="loading-spinner"></div>
+                                        جاري التحميل...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
 
-                <div class="card" id="safes-card" style="display:none;">
-        <div class="card-header"><h3>صناديق التداول</h3></div>
-        <div class="safes-grid" id="safes-container"></div>
-    </div>
-                <!-- قسم أرباح التداول -->
-                <div class="card" id="profits-card" style="display:none;">
-                    <div class="card-header" style="flex-wrap:wrap; gap:10px;">
-                        <h3><i class="fa-solid fa-chart-line" style="color:var(--primary);"></i> تقرير أرباح التداول</h3>
-                        <div style="display:flex; align-items:center; gap:10px;">
-                            <label style="font-size:13px; color:var(--gray);">اختر التاريخ:</label>
-                            <input type="date" id="report-date" style="padding:8px 12px; border:1px solid var(--border); border-radius:8px; outline:none; font-size:13px;">
-                            <button class="btn-primary" onclick="loadTradingReport()" style="padding:8px 16px; font-size:13px;">
+            <!-- ===== قسم التداول ===== -->
+            <div id="section-safes" class="section" style="display:none;">
+                <div class="card fade-in" id="safes-card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fa-solid fa-vault"></i>
+                            <h3>صناديق التداول</h3>
+                        </div>
+                    </div>
+                    <div class="safes-grid" id="safes-container">
+                        <div class="loading-row" style="padding:40px; text-align:center;">
+                            <div class="loading-spinner" style="margin:0 auto 10px;"></div>
+                            جاري التحميل...
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== قسم الأرباح ===== -->
+            <div id="section-profits" class="section" style="display:none;">
+                <div class="card fade-in" id="profits-card">
+                    <div class="card-header" style="flex-wrap:wrap; gap:12px;">
+                        <div class="card-title">
+                            <i class="fa-solid fa-chart-line"></i>
+                            <h3>تقرير أرباح التداول</h3>
+                        </div>
+                        <div class="date-filter">
+                            <label><i class="fa-regular fa-calendar"></i> اختر التاريخ:</label>
+                            <input type="date" id="report-date">
+                            <button class="btn-primary" onclick="loadTradingReport()">
                                 <i class="fa-solid fa-magnifying-glass"></i> عرض
                             </button>
                         </div>
                     </div>
 
-                    <!-- بطاقات الملخص -->
-                    <div class="stats-grid" id="profits-summary" style="margin-bottom:20px;"></div>
+                    <div class="stats-grid" id="profits-summary"></div>
 
-                    <!-- جدول العمليات -->
                     <table class="data-table" id="profits-table" style="display:none;">
                         <thead>
                             <tr>
@@ -73,33 +174,16 @@
                         <tbody id="profits-list"></tbody>
                     </table>
 
-                    <div id="profits-empty" style="text-align:center; padding:40px; color:var(--gray); display:none;">
-                        <i class="fa-solid fa-inbox" style="font-size:40px; margin-bottom:10px; display:block; opacity:0.3;"></i>
-                        لا توجد عمليات تداول في هذا التاريخ
+                    <div id="profits-empty" style="display:none;" class="empty-state">
+                        <i class="fa-solid fa-inbox"></i>
+                        <p>لا توجد عمليات تداول في هذا التاريخ</p>
                     </div>
-                </div>
-
-                <div class="card">
-                    <div class="card-header">
-                        <h3>الحوالات الجاهزة للتسليم (مقبولة إدارياً)</h3>
-                    </div>
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>رقم الحوالة</th>
-                                <th>المرسل</th>
-                                <th>المبلغ</th>
-                                <th>العملة</th>
-                                <th>سعر التسليم</th>
-                                <th>الإجراء</th>
-                            </tr>
-                        </thead>
-                        <tbody id="new-transfers-list">
-                        </tbody>
-                    </table>
                 </div>
             </div>
-        </main>
-        <script src="cashier.js"></script>
-    </body>
+
+        </div>
+    </main>
+
+    <script src="cashier.js"></script>
+</body>
 </html>
