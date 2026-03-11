@@ -1,0 +1,1171 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>FlashPay - Super Admin</title>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.css">
+<script src="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.js"></script>
+        <link
+            href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap"
+            rel="stylesheet">
+        <link rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+        <link rel="stylesheet" href="style_super.css">
+        <link rel="stylesheet" href="mobile_super.css">
+    </head>
+    <body>
+        <!-- Mobile sidebar overlay -->
+        <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+        <aside class="sidebar" id="sidebar">
+            <div class="logo">
+    <i class="fa-solid fa-bolt-lightning"></i>
+   <span class="pay">Pay</span> <span class="flash">Flash</span>
+</div>
+            <nav>
+                <ul>
+                    <li class="active"><a href="#"
+                            onclick="showSection('dashboard')"><i
+                                class="fa-solid fa-chart-pie"></i>
+                            الرئيسية</a></li>
+                    <li><a href="#" onclick="showSection('offices')"><i
+                                class="fa-solid fa-building"></i>
+                            المكاتب</a></li>
+                    <li><a href="#" onclick="showSection('employees')"><i
+                                class="fa-solid fa-users"></i> الموظفين
+                            والمندوبين</a></li>
+                    <li><a href="#" onclick="showSection('exchange')"><i
+                                class="fa-solid fa-exchange-alt"></i> أسعار
+                            الصرف</a></li>
+                            <li>
+    <a href="#" onclick="showSection('safes')">
+        <i class="fa-solid fa-vault"></i>
+        الصناديق
+    </a>
+</li>
+                    <li>
+    <a href="#" onclick="showSection('trading-profits')">
+        <i class="fa-solid fa-chart-line"></i>
+        أرباح التداول
+    </a>
+</li>
+                    <li>
+    <a href="#" onclick="showSection('customers')">
+        <i class="fa-solid fa-users-rectangle"></i>
+        الزبائن
+    </a>
+</li>
+                </ul>
+                
+            </nav>
+            <div class="logout">
+                <a href="#" onclick="handleLogout()"><i
+                        class="fa-solid fa-arrow-right-from-bracket"></i> تسجيل
+                    الخروج</a>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <header class="app-header">
+
+                <div class="header-left">
+                    <button class="hamburger-btn" id="hamburger-btn" onclick="toggleSidebar()" aria-label="القائمة">
+                        <i class="fa-solid fa-bars"></i>
+                    </button>
+                    <div class="page-title">
+                        <i class="fa-solid fa-shield-halved"></i>
+                        <h2>لوحة الإدارة العليا</h2>
+                    </div>
+                </div>
+
+                <div class="header-actions">
+                    <button class="icon-btn" type="button"
+                        aria-label="الإشعارات" title="الإشعارات">
+                        <i class="fa-regular fa-bell"></i>
+                    </button>
+
+                    <div class="profile-wrapper">
+                        <div class="profile-box" id="profile-toggle-btn" onclick="toggleProfileDropdown()">
+                            <div class="avatar">
+                                <i class="fa-solid fa-user"></i>
+                            </div>
+                            <div class="profile-info">
+                                <span id="user-name">جاري التحميل...</span>
+                                <small>Super Admin</small>
+                            </div>
+                            <i class="fa-solid fa-chevron-down profile-chevron" id="profile-chevron"></i>
+                        </div>
+
+                        <!-- Profile Dropdown -->
+                        <div class="profile-dropdown hidden" id="profile-dropdown">
+                            <div class="profile-dropdown-header">
+                                <div class="profile-dropdown-avatar">
+                                    <i class="fa-solid fa-user-shield"></i>
+                                </div>
+                                <div>
+                                    <strong id="dropdown-user-name">—</strong>
+                                    <span id="dropdown-user-email">—</span>
+                                </div>
+                            </div>
+                            <div class="profile-dropdown-divider"></div>
+                            <button class="profile-dropdown-item" onclick="openProfileModal(); closeProfileDropdown()">
+                                <i class="fa-solid fa-user-pen"></i>
+                                تعديل الملف الشخصي
+                            </button>
+                            <div class="profile-dropdown-divider"></div>
+                            <button class="profile-dropdown-item profile-dropdown-logout" onclick="handleLogout()">
+                                <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                                تسجيل الخروج
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+            </header>
+
+            <div class="content-body">
+
+                <!-- ===== قسم الرئيسية (Dashboard) ===== -->
+                <div id="dashboard-section" class="">
+
+                    <!-- Hero Banner للرئيسية -->
+                    <div class="dashboard-hero">
+                        <div class="dashboard-hero-content">
+                            <div class="dashboard-hero-icon">
+                                <i class="fa-solid fa-shield-halved"></i>
+                            </div>
+                            <div>
+                                <h1>مرحباً بك في لوحة الإدارة العليا</h1>
+                                <p>نظرة شاملة على أداء النظام وجميع العمليات</p>
+                            </div>
+                        </div>
+                        <div class="dashboard-hero-date">
+                            <i class="fa-regular fa-calendar"></i>
+                            <span id="dashboard-date">—</span>
+                        </div>
+                    </div>
+
+                    <!-- بطاقات الإحصائيات الرئيسية -->
+                    <div class="dashboard-stats-grid">
+                        <div class="dash-stat-card dash-stat-offices">
+                            <div class="dash-stat-icon">
+                                <i class="fa-solid fa-building"></i>
+                            </div>
+                            <div class="dash-stat-body">
+                                <span class="dash-stat-value" id="dash-offices-count">—</span>
+                                <span class="dash-stat-label">إجمالي المكاتب</span>
+                            </div>
+                            <div class="dash-stat-trend">
+                                <i class="fa-solid fa-arrow-trend-up"></i>
+                            </div>
+                        </div>
+
+                        <div class="dash-stat-card dash-stat-employees">
+                            <div class="dash-stat-icon">
+                                <i class="fa-solid fa-users"></i>
+                            </div>
+                            <div class="dash-stat-body">
+                                <span class="dash-stat-value" id="dash-employees-count">—</span>
+                                <span class="dash-stat-label">الموظفون والمندوبون</span>
+                            </div>
+                            <div class="dash-stat-trend">
+                                <i class="fa-solid fa-arrow-trend-up"></i>
+                            </div>
+                        </div>
+
+                        <div class="dash-stat-card dash-stat-customers">
+                            <div class="dash-stat-icon">
+                                <i class="fa-solid fa-users-rectangle"></i>
+                            </div>
+                            <div class="dash-stat-body">
+                                <span class="dash-stat-value" id="dash-customers-count">—</span>
+                                <span class="dash-stat-label">إجمالي الزبائن</span>
+                            </div>
+                            <div class="dash-stat-trend">
+                                <i class="fa-solid fa-arrow-trend-up"></i>
+                            </div>
+                        </div>
+
+                        <div class="dash-stat-card dash-stat-safes">
+                            <div class="dash-stat-icon">
+                                <i class="fa-solid fa-vault"></i>
+                            </div>
+                            <div class="dash-stat-body">
+                                <span class="dash-stat-value" id="dash-safes-count">—</span>
+                                <span class="dash-stat-label">إجمالي الصناديق</span>
+                            </div>
+                            <div class="dash-stat-trend">
+                                <i class="fa-solid fa-circle-check"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- قسم الميزات والوصول السريع -->
+                    <div class="dashboard-features-grid">
+
+                        <!-- بطاقة الوصول السريع -->
+                        <div class="dash-feature-card">
+                            <div class="dash-feature-header">
+                                <i class="fa-solid fa-bolt"></i>
+                                <h3>وصول سريع</h3>
+                            </div>
+                            <div class="quick-access-grid">
+                                <button class="quick-btn" onclick="showSection('offices')">
+                                    <i class="fa-solid fa-building"></i>
+                                    <span>المكاتب</span>
+                                </button>
+                                <button class="quick-btn" onclick="showSection('employees')">
+                                    <i class="fa-solid fa-users"></i>
+                                    <span>الموظفين</span>
+                                </button>
+                                <button class="quick-btn" onclick="showSection('customers')">
+                                    <i class="fa-solid fa-users-rectangle"></i>
+                                    <span>الزبائن</span>
+                                </button>
+                                <button class="quick-btn" onclick="showSection('exchange')">
+                                    <i class="fa-solid fa-exchange-alt"></i>
+                                    <span>أسعار الصرف</span>
+                                </button>
+                                <button class="quick-btn" onclick="showSection('safes')">
+                                    <i class="fa-solid fa-vault"></i>
+                                    <span>الصناديق</span>
+                                </button>
+                                <button class="quick-btn" onclick="showSection('trading-profits')">
+                                    <i class="fa-solid fa-chart-line"></i>
+                                    <span>أرباح التداول</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- بطاقة ميزات النظام -->
+                        <div class="dash-feature-card dash-features-list-card">
+                            <div class="dash-feature-header">
+                                <i class="fa-solid fa-star"></i>
+                                <h3>مميزات النظام</h3>
+                            </div>
+                            <ul class="features-list">
+                                <li>
+                                    <div class="feature-icon-wrap feat-green">
+                                        <i class="fa-solid fa-shield-halved"></i>
+                                    </div>
+                                    <div>
+                                        <strong>إدارة مركزية شاملة</strong>
+                                        <span>تحكم كامل بجميع المكاتب والموظفين من مكان واحد</span>
+                                    </div>
+                                </li>
+                                <li>
+                                    <div class="feature-icon-wrap feat-blue">
+                                        <i class="fa-solid fa-chart-line"></i>
+                                    </div>
+                                    <div>
+                                        <strong>تقارير أرباح التداول</strong>
+                                        <span>تتبع الأرباح والخسائر لكل مكتب بشكل يومي</span>
+                                    </div>
+                                </li>
+                                <li>
+                                    <div class="feature-icon-wrap feat-orange">
+                                        <i class="fa-solid fa-coins"></i>
+                                    </div>
+                                    <div>
+                                        <strong>إدارة أسعار الصرف</strong>
+                                        <span>تحديث فوري لأسعار العملات مقابل الدولار</span>
+                                    </div>
+                                </li>
+                                <li>
+                                    <div class="feature-icon-wrap feat-purple">
+                                        <i class="fa-solid fa-vault"></i>
+                                    </div>
+                                    <div>
+                                        <strong>مراقبة الصناديق</strong>
+                                        <span>رصد شامل لجميع صناديق المكاتب والمندوبين</span>
+                                    </div>
+                                </li>
+                                <li>
+                                    <div class="feature-icon-wrap feat-teal">
+                                        <i class="fa-solid fa-users-rectangle"></i>
+                                    </div>
+                                    <div>
+                                        <strong>إدارة الزبائن</strong>
+                                        <span>سجل متكامل للزبائن وجميع حواlatهم</span>
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+
+                    </div>
+
+                    <!-- بطاقة النظام والحالة -->
+                    <div class="dashboard-system-card">
+                        <div class="system-status-header">
+                            <i class="fa-solid fa-circle-check" style="color:var(--success)"></i>
+                            <h3>حالة النظام</h3>
+                            <div class="system-status-badge">
+                                <span class="status-dot"></span>
+                                يعمل بشكل طبيعي
+                            </div>
+                        </div>
+                        <div class="system-info-row">
+                            <div class="sys-info-item">
+                                <i class="fa-solid fa-server"></i>
+                                <div>
+                                    <span>FlashPay</span>
+                                    <small>اسم النظام</small>
+                                </div>
+                            </div>
+                            <div class="sys-info-item">
+                                <i class="fa-solid fa-user-tie"></i>
+                                <div>
+                                    <span>Super Admin</span>
+                                    <small>مستوى الصلاحية</small>
+                                </div>
+                            </div>
+                            <div class="sys-info-item">
+                                <i class="fa-solid fa-clock"></i>
+                                <div>
+                                    <span id="dash-time">—</span>
+                                    <small>الوقت الحالي</small>
+                                </div>
+                            </div>
+                            <div class="sys-info-item">
+                                <i class="fa-solid fa-lock"></i>
+                                <div>
+                                    <span>محمي ومشفر</span>
+                                    <small>حالة الاتصال</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div id="safes-section" class="card hidden">
+
+    <!-- Hero Banner للصناديق -->
+    <div class="section-hero safes-hero">
+        <div class="section-hero-text">
+            <h2><i class="fa-solid fa-vault"></i> إدارة الصناديق</h2>
+            <p>عرض وإدارة جميع صناديق المكاتب والمندوبين في النظام</p>
+        </div>
+        <div class="section-hero-stats">
+            <div class="hero-stat">
+                <span id="stat-safes-count">—</span>
+                <small>إجمالي الصناديق</small>
+            </div>
+            <div class="hero-stat">
+                <span id="stat-safes-balance">—</span>
+                <small>إجمالي الرصيد</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- شريط أدوات -->
+    <div class="table-toolbar">
+        <div class="toolbar-search">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="safes-search" placeholder="بحث بالمالك أو نوع الصندوق..." oninput="filterSafesTable()">
+        </div>
+        <div class="toolbar-actions">
+            <button class="toolbar-btn" onclick="loadSafes()" title="تحديث">
+                <i class="fa-solid fa-arrows-rotate"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- جدول الصناديق -->
+    <div class="table-wrapper">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>نوع الصندوق</th>
+                    <th>المالك</th>
+                    <th>العملة</th>
+                    <th>الرصيد</th>
+                    <th>Cost</th>
+                </tr>
+            </thead>
+            <tbody id="safes-table-body"></tbody>
+        </table>
+        <div id="safes-empty" class="table-empty hidden">
+            <i class="fa-solid fa-vault"></i>
+            <p>لا توجد صناديق مسجلة بعد</p>
+        </div>
+    </div>
+
+</div>
+<!-- ===== قسم أرباح التداول ===== -->
+<div id="trading-profits-section" class="card hidden">
+
+    <!-- Hero Banner لأرباح التداول -->
+    <div class="section-hero trading-hero">
+        <div class="section-hero-text">
+            <h2><i class="fa-solid fa-chart-line"></i> تقرير أرباح التداول</h2>
+            <p>تتبع وتحليل أرباح وخسائر التداول لكل مكتب على حدة</p>
+        </div>
+        <div class="section-hero-stats">
+            <div class="hero-stat" id="trading-hero-stat-profit" style="display:none">
+                <span id="trading-total-profit">—</span>
+                <small>إجمالي الربح</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- فلاتر البحث -->
+    <div class="collapsible-form" style="margin-bottom:24px;">
+        <button class="collapse-toggle" style="cursor:default; pointer-events:none;">
+            <span><i class="fa-solid fa-filter"></i> فلاتر البحث</span>
+        </button>
+        <div class="collapse-body open" style="max-height:200px;">
+            <div class="styled-form" style="padding:20px 24px;">
+                <div class="form-row" style="margin-bottom:0;">
+                    <div class="form-group">
+                        <label><i class="fa-solid fa-building"></i> المكتب</label>
+                        <select id="profits-office-select" onchange="onProfitsOfficeChange()">
+                            <option value="">اختر المكتب</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fa-solid fa-calendar"></i> التاريخ</label>
+                        <input type="date" id="profits-date">
+                    </div>
+                    <div class="form-group" style="justify-content:flex-end; padding-top:22px;">
+                        <button onclick="loadSuperTradingReport()" class="btn-primary">
+                            <i class="fa-solid fa-magnifying-glass"></i> عرض التقرير
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- اسم المكتب المختار -->
+    <div id="profits-office-label" style="display:none; margin-bottom:16px;">
+        <span style="font-size:13px; color:var(--gray);">المكتب المختار: </span>
+        <span id="profits-office-name" style="font-weight:700; color:var(--primary); font-size:14px;"></span>
+    </div>
+
+    <!-- بطاقات الملخص -->
+    <div id="profits-summary"
+         style="display:grid; grid-template-columns:repeat(auto-fit,minmax(175px,1fr)); gap:16px; margin-bottom:24px;"></div>
+
+    <!-- جدول العمليات -->
+    <div class="table-wrapper" id="profits-table-wrapper" style="display:none; margin-bottom:0;">
+        <table class="data-table" id="profits-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>النوع</th>
+                    <th>العملة</th>
+                    <th>الكمية</th>
+                    <th>السعر</th>
+                    <th>متوسط التكلفة</th>
+                    <th>الربح / الخسارة</th>
+                    <th>التاريخ</th>
+                    <th>المنفذ</th>
+                </tr>
+            </thead>
+            <tbody id="profits-list"></tbody>
+        </table>
+    </div>
+
+    <!-- حالة فارغة -->
+    <div id="profits-empty" style="display:none;" class="table-empty">
+        <i class="fa-solid fa-inbox"></i>
+        <p>لا توجد عمليات تداول في هذا التاريخ للمكتب المختار</p>
+    </div>
+
+    <!-- حالة: لم يختر مكتباً بعد -->
+    <div id="profits-placeholder" class="table-empty">
+        <i class="fa-solid fa-building-circle-arrow-right"></i>
+        <p>اختر مكتباً وتاريخاً ثم اضغط "عرض التقرير"</p>
+    </div>
+
+</div>
+
+                <div id="offices-section" class="card hidden">
+                    <div class="section-hero offices-hero">
+                        <div class="section-hero-text">
+                            <h2><i class="fa-solid fa-building"></i> إدارة المكاتب</h2>
+                            <p>إضافة وتعديل وحذف مكاتب النظام وصناديقها</p>
+                        </div>
+                        <div class="section-hero-stats" id="offices-stats">
+                            <div class="hero-stat">
+                                <span id="stat-offices-count">—</span>
+                                <small>إجمالي المكاتب</small>
+                            </div>
+                            <div class="hero-stat">
+                                <span id="stat-offices-balance">—</span>
+                                <small>إجمالي الرصيد</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ===== فورم الإضافة (قابل للطي) ===== -->
+                    <div class="collapsible-form" id="add-office-collapse">
+                        <button class="collapse-toggle" onclick="toggleAddOfficeForm()">
+                            <span><i class="fa-solid fa-plus-circle"></i> إضافة مكتب جديد</span>
+                            <i class="fa-solid fa-chevron-down toggle-icon" id="add-office-chevron"></i>
+                        </button>
+                        <div class="collapse-body" id="add-office-body">
+                            <form id="add-office-form" class="styled-form">
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label><i class="fa-solid fa-tag"></i> اسم المكتب</label>
+                                        <input type="text" id="office-name" placeholder="مثال: مكتب دمشق الرئيسي" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label><i class="fa-solid fa-city"></i> المدينة</label>
+                                        <select id="office-city-select">
+                                            <option value="">اختر المدينة</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label><i class="fa-solid fa-dollar-sign"></i> الرصيد الافتتاحي (USD)</label>
+                                        <input type="number" id="office-balance" placeholder="0.00" min="0" step="0.01" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label><i class="fa-solid fa-map-marker-alt"></i> العنوان التفصيلي</label>
+                                        <input type="text" id="office-address" placeholder="اختياري">
+                                    </div>
+                                </div>
+                                <div class="form-actions">
+                                    <button type="submit" class="btn-primary">
+                                        <i class="fa-solid fa-floppy-disk"></i> حفظ المكتب
+                                    </button>
+                                    <button type="reset" class="btn-cancel" onclick="resetOfficeForm()">
+                                        <i class="fa-solid fa-rotate-left"></i> مسح
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- ===== شريط البحث والفلترة ===== -->
+                    <div class="table-toolbar">
+                        <div class="toolbar-search">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                            <input type="text" id="offices-search" placeholder="بحث بالاسم أو المدينة..." oninput="filterOfficesTable()">
+                        </div>
+                        <div class="toolbar-actions">
+                            <button class="toolbar-btn" onclick="loadOffices()" title="تحديث">
+                                <i class="fa-solid fa-arrows-rotate"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- ===== جدول المكاتب ===== -->
+                    <div class="table-wrapper">
+                        <table class="data-table" id="offices-table">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>المكتب</th>
+                                    <th>المدينة</th>
+                                    <th>العنوان</th>
+                                    <th>رصيد الصندوق</th>
+                                    <th>الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody id="offices-list"></tbody>
+                        </table>
+                        <div id="offices-empty" class="table-empty hidden">
+                            <i class="fa-solid fa-building-circle-xmark"></i>
+                            <p>لا توجد مكاتب مسجلة بعد</p>
+                        </div>
+                    </div>
+                </div>
+<div id="employees-section" class="card hidden">
+
+    <!-- ===== رأس القسم مع إحصائيات ===== -->
+    <div class="section-hero employees-hero">
+        <div class="section-hero-text">
+            <h2><i class="fa-solid fa-users"></i> إدارة الموظفين والمندوبين</h2>
+            <p>تسجيل وتعديل وحذف حسابات الموظفين والمندوبين الدوليين</p>
+        </div>
+        <div class="section-hero-stats" id="employees-stats">
+            <div class="hero-stat"><span id="stat-emp-total">—</span><small>إجمالي</small></div>
+            <div class="hero-stat"><span id="stat-emp-admins">—</span><small>مدراء</small></div>
+            <div class="hero-stat"><span id="stat-emp-agents">—</span><small>مندوبين</small></div>
+            <div class="hero-stat"><span id="stat-emp-cashiers">—</span><small>كاشير</small></div>
+        </div>
+    </div>
+
+    <!-- ===== فورم الإضافة (قابل للطي) ===== -->
+    <div class="collapsible-form" id="add-emp-collapse">
+        <button class="collapse-toggle" onclick="toggleAddEmpForm()">
+            <span><i class="fa-solid fa-user-plus"></i> إضافة موظف / مندوب جديد</span>
+            <i class="fa-solid fa-chevron-down toggle-icon" id="add-emp-chevron"></i>
+        </button>
+        <div class="collapse-body" id="add-emp-body">
+            <form id="add-employee-form" class="styled-form">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label><i class="fa-solid fa-user"></i> الاسم الكامل</label>
+                        <input type="text" id="emp-name" placeholder="الاسم الثلاثي" required>
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fa-solid fa-envelope"></i> البريد الإلكتروني</label>
+                        <input type="email" id="emp-email" placeholder="example@mail.com" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label><i class="fa-solid fa-phone"></i> رقم الهاتف</label>
+                        <input type="tel" id="emp-phone" placeholder="10 أرقام" required autocomplete="tel">
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fa-solid fa-lock"></i> كلمة المرور</label>
+                        <div class="input-with-icon">
+                            <input type="password" id="emp-password" placeholder="8 خانات على الأقل" required autocomplete="new-password">
+                            <button type="button" class="toggle-pass-btn" onclick="togglePasswordVisibility('emp-password', this)" title="إظهار/إخفاء كلمة المرور">
+                                <i class="fa-solid fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label><i class="fa-solid fa-shield-halved"></i> الصلاحية (الرول)</label>
+                        <select id="emp-role" onchange="handleRoleChange()" required>
+                            <option value="admin">مدير مكتب (Admin)</option>
+                            <option value="cashier">كاشير (Cashier)</option>
+                            <option value="accountant">محاسب (Accountant)</option>
+                            <option value="agent">مندوب دولي (Agent)</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="office-select-group">
+                        <label><i class="fa-solid fa-building"></i> المكتب التابع له</label>
+                        <select id="emp-office">
+                            <option value="">اختر المكتب</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- حقول المندوب -->
+                <div class="agent-fields-box hidden" id="agent-fields">
+                    <div class="agent-fields-title"><i class="fa-solid fa-earth-americas"></i> بيانات المندوب الدولي</div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label><i class="fa-solid fa-flag"></i> دولة المندوب</label>
+                            <select id="agent-country-select">
+                                <option value="">اختر الدولة</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fa-solid fa-city"></i> مدينة المندوب</label>
+                            <select id="agent-city-select">
+                                <option value="">اختر المدينة أولاً</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fa-solid fa-dollar-sign"></i> الرصيد الافتتاحي</label>
+                            <input type="number" id="emp-balance" placeholder="0.00" min="0">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn-primary">
+                        <i class="fa-solid fa-user-check"></i> تسجيل الموظف
+                    </button>
+                    <button type="reset" class="btn-cancel">
+                        <i class="fa-solid fa-rotate-left"></i> مسح
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ===== شريط البحث والفلترة ===== -->
+    <div class="table-toolbar">
+        <div class="toolbar-search">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="emp-search" placeholder="بحث بالاسم أو البريد أو الهاتف..." oninput="filterEmployeesTable()">
+        </div>
+        <div class="toolbar-filters">
+            <button class="filter-chip active" data-role="all" onclick="setEmpFilter('all', this)">الكل</button>
+            <button class="filter-chip" data-role="admin" onclick="setEmpFilter('admin', this)">مدراء</button>
+            <button class="filter-chip" data-role="cashier" onclick="setEmpFilter('cashier', this)">كاشير</button>
+            <button class="filter-chip" data-role="accountant" onclick="setEmpFilter('accountant', this)">محاسبين</button>
+            <button class="filter-chip" data-role="agent" onclick="setEmpFilter('agent', this)">مندوبين</button>
+        </div>
+        <div class="toolbar-actions">
+            <button class="toolbar-btn" onclick="loadEmployees()" title="تحديث">
+                <i class="fa-solid fa-arrows-rotate"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- ===== جدول الموظفين ===== -->
+    <div class="table-wrapper">
+        <table class="data-table" id="employees-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>الموظف</th>
+                    <th>البريد</th>
+                    <th>الهاتف</th>
+                    <th>الصلاحية</th>
+                    <th>المكتب / الموقع</th>
+                    <th>الإجراءات</th>
+                </tr>
+            </thead>
+            <tbody id="employees-list">
+                <tr><td colspan="7"><div class="skeleton" style="height:35px"></div></td></tr>
+            </tbody>
+        </table>
+        <div id="employees-empty" class="table-empty hidden">
+            <i class="fa-solid fa-users-slash"></i>
+            <p>لا يوجد موظفون مطابقون للبحث</p>
+        </div>
+    </div>
+</div>
+
+           <div id="exchange-section" class="card hidden">
+
+    <!-- Hero Banner لأسعار الصرف -->
+    <div class="section-hero exchange-hero">
+        <div class="section-hero-text">
+            <h2><i class="fa-solid fa-exchange-alt"></i> إدارة أسعار الصرف</h2>
+            <p>تحديث ومراقبة أسعار العملات مقابل الدولار الأمريكي</p>
+        </div>
+        <div class="section-hero-stats">
+            <div class="hero-stat">
+                <span id="stat-currencies-count">—</span>
+                <small>عدد العملات</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- فورم تحديث السعر -->
+    <div class="collapsible-form" style="margin-bottom:28px;">
+        <button class="collapse-toggle" style="cursor:default; pointer-events:none;">
+            <span><i class="fa-solid fa-rotate"></i> تحديث سعر الصرف</span>
+        </button>
+        <div class="collapse-body open" style="max-height:300px;">
+            <div class="styled-form" style="padding:24px;">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label><i class="fa-solid fa-coins"></i> العملة</label>
+                        <select id="currency-select"></select>
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fa-solid fa-dollar-sign"></i> السعر الجديد (مقابل الدولار)</label>
+                        <input type="number" id="new-price" inputmode="decimal" placeholder="0.00">
+                    </div>
+                    <div class="form-group">
+                        <label><i class="fa-solid fa-money-bill-wave"></i> القيمة بالليرة السورية</label>
+                        <div class="syp-preview-box">
+                            <i class="fa-solid fa-coins"></i>
+                            <span id="syp-preview">0</span>
+                            <small>ل.س</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button class="btn-update-price" onclick="updatePrice()">
+                        <i class="fa-solid fa-rotate"></i>
+                        تحديث السعر
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <hr class="section-divider">
+
+    <!-- شريط أدوات الجدول -->
+    <div class="table-toolbar" style="margin-bottom:16px;">
+        <div style="display:flex; align-items:center; gap:10px;">
+            <i class="fa-solid fa-coins" style="color:var(--warning); font-size:18px;"></i>
+            <h3 style="font-size:1rem; font-weight:800; color:var(--dark);">أسعار الصرف الحالية</h3>
+        </div>
+        <div class="toolbar-actions">
+            <button class="toolbar-btn" onclick="loadCurrencies()" title="تحديث">
+                <i class="fa-solid fa-arrows-rotate"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- جدول العملات -->
+    <div class="table-wrapper">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>العملة</th>
+                    <th>الرمز</th>
+                    <th>السعر (مقابل الدولار)</th>
+                    <th>السعر (بالليرة السورية)</th>
+                </tr>
+            </thead>
+            <tbody id="currencies-table-body"></tbody>
+        </table>
+    </div>
+
+</div>
+<!-- ===== قسم الزبائن ===== -->
+<div id="customers-section" class="card hidden">
+
+    <!-- Hero Banner للزبائن -->
+    <div class="section-hero customers-hero">
+        <div class="section-hero-text">
+            <h2><i class="fa-solid fa-users-rectangle"></i> إدارة الزبائن</h2>
+            <p>عرض وإدارة جميع الزبائن المسجلين وسجلات حوالاتهم</p>
+        </div>
+        <div class="section-hero-stats" id="customers-hero-stats">
+            <div class="hero-stat">
+                <span id="stat-customers-total">—</span>
+                <small>إجمالي الزبائن</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- إحصائيات سريعة -->
+    <div id="customers-stats" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:14px; margin:0 0 24px;"></div>
+
+    <!-- شريط البحث والأدوات -->
+    <div class="table-toolbar">
+        <div class="toolbar-search">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="customer-search" placeholder="بحث بالاسم أو الهاتف..." oninput="filterCustomers()">
+        </div>
+        <div class="toolbar-actions">
+            <button class="toolbar-btn" onclick="loadCustomers()" title="تحديث">
+                <i class="fa-solid fa-arrows-rotate"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- جدول الزبائن -->
+    <div class="table-wrapper">
+        <table class="data-table" id="customers-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>الاسم</th>
+                    <th>الهاتف</th>
+                    <th>البريد الإلكتروني</th>
+                    <th>المدينة</th>
+                    <th>الدولة</th>
+                    <th>تاريخ التسجيل</th>
+                    <th>الحوالات</th>
+                    <th>الإجراءات</th>
+                </tr>
+            </thead>
+            <tbody id="customers-tbody"></tbody>
+        </table>
+        <div id="customers-empty" style="display:none;" class="table-empty">
+            <i class="fa-solid fa-users-slash"></i>
+            <p>لا يوجد زبائن مسجلون حتى الآن</p>
+        </div>
+    </div>
+</div>
+
+<!-- ===== مودال تفاصيل الزبون ===== -->
+<div id="customer-detail-modal" class="modal-overlay hidden" onclick="handleCustomerModalBackdrop(event)">
+    <div class="customer-modal-content" onclick="event.stopPropagation()">
+
+        <!-- رأس المودال -->
+        <div class="cmodal-header">
+            <div class="cmodal-avatar">
+                <i class="fa-solid fa-user"></i>
+            </div>
+            <div class="cmodal-header-info">
+                <h2 id="cd-name">—</h2>
+                <div class="cmodal-header-meta">
+                    <span><i class="fa-solid fa-phone"></i> <span id="cd-phone">—</span></span>
+                    <span><i class="fa-solid fa-envelope"></i> <span id="cd-email">—</span></span>
+                </div>
+            </div>
+            <button class="cmodal-close-btn" onclick="closeCustomerModal()" title="إغلاق">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <!-- الجسم القابل للتمرير -->
+        <div class="cmodal-body">
+
+            <!-- بطاقات المعلومات الأساسية -->
+            <div class="cmodal-info-grid">
+                <div class="cmodal-info-item">
+                    <i class="fa-solid fa-location-dot"></i>
+                    <div>
+                        <span class="cmodal-info-label">الموقع</span>
+                        <span class="cmodal-info-value" id="cd-location">—</span>
+                    </div>
+                </div>
+                <div class="cmodal-info-item">
+                    <i class="fa-solid fa-calendar-days"></i>
+                    <div>
+                        <span class="cmodal-info-label">تاريخ التسجيل</span>
+                        <span class="cmodal-info-value" id="cd-date">—</span>
+                    </div>
+                </div>
+                <div class="cmodal-info-item">
+                    <i class="fa-solid fa-paper-plane"></i>
+                    <div>
+                        <span class="cmodal-info-label">إجمالي الحوالات</span>
+                        <span class="cmodal-info-value" id="cd-total" style="color:var(--primary);">—</span>
+                    </div>
+                </div>
+                <div class="cmodal-info-item">
+                    <i class="fa-solid fa-dollar-sign"></i>
+                    <div>
+                        <span class="cmodal-info-label">إجمالي المبالغ (USD)</span>
+                        <span class="cmodal-info-value" id="cd-usd-total" style="color:var(--secondary);">—</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ملخص الحالات -->
+            <div class="cmodal-section-title">
+                <i class="fa-solid fa-chart-pie"></i> ملخص الحالات
+            </div>
+            <div id="cd-summary" class="cmodal-status-grid"></div>
+
+            <!-- جدول الحوالات -->
+            <div class="cmodal-section-title" style="margin-top:20px;">
+                <i class="fa-solid fa-list-check"></i> سجل الحوالات
+            </div>
+            <div class="cmodal-table-wrapper">
+                <table class="data-table cmodal-table">
+                    <thead>
+                        <tr>
+                            <th>كود التتبع</th>
+                            <th>المبلغ</th>
+                            <th>العملة</th>
+                            <th>المستلم</th>
+                            <th>الحالة</th>
+                            <th>التاريخ</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cd-transfers-tbody"></tbody>
+                </table>
+                <div id="cd-no-transfers" style="display:none;" class="cmodal-empty">
+                    <i class="fa-solid fa-inbox"></i>
+                    <p>لا توجد حوالات لهذا الزبون</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- تذييل المودال -->
+        <div class="cmodal-footer">
+            <button class="btn-cancel" onclick="closeCustomerModal()">
+                <i class="fa-solid fa-arrow-right-from-bracket"></i> إغلاق
+            </button>
+        </div>
+
+    </div>
+</div>
+
+            </div>
+        </main>
+        <div id="delete-modal" class="modal-overlay hidden">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3><i class="fa-solid fa-triangle-exclamation"></i> تأكيد
+                        الحذف</h3>
+                </div>
+                <div class="modal-body">
+                    <p>هل أنت متأكد من حذف هذا المستخدم نهائياً؟</p>
+                </div>
+                <div class="modal-actions">
+                    <button class="btn-cancel"
+                        onclick="closeDeleteModal()">إلغاء</button>
+                    <button class="btn-danger" id="confirm-delete-btn">حذف
+                        الآن</button>
+                </div>
+            </div>
+        </div>
+        <div id="edit-modal" class="modal-overlay hidden">
+            <div class="modal-content modal-lg">
+                <div class="modal-header">
+                    <h3><i class="fa-solid fa-user-pen"></i> تعديل بيانات
+                        الموظف</h3>
+                    <button class="close-btn"
+                        onclick="closeEditModal()">&times;</button>
+                </div>
+                <form id="edit-user-form">
+                    <input type="hidden" id="edit-user-id">
+                    <input type="hidden" id="edit-user-role">
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>الاسم الكامل</label>
+                            <input type="text" id="edit-user-name" required>
+                        </div>
+                        <div class="form-group">
+                            <label>الهاتف</label>
+                            <input type="text" id="edit-user-phone" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>البريد الإلكتروني</label>
+                            <input type="email" id="edit-user-email" required>
+                        </div>
+                        <div class="form-group">
+                            <label>كلمة المرور (اتركها فارغة لعدم
+                                التغيير)</label>
+                            <input type="password" id="edit-user-password">
+                        </div>
+                    </div>
+
+                    <div class="form-group" id="edit-office-group">
+                        <label>المكتب</label>
+                        <select id="edit-user-office"></select>
+                    </div>
+
+                    <div id="edit-agent-group" class="hidden">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>الدولة</label>
+                                <select id="edit-user-country"
+                                    onchange="handleEditCountryChange()"></select>
+                            </div>
+                            <div class="form-group">
+                                <label>المدينة</label>
+                                <select id="edit-user-city"></select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="modal-actions">
+                        <button type="button" class="btn-cancel"
+                            onclick="closeEditModal()">إلغاء</button>
+                        <button type="submit" class="btn-primary">حفظ
+                            التعديلات</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+
+        <div id="delete-office-modal" class="modal-overlay hidden">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fa-solid fa-triangle-exclamation"></i> تأكيد الحذف</h3>
+        </div>
+        <div class="modal-body">
+            <p>هل أنت متأكد من حذف هذا المكتب نهائياً؟ سيؤدي هذا إلى حذف الصناديق المرتبطة به!</p>
+        </div>
+        <div class="modal-actions">
+            <button class="btn-cancel" onclick="closeDeleteOfficeModal()">إلغاء</button>
+            <button class="btn-danger" id="confirm-delete-office-btn">حذف الآن</button>
+        </div>
+    </div>
+</div>
+
+<div id="edit-office-modal" class="modal-overlay hidden">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fa-solid fa-building"></i> تعديل بيانات المكتب</h3>
+            <button class="close-btn" onclick="closeEditOfficeModal()">&times;</button>
+        </div>
+        <form id="edit-office-form">
+            <input type="hidden" id="edit-office-id">
+            <div class="form-row">
+                <div class="form-group">
+                    <label>اسم المكتب</label>
+                    <input type="text" id="edit-office-name" required>
+                </div>
+                <div class="form-group">
+                    <label>المدينة</label>
+                    <select id="edit-office-city-select" required></select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>العنوان التفصيلي</label>
+                    <input type="text" id="edit-office-address">
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn-cancel" onclick="closeEditOfficeModal()">إلغاء</button>
+                <button type="submit" class="btn-primary">حفظ التعديلات</button>
+            </div>
+        </form>
+    </div>
+</div>      
+
+<div id="safe-details-modal" class="modal-overlay hidden safe-details-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fa-solid fa-vault"></i> تفاصيل الصندوق</h3>
+            <button class="close-btn" onclick="closeSafeDetails()">&times;</button>
+        </div>
+
+        <div class="modal-body">
+            <div class="safe-details-list">
+                <div>نوع الصندوق: <span id="detail-type"></span></div>
+                <div>المالك: <span id="detail-owner"></span></div>
+                <div>العملة: <span id="detail-currency"></span></div>
+                <div>الرصيد: <span id="detail-balance"></span></div>
+                <div>Cost: <span id="detail-cost"></span></div>
+            </div>
+        </div>
+
+        <div class="modal-actions">
+            <button class="btn-cancel" onclick="closeSafeDetails()">إغلاق</button>
+        </div>
+    </div>
+</div>
+
+        <!-- Profile Edit Modal -->
+        <div id="profile-modal" class="modal-overlay hidden">
+            <div class="modal-content modal-lg">
+                <div class="modal-header">
+                    <h3><i class="fa-solid fa-user-pen"></i> تعديل الملف الشخصي</h3>
+                    <button class="close-btn" onclick="closeProfileModal()">&times;</button>
+                </div>
+                <div class="profile-modal-hero">
+                    <div class="profile-modal-avatar-wrap">
+                        <div class="profile-modal-avatar">
+                            <i class="fa-solid fa-user-shield"></i>
+                        </div>
+                        <div class="profile-modal-badge">Super Admin</div>
+                    </div>
+                    <div class="profile-modal-meta">
+                        <h4 id="profile-modal-name-display">—</h4>
+                        <span id="profile-modal-email-display">—</span>
+                    </div>
+                </div>
+                <form id="profile-edit-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label><i class="fa-solid fa-user"></i> الاسم الكامل</label>
+                            <input type="text" id="profile-edit-name" placeholder="أدخل اسمك الكامل" required>
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fa-solid fa-phone"></i> رقم الهاتف</label>
+                            <input type="text" id="profile-edit-phone" placeholder="أدخل رقم الهاتف">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label><i class="fa-solid fa-envelope"></i> البريد الإلكتروني</label>
+                            <input type="email" id="profile-edit-email" placeholder="أدخل البريد الإلكتروني" required>
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fa-solid fa-lock"></i> كلمة المرور الجديدة</label>
+                            <input type="password" id="profile-edit-password" placeholder="اتركه فارغاً لعدم التغيير">
+                        </div>
+                    </div>
+                    <div class="modal-actions">
+                        <button type="button" class="btn-cancel" onclick="closeProfileModal()">إلغاء</button>
+                        <button type="submit" class="btn-primary">
+                            <i class="fa-solid fa-floppy-disk"></i> حفظ التعديلات
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <script src="super.js"></script>
+
+    </body>
+</html> 

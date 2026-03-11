@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FlashPay - Office Manager</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style_admin.css">
+</head>
+<body>
+
+    <!-- ===== الشريط الجانبي ===== -->
+    <aside class="sidebar">
+        <div class="logo">
+            <i class="fa-solid fa-wallet"></i>
+            <span>FlashPay</span>
+        </div>
+
+        <nav>
+            <ul>
+                <li class="active">
+                    <a href="#" onclick="setActive(this); showPendingTransfers();">
+                        <i class="fa-solid fa-list-check"></i>
+                        الحوالات المعلقة
+                    </a>
+                </li>
+                <li>
+                    <a href="#" onclick="setActive(this); showAllTransfers();">
+                        <i class="fa-solid fa-clock-rotate-left"></i>
+                        سجل جميع الحوالات
+                    </a>
+                </li>
+                <li>
+                    <a href="#" onclick="setActive(this); showOfficeSection();">
+                        <i class="fa-solid fa-building"></i>
+                        معلومات المكتب والموظفين
+                    </a>
+                </li>
+                <li>
+                    <a href="#" onclick="setActive(this); showSafesSection();">
+                        <i class="fa-solid fa-vault"></i>
+                        صناديق المكتب المالية
+                    </a>
+                </li>
+                <li>
+                    <a href="#" onclick="setActive(this); showProfitsSection();">
+                        <i class="fa-solid fa-chart-line"></i>
+                        أرباح التداول
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+        <div class="logout">
+            <a href="#" onclick="handleLogout()">
+                <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                تسجيل الخروج
+            </a>
+        </div>
+    </aside>
+
+    <!-- ===== المحتوى الرئيسي ===== -->
+    <main class="main-content">
+
+        <!-- الرأس -->
+        <header class="app-header">
+            <div class="page-title">
+                <i class="fa-solid fa-building-user"></i>
+                <h2>لوحة إدارة المكتب</h2>
+            </div>
+            <div class="header-actions">
+                <div class="profile-box">
+                    <div class="avatar">
+                        <i class="fa-solid fa-user"></i>
+                    </div>
+                    <div class="profile-info">
+                        <span id="admin-name">جاري التحميل...</span>
+                        <small>Office Admin</small>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="content-body">
+
+            <!-- ===== قسم الحوالات المعلقة ===== -->
+            <div class="card" id="pending-transfers-card">
+
+                <!-- Hero Banner -->
+                <div class="section-hero pending-hero">
+                    <div class="section-hero-text">
+                        <h2><i class="fa-solid fa-list-check"></i> الحوالات المعلقة</h2>
+                        <p>مراجعة والموافقة أو رفض الحوالات الجديدة بانتظار إجراءك</p>
+                    </div>
+                    <div class="section-hero-stats">
+                        <div class="hero-stat">
+                            <span id="stat-pending-count">—</span>
+                            <small>في الانتظار</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- شريط أدوات -->
+                <div class="table-toolbar">
+                    <div class="toolbar-search">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="text" id="pending-search" placeholder="بحث برقم الحوالة أو المستلم..." oninput="filterPendingTable()">
+                    </div>
+                    <div class="toolbar-actions">
+                        <button class="toolbar-btn" onclick="loadPendingTransfers()" title="تحديث">
+                            <i class="fa-solid fa-arrows-rotate"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- الجدول -->
+                <div class="table-wrapper">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>رقم الحوالة</th>
+                                <th>المبلغ</th>
+                                <th>المستلم</th>
+                                <th>الحالة الحالية</th>
+                                <th>الإجراء</th>
+                            </tr>
+                        </thead>
+                        <tbody id="transfers-list"></tbody>
+                    </table>
+                    <div id="pending-empty" class="table-empty hidden">
+                        <i class="fa-solid fa-circle-check"></i>
+                        <p>لا توجد حوالات معلقة حالياً</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== قسم سجل جميع الحوالات ===== -->
+            <div class="card" id="all-transfers-card" style="display:none;">
+
+                <!-- Hero Banner -->
+                <div class="section-hero all-transfers-hero">
+                    <div class="section-hero-text">
+                        <h2><i class="fa-solid fa-clock-rotate-left"></i> سجل جميع الحوالات</h2>
+                        <p>عرض كامل لجميع الحوالات بمختلف حالاتها</p>
+                    </div>
+                    <div class="section-hero-stats">
+                        <div class="hero-stat">
+                            <span id="stat-all-count">—</span>
+                            <small>إجمالي الحوالات</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- شريط أدوات -->
+                <div class="table-toolbar">
+                    <div class="toolbar-search">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="text" id="all-transfers-search" placeholder="بحث برقم الحوالة أو المرسل..." oninput="filterAllTransfersTable()">
+                    </div>
+                    <div class="toolbar-filters">
+                        <button class="filter-chip active" data-status="all" onclick="setTransferFilter('all', this)">الكل</button>
+                        <button class="filter-chip" data-status="pending" onclick="setTransferFilter('pending', this)">معلقة</button>
+                        <button class="filter-chip" data-status="approved" onclick="setTransferFilter('approved', this)">موافق</button>
+                        <button class="filter-chip" data-status="rejected" onclick="setTransferFilter('rejected', this)">مرفوضة</button>
+                    </div>
+                    <div class="toolbar-actions">
+                        <button class="toolbar-btn" onclick="loadAllTransfers()" title="تحديث">
+                            <i class="fa-solid fa-arrows-rotate"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- الجدول -->
+                <div class="table-wrapper">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>رقم الحوالة</th>
+                                <th>المبلغ</th>
+                                <th>المرسل</th>
+                                <th>المستلم</th>
+                                <th>الحالة</th>
+                                <th>التاريخ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="all-transfers-list"></tbody>
+                    </table>
+                    <div id="all-transfers-empty" class="table-empty hidden">
+                        <i class="fa-solid fa-inbox"></i>
+                        <p>لا توجد حوالات مسجلة بعد</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== قسم معلومات المكتب والموظفين ===== -->
+            <div class="card" id="office-info-card" style="display:none;">
+
+                <!-- Hero Banner -->
+                <div class="section-hero office-hero">
+                    <div class="section-hero-text">
+                        <h2><i class="fa-solid fa-building"></i> معلومات المكتب وطاقم العمل</h2>
+                        <p>بيانات المكتب التفصيلية وجميع الموظفين المرتبطين به</p>
+                    </div>
+                    <div class="section-hero-stats">
+                        <div class="hero-stat">
+                            <span id="stat-staff-count">—</span>
+                            <small>إجمالي الموظفين</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- بطاقات بيانات المكتب -->
+                <div class="office-info-grid" id="office-details"></div>
+
+                <!-- جدول الموظفين -->
+                <div class="table-toolbar" style="margin-top: 8px;">
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <i class="fa-solid fa-users" style="color:var(--primary); font-size:18px;"></i>
+                        <h3 style="font-size:15px; font-weight:800; color:var(--dark);">طاقم العمل</h3>
+                    </div>
+                </div>
+
+                <div class="table-wrapper">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>الموظف</th>
+                                <th>الدور</th>
+                                <th>رقم الهاتف</th>
+                                <th>الحالة</th>
+                            </tr>
+                        </thead>
+                        <tbody id="staff-list"></tbody>
+                    </table>
+                    <div id="staff-empty" class="table-empty hidden">
+                        <i class="fa-solid fa-users-slash"></i>
+                        <p>لا يوجد موظفون مسجلون</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== قسم الصناديق المالية ===== -->
+            <div class="card" id="safes-card" style="display:none;">
+
+                <!-- Hero Banner -->
+                <div class="section-hero safes-hero">
+                    <div class="section-hero-text">
+                        <h2><i class="fa-solid fa-vault"></i> صناديق المكتب المالية</h2>
+                        <p>الرصيد الحالي لصندوق المكتب الرئيسي وصندوق المبيعات</p>
+                    </div>
+                    <div class="section-hero-stats" id="safes-hero-stats">
+                        <div class="hero-stat">
+                            <span id="stat-safes-total">—</span>
+                            <small>إجمالي الرصيد</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- شبكة الصناديق -->
+                <div class="safes-grid" id="safes-container"></div>
+            </div>
+
+            <!-- ===== قسم أرباح التداول ===== -->
+            <div class="card" id="profits-card" style="display:none;">
+
+                <!-- Hero Banner -->
+                <div class="section-hero profits-hero">
+                    <div class="section-hero-text">
+                        <h2><i class="fa-solid fa-chart-line"></i> تقرير أرباح التداول</h2>
+                        <p>تتبع وتحليل أرباح وخسائر عمليات شراء وبيع العملات</p>
+                    </div>
+                    <div class="section-hero-stats">
+                        <div class="hero-stat" id="profits-hero-stat" style="display:none;">
+                            <span id="profits-net-total">—</span>
+                            <small>صافي الربح</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- فلتر التاريخ -->
+                <div class="collapsible-form" style="margin-bottom:24px;">
+                    <button class="collapse-toggle" style="cursor:default; pointer-events:none;">
+                        <span><i class="fa-solid fa-calendar-days"></i> تحديد التاريخ</span>
+                    </button>
+                    <div class="collapse-body open" style="max-height:120px;">
+                        <div class="styled-form" style="padding:18px 24px;">
+                            <div class="form-row" style="margin-bottom:0; align-items:flex-end;">
+                                <div class="form-group" style="flex: 0 0 auto; min-width:180px;">
+                                    <label><i class="fa-regular fa-calendar"></i> التاريخ</label>
+                                    <input type="date" id="report-date">
+                                </div>
+                                <div class="form-group" style="flex: 0 0 auto; justify-content:flex-end;">
+                                    <button class="btn-primary" onclick="loadTradingReport()" style="padding:12px 22px;">
+                                        <i class="fa-solid fa-magnifying-glass"></i> عرض التقرير
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- بطاقات الملخص -->
+                <div id="profits-summary"
+                     style="display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:16px; margin-bottom:24px;"></div>
+
+                <!-- جدول العمليات -->
+                <div class="table-wrapper" id="profits-table-wrapper" style="display:none;">
+                    <table class="data-table" id="profits-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>النوع</th>
+                                <th>العملة</th>
+                                <th>الكمية</th>
+                                <th>السعر</th>
+                                <th>متوسط التكلفة</th>
+                                <th>الربح / الخسارة</th>
+                                <th>التاريخ</th>
+                                <th>المنفذ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="profits-list"></tbody>
+                    </table>
+                </div>
+
+                <!-- حالة فارغة -->
+                <div id="profits-empty" class="table-empty" style="display:none;">
+                    <i class="fa-solid fa-inbox"></i>
+                    <p>لا توجد عمليات تداول في هذا التاريخ</p>
+                </div>
+
+                <!-- حالة: اختر تاريخاً -->
+                <div id="profits-placeholder" class="table-empty">
+                    <i class="fa-solid fa-calendar-days"></i>
+                    <p>حدد تاريخاً ثم اضغط "عرض التقرير"</p>
+                </div>
+
+            </div>
+
+        </div><!-- /.content-body -->
+    </main>
+
+    <script src="admin.js"></script>
+
+    <script>
+    // ===== وظائف مساعدة للواجهة =====
+
+    function filterPendingTable() {
+        const q = (document.getElementById('pending-search')?.value || '').toLowerCase();
+        document.querySelectorAll('#transfers-list tr').forEach(row => {
+            row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+        });
+    }
+
+    function filterAllTransfersTable() {
+        const q = (document.getElementById('all-transfers-search')?.value || '').toLowerCase();
+        document.querySelectorAll('#all-transfers-list tr').forEach(row => {
+            row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+        });
+    }
+
+    let _currentTransferFilter = 'all';
+    function setTransferFilter(status, btn) {
+        _currentTransferFilter = status;
+        document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+        btn.classList.add('active');
+        document.querySelectorAll('#all-transfers-list tr').forEach(row => {
+            if (status === 'all') { row.style.display = ''; return; }
+            const badge = row.querySelector('.status-badge');
+            const rowStatus = badge ? badge.dataset.status : '';
+            row.style.display = rowStatus === status ? '' : 'none';
+        });
+    }
+
+    // إعادة تهيئة profits table عند التنقل
+    const _origShowProfits = typeof showProfitsSection === 'function' ? showProfitsSection : null;
+    </script>
+
+</body>
+</html>
