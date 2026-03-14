@@ -7,11 +7,15 @@
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style_admin.css">
+    <link rel="stylesheet" href="mobile_small.css">
 </head>
 <body>
 
+    <!-- Sidebar Overlay -->
+    <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+
     <!-- ===== الشريط الجانبي ===== -->
-    <aside class="sidebar">
+    <aside class="sidebar" id="sidebar">
         <div class="logo">
             <i class="fa-solid fa-wallet"></i>
             <span>FlashPay</span>
@@ -65,9 +69,14 @@
 
         <!-- الرأس -->
         <header class="app-header">
-            <div class="page-title">
-                <i class="fa-solid fa-building-user"></i>
-                <h2>لوحة إدارة المكتب</h2>
+            <div class="header-left">
+                <button class="hamburger-btn" id="hamburger-btn" onclick="toggleSidebar()" title="فتح القائمة الجانبية">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+                <div class="page-title">
+                    <i class="fa-solid fa-building-user"></i>
+                    <h2>لوحة إدارة المكتب</h2>
+                </div>
             </div>
             <div class="header-actions">
                 <div class="profile-box">
@@ -377,6 +386,7 @@
     // إعادة تهيئة profits table عند التنقل
     const _origShowProfits = typeof showProfitsSection === 'function' ? showProfitsSection : null;
     </script>
+    <script src="sidebar-mobile.js"></script>
 
 </body>
 </html>
