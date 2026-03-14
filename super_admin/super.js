@@ -25,7 +25,7 @@ async function checkAuth() {
         // التوكن غير صالح (بعد migrate:fresh مثلاً)
         if (!res.ok) {
             localStorage.clear();
-            window.location.href = '/FlashPay-Front/login/login.html';
+            window.location.href = '../login/login.html';
             return null;
         }
 
@@ -33,7 +33,7 @@ async function checkAuth() {
 
     } catch (e) {
         localStorage.clear();
-        window.location.href = '/FlashPay-Front/login/login.html';
+        window.location.href = '../login/login.html';
         return null;
     }
 }
