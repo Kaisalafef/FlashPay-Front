@@ -111,35 +111,68 @@ async function loadAllTransfers(){
                 let statusText = '';
 
                 switch(transfer.status){
-                    case 'waiting':
+                    case 'pending':
                         statusClass = 'status-badge status-pending';
                         statusText = 'بانتظار الوكيل';
                         break;
-                    case 'waiting': // تمت إضافة حالة waiting هنا للأدمن
+                    case 'approved':
+                        statusClass = 'status-badge status-approved';
+                        statusText = 'موافق عليها';
+                        break;
+                    case 'waiting':
                         statusClass = 'status-badge status-pending';
                         statusText = 'بانتظار موافقة المكتب';
                         break;
                     case 'ready':
                         statusClass = 'status-badge status-approved';
-                        statusText = 'تمت الموافقة (جاهزة)';
+                        statusText = 'جاهزة للتسليم';
+                        break;
+                    case 'completed':
+                        statusClass = 'status-badge status-approved';
+                        statusText = 'مكتملة';
                         break;
                     case 'rejected':
                         statusClass = 'status-badge status-rejected';
                         statusText = 'مرفوضة';
+                        break;
+                    case 'cancelled':
+                        statusClass = 'status-badge status-rejected';
+                        statusText = 'ملغاة';
                         break;
                     default:
                         statusClass = 'status-badge';
                         statusText = transfer.status;
                 }
 
+                // ── المبالغ ──────────────────────────────────────────────
+                const amountUsd    = Number(transfer.amount_in_usd ?? 0);
+                const sendAmount   = Number(transfer.amount ?? 0);
+                const sendCurrency = transfer.send_currency?.code
+                                   ?? transfer.sendCurrency?.code ?? '—';
+                const recvCurrency = transfer.currency?.code ?? '—';
+                const recvPrice    = Number(transfer.currency?.price ?? 1);
+                const deliveryAmt  = recvPrice > 0 ? amountUsd / recvPrice : 0;
+
                 tbody.innerHTML += `
                     <tr>
                         <td>#${transfer.id}</td>
-                        <td>$${transfer.amount}</td>
+                        <td>
+                            <div style="font-weight:800; color:var(--primary);">
+                                $${amountUsd.toFixed(2)}
+                            </div>
+                            <div style="font-size:11px; color:var(--gray); margin-top:2px; direction:ltr;">
+                                ${sendAmount.toFixed(2)} ${sendCurrency}
+                            </div>
+                        </td>
                         <td>${transfer.sender ? transfer.sender.name : '-'}</td>
-                        <td>${transfer.receiver_name}</td>
+                        <td>
+                            <div>${transfer.receiver_name}</div>
+                            <div style="font-size:11px; color:var(--gray); margin-top:2px;">
+                                يستلم: <b>${deliveryAmt.toFixed(2)} ${recvCurrency}</b>
+                            </div>
+                        </td>
                         <td><span class="${statusClass}">${statusText}</span></td>
-                        <td>${new Date(transfer.created_at).toLocaleString()}</td>
+                        <td>${new Date(transfer.created_at).toLocaleString('ar-SY')}</td>
                     </tr>
                 `;
             });
@@ -387,11 +420,33 @@ async function loadPendingTransfers() {
 
         if (json.status === 'success' && Array.isArray(json.data)) {
             json.data.forEach(transfer => {
+                // ── المبالغ ──────────────────────────────────────────────
+                const amountUsd      = Number(transfer.amount_in_usd ?? 0);
+                const sendAmount     = Number(transfer.amount ?? 0);
+                const sendCurrency   = transfer.send_currency?.code
+                                    ?? transfer.sendCurrency?.code ?? '—';
+                const recvCurrency   = transfer.currency?.code ?? '—';
+                const recvPrice      = Number(transfer.currency?.price ?? 1);
+                const deliveryAmount = recvPrice > 0 ? amountUsd / recvPrice : 0;
+
     tbody.innerHTML += `
         <tr>
             <td>#${transfer.id}</td>
-            <td>$${transfer.amount}</td>
-            <td>${transfer.receiver_name}</td>
+            <td>
+                <div style="font-weight:800; color:var(--primary);">
+                    $${amountUsd.toFixed(2)}
+                </div>
+                <div style="font-size:11px; color:var(--gray); margin-top:2px; direction:ltr;">
+                    ${sendAmount.toFixed(2)} ${sendCurrency}
+                </div>
+            </td>
+            <td>${transfer.sender?.name ?? '—'}</td>
+            <td>
+                <div style="font-weight:700;">${transfer.receiver_name}</div>
+                <div style="font-size:11px; color:var(--gray); margin-top:2px;">
+                    يستلم: <b>${deliveryAmount.toFixed(2)} ${recvCurrency}</b>
+                </div>
+            </td>
             <td><span style="color: orange;">بانتظار الموافقة</span></td>
             <td>
                 <input type="number"
