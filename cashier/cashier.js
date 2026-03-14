@@ -51,16 +51,28 @@ async function loadNewTransfers() {
       document.getElementById('transfers-count').textContent = json.data.length;
 
       json.data.forEach((transfer) => {
-        const amount        = Number(transfer.amount);
+        // amount_in_usd = القيمة المحوّلة للدولار (amount × send_currency.price) محفوظة في البك-اند
+        // currency      = عملة الاستلام التي سيتسلمها المستفيد
+        // deliveryPrice = كم يستلم المستفيد = amount_in_usd ÷ currency.price
+        const amountUsd     = Number(transfer.amount_in_usd ?? 0);
         const currencyPrice = Number(transfer.currency?.price ?? 1);
         const currencyCode  = transfer.currency?.code ?? "USD";
-        const deliveryPrice = amount / currencyPrice;
+        const deliveryPrice = currencyPrice > 0 ? amountUsd / currencyPrice : 0;
+
+        // عملة الإرسال للعرض فقط
+        const sendAmount     = Number(transfer.amount ?? 0);
+        const sendCurrency   = transfer.send_currency?.code ?? transfer.sendCurrency?.code ?? "—";
 
         tbody.innerHTML += `
           <tr>
             <td><span class="transfer-id">#${transfer.id}</span></td>
-            <td>${transfer.sender?.name ?? "—"}</td>
-            <td><span class="amount-cell">$${amount.toFixed(2)}</span></td>
+            <td>
+              ${transfer.sender?.name ?? "—"}
+              <div style="font-size:11px; color:var(--gray); margin-top:2px; direction:ltr;">
+                ${sendAmount.toFixed(2)} ${sendCurrency}
+              </div>
+            </td>
+            <td><span class="amount-cell">$${amountUsd.toFixed(2)}</span></td>
             <td>${currencyCode}</td>
             <td><span class="delivery-price">${deliveryPrice.toFixed(2)} ${currencyCode}</span></td>
             <td>
