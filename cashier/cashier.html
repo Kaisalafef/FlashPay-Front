@@ -9,11 +9,15 @@
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="cashier.css">
+    <link rel="stylesheet" href="mobile_small.css">
 </head>
 <body>
 
+    <!-- Sidebar Overlay -->
+    <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+
     <!-- Sidebar -->
-    <aside class="sidebar">
+    <aside class="sidebar" id="sidebar">
         <div class="logo">
             <div class="logo-icon"><i class="fa-solid fa-wallet"></i></div>
             <span>FlashPay</span>
@@ -63,6 +67,9 @@
 
         <header>
             <div class="header-left">
+                <button class="hamburger-btn" id="hamburger-btn" onclick="toggleSidebar()" title="فتح القائمة الجانبية">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
                 <div class="page-title">
                     <span class="page-icon" id="page-icon"><i class="fa-solid fa-money-bill-transfer"></i></span>
                     <div>
@@ -185,5 +192,6 @@
     </main>
 
     <script src="cashier.js"></script>
+    <script src="sidebar-mobile.js"></script>
 </body>
 </html>
