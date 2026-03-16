@@ -25,7 +25,7 @@ async function checkAuth() {
         // التوكن غير صالح (بعد migrate:fresh مثلاً)
         if (!res.ok) {
             localStorage.clear();
-            window.location.href = '/FlashPay-Front/login/login.html';
+            window.location.href = '../login/login.html';
             return null;
         }
 
@@ -33,7 +33,7 @@ async function checkAuth() {
 
     } catch (e) {
         localStorage.clear();
-        window.location.href = '/FlashPay-Front/login/login.html';
+        window.location.href = '../login/login.html';
         return null;
     }
 }
@@ -44,6 +44,7 @@ function getHeaders() {
     const token = localStorage.getItem('auth_token');
     return {
         'Content-Type': 'application/json',
+        'Accept': 'application/json',
         'Authorization': `Bearer ${token}`
     };
 }
@@ -534,6 +535,9 @@ async function loadOfficesForSelect() {
 /* =========================
    Add Employee / Agent
 ========================= */
+/* =========================
+   Add Employee / Agent
+========================= */
 document.getElementById('add-employee-form')?.addEventListener('submit', async (e) => {
     e.preventDefault();
 
@@ -542,16 +546,14 @@ document.getElementById('add-employee-form')?.addEventListener('submit', async (
         position: { x: 'left', y: 'bottom' },
         types: [
             { type: 'error', background: '#ef4444', icon: { className: 'fa-solid fa-circle-exclamation', color: 'white' } },
-            { type: 'success', background: '#10b981', icon: { className: 'fa-solid fa-check-circle', color: 'white' } } // اللون الأخضر الجميل
+            { type: 'success', background: '#10b981', icon: { className: 'fa-solid fa-check-circle', color: 'white' } }
         ]
     });
 
-    // دالة مساعدة للتركيز على الخطأ
     const triggerError = (elementId, message) => {
         const el = document.getElementById(elementId);
         el.classList.add('input-error');
         el.focus();
-        // إزالة الخطأ عند الكتابة
         el.addEventListener('input', () => el.classList.remove('input-error'), { once: true });
         notyf.error(message);
     };
@@ -561,21 +563,18 @@ document.getElementById('add-employee-form')?.addEventListener('submit', async (
     const phoneEl = document.getElementById('emp-phone');
     const passEl = document.getElementById('emp-password');
 
-    // 1. البريد الإلكتروني
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(emailEl.value.trim())) {
         triggerError('emp-email', 'يرجى إدخال بريد إلكتروني صحيح');
         return;
     }
 
-    // 2. الهاتف
     const phoneRegex = /^\d{10}$/;
     if (!phoneRegex.test(phoneEl.value.trim())) {
         triggerError('emp-phone', 'رقم الهاتف يجب أن يتكون من 10 أرقام');
         return;
     }
 
-    // 3. كلمة المرور
     const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/;
     if (!passwordRegex.test(passEl.value)) {
         triggerError('emp-password', 'كلمة المرور يجب أن تكون 8 خانات مع أرقام وحروف');
@@ -588,6 +587,7 @@ document.getElementById('add-employee-form')?.addEventListener('submit', async (
         email: emailEl.value.trim(),
         phone: phoneEl.value.trim(),
         password: passEl.value,
+        password_confirmation: passEl.value, // 👈 إضافة ضرورية لتجاوز فحص كلمة المرور في لارافيل
         role: role
     };
 
@@ -596,15 +596,27 @@ document.getElementById('add-employee-form')?.addEventListener('submit', async (
         data.city_id = document.getElementById('agent-city-select').value || null;
         data.balance = document.getElementById('emp-balance').value || 0;
     } else {
-        data.office_id = document.getElementById('emp-office').value || null;
+        // 👈 التحقق من اختيار المكتب للموظفين
+        const officeId = document.getElementById('emp-office').value;
+        if (!officeId) {
+            triggerError('emp-office', 'يرجى اختيار المكتب التابع له الموظف أولاً');
+            return;
+        }
+        data.office_id = officeId;
+        // إرسال قيم فارغة لتفادي حظر لارافيل بسبب غياب الدولة والمدينة
+        data.country_id = null;
+        data.city_id = null;
     }
 
     try {
         const res = await fetch(`${API_URL}/register`, {
             method: 'POST',
-            headers: { ...getHeaders(), 'Content-Type': 'application/json' },
+            headers: getHeaders(), // 👈 سيتم الآن إرسال Accept: application/json
             body: JSON.stringify(data)
         });
+
+        // 👈 قراءة الرد الفعلي من السيرفر لمعرفة سبب الرفض إن وجد
+        const json = await res.json(); 
 
         if (res.ok) {
             notyf.success('تم إضافة الموظف بنجاح إلى النظام');
@@ -612,7 +624,9 @@ document.getElementById('add-employee-form')?.addEventListener('submit', async (
             handleRoleChange();
             await loadEmployees();
         } else {
-            notyf.error('حدث خطأ في التسجيل، يرجى المحاولة لاحقاً');
+            // الآن سيظهر لك الخطأ الحقيقي القادم من قاعدة البيانات بدلاً من "النجاح الوهمي"
+            notyf.error(json.message || 'تأكد من إدخال جميع البيانات، الإيميل أو الهاتف قد يكون مسجلاً مسبقاً');
+            console.log("Validation Errors:", json.errors);
         }
     } catch (error) {
         notyf.error('خطأ في الاتصال بالسيرفر');
@@ -1460,7 +1474,21 @@ function renderCustomersTable(customers) {
         tbody.innerHTML += `
             <tr>
                 <td>${index + 1}</td>
-                <td><strong>${customer.name}</strong></td>
+                <td>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <strong>${customer.name}</strong>
+                        ${customer.id_card_image
+                            ? `<button
+                                onclick="openIdImageModal('${STORAGE_URL}/${customer.id_card_image}')"
+                                title="عرض صورة الهوية"
+                                style="border:none; cursor:pointer; border-radius:7px; background:#eff6ff; color:#2563eb; width:28px; height:28px; font-size:13px; display:inline-flex; align-items:center; justify-content:center; flex-shrink:0; transition:all 0.2s;"
+                                onmouseover="this.style.background='#dbeafe'"
+                                onmouseout="this.style.background='#eff6ff'">
+                                <i class="fa-solid fa-id-card"></i>
+                              </button>`
+                            : ''}
+                    </div>
+                </td>
                 <td style="direction:ltr; text-align:right;">${customer.phone || '—'}</td>
                 <td style="font-size:12px; color:var(--gray);">${customer.email || '—'}</td>
                 <td>${customer.city?.name || '—'}</td>
@@ -1471,9 +1499,24 @@ function renderCustomersTable(customers) {
                         ${transferCount} حوالة
                     </span>
                 </td>
-                <td>
+                <td style="display:flex; gap:6px; align-items:center; justify-content:center;">
                     <button class="btn-edit" onclick="openCustomerModal(${customer.id})" title="عرض التفاصيل">
                         <i class="fa-solid fa-eye"></i>
+                    </button>
+                    <button
+                        class="btn-block-toggle"
+                        onclick="toggleBlockCustomer(${customer.id}, ${!!customer.is_active})"
+                        title="${customer.is_active ? 'حظر الزبون' : 'فك الحظر'}"
+                        style="
+                            border:none; cursor:pointer; border-radius:8px;
+                            width:34px; height:34px; font-size:14px;
+                            display:inline-flex; align-items:center; justify-content:center;
+                            transition:all 0.2s;
+                            background:${customer.is_active ? '#fee2e2' : '#dcfce7'};
+                            color:${customer.is_active ? '#dc2626' : '#16a34a'};
+                        "
+                    >
+                        <i class="fa-solid ${customer.is_active ? 'fa-ban' : 'fa-lock-open'}"></i>
                     </button>
                 </td>
             </tr>
@@ -1495,9 +1538,33 @@ function filterCustomers() {
     renderCustomersTable(filtered);
 }
 
+// متغير لحفظ الزبون الحالي في المودال
+let currentModalCustomer = null;
+
 function openCustomerModal(customerId) {
     const customer = allCustomers.find(c => c.id === customerId);
     if (!customer) return;
+    currentModalCustomer = customer;
+
+    const blockBtn   = document.getElementById('cd-block-btn');
+    const blockLabel = document.getElementById('cd-block-label');
+    const blockIcon  = document.getElementById('cd-block-icon');
+    if (blockBtn && blockLabel && blockIcon) {
+        const isActive = !!customer.is_active;
+        if (isActive) {
+            blockBtn.style.borderColor = '#dc2626';
+            blockBtn.style.background  = '#fff0f0';
+            blockBtn.style.color       = '#dc2626';
+            blockIcon.className = 'fa-solid fa-ban';
+            blockLabel.textContent = 'حظر الزبون';
+        } else {
+            blockBtn.style.borderColor = '#16a34a';
+            blockBtn.style.background  = '#f0fdf4';
+            blockBtn.style.color       = '#16a34a';
+            blockIcon.className = 'fa-solid fa-lock-open';
+            blockLabel.textContent = 'فك الحظر';
+        }
+    }
 
     const customerTransfers = allTransfers.filter(t => t.sender_id === customerId);
 
@@ -1505,6 +1572,17 @@ function openCustomerModal(customerId) {
     document.getElementById('cd-name').textContent  = customer.name  || '—';
     document.getElementById('cd-phone').textContent = customer.phone || '—';
     document.getElementById('cd-email').textContent = customer.email || '—';
+
+    // زر عرض صورة الهوية في رأس المودال
+    const cdIdBtn = document.getElementById('cd-id-card-btn');
+    if (cdIdBtn) {
+        if (customer.id_card_image) {
+            cdIdBtn.style.display = 'inline-flex';
+            cdIdBtn.onclick = () => openIdImageModal(`${STORAGE_URL}/${customer.id_card_image}`);
+        } else {
+            cdIdBtn.style.display = 'none';
+        }
+    }
 
     // ===== بطاقات المعلومات =====
     document.getElementById('cd-location').textContent =
@@ -1649,6 +1727,76 @@ document.addEventListener('keydown', (e) => {
         }
     }
 });
+
+
+/* =============================================
+   دوال الحظر / فك الحظر
+============================================= */
+
+/**
+ * تحويل is_active للزبون عبر API PUT /users/{id}
+ * @param {number} userId
+ * @param {boolean} currentIsActive  - الحالة الحالية قبل التغيير
+ */
+async function toggleBlockCustomer(userId, currentIsActive) {
+    const newIsActive = !currentIsActive;
+    const action = newIsActive ? 'فك الحظر' : 'حظر';
+
+    const confirmed = confirm(`هل تريد ${action} هذا الزبون؟`);
+    if (!confirmed) return;
+
+    try {
+        const res = await fetch(`${API_URL}/users/${userId}/toggle-status`, {
+            method: 'PATCH',
+            headers: getHeaders()
+        });
+
+        if (!res.ok) throw new Error('فشلت العملية');
+
+        // تحديث الحالة محلياً على الفور
+        const customer = allCustomers.find(c => c.id === userId);
+        if (customer) customer.is_active = newIsActive;
+
+        // تحديث الجدول زر الخطوط
+        renderCustomersTable(allCustomers);
+
+        // تحديث المودال إن كان مفتوحاً لنفس الزبون
+        if (currentModalCustomer && currentModalCustomer.id === userId) {
+            currentModalCustomer.is_active = newIsActive;
+            const blockBtn   = document.getElementById('cd-block-btn');
+            const blockLabel = document.getElementById('cd-block-label');
+            const blockIcon  = document.getElementById('cd-block-icon');
+            if (blockBtn) {
+                if (newIsActive) {
+                    blockBtn.style.borderColor = '#16a34a';
+                    blockBtn.style.background  = '#f0fdf4';
+                    blockBtn.style.color       = '#16a34a';
+                    blockIcon.className = 'fa-solid fa-lock-open';
+                    blockLabel.textContent = 'فك الحظر';
+                } else {
+                    blockBtn.style.borderColor = '#dc2626';
+                    blockBtn.style.background  = '#fff0f0';
+                    blockBtn.style.color       = '#dc2626';
+                    blockIcon.className = 'fa-solid fa-ban';
+                    blockLabel.textContent = 'حظر الزبون';
+                }
+            }
+        }
+
+        alert(`تم ${action} الزبون بنجاح`);
+    } catch (err) {
+        console.error(err);
+        alert('حدث خطأ أثناء العملية. تحقق من أن الخادم يدعم حقل is_active.');
+    }
+}
+
+/**
+ * تنفيذ الحظر/فك الحظر من داخل المودال
+ */
+function toggleBlockFromModal() {
+    if (!currentModalCustomer) return;
+    toggleBlockCustomer(currentModalCustomer.id, !!currentModalCustomer.is_active);
+}
 
 async function handleLogout() {
     await fetch(`${API_URL}/logout`, {
