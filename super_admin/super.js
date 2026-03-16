@@ -1,4 +1,5 @@
 const API_URL = 'http://127.0.0.1:8000/api';
+const STORAGE_URL = 'http://127.0.0.1:8000/storage';  // ✅ يُستخدم مع receiver_id_image مباشرة (مثال: receipts/filename.jpg)
 
 
 /* =========================
@@ -1058,6 +1059,7 @@ function renderEmployeesStats() {
     document.getElementById('stat-emp-admins')?.textContent && (document.getElementById('stat-emp-admins').textContent  = nonCustomers.filter(u => u.role === 'admin').length);
     document.getElementById('stat-emp-agents')?.textContent && (document.getElementById('stat-emp-agents').textContent  = nonCustomers.filter(u => u.role === 'agent').length);
     document.getElementById('stat-emp-cashiers')?.textContent && (document.getElementById('stat-emp-cashiers').textContent = nonCustomers.filter(u => u.role === 'cashier').length);
+    document.getElementById('stat-emp-accountant')?.textContent && (document.getElementById('stat-emp-accountant').textContent = nonCustomers.filter(u=>u.role === 'accountant').length);
 }
 
 const ROLE_LABELS = {
@@ -1458,7 +1460,21 @@ function renderCustomersTable(customers) {
         tbody.innerHTML += `
             <tr>
                 <td>${index + 1}</td>
-                <td><strong>${customer.name}</strong></td>
+                <td>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <strong>${customer.name}</strong>
+                        ${customer.id_card_image
+                            ? `<button
+                                onclick="openIdImageModal('${STORAGE_URL}/${customer.id_card_image}')"
+                                title="عرض صورة الهوية"
+                                style="border:none; cursor:pointer; border-radius:7px; background:#eff6ff; color:#2563eb; width:28px; height:28px; font-size:13px; display:inline-flex; align-items:center; justify-content:center; flex-shrink:0; transition:all 0.2s;"
+                                onmouseover="this.style.background='#dbeafe'"
+                                onmouseout="this.style.background='#eff6ff'">
+                                <i class="fa-solid fa-id-card"></i>
+                              </button>`
+                            : ''}
+                    </div>
+                </td>
                 <td style="direction:ltr; text-align:right;">${customer.phone || '—'}</td>
                 <td style="font-size:12px; color:var(--gray);">${customer.email || '—'}</td>
                 <td>${customer.city?.name || '—'}</td>
@@ -1469,9 +1485,24 @@ function renderCustomersTable(customers) {
                         ${transferCount} حوالة
                     </span>
                 </td>
-                <td>
+                <td style="display:flex; gap:6px; align-items:center; justify-content:center;">
                     <button class="btn-edit" onclick="openCustomerModal(${customer.id})" title="عرض التفاصيل">
                         <i class="fa-solid fa-eye"></i>
+                    </button>
+                    <button
+                        class="btn-block-toggle"
+                        onclick="toggleBlockCustomer(${customer.id}, ${!!customer.is_active})"
+                        title="${customer.is_active ? 'حظر الزبون' : 'فك الحظر'}"
+                        style="
+                            border:none; cursor:pointer; border-radius:8px;
+                            width:34px; height:34px; font-size:14px;
+                            display:inline-flex; align-items:center; justify-content:center;
+                            transition:all 0.2s;
+                            background:${customer.is_active ? '#fee2e2' : '#dcfce7'};
+                            color:${customer.is_active ? '#dc2626' : '#16a34a'};
+                        "
+                    >
+                        <i class="fa-solid ${customer.is_active ? 'fa-ban' : 'fa-lock-open'}"></i>
                     </button>
                 </td>
             </tr>
@@ -1493,9 +1524,33 @@ function filterCustomers() {
     renderCustomersTable(filtered);
 }
 
+// متغير لحفظ الزبون الحالي في المودال
+let currentModalCustomer = null;
+
 function openCustomerModal(customerId) {
     const customer = allCustomers.find(c => c.id === customerId);
     if (!customer) return;
+    currentModalCustomer = customer;
+
+    const blockBtn   = document.getElementById('cd-block-btn');
+    const blockLabel = document.getElementById('cd-block-label');
+    const blockIcon  = document.getElementById('cd-block-icon');
+    if (blockBtn && blockLabel && blockIcon) {
+        const isActive = !!customer.is_active;
+        if (isActive) {
+            blockBtn.style.borderColor = '#dc2626';
+            blockBtn.style.background  = '#fff0f0';
+            blockBtn.style.color       = '#dc2626';
+            blockIcon.className = 'fa-solid fa-ban';
+            blockLabel.textContent = 'حظر الزبون';
+        } else {
+            blockBtn.style.borderColor = '#16a34a';
+            blockBtn.style.background  = '#f0fdf4';
+            blockBtn.style.color       = '#16a34a';
+            blockIcon.className = 'fa-solid fa-lock-open';
+            blockLabel.textContent = 'فك الحظر';
+        }
+    }
 
     const customerTransfers = allTransfers.filter(t => t.sender_id === customerId);
 
@@ -1503,6 +1558,17 @@ function openCustomerModal(customerId) {
     document.getElementById('cd-name').textContent  = customer.name  || '—';
     document.getElementById('cd-phone').textContent = customer.phone || '—';
     document.getElementById('cd-email').textContent = customer.email || '—';
+
+    // زر عرض صورة الهوية في رأس المودال
+    const cdIdBtn = document.getElementById('cd-id-card-btn');
+    if (cdIdBtn) {
+        if (customer.id_card_image) {
+            cdIdBtn.style.display = 'inline-flex';
+            cdIdBtn.onclick = () => openIdImageModal(`${STORAGE_URL}/${customer.id_card_image}`);
+        } else {
+            cdIdBtn.style.display = 'none';
+        }
+    }
 
     // ===== بطاقات المعلومات =====
     document.getElementById('cd-location').textContent =
@@ -1582,6 +1648,18 @@ function openCustomerModal(customerId) {
                         </span>
                     </td>
                     <td style="font-size:12px; color:var(--gray);">${date}</td>
+                    <td>
+                        ${t.receiver_id_image
+                            ? `<button data-img-url="${STORAGE_URL}/${t.receiver_id_image}"
+                                       onclick="openIdImageModal(this.dataset.imgUrl)"
+                                       class="action-btn"
+                                       title="عرض هوية المستلم"
+                                       style="background:var(--primary-bg); color:var(--primary); border:1px solid var(--primary-light); width:34px; height:34px; border-radius:8px; cursor:pointer; font-size:13px; display:inline-flex; align-items:center; justify-content:center; transition:all 0.2s;">
+                                   <i class="fa-solid fa-id-card"></i>
+                               </button>`
+                            : '<span style="font-size:12px; color:var(--gray-light);">—</span>'
+                        }
+                    </td>
                 </tr>
             `;
         });
@@ -1590,6 +1668,25 @@ function openCustomerModal(customerId) {
     // إظهار المودال
     document.getElementById('customer-detail-modal').classList.remove('hidden');
     document.body.style.overflow = 'hidden';
+}
+
+
+function openIdImageModal(imageUrl) {
+    const modal    = document.getElementById('id-image-modal');
+    const img      = document.getElementById('id-image-viewer');
+    const dlBtn    = document.getElementById('id-image-download');
+    img.src        = imageUrl;
+    dlBtn.href     = imageUrl;
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeIdImageModal(e) {
+    // إغلاق بالزر أو بالنقر على الخلفية
+    if (e && e.target !== document.getElementById('id-image-modal') && e.type === 'click') return;
+    const modal = document.getElementById('id-image-modal');
+    modal.classList.add('hidden');
+    // لا نُعيد overflow هنا لأن customer modal لا يزال مفتوحاً
 }
 
 function closeCustomerModal() {
@@ -1616,6 +1713,76 @@ document.addEventListener('keydown', (e) => {
         }
     }
 });
+
+
+/* =============================================
+   دوال الحظر / فك الحظر
+============================================= */
+
+/**
+ * تحويل is_active للزبون عبر API PUT /users/{id}
+ * @param {number} userId
+ * @param {boolean} currentIsActive  - الحالة الحالية قبل التغيير
+ */
+async function toggleBlockCustomer(userId, currentIsActive) {
+    const newIsActive = !currentIsActive;
+    const action = newIsActive ? 'فك الحظر' : 'حظر';
+
+    const confirmed = confirm(`هل تريد ${action} هذا الزبون؟`);
+    if (!confirmed) return;
+
+    try {
+        const res = await fetch(`${API_URL}/users/${userId}/toggle-status`, {
+            method: 'PATCH',
+            headers: getHeaders()
+        });
+
+        if (!res.ok) throw new Error('فشلت العملية');
+
+        // تحديث الحالة محلياً على الفور
+        const customer = allCustomers.find(c => c.id === userId);
+        if (customer) customer.is_active = newIsActive;
+
+        // تحديث الجدول زر الخطوط
+        renderCustomersTable(allCustomers);
+
+        // تحديث المودال إن كان مفتوحاً لنفس الزبون
+        if (currentModalCustomer && currentModalCustomer.id === userId) {
+            currentModalCustomer.is_active = newIsActive;
+            const blockBtn   = document.getElementById('cd-block-btn');
+            const blockLabel = document.getElementById('cd-block-label');
+            const blockIcon  = document.getElementById('cd-block-icon');
+            if (blockBtn) {
+                if (newIsActive) {
+                    blockBtn.style.borderColor = '#16a34a';
+                    blockBtn.style.background  = '#f0fdf4';
+                    blockBtn.style.color       = '#16a34a';
+                    blockIcon.className = 'fa-solid fa-lock-open';
+                    blockLabel.textContent = 'فك الحظر';
+                } else {
+                    blockBtn.style.borderColor = '#dc2626';
+                    blockBtn.style.background  = '#fff0f0';
+                    blockBtn.style.color       = '#dc2626';
+                    blockIcon.className = 'fa-solid fa-ban';
+                    blockLabel.textContent = 'حظر الزبون';
+                }
+            }
+        }
+
+        alert(`تم ${action} الزبون بنجاح`);
+    } catch (err) {
+        console.error(err);
+        alert('حدث خطأ أثناء العملية. تحقق من أن الخادم يدعم حقل is_active.');
+    }
+}
+
+/**
+ * تنفيذ الحظر/فك الحظر من داخل المودال
+ */
+function toggleBlockFromModal() {
+    if (!currentModalCustomer) return;
+    toggleBlockCustomer(currentModalCustomer.id, !!currentModalCustomer.is_active);
+}
 
 async function handleLogout() {
     await fetch(`${API_URL}/logout`, {

@@ -7,24 +7,18 @@ let token = null;
 
 async function checkAuth() {
   const storedToken = localStorage.getItem("auth_token");
-
-  if (!storedToken) {
-    window.location.href = "../login/login.html";
-    return null;
-  }
+  if (!storedToken) { window.location.href = "../login/login.html"; return null; }
 
   try {
     const res = await fetch(`${API_URL}/me`, {
-      headers: {
-        Authorization: `Bearer ${storedToken}`,
-        Accept: "application/json",
-      },
+      headers: { Authorization: `Bearer ${storedToken}`, Accept: "application/json" },
     });
 
-    if (!res.ok) {
-      localStorage.clear();
-      window.location.href = "../login/login.html";
-      return null;
+    if (!res.ok) { localStorage.clear(); window.location.href = "../login/login.html"; return null; }
+
+    const data = await res.json();
+    if (data?.user?.name) {
+      document.getElementById('user-name').textContent = data.user.name;
     }
 
     return storedToken;
@@ -40,76 +34,96 @@ async function checkAuth() {
 /* ============================= */
 
 async function loadNewTransfers() {
+  const tbody = document.getElementById("new-transfers-list");
+  tbody.innerHTML = `<tr><td colspan="7" class="loading-row"><div class="loading-spinner"></div> جاري التحميل...</td></tr>`;
+
   try {
     const res = await fetch(`${API_URL}/transfers?status=ready`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        Accept: "application/json",
-      },
+      headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
     });
 
     const json = await res.json();
-    const tbody = document.getElementById("new-transfers-list");
     tbody.innerHTML = "";
 
-    if (json.status === "success" && Array.isArray(json.data)) {
-    json.data.forEach((transfer) => {
+    if (json.status === "success" && Array.isArray(json.data) && json.data.length > 0) {
 
-    const amount = Number(transfer.amount);
-    
+      // تحديث العداد في الهيدر
+      document.getElementById('transfers-count').textContent = json.data.length;
 
-   const currencyPrice = Number(transfer.currency?.price ?? 1);
-const currencyCode = transfer.currency?.code ?? "USD";
-    const deliveryPrice = amount / currencyPrice;
+      json.data.forEach((transfer) => {
+        // amount_in_usd = القيمة المحوّلة للدولار (amount × send_currency.price) محفوظة في البك-اند
+        // currency      = عملة الاستلام التي سيتسلمها المستفيد
+        // deliveryPrice = كم يستلم المستفيد = amount_in_usd ÷ currency.price
+        const amountUsd     = Number(transfer.amount_in_usd ?? 0);
+        const currencyPrice = Number(transfer.currency?.price ?? 1);
+        const currencyCode  = transfer.currency?.code ?? "USD";
+        const deliveryPrice = currencyPrice > 0 ? amountUsd / currencyPrice : 0;
 
-    tbody.innerHTML += `
-      <tr>
-          <td>#${transfer.id}</td>
-          <td>${transfer.sender?.name ?? "-"}</td>
-          <td>$${amount.toFixed(2)}</td>
-          <td>${currencyCode}</td>
-          <td style="font-weight:bold; color:#1e3c72;">
-              ${deliveryPrice.toFixed(2)} ${currencyCode}
+        // عملة الإرسال للعرض فقط
+        const sendAmount     = Number(transfer.amount ?? 0);
+        const sendCurrency   = transfer.send_currency?.code ?? transfer.sendCurrency?.code ?? "—";
+
+        tbody.innerHTML += `
+          <tr>
+            <td><span class="transfer-id">#${transfer.id}</span></td>
+            <td>
+              ${transfer.sender?.name ?? "—"}
+              <div style="font-size:11px; color:var(--gray); margin-top:2px; direction:ltr;">
+                ${sendAmount.toFixed(2)} ${sendCurrency}
+              </div>
+            </td>
+            <td><span class="amount-cell">$${amountUsd.toFixed(2)}</span></td>
+            <td>${currencyCode}</td>
+            <td><span class="delivery-price">${deliveryPrice.toFixed(2)} ${currencyCode}</span></td>
+            <td>
+              <div class="upload-wrapper">
+                <label class="custom-file-upload">
+                  <input type="file"
+                         id="id_image_${transfer.id}"
+                         accept="image/*"
+                         onchange="previewImage(event, ${transfer.id})">
+                  <i class="fa-solid fa-id-card"></i>
+                  اختيار صورة الهوية
+                </label>
+                <span class="file-name" id="file_name_${transfer.id}">لم يتم اختيار ملف</span>
+                <img id="preview_${transfer.id}" class="preview-img hidden">
+              </div>
+            </td>
+            <td class="action-cell">
+              <button id="btn_${transfer.id}"
+                      onclick="acceptTransfer(${transfer.id})"
+                      class="btn-confirm">
+                <i class="fa-solid fa-circle-check"></i> تأكيد التسليم
+              </button>
+            </td>
+          </tr>
+        `;
+      });
+
+    } else {
+      document.getElementById('transfers-count').textContent = '0';
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="7">
+            <div class="empty-state">
+              <i class="fa-solid fa-inbox"></i>
+              <p>لا توجد حوالات جاهزة للتسليم حالياً</p>
+            </div>
           </td>
-          <td>
-    <div class="upload-wrapper">
-
-        <label class="custom-file-upload">
-            <input type="file"
-                   id="id_image_${transfer.id}"
-                   accept="image/*"
-                   onchange="previewImage(event, ${transfer.id})">
-            <i class="fa-solid fa-id-card"></i>
-            اختيار صورة الهوية
-        </label>
-
-        <span class="file-name" id="file_name_${transfer.id}">
-            لم يتم اختيار ملف
-        </span>
-
-        <img id="preview_${transfer.id}" class="preview-img hidden">
-
-    </div>
-
-    <button id="btn_${transfer.id}"
-            onclick="acceptTransfer(${transfer.id})"
-            class="btn-primary">
-        تأكيد التسليم
-    </button>
-</td>
-      </tr>
-    `;
-});
+        </tr>
+      `;
     }
 
   } catch (error) {
     console.error("Error loading transfers:", error);
+    tbody.innerHTML = `<tr><td colspan="7" class="loading-row" style="color:var(--danger);">خطأ في الاتصال بالسيرفر</td></tr>`;
   }
 }
 
 /* ============================= */
 /*        IMAGE PREVIEW         */
 /* ============================= */
+
 function previewImage(event, id) {
   const file = event.target.files[0];
   if (!file) return;
@@ -130,19 +144,14 @@ function previewImage(event, id) {
 /* ============================= */
 
 async function acceptTransfer(transferId) {
-
   const fileInput = document.getElementById(`id_image_${transferId}`);
-  const button = document.getElementById(`btn_${transferId}`);
-  const file = fileInput.files[0];
+  const button    = document.getElementById(`btn_${transferId}`);
+  const file      = fileInput.files[0];
 
-  if (!file) {
-    alert("يرجى اختيار صورة الهوية أولاً");
-    return;
-  }
+  if (!file) { alert("يرجى اختيار صورة الهوية أولاً"); return; }
 
-  // منع الضغط المكرر
-  button.disabled = true;
-  button.innerText = "جاري المعالجة...";
+  button.disabled   = true;
+  button.innerHTML  = `<div class="loading-spinner" style="width:16px;height:16px;border-width:2px;margin:0;display:inline-block;"></div> جاري المعالجة...`;
 
   const formData = new FormData();
   formData.append("_method", "PATCH");
@@ -150,37 +159,33 @@ async function acceptTransfer(transferId) {
   formData.append("receiver_id_image", file);
 
   try {
-    const res = await fetch(
-      `${API_URL}/transfers/${transferId}/update-status`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: "application/json",
-        },
-        body: formData,
-      }
-    );
+    const res = await fetch(`${API_URL}/transfers/${transferId}/update-status`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
+      body: formData,
+    });
 
     const data = await res.json();
 
     if (res.ok) {
-      alert("تم تسليم الحوالة بنجاح");
+      alert("✅ تم تسليم الحوالة بنجاح");
       loadNewTransfers();
     } else {
       alert(data.message || "فشل التحديث");
-      button.disabled = false;
-      button.innerText = "تأكيد التسليم";
+      button.disabled  = false;
+      button.innerHTML = `<i class="fa-solid fa-circle-check"></i> تأكيد التسليم`;
     }
 
   } catch (error) {
     console.error(error);
     alert("خطأ في الاتصال");
-    button.disabled = false;
-    button.innerText = "تأكيد التسليم";
+    button.disabled  = false;
+    button.innerHTML = `<i class="fa-solid fa-circle-check"></i> تأكيد التسليم`;
   }
 }
 
+/* ============================= */
+/*           LOGOUT              */
 /* ============================= */
 
 async function handleLogout() {
@@ -188,288 +193,334 @@ async function handleLogout() {
     method: "POST",
     headers: { Authorization: `Bearer ${token}` },
   });
-
   localStorage.removeItem("auth_token");
   window.location.href = "../login/login.html";
 }
+
 /* ============================= */
-/* NAVIGATION & UI         */
+/*       NAVIGATION & UI        */
 /* ============================= */
+
 function setActive(element) {
-    document.querySelectorAll('.sidebar nav ul li').forEach(li => li.classList.remove('active'));
-    element.parentElement.classList.add('active');
+  document.querySelectorAll('.sidebar nav ul li').forEach(li => li.classList.remove('active'));
+  element.parentElement.classList.add('active');
 }
 
 function showTransfersSection() {
-    document.getElementById('safes-card').style.display = 'none';
-    // البحث عن الكارت الذي يحتوي على جدول الحوالات
-    const cards = document.querySelectorAll('.main-content .card');
-    cards.forEach(card => {
-        if(card.id !== 'safes-card') card.style.display = 'block';
-    });
-    loadNewTransfers();
+  document.getElementById('section-transfers').style.display = 'block';
+  document.getElementById('section-safes').style.display    = 'none';
+  document.getElementById('section-profits').style.display  = 'none';
+
+  document.getElementById('page-heading').textContent = 'الحوالات';
+  document.querySelector('.page-sub').textContent     = 'جاهزة للتسليم';
+  document.querySelector('.page-icon').innerHTML      = '<i class="fa-solid fa-money-bill-transfer"></i>';
+
+  loadNewTransfers();
 }
 
 function showSafesSection() {
-    const cards = document.querySelectorAll('.main-content .card');
-    cards.forEach(card => {
-        if(card.id !== 'safes-card') card.style.display = 'none';
-    });
-    document.getElementById('safes-card').style.display = 'block';
-    loadTradingSafes();
+  document.getElementById('section-transfers').style.display = 'none';
+  document.getElementById('section-safes').style.display    = 'block';
+  document.getElementById('section-profits').style.display  = 'none';
+
+  document.getElementById('page-heading').textContent = 'التداول';
+  document.querySelector('.page-sub').textContent     = 'صناديق التداول';
+  document.querySelector('.page-icon').innerHTML      = '<i class="fa-solid fa-vault"></i>';
+
+  loadTradingSafes();
 }
 
 function showProfitsSection() {
-    const cards = document.querySelectorAll('.main-content .card');
-    cards.forEach(card => {
-        if(card.id !== 'profits-card') card.style.display = 'none';
-    });
-    document.getElementById('profits-card').style.display = 'block';
+  document.getElementById('section-transfers').style.display = 'none';
+  document.getElementById('section-safes').style.display    = 'none';
+  document.getElementById('section-profits').style.display  = 'block';
 
-    // تعيين تاريخ اليوم كافتراضي
-    const dateInput = document.getElementById('report-date');
-    if (!dateInput.value) {
-        dateInput.value = new Date().toISOString().split('T')[0];
-    }
-    loadTradingReport();
+  document.getElementById('page-heading').textContent = 'أرباح التداول';
+  document.querySelector('.page-sub').textContent     = 'تقرير يومي';
+  document.querySelector('.page-icon').innerHTML      = '<i class="fa-solid fa-chart-line"></i>';
 }
 
 /* ============================= */
-/* جلب وعرض صناديق التداول      */
+/*        TRADING SAFES         */
 /* ============================= */
 
 async function loadTradingSafes() {
-    try {
-        const res = await fetch(`${API_URL}/main-safes`, {
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Accept': 'application/json'
-            }
-        });
-        const data = await res.json();
-        if (res.ok) {
-            // تصفية البيانات لعرض صناديق التداول (trading) فقط
-            const tradingSafes = data.data.filter(safe => safe.type === 'trading');
-            renderTradingSafes(tradingSafes);
-        }
-    } catch (error) {
-        console.error("Error loading trading safes:", error);
+  const container = document.getElementById('safes-container');
+  container.innerHTML = `<div class="loading-row" style="padding:40px; text-align:center; grid-column:1/-1;"><div class="loading-spinner" style="margin:0 auto 10px;"></div> جاري التحميل...</div>`;
+
+  try {
+    // جلب الصناديق و بيانات المستخدم معاً
+    const [safesRes, meRes] = await Promise.all([
+      fetch(`${API_URL}/main-safes`, { headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' } }),
+      fetch(`${API_URL}/me`,         { headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' } })
+    ]);
+
+    const safesJson = await safesRes.json();
+    const meData    = await meRes.json();
+
+    if (safesRes.ok && safesJson.data) {
+      const myOfficeId = meData.user?.office_id;
+      // فلترة الصناديق الخاصة بمكتب الكاشير فقط (رئيسي + تداول)
+      const mySafes = safesJson.data.filter(s =>
+        s.office_id === myOfficeId &&
+        (s.type === 'office_main' || s.type === 'trading')
+      );
+      renderTradingSafes(mySafes);
+    } else {
+      container.innerHTML = `<p style="grid-column:1/-1; text-align:center; padding:40px; color:var(--danger);">${safesJson.message || 'فشل تحميل البيانات'}</p>`;
     }
+  } catch (error) {
+    console.error("Error loading safes:", error);
+    container.innerHTML = `<p style="grid-column:1/-1; text-align:center; padding:40px; color:var(--danger);">خطأ في الاتصال بالسيرفر</p>`;
+  }
 }
 
 function renderTradingSafes(safes) {
-    const container = document.getElementById('safes-container');
-    if (safes.length === 0) {
-        container.innerHTML = '<p style="text-align:center; padding:20px;">لا توجد صناديق تداول متاحة حالياً.</p>';
-        return;
-    }
+  const container = document.getElementById('safes-container');
 
-    container.innerHTML = safes.map(safe => `
-        <div class="safe-card" style="padding:20px; border-radius:12px; border:2px solid #eee; background:#fff9f0; display:flex; flex-direction:column;">
-            <h4 style="color:#1e3c72; margin-bottom:10px;">
-                <i class="fa-solid fa-chart-line"></i> صندوق التداول (${safe.currency})
-            </h4>
+  if (!safes || safes.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state" style="grid-column:1/-1;">
+        <i class="fa-solid fa-vault"></i>
+        <p>لا توجد صناديق متاحة حالياً</p>
+      </div>`;
+    return;
+  }
 
-            <div style="font-size:24px; font-weight:bold; color:#222;">
-                ${parseFloat(safe.balance).toLocaleString()} 
-                <small>${safe.currency}</small>
-            </div>
+  container.innerHTML = safes.map(safe => {
+    const isMain    = safe.type === 'office_main';
+    const isTrading = safe.type === 'trading';
 
-            <div style="font-size:13px; color:#64748b; margin-top:5px; font-weight:600;">
-                متوسط التكلفة: <span style="color:#1e3c72;">${parseFloat(safe.cost || 0).toFixed(2)}</span>
-            </div>
+    const title     = isMain ? 'الصندوق الرئيسي' : `صندوق التداول (${safe.currency})`;
+    const icon      = isMain ? 'fa-vault' : 'fa-chart-line';
+    const cardClass = isMain ? 'safe-card safe-card-main' : 'safe-card safe-card-trading';
 
-            <div style="margin-top: 20px; padding-top: 15px; border-top: 1px dashed #cbd5e1;">
-                <h5 style="color: #475569; margin-bottom: 12px; font-size: 13px;">إدارة عمليات التداول</h5>
-                
-                <div style="display: flex; gap: 8px; margin-bottom: 10px; align-items: center;">
-                    <input type="number" id="buy_amount_${safe.currency_id}" class="trading-input" placeholder="الكمية" step="any">
-                    <input type="number" id="buy_price_${safe.currency_id}" class="trading-input" placeholder="سعر الشراء" step="any">
-                    <button class="btn-approve" style="flex: 1;" onclick="executeTrade('buy', ${safe.office_id}, ${safe.currency_id})">
-                         شراء
-                    </button>
-                </div>
+    const costRow = (!isMain && safe.cost !== null && safe.cost !== undefined) ? `
+      <div class="safe-cost">
+        متوسط التكلفة: <span>${parseFloat(safe.cost).toFixed(2)}</span>
+      </div>` : '';
 
-                <div style="display: flex; gap: 8px; align-items: center;">
-                    <input type="number" id="sell_amount_${safe.currency_id}" class="trading-input" placeholder="الكمية" step="any">
-                    <input type="number" id="sell_price_${safe.currency_id}" class="trading-input" placeholder="سعر البيع" step="any">
-                    <button class="btn-reject" style="flex: 1;" onclick="executeTrade('sell', ${safe.office_id}, ${safe.currency_id})">
-                         بيع
-                    </button>
-                </div>
-            </div>
+    const tradingUI = isTrading ? `
+      <div class="trade-section">
+        <p class="trade-label">إدارة عمليات التداول</p>
+        <div class="trade-row">
+          <input type="number" id="buy_amount_${safe.currency_id}"  class="trading-input" placeholder="الكمية"     step="any" min="0">
+          <input type="number" id="buy_price_${safe.currency_id}"   class="trading-input" placeholder="سعر الشراء" step="any" min="0">
+          <button class="btn-approve" onclick="executeTrade('buy', ${safe.office_id}, ${safe.currency_id})">
+            <i class="fa-solid fa-arrow-down"></i> شراء
+          </button>
         </div>
-    `).join('');
+        <div class="trade-row">
+          <input type="number" id="sell_amount_${safe.currency_id}" class="trading-input" placeholder="الكمية"    step="any" min="0">
+          <input type="number" id="sell_price_${safe.currency_id}"  class="trading-input" placeholder="سعر البيع" step="any" min="0">
+          <button class="btn-reject" onclick="executeTrade('sell', ${safe.office_id}, ${safe.currency_id})">
+            <i class="fa-solid fa-arrow-up"></i> بيع
+          </button>
+        </div>
+      </div>` : '';
+
+    return `
+    <div class="${cardClass}">
+      <div class="safe-card-header">
+        <div class="safe-card-icon">
+          <i class="fa-solid ${icon}"></i>
+        </div>
+        <div>
+          <div class="safe-card-title">${title}</div>
+          <div class="safe-card-subtitle">${safe.currency || 'USD'}</div>
+        </div>
+      </div>
+      <div class="safe-card-balance">${parseFloat(safe.balance).toLocaleString('ar-SY')}</div>
+      <div class="safe-card-currency">${safe.currency || 'USD'}</div>
+      ${costRow}
+      ${tradingUI}
+    </div>`;
+  }).join('');
 }
+
+/* ============================= */
+/*        EXECUTE TRADE         */
+/* ============================= */
 
 async function executeTrade(type, officeId, currencyId) {
-    const amount = document.getElementById(`${type}_amount_${currencyId}`).value;
-    const price = document.getElementById(`${type}_price_${currencyId}`).value;
+  // التحقق من وجود office_id و currency_id قبل الإرسال
+  if (!officeId || !currencyId) {
+    alert('بيانات الصندوق غير مكتملة، يرجى تحديث الصفحة');
+    return;
+  }
 
-    if (!amount || amount <= 0 || !price || price <= 0) {
-        alert('يرجى إدخال قيم صحيحة للكمية والسعر');
-        return;
+  const amount = parseFloat(document.getElementById(`${type}_amount_${currencyId}`)?.value);
+  const price  = parseFloat(document.getElementById(`${type}_price_${currencyId}`)?.value);
+
+  if (!amount || amount <= 0 || !price || price <= 0) {
+    alert('يرجى إدخال قيم صحيحة للكمية والسعر');
+    return;
+  }
+
+  const payload = { office_id: officeId, currency_id: currencyId, amount: amount };
+  if (type === 'buy') payload.buy_price  = parseFloat(price);
+  else                payload.sell_price = parseFloat(price);
+
+  try {
+    const res = await fetch(`${API_URL}/trading/${type}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
+      alert(type === 'buy' ? '✅ تمت عملية الشراء بنجاح' : `✅ تمت عملية البيع!\nالربح: ${data.profit}`);
+      loadTradingSafes();
+    } else {
+      alert(data.message || 'فشلت العملية');
     }
-
-    const payload = {
-        office_id: officeId,
-        currency_id: currencyId,
-        amount: parseFloat(amount)
-    };
-    if (type === 'buy') payload.buy_price = parseFloat(price);
-    else payload.sell_price = parseFloat(price);
-
-    try {
-        const res = await fetch(`${API_URL}/trading/${type}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`,
-                'Accept': 'application/json'
-            },
-            body: JSON.stringify(payload)
-        });
-
-        const data = await res.json();
-        if (res.ok) {
-            alert(type === 'buy' ? 'تمت عملية الشراء بنجاح' : `تمت عملية البيع! الربح: ${data.profit}`);
-            loadTradingSafes(); // تحديث الأرصدة
-        } else {
-            alert(data.message || 'فشلت العملية');
-        }
-    } catch (error) {
-        alert('خطأ في الاتصال بالسيرفر');
-    }
+  } catch (error) {
+    alert('خطأ في الاتصال بالسيرفر');
+  }
 }
-/* ============================= */
 
 /* ============================= */
-/* تقرير أرباح التداول           */
+/*   تقرير أرباح التداول        */
 /* ============================= */
 
 async function loadTradingReport() {
-    const dateInput = document.getElementById('report-date');
-    const date = dateInput.value || new Date().toISOString().split('T')[0];
+  const dateInput = document.getElementById('report-date');
+  const date      = dateInput.value || new Date().toISOString().split('T')[0];
 
-    const summaryEl  = document.getElementById('profits-summary');
-    const tableEl    = document.getElementById('profits-table');
-    const emptyEl    = document.getElementById('profits-empty');
-    const tbodyEl    = document.getElementById('profits-list');
+  const summaryEl = document.getElementById('profits-summary');
+  const tableEl   = document.getElementById('profits-table');
+  const emptyEl   = document.getElementById('profits-empty');
+  const tbodyEl   = document.getElementById('profits-list');
 
-    summaryEl.innerHTML = '<p style="color:var(--gray); font-size:13px;">جاري التحميل...</p>';
-    tableEl.style.display  = 'none';
-    emptyEl.style.display  = 'none';
-    tbodyEl.innerHTML = '';
+  summaryEl.innerHTML    = `<div class="loading-row" style="grid-column:1/-1;"><div class="loading-spinner" style="margin:0 auto 8px;"></div> جاري التحميل...</div>`;
+  tableEl.style.display  = 'none';
+  emptyEl.style.display  = 'none';
+  tbodyEl.innerHTML      = '';
 
-    try {
-        const res = await fetch(`${API_URL}/trading/report/details?date=${date}`, {
-            headers: {
-                Authorization: `Bearer ${token}`,
-                Accept: 'application/json'
-            }
-        });
+  try {
+    const res = await fetch(`${API_URL}/trading/report/details?date=${date}`, {
+      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' }
+    });
 
-        const json = await res.json();
-        if (!res.ok) {
-            summaryEl.innerHTML = `<p style="color:var(--danger);">${json.message || 'فشل تحميل البيانات'}</p>`;
-            return;
-        }
+    const json = await res.json();
 
-        const transactions = json.transactions || [];
-        const summary      = json.summary || {};
-
-        // ===== بطاقات الملخص =====
-        const totalProfit = parseFloat(summary.total_net_profit || 0);
-        const profitColor = totalProfit >= 0 ? 'var(--success)' : 'var(--danger)';
-        const profitIcon  = totalProfit >= 0 ? 'fa-arrow-trend-up' : 'fa-arrow-trend-down';
-
-        summaryEl.innerHTML = `
-            <div class="card" style="margin:0;">
-                <div class="stat-card">
-                    <div class="icon blue"><i class="fa-solid fa-cart-arrow-down"></i></div>
-                    <div>
-                        <div style="font-size:12px; color:var(--gray); margin-bottom:4px;">إجمالي المشتريات</div>
-                        <div style="font-size:20px; font-weight:bold;">${parseFloat(summary.total_bought || 0).toFixed(2)}</div>
-                    </div>
-                </div>
-            </div>
-            <div class="card" style="margin:0;">
-                <div class="stat-card">
-                    <div class="icon orange"><i class="fa-solid fa-cart-arrow-up"></i></div>
-                    <div>
-                        <div style="font-size:12px; color:var(--gray); margin-bottom:4px;">إجمالي المبيعات</div>
-                        <div style="font-size:20px; font-weight:bold;">${parseFloat(summary.total_sold || 0).toFixed(2)}</div>
-                    </div>
-                </div>
-            </div>
-            <div class="card" style="margin:0;">
-                <div class="stat-card">
-                    <div class="icon" style="background:${profitColor};"><i class="fa-solid ${profitIcon}"></i></div>
-                    <div>
-                        <div style="font-size:12px; color:var(--gray); margin-bottom:4px;">صافي الربح / الخسارة</div>
-                        <div style="font-size:20px; font-weight:bold; color:${profitColor};">
-                            ${totalProfit >= 0 ? '+' : ''}${totalProfit.toFixed(2)}
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="card" style="margin:0;">
-                <div class="stat-card">
-                    <div class="icon purple"><i class="fa-solid fa-list-ol"></i></div>
-                    <div>
-                        <div style="font-size:12px; color:var(--gray); margin-bottom:4px;">عدد العمليات</div>
-                        <div style="font-size:20px; font-weight:bold;">${transactions.length}</div>
-                    </div>
-                </div>
-            </div>
-        `;
-
-        if (transactions.length === 0) {
-            emptyEl.style.display = 'block';
-            return;
-        }
-
-        // ===== صفوف الجدول =====
-        transactions.forEach((tx, index) => {
-            const isBuy    = tx.type === 'buy';
-            const profit   = parseFloat(tx.profit || 0);
-            const pColor   = profit > 0 ? 'var(--success)' : profit < 0 ? 'var(--danger)' : 'var(--gray)';
-            const typeLabel = isBuy
-                ? `<span style="background:#e8f5e9; color:var(--success); padding:4px 10px; border-radius:20px; font-size:12px; font-weight:600;">شراء</span>`
-                : `<span style="background:#fdecea; color:var(--danger); padding:4px 10px; border-radius:20px; font-size:12px; font-weight:600;">بيع</span>`;
-
-            const profitCell = isBuy
-                ? `<span style="color:var(--gray); font-size:12px;">—</span>`
-                : `<span style="color:${pColor}; font-weight:bold;">${profit >= 0 ? '+' : ''}${profit.toFixed(2)}</span>`;
-
-            tbodyEl.innerHTML += `
-                <tr>
-                    <td>${index + 1}</td>
-                    <td>${typeLabel}</td>
-                    <td>${tx.currency?.code ?? '—'}</td>
-                    <td>${parseFloat(tx.amount).toFixed(2)}</td>
-                    <td>${parseFloat(tx.price).toFixed(2)}</td>
-                    <td style="color:#64748b;">${parseFloat(tx.cost_at_time || 0).toFixed(2)}</td>
-                    <td>${profitCell}</td>
-                    <td>${tx.transaction_date ?? '—'}</td>
-                    <td>${tx.user?.name ?? '—'}</td>
-                </tr>
-            `;
-        });
-
-        tableEl.style.display = 'table';
-
-    } catch (error) {
-        console.error('Error loading report:', error);
-        summaryEl.innerHTML = '<p style="color:var(--danger);">خطأ في الاتصال بالسيرفر</p>';
+    if (!res.ok) {
+      summaryEl.innerHTML = `<p style="color:var(--danger); grid-column:1/-1;">${json.message || 'فشل تحميل البيانات'}</p>`;
+      return;
     }
+
+    const transactions = json.transactions || [];
+    const summary      = json.summary     || {};
+
+    const totalProfit = parseFloat(summary.total_net_profit || 0);
+    const profitColor = totalProfit >= 0 ? 'var(--success)' : 'var(--danger)';
+    const profitBg    = totalProfit >= 0 ? 'var(--success-soft)' : 'var(--danger-soft)';
+    const profitIcon  = totalProfit >= 0 ? 'fa-arrow-trend-up' : 'fa-arrow-trend-down';
+
+    summaryEl.innerHTML = `
+      <div class="stat-card">
+        <div class="icon blue"><i class="fa-solid fa-cart-arrow-down"></i></div>
+        <div>
+          <div style="font-size:12px; color:var(--gray); margin-bottom:4px;">إجمالي المشتريات</div>
+          <div style="font-size:20px; font-weight:800; direction:ltr; text-align:right;">${parseFloat(summary.total_bought || 0).toFixed(2)}</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="icon orange"><i class="fa-solid fa-cart-arrow-up"></i></div>
+        <div>
+          <div style="font-size:12px; color:var(--gray); margin-bottom:4px;">إجمالي المبيعات</div>
+          <div style="font-size:20px; font-weight:800; direction:ltr; text-align:right;">${parseFloat(summary.total_sold || 0).toFixed(2)}</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="icon" style="background:${profitColor};"><i class="fa-solid ${profitIcon}"></i></div>
+        <div>
+          <div style="font-size:12px; color:var(--gray); margin-bottom:4px;">صافي الربح / الخسارة</div>
+          <div style="font-size:20px; font-weight:800; color:${profitColor}; direction:ltr; text-align:right;">
+            ${totalProfit >= 0 ? '+' : ''}${totalProfit.toFixed(2)}
+          </div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="icon purple"><i class="fa-solid fa-list-ol"></i></div>
+        <div>
+          <div style="font-size:12px; color:var(--gray); margin-bottom:4px;">عدد العمليات</div>
+          <div style="font-size:20px; font-weight:800;">${transactions.length}</div>
+        </div>
+      </div>
+    `;
+
+    if (transactions.length === 0) { emptyEl.style.display = 'block'; return; }
+
+    transactions.forEach((tx, index) => {
+      const isBuy      = tx.type === 'buy';
+      const profit     = parseFloat(tx.profit || 0);
+      const pColor     = profit > 0 ? 'var(--success)' : profit < 0 ? 'var(--danger)' : 'var(--gray)';
+      const typeLabel  = isBuy
+        ? `<span class="badge-buy">شراء</span>`
+        : `<span class="badge-sell">بيع</span>`;
+      const profitCell = isBuy
+        ? `<span style="color:var(--gray-light); font-size:12px;">—</span>`
+        : `<span style="color:${pColor}; font-weight:700; direction:ltr; display:inline-block;">${profit >= 0 ? '+' : ''}${profit.toFixed(2)}</span>`;
+
+      tbodyEl.innerHTML += `
+        <tr>
+          <td>${index + 1}</td>
+          <td>${typeLabel}</td>
+          <td>${tx.currency?.code ?? '—'}</td>
+          <td style="direction:ltr; text-align:right;">${parseFloat(tx.amount).toFixed(2)}</td>
+          <td style="direction:ltr; text-align:right;">${parseFloat(tx.price).toFixed(2)}</td>
+          <td style="color:var(--gray); direction:ltr; text-align:right;">${parseFloat(tx.cost_at_time || 0).toFixed(2)}</td>
+          <td>${profitCell}</td>
+          <td style="direction:ltr; text-align:right;">${tx.transaction_date ?? '—'}</td>
+          <td>${tx.user?.name ?? '—'}</td>
+        </tr>
+      `;
+    });
+
+    tableEl.style.display = 'table';
+
+  } catch (error) {
+    console.error('Error loading report:', error);
+    summaryEl.innerHTML = `<p style="color:var(--danger); grid-column:1/-1;">خطأ في الاتصال بالسيرفر</p>`;
+  }
 }
 
+/* ============================= */
+/*        LIVE CLOCK            */
+/* ============================= */
+
+function updateClock() {
+  const el = document.getElementById('time-display');
+  if (!el) return;
+  const now = new Date();
+  const hh  = String(now.getHours()).padStart(2, '0');
+  const mm  = String(now.getMinutes()).padStart(2, '0');
+  const ss  = String(now.getSeconds()).padStart(2, '0');
+  el.textContent = `${hh}:${mm}:${ss}`;
+}
+
+/* ============================= */
+/*             INIT             */
 /* ============================= */
 
 document.addEventListener("DOMContentLoaded", async () => {
   token = await checkAuth();
   if (!token) return;
 
+  // ضبط تاريخ اليوم لحقل التقرير
+  document.getElementById('report-date').value = new Date().toISOString().split('T')[0];
+
+  // ساعة مباشرة
+  updateClock();
+  setInterval(updateClock, 1000);
+
+  // تحميل الحوالات بشكل افتراضي
   loadNewTransfers();
 });

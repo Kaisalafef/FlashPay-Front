@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FlashPay - المحاسب</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.js"></script>
+<link rel="stylesheet" href="style_accountant.css">
+<link rel="stylesheet" href="mobile_small.css">
+</head>
+<body>
+
+<!-- Sidebar Overlay -->
+<div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+<!-- Sidebar -->
+<aside class="sidebar" id="sidebar">
+    <div class="logo">
+        <i class="fa-solid fa-bolt-lightning"></i>
+        <span class="pay">Pay</span><span class="flash">Flash</span>
+    </div>
+    <nav>
+        <ul>
+            <li class="active" id="nav-dashboard">
+                <a href="#" onclick="showSection('dashboard')">
+                    <i class="fa-solid fa-chart-pie"></i> الرئيسية
+                </a>
+            </li>
+            <li id="nav-transfers">
+                <a href="#" onclick="showSection('transfers')">
+                    <i class="fa-solid fa-arrow-right-arrow-left"></i> سجل الحوالات
+                </a>
+            </li>
+            <li id="nav-summary">
+                <a href="#" onclick="showSection('summary')">
+                    <i class="fa-solid fa-calculator"></i> ملخص الحسابات
+                </a>
+            </li>
+            <li id="nav-reports">
+                <a href="#" onclick="showSection('reports')">
+                    <i class="fa-solid fa-file-chart-column"></i> التقارير
+                </a>
+            </li>
+        </ul>
+    </nav>
+    <div class="logout">
+        <a href="#" onclick="handleLogout()">
+            <i class="fa-solid fa-arrow-right-from-bracket"></i> تسجيل الخروج
+        </a>
+    </div>
+</aside>
+
+<!-- Main Content -->
+<main class="main-content">
+    <header class="app-header">
+        <div class="header-left">
+            <button class="hamburger-btn" id="hamburger-btn" onclick="toggleSidebar()" title="فتح القائمة الجانبية">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+            <div class="page-title">
+                <i class="fa-solid fa-calculator"></i>
+                <h2 id="page-heading">لوحة المحاسب</h2>
+            </div>
+        </div>
+        <div class="header-actions">
+            <button class="icon-btn" title="تحديث البيانات" onclick="refreshData()">
+                <i class="fa-solid fa-rotate"></i>
+            </button>
+            <div class="profile-box" onclick="toggleProfileMenu()">
+                <div class="avatar"><i class="fa-solid fa-user"></i></div>
+                <div class="profile-info">
+                    <span id="user-name">محمد الأمين</span>
+                    <small>محاسب</small>
+                </div>
+                <i class="fa-solid fa-chevron-down" style="font-size:0.7rem;color:var(--gray);margin-right:4px;"></i>
+            </div>
+        </div>
+    </header>
+
+    <div class="content-body">
+
+        <!-- ===== DASHBOARD ===== -->
+        <div id="dashboard-section" class="section active">
+
+            <div class="section-hero">
+                <div class="section-hero-content">
+                    <div class="section-hero-icon">
+                        <i class="fa-solid fa-calculator"></i>
+                    </div>
+                    <div>
+                        <h1>مرحباً، <span id="hero-name">محمد</span></h1>
+                        <p>نظرة عامة على الحوالات والحسابات اليوم</p>
+                    </div>
+                </div>
+                <div class="section-hero-date">
+                    <i class="fa-regular fa-calendar"></i>
+                    <span id="dashboard-date">—</span>
+                </div>
+            </div>
+
+            <!-- Stats -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon purple"><i class="fa-solid fa-arrow-right-arrow-left"></i></div>
+                    <div class="stat-body">
+                        <div class="stat-value" id="stat-total">0</div>
+                        <div class="stat-label">إجمالي الحوالات</div>
+                        <div class="stat-sub" id="stat-today-count">اليوم: 0</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon green"><i class="fa-solid fa-circle-check"></i></div>
+                    <div class="stat-body">
+                        <div class="stat-value" id="stat-completed">0</div>
+                        <div class="stat-label">حوالات مكتملة</div>
+                        <div class="stat-sub" id="stat-completed-pct">النسبة: 0%</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon orange"><i class="fa-solid fa-clock"></i></div>
+                    <div class="stat-body">
+                        <div class="stat-value" id="stat-pending">0</div>
+                        <div class="stat-label">حوالات معلقة</div>
+                        <div class="stat-sub" style="color:var(--warning)">تحتاج مراجعة</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon blue"><i class="fa-solid fa-coins"></i></div>
+                    <div class="stat-body">
+                        <div class="stat-value" id="stat-amount">0</div>
+                        <div class="stat-label">إجمالي المبالغ (USD)</div>
+                        <div class="stat-sub">إجمالي المحول</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon cyan"><i class="fa-solid fa-percent"></i></div>
+                    <div class="stat-body">
+                        <div class="stat-value" id="stat-commission">0</div>
+                        <div class="stat-label">إجمالي العمولات (USD)</div>
+                        <div class="stat-sub">عمولات محصّلة</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon red"><i class="fa-solid fa-circle-xmark"></i></div>
+                    <div class="stat-body">
+                        <div class="stat-value" id="stat-cancelled">0</div>
+                        <div class="stat-label">حوالات ملغاة</div>
+                        <div class="stat-sub" style="color:var(--danger)">مراجعة مطلوبة</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Row -->
+            <div class="charts-grid">
+                <div class="chart-box">
+                    <h4><i class="fa-solid fa-chart-bar"></i> حوالات آخر 7 أيام</h4>
+                    <div class="mini-bars" id="week-chart">
+                        <!-- filled by JS -->
+                    </div>
+                </div>
+                <div class="chart-box">
+                    <h4><i class="fa-solid fa-layer-group"></i> توزيع الحوالات حسب الحالة</h4>
+                    <div class="type-list" id="status-chart">
+                        <!-- filled by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Transfers -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title"><i class="fa-solid fa-clock-rotate-left"></i> آخر الحوالات</div>
+                    <button class="btn-outline" onclick="showSection('transfers')">
+                        <i class="fa-solid fa-arrow-left"></i> عرض الكل
+                    </button>
+                </div>
+                <div class="table-wrapper">
+                    <table class="data-table" id="recent-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>المرسل</th>
+                                <th>المستلم</th>
+                                <th>المبلغ</th>
+                                <th>العملة</th>
+                                <th>الحالة</th>
+                                <th>التاريخ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recent-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== TRANSFERS ===== -->
+        <div id="transfers-section" class="section">
+
+            <div class="section-hero">
+                <div class="section-hero-content">
+                    <div class="section-hero-icon"><i class="fa-solid fa-arrow-right-arrow-left"></i></div>
+                    <div>
+                        <h1>سجل الحوالات</h1>
+                        <p>عرض وتصفية جميع الحوالات المالية</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Summary Bar -->
+            <div class="summary-bar" id="transfers-summary-bar">
+                <div class="summary-item">
+                    <div class="s-value" id="sb-total-count">—</div>
+                    <div class="s-label">عدد الحوالات</div>
+                </div>
+                <div class="summary-divider"></div>
+                <div class="summary-item">
+                    <div class="s-value" id="sb-total-usd">—</div>
+                    <div class="s-label">مجموع (USD)</div>
+                </div>
+                <div class="summary-divider"></div>
+                <div class="summary-item" style="max-width:220px;">
+                    <div class="s-value" id="sb-total-orig" style="font-size:0.85rem;">—</div>
+                    <div class="s-label">مجموع العملات الأصلية</div>
+                </div>
+                <div class="summary-divider"></div>
+                <div class="summary-item">
+                    <div class="s-value" id="sb-commission">—</div>
+                    <div class="s-label">مجموع العمولات</div>
+                </div>
+                <div class="summary-divider"></div>
+                <div class="summary-item">
+                    <div class="s-value" id="sb-completed">—</div>
+                    <div class="s-label">مكتملة</div>
+                </div>
+                <div class="summary-divider"></div>
+                <div class="summary-item">
+                    <div class="s-value" id="sb-pending">—</div>
+                    <div class="s-label">معلقة</div>
+                </div>
+            </div>
+
+            <!-- Toolbar -->
+            <div class="card" style="margin-bottom:0;border-radius:var(--radius) var(--radius) 0 0;">
+                <div class="toolbar">
+                    <div class="search-box">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="text" id="search-input" placeholder="بحث باسم المرسل أو المستلم أو رقم الحوالة..." oninput="applyFilters()">
+                    </div>
+                    <select class="filter-select" id="status-filter" onchange="applyFilters()">
+                        <option value="">كل الحالات</option>
+                        <option value="pending">معلقة</option>
+                        <option value="approved">موافق عليها</option>
+                        <option value="waiting">قيد الانتظار</option>
+                        <option value="ready">جاهزة للتسليم</option>
+                        <option value="completed">مكتملة</option>
+                        <option value="cancelled">ملغاة</option>
+                        <option value="rejected">مرفوضة</option>
+                    </select>
+                    <select class="filter-select" id="currency-filter" onchange="applyFilters()">
+                        <option value="">كل العملات</option>
+                        <option value="USD">USD</option>
+                        <option value="SYP">SYP</option>
+                        <option value="EUR">EUR</option>
+                        <option value="TRY">TRY</option>
+                    </select>
+                    <div class="date-range">
+                        <input type="date" id="date-from" onchange="applyFilters()">
+                        <span>إلى</span>
+                        <input type="date" id="date-to" onchange="applyFilters()">
+                    </div>
+                    <button class="btn-outline" onclick="resetFilters()">
+                        <i class="fa-solid fa-rotate-left"></i> إعادة ضبط
+                    </button>
+                    <button class="btn-success" onclick="exportCSV()">
+                        <i class="fa-solid fa-file-export"></i> تصدير
+                    </button>
+                </div>
+            </div>
+
+            <!-- Table -->
+            <div class="card" style="border-radius:0 0 var(--radius) var(--radius);border-top:none;padding-top:0;">
+                <div class="table-wrapper">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th onclick="sortTable('id')" style="cursor:pointer">
+                                    # <i class="fa-solid fa-sort" style="font-size:0.65rem;opacity:0.4;"></i>
+                                </th>
+                                <th>المرسل</th>
+                                <th>المستلم</th>
+                                <th>الهاتف</th>
+                                <th onclick="sortTable('amount')" style="cursor:pointer">
+                                    المبلغ <i class="fa-solid fa-sort" style="font-size:0.65rem;opacity:0.4;"></i>
+                                </th>
+                                <th onclick="sortTable('amount')" style="cursor:pointer">
+                                    المبلغ USD <i class="fa-solid fa-sort" style="font-size:0.65rem;opacity:0.4;"></i>
+                                </th>
+                                <th>العمولة</th>
+                                <th>الحالة</th>
+                                <th onclick="sortTable('date')" style="cursor:pointer">
+                                    التاريخ <i class="fa-solid fa-sort" style="font-size:0.65rem;opacity:0.4;"></i>
+                                </th>
+                                <th>إجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="transfers-tbody"></tbody>
+                    </table>
+                </div>
+                <div class="pagination" id="pagination-bar"></div>
+            </div>
+        </div>
+
+        <!-- ===== SUMMARY ===== -->
+        <div id="summary-section" class="section">
+
+            <div class="section-hero">
+                <div class="section-hero-content">
+                    <div class="section-hero-icon"><i class="fa-solid fa-sigma"></i></div>
+                    <div>
+                        <h1>ملخص الحسابات</h1>
+                        <p>عمليات جمع وتحليل متقدمة للحوالات</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Summary Cards -->
+            <div class="stats-grid" style="grid-template-columns: repeat(3,1fr); margin-bottom:20px;">
+                <div class="stat-card">
+                    <div class="stat-icon purple"><i class="fa-solid fa-sigma"></i></div>
+                    <div class="stat-body">
+                        <div class="stat-value" id="sum-total-amount">0</div>
+                        <div class="stat-label">مجموع كل المبالغ (USD)</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon green"><i class="fa-solid fa-percent"></i></div>
+                    <div class="stat-body">
+                        <div class="stat-value" id="sum-avg-amount">0</div>
+                        <div class="stat-label">متوسط مبلغ الحوالة</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon blue"><i class="fa-solid fa-arrow-trend-up"></i></div>
+                    <div class="stat-body">
+                        <div class="stat-value" id="sum-max-amount">0</div>
+                        <div class="stat-label">أعلى حوالة</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Grouped by currency -->
+            <div class="charts-grid">
+                <div class="card" style="margin-bottom:0;">
+                    <div class="card-title" style="margin-bottom:14px;">
+                        <i class="fa-solid fa-coins"></i> مجموع الحوالات حسب العملة
+                    </div>
+                    <div class="table-wrapper">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>العملة</th>
+                                    <th>عدد الحوالات</th>
+                                    <th>مجموع المبالغ</th>
+                                    <th>مجموع العمولات</th>
+                                </tr>
+                            </thead>
+                            <tbody id="currency-summary-tbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card" style="margin-bottom:0;">
+                    <div class="card-title" style="margin-bottom:14px;">
+                        <i class="fa-solid fa-layer-group"></i> مجموع الحوالات حسب الحالة
+                    </div>
+                    <div class="table-wrapper">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>المكتب</th>
+                                    <th>عدد الحوالات</th>
+                                    <th>مجموع المبالغ</th>
+                                    <th>العمولات</th>
+                                </tr>
+                            </thead>
+                            <tbody id="office-summary-tbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-top:20px;">
+                <div class="card">
+                    <div class="card-title" style="margin-bottom:14px;">
+                        <i class="fa-solid fa-calendar-week"></i> ملخص يومي — آخر 30 يوم
+                    </div>
+                    <div class="table-wrapper">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>التاريخ</th>
+                                    <th>عدد الحوالات</th>
+                                    <th>مجموع المبالغ (USD)</th>
+                                    <th>مكتملة</th>
+                                    <th>معلقة</th>
+                                    <th>العمولات</th>
+                                </tr>
+                            </thead>
+                            <tbody id="daily-summary-tbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== REPORTS ===== -->
+        <div id="reports-section" class="section">
+
+            <div class="section-hero">
+                <div class="section-hero-content">
+                    <div class="section-hero-icon"><i class="fa-solid fa-file-chart-column"></i></div>
+                    <div>
+                        <h1>التقارير</h1>
+                        <p>استخراج تقارير مخصصة وتصديرها</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title" style="margin-bottom:16px;"><i class="fa-solid fa-sliders"></i> خيارات التقرير</div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>من تاريخ</label>
+                        <input type="date" id="rep-from">
+                    </div>
+                    <div class="form-group">
+                        <label>إلى تاريخ</label>
+                        <input type="date" id="rep-to">
+                    </div>
+                    <div class="form-group">
+                        <label>حالة الحوالة</label>
+                        <select id="rep-status">
+                            <option value="">الكل</option>
+                            <option value="pending">معلقة</option>
+                            <option value="approved">موافق عليها</option>
+                            <option value="waiting">قيد الانتظار</option>
+                            <option value="ready">جاهزة للتسليم</option>
+                            <option value="completed">مكتملة</option>
+                            <option value="cancelled">ملغاة</option>
+                            <option value="rejected">مرفوضة</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>العملة</label>
+                        <select id="rep-currency">
+                            <option value="">الكل</option>
+                            <option value="USD">USD</option>
+                            <option value="SYP">SYP</option>
+                            <option value="EUR">EUR</option>
+                        </select>
+                    </div>
+                </div>
+                <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                    <button class="btn-primary" onclick="generateReport()">
+                        <i class="fa-solid fa-chart-bar"></i> إنشاء التقرير
+                    </button>
+                    <button class="btn-success" onclick="exportReport()">
+                        <i class="fa-solid fa-file-csv"></i> تصدير CSV
+                    </button>
+                </div>
+            </div>
+
+            <!-- Report Result -->
+            <div class="card" id="report-result" style="display:none;">
+                <div class="card-header">
+                    <div class="card-title"><i class="fa-solid fa-table"></i> نتائج التقرير</div>
+                    <div id="report-meta" style="font-size:0.8rem;color:var(--gray);"></div>
+                </div>
+
+                <!-- Report Summary -->
+                <div class="summary-bar" style="margin-bottom:16px;">
+                    <div class="summary-item">
+                        <div class="s-value" id="rep-count">—</div>
+                        <div class="s-label">عدد الحوالات</div>
+                    </div>
+                    <div class="summary-divider"></div>
+                    <div class="summary-item">
+                        <div class="s-value" id="rep-sum">—</div>
+                        <div class="s-label">مجموع المبالغ</div>
+                    </div>
+                    <div class="summary-divider"></div>
+                    <div class="summary-item">
+                        <div class="s-value" id="rep-avg">—</div>
+                        <div class="s-label">متوسط المبلغ</div>
+                    </div>
+                    <div class="summary-divider"></div>
+                    <div class="summary-item">
+                        <div class="s-value" id="rep-commission-sum">—</div>
+                        <div class="s-label">مجموع العمولات</div>
+                    </div>
+                </div>
+
+                <div class="table-wrapper">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>المرسل</th>
+                                <th>المستلم</th>
+                                <th>المبلغ</th>
+                                <th>العملة</th>
+                                <th>العمولة</th>
+                                <th>الحالة</th>
+                                <th>التاريخ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="report-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div><!-- /content-body -->
+</main>
+
+<!-- Transfer Detail Modal -->
+<div class="modal-overlay hidden" id="transfer-modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fa-solid fa-arrow-right-arrow-left"></i> تفاصيل الحوالة</h3>
+            <button class="close-btn" onclick="closeModal('transfer-modal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="detail-grid">
+                <div class="detail-item"><label>رقم التتبع</label><span id="md-tracking">—</span></div>
+                <div class="detail-item"><label>الحالة</label><span id="md-status">—</span></div>
+                <div class="detail-item"><label>المرسل</label><span id="md-sender">—</span></div>
+                <div class="detail-item"><label>المستلم</label><span id="md-receiver">—</span></div>
+                <div class="detail-item"><label>هاتف المستلم</label><span id="md-phone">—</span></div>
+                <div class="detail-item"><label>المبلغ الأصلي</label><span id="md-amount">—</span></div>
+                <div class="detail-item"><label>المبلغ بالدولار</label><span id="md-amount-usd">—</span></div>
+                <div class="detail-item"><label>عملة الإرسال</label><span id="md-currency">—</span></div>
+                <div class="detail-item"><label>عملة الاستلام</label><span id="md-send-currency">—</span></div>
+                <div class="detail-item"><label>العمولة</label><span id="md-commission">—</span></div>
+                <div class="detail-item"><label>المكتب المستلِم</label><span id="md-office">—</span></div>
+                <div class="detail-item"><label>الوكيل المستلِم</label><span id="md-agent">—</span></div>
+                <div class="detail-item" style="grid-column:1/-1;"><label>تاريخ الإنشاء</label><span id="md-date">—</span></div>
+            </div>
+        </div>
+        <div class="modal-actions">
+            <button class="btn-cancel" onclick="closeModal('transfer-modal')">إغلاق</button>
+        </div>
+    </div>
+</div>
+
+<script src="accountant.js"></script>
+</body>
+</html>
