@@ -863,7 +863,17 @@
                 <i class="fa-solid fa-user"></i>
             </div>
             <div class="cmodal-header-info">
-                <h2 id="cd-name">—</h2>
+                <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                    <h2 id="cd-name" style="margin:0;">—</h2>
+                    <button id="cd-id-card-btn"
+                        title="عرض صورة الهوية"
+                        style="display:none; align-items:center; gap:6px; border:none; cursor:pointer;
+                               border-radius:8px; background:#eff6ff; color:#2563eb;
+                               padding:6px 12px; font-size:12px; font-weight:700;
+                               font-family:inherit; transition:all 0.2s; white-space:nowrap;">
+                        <i class="fa-solid fa-id-card"></i> هوية الزبون
+                    </button>
+                </div>
                 <div class="cmodal-header-meta">
                     <span><i class="fa-solid fa-phone"></i> <span id="cd-phone">—</span></span>
                     <span><i class="fa-solid fa-envelope"></i> <span id="cd-email">—</span></span>
@@ -942,7 +952,11 @@
         </div>
 
         <!-- تذييل المودال -->
-        <div class="cmodal-footer">
+        <div class="cmodal-footer" style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
+            <button id="cd-block-btn" onclick="toggleBlockFromModal()" style="display:flex; align-items:center; gap:8px; border-radius:10px; padding:10px 20px; font-size:14px; font-weight:700; border:2px solid #dc2626; background:#fff0f0; color:#dc2626; cursor:pointer; transition:all 0.2s;">
+                <i class="fa-solid fa-ban" id="cd-block-icon"></i>
+                <span id="cd-block-label">حظر الزبون</span>
+            </button>
             <button class="btn-cancel" onclick="closeCustomerModal()">
                 <i class="fa-solid fa-arrow-right-from-bracket"></i> إغلاق
             </button>
