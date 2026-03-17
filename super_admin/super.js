@@ -588,7 +588,8 @@ document.getElementById('add-employee-form')?.addEventListener('submit', async (
         email: emailEl.value.trim(),
         phone: phoneEl.value.trim(),
         password: passEl.value,
-        role: role
+        role: role,
+       
     };
 
     if (role === 'agent') {
@@ -597,6 +598,7 @@ document.getElementById('add-employee-form')?.addEventListener('submit', async (
         data.balance = document.getElementById('emp-balance').value || 0;
     } else {
         data.office_id = document.getElementById('emp-office').value || null;
+       
     }
 
     try {
