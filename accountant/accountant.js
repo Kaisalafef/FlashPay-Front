@@ -143,12 +143,14 @@ function showSection(name) {
         dashboard : 'لوحة المحاسب',
         transfers : 'سجل الحوالات',
         summary   : 'ملخص الحسابات',
+        trading   : 'أرباح التداول',
         reports   : 'التقارير'
     };
     setText('page-heading', titles[name] || '');
 
     if (name === 'transfers') renderTransfersSection();
     if (name === 'summary')   renderSummarySection();
+    if (name === 'trading')   initTradingSection();
 
     closeSidebar();
 }
@@ -718,6 +720,342 @@ async function refreshData() {
     await fetchAllTransfers();
     if (iconEl) iconEl.classList.remove('fa-spin');
     showToast('تم تحديث البيانات ✓', 'success');
+}
+
+// ═══════════════════════════════════════════════════════
+//   أرباح التداول — Trading Profits Section
+// ═══════════════════════════════════════════════════════
+
+let TRADING_DATA        = [];   // كل العمليات من API
+let TRADING_FILTERED    = [];   // بعد فلتر النوع
+let _tradingRange       = 'today';
+let _tradingFrom        = '';
+let _tradingTo          = '';
+
+/** يُستدعى عند فتح القسم لأول مرة */
+function initTradingSection() {
+    // تعيين اليوم كافتراضي
+    const today = new Date().toISOString().split('T')[0];
+    _tradingFrom = today;
+    _tradingTo   = today;
+
+    const fromEl = document.getElementById('trading-from');
+    const toEl   = document.getElementById('trading-to');
+    if (fromEl) fromEl.value = today;
+    if (toEl)   toEl.value   = today;
+
+    setText('trading-date-label', formatArabicDate(today));
+    loadTradingData();
+}
+
+/** زر الاختصارات الزمنية */
+function setTradingRange(range, btn) {
+    _tradingRange = range;
+
+    // تحديث الـ active
+    document.querySelectorAll('.trading-quick-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+
+    const customDates = document.getElementById('trading-custom-dates');
+
+    if (range === 'custom') {
+        customDates.style.display = 'block';
+        return; // ننتظر ضغط "عرض"
+    }
+
+    customDates.style.display = 'none';
+
+    const today = new Date();
+    const todayStr = today.toISOString().split('T')[0];
+
+    if (range === 'today') {
+        _tradingFrom = todayStr;
+        _tradingTo   = todayStr;
+    } else if (range === 'week') {
+        const start = new Date(today);
+        start.setDate(today.getDate() - today.getDay()); // أول الأسبوع
+        _tradingFrom = start.toISOString().split('T')[0];
+        _tradingTo   = todayStr;
+    } else if (range === 'month') {
+        _tradingFrom = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2,'0')}-01`;
+        _tradingTo   = todayStr;
+    }
+
+    loadTradingData();
+}
+
+/** جلب البيانات من API */
+async function loadTradingData() {
+    // إذا كان وضع مخصص نقرأ الحقول
+    if (_tradingRange === 'custom') {
+        const f = document.getElementById('trading-from')?.value;
+        const t = document.getElementById('trading-to')?.value;
+        if (!f || !t) { showToast('يرجى تحديد تاريخ البداية والنهاية', 'error'); return; }
+        _tradingFrom = f;
+        _tradingTo   = t;
+    }
+
+    // إخفاء الكروت وإظهار لودر
+    _showTradingState('loading');
+
+    try {
+        // نجلب كل أيام الفترة — API يدعم ?date= ليوم واحد، لذا نجلب كل يوم على حدة
+        const days   = getDatesInRange(_tradingFrom, _tradingTo);
+        const allTx  = [];
+
+        // نجلب بالتوازي (Promise.all) لتسريع الطلب
+        const results = await Promise.all(
+            days.map(d =>
+                fetch(`${API_URL}/trading/report/details?date=${d}`, { headers: getHeaders() })
+                    .then(r => r.json())
+                    .catch(() => null)
+            )
+        );
+
+        results.forEach(json => {
+            if (json?.status === 'success' && Array.isArray(json.transactions)) {
+                allTx.push(...json.transactions);
+            }
+        });
+
+        TRADING_DATA     = allTx;
+        TRADING_FILTERED = [...allTx];
+
+        _renderTradingStats();
+        _renderTradingChart(days);
+        _renderTradingTable();
+        _updateTradingLabel();
+
+        if (allTx.length === 0) {
+            _showTradingState('empty');
+        } else {
+            _showTradingState('data');
+        }
+
+    } catch (err) {
+        console.error(err);
+        showToast('خطأ في جلب بيانات التداول', 'error');
+        _showTradingState('placeholder');
+    }
+}
+
+/** تحديث بطاقات الإحصاء */
+function _renderTradingStats() {
+    const data  = TRADING_DATA;
+    const buys  = data.filter(t => t.type === 'buy');
+    const sells = data.filter(t => t.type === 'sell');
+
+    const totalBought = buys.reduce((s, t)  => s + parseFloat(t.amount  || 0), 0);
+    const totalSold   = sells.reduce((s, t) => s + parseFloat(t.amount  || 0), 0);
+    const netProfit   = data.reduce((s, t)  => s + parseFloat(t.profit  || 0), 0);
+
+    const profitColor = netProfit >= 0 ? 'var(--success)' : 'var(--danger)';
+    const profitIcon  = netProfit >= 0 ? 'fa-arrow-trend-up' : 'fa-arrow-trend-down';
+    const profitSign  = netProfit >= 0 ? '+' : '';
+
+    // بطاقة الربح — نعيد رسمها مع اللون
+    const profitEl = document.getElementById('tr-net-profit');
+    if (profitEl) {
+        profitEl.innerHTML = `<span style="color:${profitColor};">
+            <i class="fa-solid ${profitIcon}" style="font-size:0.9rem;"></i>
+            ${profitSign}${fmtMoney(netProfit)}
+        </span>`;
+    }
+    setText('tr-profit-sub', netProfit >= 0 ? 'ربح محقق ✓' : 'خسارة');
+    setText('tr-total-bought', fmtMoney(totalBought));
+    setText('tr-buy-count',    `${buys.length} عملية شراء`);
+    setText('tr-total-sold',   fmtMoney(totalSold));
+    setText('tr-sell-count',   `${sells.length} عملية بيع`);
+    setText('tr-ops-count',    fmt(data.length));
+
+    // ملخص مختصر
+    setText('tr-ms-buy',    fmtMoney(totalBought));
+    setText('tr-ms-sell',   fmtMoney(totalSold));
+    const msProfit = document.getElementById('tr-ms-profit');
+    if (msProfit) {
+        msProfit.innerHTML = `<span style="color:${profitColor};font-weight:800;">
+            ${profitSign}${fmtMoney(netProfit)}
+        </span>`;
+    }
+}
+
+/** مخطط الربح اليومي */
+function _renderTradingChart(days) {
+    const chartEl = document.getElementById('trading-daily-chart');
+    if (!chartEl) return;
+
+    if (days.length <= 1) {
+        document.getElementById('trading-chart-card').style.display = 'none';
+        return;
+    }
+    document.getElementById('trading-chart-card').style.display = 'block';
+
+    // نحسب الربح لكل يوم
+    const byDay = {};
+    days.forEach(d => { byDay[d] = 0; });
+    TRADING_DATA.forEach(tx => {
+        const d = tx.transaction_date || '';
+        if (byDay[d] !== undefined) byDay[d] += parseFloat(tx.profit || 0);
+    });
+
+    const values = days.map(d => byDay[d]);
+    const maxAbs = Math.max(...values.map(Math.abs), 0.01);
+
+    chartEl.innerHTML = days.map((d, i) => {
+        const val     = values[i];
+        const height  = Math.max(4, Math.round(Math.abs(val) / maxAbs * 80));
+        const color   = val >= 0 ? '#10b981' : '#ef4444';
+        const label   = d.slice(5); // MM-DD
+        const title   = `${val >= 0 ? '+' : ''}${val.toFixed(2)} | ${d}`;
+        return `
+            <div class="td-bar-wrap">
+                <div class="td-bar" style="height:${height}px;background:${color};" title="${title}"></div>
+                <div class="td-bar-label">${label}</div>
+            </div>
+        `;
+    }).join('');
+}
+
+/** رسم جدول العمليات */
+function _renderTradingTable() {
+    const tbody = document.getElementById('trading-tbody');
+    if (!tbody) return;
+
+    const typeFilter = document.getElementById('trading-type-filter')?.value || '';
+    TRADING_FILTERED = TRADING_DATA.filter(t => !typeFilter || t.type === typeFilter);
+
+    if (TRADING_FILTERED.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--gray);padding:24px;">
+            <i class="fa-solid fa-magnifying-glass" style="margin-left:6px;"></i>لا توجد نتائج
+        </td></tr>`;
+        return;
+    }
+
+    tbody.innerHTML = TRADING_FILTERED.map((tx, i) => {
+        const isBuy    = tx.type === 'buy';
+        const profit   = parseFloat(tx.profit || 0);
+        const pColor   = profit > 0 ? 'var(--success)' : profit < 0 ? 'var(--danger)' : 'var(--gray)';
+        const typeBadge = isBuy
+            ? `<span class="badge badge-success" style="background:#dcfce7;color:#166534;border:none;">
+                 <i class="fa-solid fa-circle-arrow-down"></i> شراء</span>`
+            : `<span class="badge badge-danger" style="background:#fee2e2;color:#991b1b;border:none;">
+                 <i class="fa-solid fa-circle-arrow-up"></i> بيع</span>`;
+        const profitCell = isBuy
+            ? `<span style="color:var(--gray);font-size:12px;">—</span>`
+            : `<span style="color:${pColor};font-weight:700;">${profit >= 0 ? '+' : ''}${fmtMoney(profit)}</span>`;
+
+        return `<tr>
+            <td>${i + 1}</td>
+            <td>${typeBadge}</td>
+            <td><span class="badge" style="background:var(--primary-bg);color:var(--primary);border:none;">
+                ${tx.currency?.code ?? '—'}</span></td>
+            <td style="font-weight:700;">${parseFloat(tx.amount || 0).toFixed(2)}</td>
+            <td>${parseFloat(tx.price || 0).toFixed(2)}</td>
+            <td style="color:#64748b;">${parseFloat(tx.cost_at_time || 0).toFixed(2)}</td>
+            <td>${profitCell}</td>
+            <td>${tx.transaction_date ?? '—'}</td>
+            <td style="color:var(--gray);font-size:0.8rem;">${tx.user?.name ?? '—'}</td>
+        </tr>`;
+    }).join('');
+}
+
+/** فلتر النوع في الجدول */
+function filterTradingTable() {
+    _renderTradingTable();
+}
+
+/** تحديث label الفترة في الهيدر */
+function _updateTradingLabel() {
+    const label = _tradingFrom === _tradingTo
+        ? formatArabicDate(_tradingFrom)
+        : `${_tradingFrom} ← ${_tradingTo}`;
+    setText('trading-date-label', label);
+    setText('tr-period-label', label);
+}
+
+/** إدارة حالة العرض */
+function _showTradingState(state) {
+    const els = {
+        placeholder : document.getElementById('trading-placeholder'),
+        empty       : document.getElementById('trading-empty'),
+        stats       : document.getElementById('trading-stats-grid'),
+        chart       : document.getElementById('trading-chart-card'),
+        table       : document.getElementById('trading-table-card'),
+    };
+
+    // إخفاء الكل أولاً
+    Object.values(els).forEach(el => { if (el) el.style.display = 'none'; });
+
+    if (state === 'loading') {
+        if (els.stats) els.stats.style.display = 'grid';
+        // نُبقي على الستات فارغة مع loading نص
+        document.querySelectorAll('#trading-stats-grid .stat-value').forEach(el => {
+            el.textContent = '...';
+        });
+    } else if (state === 'empty') {
+        if (els.stats) els.stats.style.display = 'grid';
+        if (els.empty) els.empty.style.display = 'block';
+    } else if (state === 'data') {
+        if (els.stats) els.stats.style.display = 'grid';
+        if (els.table) els.table.style.display = 'block';
+        // chart يُظهَر فقط إذا كانت هناك أيام متعددة (يُعالج في _renderTradingChart)
+    } else {
+        // placeholder
+        if (els.placeholder) els.placeholder.style.display = 'block';
+    }
+}
+
+/** تصدير CSV لبيانات التداول */
+function exportTradingCSV() {
+    const headers = ['#', 'النوع', 'العملة', 'الكمية', 'السعر', 'متوسط_التكلفة', 'الربح/الخسارة', 'التاريخ', 'المنفذ'];
+    const rows    = TRADING_FILTERED.map((tx, i) => [
+        i + 1,
+        tx.type === 'buy' ? 'شراء' : 'بيع',
+        tx.currency?.code ?? '',
+        parseFloat(tx.amount || 0).toFixed(2),
+        parseFloat(tx.price  || 0).toFixed(2),
+        parseFloat(tx.cost_at_time || 0).toFixed(2),
+        parseFloat(tx.profit || 0).toFixed(2),
+        tx.transaction_date ?? '',
+        tx.user?.name ?? ''
+    ]);
+
+    const period = _tradingFrom === _tradingTo ? _tradingFrom : `${_tradingFrom}_${_tradingTo}`;
+    const csv    = [headers, ...rows].map(r => r.map(v => `"${v}"`).join(',')).join('\n');
+    const blob   = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url    = URL.createObjectURL(blob);
+    const a      = document.createElement('a');
+    a.href       = url;
+    a.download   = `trading_profits_${period}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+/** طباعة التقرير */
+function printTradingReport() {
+    window.print();
+}
+
+// ── Helpers ─────────────────────────────────────────
+/** كل الأيام بين تاريخين */
+function getDatesInRange(from, to) {
+    const dates = [];
+    const cur   = new Date(from);
+    const end   = new Date(to);
+    while (cur <= end) {
+        dates.push(cur.toISOString().split('T')[0]);
+        cur.setDate(cur.getDate() + 1);
+    }
+    return dates;
+}
+
+/** تنسيق التاريخ بالعربية */
+function formatArabicDate(dateStr) {
+    try {
+        return new Date(dateStr).toLocaleDateString('ar-SY', {
+            weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+        });
+    } catch (e) { return dateStr; }
 }
 
 // ─────────────────────────────────────────────────────
