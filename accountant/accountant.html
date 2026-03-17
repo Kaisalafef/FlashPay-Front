@@ -39,6 +39,11 @@
                     <i class="fa-solid fa-calculator"></i> ملخص الحسابات
                 </a>
             </li>
+            <li id="nav-trading">
+                <a href="#" onclick="showSection('trading')">
+                    <i class="fa-solid fa-chart-line"></i> أرباح التداول
+                </a>
+            </li>
             <li id="nav-reports">
                 <a href="#" onclick="showSection('reports')">
                     <i class="fa-solid fa-file-chart-column"></i> التقارير
@@ -414,6 +419,186 @@
                 </div>
             </div>
         </div>
+
+        <!-- ===== TRADING PROFITS ===== -->
+        <div id="trading-section" class="section">
+
+            <div class="section-hero">
+                <div class="section-hero-content">
+                    <div class="section-hero-icon" style="background:linear-gradient(135deg,#059669,#10b981);">
+                        <i class="fa-solid fa-chart-line"></i>
+                    </div>
+                    <div>
+                        <h1>أرباح التداول</h1>
+                        <p>تتبع وتحليل عمليات شراء وبيع العملات وصافي الأرباح</p>
+                    </div>
+                </div>
+                <div class="section-hero-date">
+                    <i class="fa-regular fa-calendar"></i>
+                    <span id="trading-date-label">—</span>
+                </div>
+            </div>
+
+            <!-- ── فلتر التاريخ ── -->
+            <div class="card" style="margin-bottom:16px;">
+                <div class="card-title" style="margin-bottom:16px;">
+                    <i class="fa-solid fa-sliders"></i> تحديد الفترة الزمنية
+                </div>
+
+                <!-- أزرار الاختصار -->
+                <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;" id="trading-quick-btns">
+                    <button class="trading-quick-btn active" data-range="today"   onclick="setTradingRange('today',this)">
+                        <i class="fa-solid fa-calendar-day"></i> اليوم
+                    </button>
+                    <button class="trading-quick-btn" data-range="week"    onclick="setTradingRange('week',this)">
+                        <i class="fa-solid fa-calendar-week"></i> هذا الأسبوع
+                    </button>
+                    <button class="trading-quick-btn" data-range="month"   onclick="setTradingRange('month',this)">
+                        <i class="fa-solid fa-calendar"></i> هذا الشهر
+                    </button>
+                    <button class="trading-quick-btn" data-range="custom"  onclick="setTradingRange('custom',this)">
+                        <i class="fa-solid fa-calendar-range"></i> تحديد يدوي
+                    </button>
+                </div>
+
+                <!-- حقول التاريخ المخصص -->
+                <div id="trading-custom-dates" style="display:none;">
+                    <div class="form-row" style="margin-bottom:0;align-items:flex-end;gap:12px;flex-wrap:wrap;">
+                        <div class="form-group" style="flex:0 0 auto;min-width:160px;">
+                            <label>من تاريخ</label>
+                            <input type="date" id="trading-from">
+                        </div>
+                        <div class="form-group" style="flex:0 0 auto;min-width:160px;">
+                            <label>إلى تاريخ</label>
+                            <input type="date" id="trading-to">
+                        </div>
+                        <div class="form-group" style="flex:0 0 auto;">
+                            <button class="btn-primary" onclick="loadTradingData()" style="padding:10px 20px;">
+                                <i class="fa-solid fa-magnifying-glass"></i> عرض
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── بطاقات الملخص ── -->
+            <div class="stats-grid" id="trading-stats-grid" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr));margin-bottom:16px;">
+                <div class="stat-card">
+                    <div class="stat-icon green"><i class="fa-solid fa-arrow-trend-up"></i></div>
+                    <div class="stat-body">
+                        <div class="stat-value" id="tr-net-profit">—</div>
+                        <div class="stat-label">صافي الربح / الخسارة</div>
+                        <div class="stat-sub" id="tr-profit-sub">—</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon blue"><i class="fa-solid fa-circle-arrow-down"></i></div>
+                    <div class="stat-body">
+                        <div class="stat-value" id="tr-total-bought">—</div>
+                        <div class="stat-label">إجمالي المشتريات</div>
+                        <div class="stat-sub" id="tr-buy-count">0 عملية</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon orange"><i class="fa-solid fa-circle-arrow-up"></i></div>
+                    <div class="stat-body">
+                        <div class="stat-value" id="tr-total-sold">—</div>
+                        <div class="stat-label">إجمالي المبيعات</div>
+                        <div class="stat-sub" id="tr-sell-count">0 عملية</div>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon purple"><i class="fa-solid fa-list-ol"></i></div>
+                    <div class="stat-body">
+                        <div class="stat-value" id="tr-ops-count">—</div>
+                        <div class="stat-label">عدد العمليات</div>
+                        <div class="stat-sub" id="tr-period-label">—</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── مخطط يومي ── -->
+            <div class="card" id="trading-chart-card" style="margin-bottom:16px;display:none;">
+                <div class="card-title" style="margin-bottom:14px;">
+                    <i class="fa-solid fa-chart-bar"></i> الربح اليومي خلال الفترة
+                </div>
+                <div id="trading-daily-chart" style="display:flex;align-items:flex-end;gap:6px;height:100px;padding:8px 0;overflow-x:auto;"></div>
+            </div>
+
+            <!-- ── جدول التفاصيل + تصدير ── -->
+            <div class="card" id="trading-table-card" style="display:none;">
+                <div class="card-header" style="margin-bottom:14px;">
+                    <div class="card-title">
+                        <i class="fa-solid fa-table"></i> تفاصيل العمليات
+                    </div>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                        <!-- فلتر النوع -->
+                        <select id="trading-type-filter" class="filter-select" onchange="filterTradingTable()" style="min-width:120px;">
+                            <option value="">الكل</option>
+                            <option value="buy">شراء فقط</option>
+                            <option value="sell">بيع فقط</option>
+                        </select>
+                        <button class="btn-success" onclick="exportTradingCSV()">
+                            <i class="fa-solid fa-file-csv"></i> تصدير CSV
+                        </button>
+                        <button class="btn-primary" onclick="printTradingReport()">
+                            <i class="fa-solid fa-print"></i> طباعة
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ملخص مختصر قبل الجدول -->
+                <div class="summary-bar" id="trading-mini-summary" style="margin-bottom:16px;">
+                    <div class="summary-item">
+                        <div class="s-value" id="tr-ms-buy">—</div>
+                        <div class="s-label">إجمالي الشراء</div>
+                    </div>
+                    <div class="summary-divider"></div>
+                    <div class="summary-item">
+                        <div class="s-value" id="tr-ms-sell">—</div>
+                        <div class="s-label">إجمالي البيع</div>
+                    </div>
+                    <div class="summary-divider"></div>
+                    <div class="summary-item">
+                        <div class="s-value" id="tr-ms-profit">—</div>
+                        <div class="s-label">صافي الربح</div>
+                    </div>
+                </div>
+
+                <div class="table-wrapper">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>النوع</th>
+                                <th>العملة</th>
+                                <th>الكمية</th>
+                                <th>السعر</th>
+                                <th>متوسط التكلفة</th>
+                                <th>الربح / الخسارة</th>
+                                <th>التاريخ</th>
+                                <th>المنفذ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="trading-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- حالة الانتظار -->
+            <div id="trading-placeholder" class="card" style="text-align:center;padding:48px 24px;color:var(--gray);">
+                <i class="fa-solid fa-calendar-days" style="font-size:2.5rem;margin-bottom:12px;opacity:0.3;display:block;"></i>
+                <p style="font-size:1rem;font-weight:600;">اختر الفترة الزمنية لعرض بيانات التداول</p>
+                <p style="font-size:0.8rem;margin-top:4px;">يمكنك اختيار اليوم، الأسبوع، الشهر، أو تحديد فترة مخصصة</p>
+            </div>
+
+            <!-- حالة فارغة -->
+            <div id="trading-empty" class="card" style="display:none;text-align:center;padding:48px 24px;color:var(--gray);">
+                <i class="fa-solid fa-inbox" style="font-size:2.5rem;margin-bottom:12px;opacity:0.3;display:block;"></i>
+                <p style="font-size:1rem;font-weight:600;">لا توجد عمليات تداول في هذه الفترة</p>
+            </div>
+
+        </div><!-- /trading-section -->
 
         <!-- ===== REPORTS ===== -->
         <div id="reports-section" class="section">

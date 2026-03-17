@@ -25,7 +25,7 @@ async function checkAuth() {
         // التوكن غير صالح (بعد migrate:fresh مثلاً)
         if (!res.ok) {
             localStorage.clear();
-            window.location.href = '/FlashPay-Front/login/login.html';
+            window.location.href = '../login/login.html';
             return null;
         }
 
@@ -33,7 +33,7 @@ async function checkAuth() {
 
     } catch (e) {
         localStorage.clear();
-        window.location.href = '/FlashPay-Front/login/login.html';
+        window.location.href = '../login/login.html';
         return null;
     }
 }
@@ -44,6 +44,7 @@ function getHeaders() {
     const token = localStorage.getItem('auth_token');
     return {
         'Content-Type': 'application/json',
+        'Accept': 'application/json',
         'Authorization': `Bearer ${token}`
     };
 }
@@ -534,6 +535,9 @@ async function loadOfficesForSelect() {
 /* =========================
    Add Employee / Agent
 ========================= */
+/* =========================
+   Add Employee / Agent
+========================= */
 document.getElementById('add-employee-form')?.addEventListener('submit', async (e) => {
     e.preventDefault();
 
@@ -542,16 +546,14 @@ document.getElementById('add-employee-form')?.addEventListener('submit', async (
         position: { x: 'left', y: 'bottom' },
         types: [
             { type: 'error', background: '#ef4444', icon: { className: 'fa-solid fa-circle-exclamation', color: 'white' } },
-            { type: 'success', background: '#10b981', icon: { className: 'fa-solid fa-check-circle', color: 'white' } } // اللون الأخضر الجميل
+            { type: 'success', background: '#10b981', icon: { className: 'fa-solid fa-check-circle', color: 'white' } }
         ]
     });
 
-    // دالة مساعدة للتركيز على الخطأ
     const triggerError = (elementId, message) => {
         const el = document.getElementById(elementId);
         el.classList.add('input-error');
         el.focus();
-        // إزالة الخطأ عند الكتابة
         el.addEventListener('input', () => el.classList.remove('input-error'), { once: true });
         notyf.error(message);
     };
@@ -561,21 +563,18 @@ document.getElementById('add-employee-form')?.addEventListener('submit', async (
     const phoneEl = document.getElementById('emp-phone');
     const passEl = document.getElementById('emp-password');
 
-    // 1. البريد الإلكتروني
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(emailEl.value.trim())) {
         triggerError('emp-email', 'يرجى إدخال بريد إلكتروني صحيح');
         return;
     }
 
-    // 2. الهاتف
     const phoneRegex = /^\d{10}$/;
     if (!phoneRegex.test(phoneEl.value.trim())) {
         triggerError('emp-phone', 'رقم الهاتف يجب أن يتكون من 10 أرقام');
         return;
     }
 
-    // 3. كلمة المرور
     const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/;
     if (!passwordRegex.test(passEl.value)) {
         triggerError('emp-password', 'كلمة المرور يجب أن تكون 8 خانات مع أرقام وحروف');
@@ -588,6 +587,7 @@ document.getElementById('add-employee-form')?.addEventListener('submit', async (
         email: emailEl.value.trim(),
         phone: phoneEl.value.trim(),
         password: passEl.value,
+        password_confirmation: passEl.value, // 👈 إضافة ضرورية لتجاوز فحص كلمة المرور في لارافيل
         role: role
     };
 
@@ -596,15 +596,27 @@ document.getElementById('add-employee-form')?.addEventListener('submit', async (
         data.city_id = document.getElementById('agent-city-select').value || null;
         data.balance = document.getElementById('emp-balance').value || 0;
     } else {
-        data.office_id = document.getElementById('emp-office').value || null;
+        // 👈 التحقق من اختيار المكتب للموظفين
+        const officeId = document.getElementById('emp-office').value;
+        if (!officeId) {
+            triggerError('emp-office', 'يرجى اختيار المكتب التابع له الموظف أولاً');
+            return;
+        }
+        data.office_id = officeId;
+        // إرسال قيم فارغة لتفادي حظر لارافيل بسبب غياب الدولة والمدينة
+        data.country_id = null;
+        data.city_id = null;
     }
 
     try {
         const res = await fetch(`${API_URL}/register`, {
             method: 'POST',
-            headers: { ...getHeaders(), 'Content-Type': 'application/json' },
+            headers: getHeaders(), // 👈 سيتم الآن إرسال Accept: application/json
             body: JSON.stringify(data)
         });
+
+        // 👈 قراءة الرد الفعلي من السيرفر لمعرفة سبب الرفض إن وجد
+        const json = await res.json(); 
 
         if (res.ok) {
             notyf.success('تم إضافة الموظف بنجاح إلى النظام');
@@ -612,7 +624,9 @@ document.getElementById('add-employee-form')?.addEventListener('submit', async (
             handleRoleChange();
             await loadEmployees();
         } else {
-            notyf.error('حدث خطأ في التسجيل، يرجى المحاولة لاحقاً');
+            // الآن سيظهر لك الخطأ الحقيقي القادم من قاعدة البيانات بدلاً من "النجاح الوهمي"
+            notyf.error(json.message || 'تأكد من إدخال جميع البيانات، الإيميل أو الهاتف قد يكون مسجلاً مسبقاً');
+            console.log("Validation Errors:", json.errors);
         }
     } catch (error) {
         notyf.error('خطأ في الاتصال بالسيرفر');
