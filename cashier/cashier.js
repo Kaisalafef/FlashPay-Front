@@ -300,24 +300,7 @@ function renderTradingSafes(safes) {
         متوسط التكلفة: <span>${parseFloat(safe.cost).toFixed(2)}</span>
       </div>` : '';
 
-    const tradingUI = isTrading ? `
-      <div class="trade-section">
-        <p class="trade-label">إدارة عمليات التداول</p>
-        <div class="trade-row">
-          <input type="number" id="buy_amount_${safe.currency_id}"  class="trading-input" placeholder="الكمية"     step="any" min="0">
-          <input type="number" id="buy_price_${safe.currency_id}"   class="trading-input" placeholder="سعر الشراء" step="any" min="0">
-          <button class="btn-approve" onclick="executeTrade('buy', ${safe.office_id}, ${safe.currency_id})">
-            <i class="fa-solid fa-arrow-down"></i> شراء
-          </button>
-        </div>
-        <div class="trade-row">
-          <input type="number" id="sell_amount_${safe.currency_id}" class="trading-input" placeholder="الكمية"    step="any" min="0">
-          <input type="number" id="sell_price_${safe.currency_id}"  class="trading-input" placeholder="سعر البيع" step="any" min="0">
-          <button class="btn-reject" onclick="executeTrade('sell', ${safe.office_id}, ${safe.currency_id})">
-            <i class="fa-solid fa-arrow-up"></i> بيع
-          </button>
-        </div>
-      </div>` : '';
+    const tradingUI = isTrading ? buildTradingUI(safe.currency_id, safe.office_id) : '';
 
     return `
     <div class="${cardClass}">
@@ -341,6 +324,84 @@ function renderTradingSafes(safes) {
 /* ============================= */
 /*        EXECUTE TRADE         */
 /* ============================= */
+
+/* =============================================
+   واجهة التداول المحسّنة – زر الاختيار السريع
+   ============================================= */
+function buildTradingUI(currencyId, officeId) {
+    const amountChips = [50, 100, 200, 500, 1000];
+    const priceChips  = [11500, 11700, 11750, 11800, 20000];
+
+    const amountChipsHtml = amountChips.map(v =>
+        `<button type="button" class="trade-chip" onclick="setTradeVal('buy_amount_${currencyId}','sell_amount_${currencyId}',${v})">${v}</button>`
+    ).join('');
+
+    const buyPriceChipsHtml = priceChips.map(v =>
+        `<button type="button" class="trade-chip trade-chip-buy" onclick="setTradeVal('buy_price_${currencyId}',null,${v})">${v.toLocaleString()}</button>`
+    ).join('');
+
+    const sellPriceChipsHtml = priceChips.map(v =>
+        `<button type="button" class="trade-chip trade-chip-sell" onclick="setTradeVal('sell_price_${currencyId}',null,${v})">${v.toLocaleString()}</button>`
+    ).join('');
+
+    return `
+    <div class="trade-panel">
+        <div class="trade-panel-title">
+            <i class="fa-solid fa-sliders"></i> عمليات التداول
+        </div>
+
+        <!-- الكمية مشتركة -->
+        <div class="trade-field-group">
+            <label class="trade-field-label"><i class="fa-solid fa-hashtag"></i> الكمية</label>
+            <div class="trade-chips-row">${amountChipsHtml}</div>
+            <div class="trade-input-row">
+                <input type="number" id="buy_amount_${currencyId}" class="trading-input" placeholder="أدخل الكمية يدوياً..." min="0" step="any"
+                       oninput="document.getElementById('sell_amount_${currencyId}').value=this.value">
+                <input type="number" id="sell_amount_${currencyId}" class="trading-input" style="display:none;" min="0" step="any">
+            </div>
+        </div>
+
+        <div class="trade-ops-grid">
+            <!-- شراء -->
+            <div class="trade-op trade-op-buy">
+                <div class="trade-op-header">
+                    <i class="fa-solid fa-arrow-down-to-line"></i> شراء
+                </div>
+                <div class="trade-chips-row">${buyPriceChipsHtml}</div>
+                <div class="trade-input-row">
+                    <input type="number" id="buy_price_${currencyId}" class="trading-input" placeholder="سعر الشراء يدوياً..." min="0" step="any">
+                </div>
+                <button class="trade-exec-btn trade-exec-buy"
+                        onclick="executeTrade('buy', ${officeId}, ${currencyId})">
+                    <i class="fa-solid fa-cart-shopping"></i> تنفيذ الشراء
+                </button>
+            </div>
+
+            <!-- بيع -->
+            <div class="trade-op trade-op-sell">
+                <div class="trade-op-header">
+                    <i class="fa-solid fa-arrow-up-from-line"></i> بيع
+                </div>
+                <div class="trade-chips-row">${sellPriceChipsHtml}</div>
+                <div class="trade-input-row">
+                    <input type="number" id="sell_price_${currencyId}" class="trading-input" placeholder="سعر البيع يدوياً..." min="0" step="any">
+                </div>
+                <button class="trade-exec-btn trade-exec-sell"
+                        onclick="executeTrade('sell', ${officeId}, ${currencyId})">
+                    <i class="fa-solid fa-hand-holding-dollar"></i> تنفيذ البيع
+                </button>
+            </div>
+        </div>
+    </div>`;
+}
+
+function setTradeVal(id1, id2, val) {
+    const el1 = document.getElementById(id1);
+    if (el1) { el1.value = val; el1.dispatchEvent(new Event('input')); }
+    if (id2) { const el2 = document.getElementById(id2); if (el2) el2.value = val; }
+    event.target.classList.add('trade-chip-active');
+    setTimeout(() => event.target.classList.remove('trade-chip-active'), 600);
+}
 
 async function executeTrade(type, officeId, currencyId) {
   // التحقق من وجود office_id و currency_id قبل الإرسال

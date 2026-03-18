@@ -1275,3 +1275,586 @@ button { border: none; cursor: pointer; }
     color: var(--primary);
     font-size: 1.2rem;
 }
+/* =============================================
+   CREATE TRANSFER SECTION – CT Styles
+   ============================================= */
+
+/* Hero لقسم إنشاء الحوالة */
+.create-transfer-hero {
+    background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%);
+}
+
+/* Loading Overlay */
+.ct-loading-overlay {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    padding: 48px;
+    color: var(--gray);
+    font-weight: 600;
+    font-size: 14px;
+}
+.ct-loading-overlay.hidden { display: none; }
+
+.ct-spinner {
+    width: 42px;
+    height: 42px;
+    border: 4px solid var(--border);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: ct-spin 0.8s linear infinite;
+}
+@keyframes ct-spin { to { transform: rotate(360deg); } }
+
+/* Wrapper النموذج */
+.ct-form-wrapper {
+    padding: 28px 32px 32px;
+    transition: opacity 0.3s;
+}
+
+/* قسم داخل النموذج */
+.ct-section {
+    margin-bottom: 8px;
+}
+
+.ct-section-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 22px;
+}
+
+.ct-section-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+.ct-section-title {
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--dark);
+    margin: 0;
+}
+
+.ct-section-subtitle {
+    font-size: 12px;
+    color: var(--gray);
+    margin: 2px 0 0;
+}
+
+/* الشبكة */
+.ct-fields-grid {
+    display: grid;
+    gap: 20px;
+}
+.ct-grid-3 { grid-template-columns: repeat(3, 1fr); }
+.ct-grid-2 { grid-template-columns: repeat(2, 1fr); }
+
+@media (max-width: 900px) {
+    .ct-grid-3 { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 600px) {
+    .ct-grid-3, .ct-grid-2 { grid-template-columns: 1fr; }
+    .ct-form-wrapper { padding: 20px 16px 24px; }
+}
+
+/* حقول الإدخال */
+.ct-field-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.ct-label {
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--dark);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.ct-label i {
+    color: var(--primary);
+    font-size: 12px;
+}
+
+.ct-required {
+    color: var(--danger);
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.ct-input,
+.ct-select {
+    width: 100%;
+    padding: 11px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-family: 'Cairo', sans-serif;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--dark);
+    background: var(--white);
+    transition: border-color var(--transition), box-shadow var(--transition);
+    outline: none;
+    appearance: none;
+    -webkit-appearance: none;
+}
+
+.ct-select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%236b7280' d='M6 8L0 0h12z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: left 12px center;
+    padding-left: 36px;
+}
+
+.ct-input:focus,
+.ct-select:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.12);
+}
+
+.ct-input.ct-error,
+.ct-select.ct-error {
+    border-color: var(--danger);
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+.ct-hint {
+    font-size: 11px;
+    color: var(--gray);
+    font-weight: 500;
+}
+
+/* بطاقة الدولار */
+.ct-usd-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-top: 20px;
+    padding: 16px 20px;
+    background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+    border: 1.5px solid #86efac;
+    border-radius: var(--radius-sm);
+}
+
+.ct-usd-icon {
+    width: 44px;
+    height: 44px;
+    background: #16a34a;
+    color: white;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+.ct-usd-label {
+    font-size: 11.5px;
+    color: #166534;
+    font-weight: 600;
+    margin-bottom: 3px;
+}
+
+.ct-usd-value {
+    font-size: 22px;
+    font-weight: 800;
+    color: #15803d;
+    direction: ltr;
+    text-align: right;
+}
+
+/* الفاصل */
+.ct-divider {
+    height: 1px;
+    background: linear-gradient(to right, transparent, var(--border), transparent);
+    margin: 24px 0;
+}
+
+/* Footer النموذج */
+.ct-form-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 20px 24px;
+    background: var(--light);
+    border-radius: var(--radius-sm);
+    margin-top: 24px;
+    flex-wrap: wrap;
+}
+
+.ct-footer-note {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12.5px;
+    color: var(--gray);
+    font-weight: 600;
+}
+
+.ct-footer-note i {
+    color: var(--primary);
+    font-size: 14px;
+}
+
+.ct-submit-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 13px 28px;
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: white;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-family: 'Cairo', sans-serif;
+    font-size: 14px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all var(--transition);
+    box-shadow: 0 4px 14px rgba(234, 88, 12, 0.35);
+}
+
+.ct-submit-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(234, 88, 12, 0.45);
+}
+
+.ct-submit-btn:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Toast Messages */
+.ct-toast {
+    position: fixed;
+    bottom: 28px;
+    left: 28px;
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 16px 20px;
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-lg);
+    max-width: 420px;
+    z-index: 9999;
+    animation: ct-slide-in 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    font-size: 13px;
+}
+
+@keyframes ct-slide-in {
+    from { transform: translateY(20px); opacity: 0; }
+    to   { transform: translateY(0);   opacity: 1; }
+}
+
+.ct-toast.hidden { display: none; }
+
+.ct-toast i {
+    font-size: 22px;
+    margin-top: 2px;
+    flex-shrink: 0;
+}
+
+.ct-toast-success {
+    background: #f0fdf4;
+    border: 1.5px solid #86efac;
+    color: #166534;
+}
+.ct-toast-success i { color: #16a34a; }
+
+.ct-toast-error {
+    background: #fef2f2;
+    border: 1.5px solid #fca5a5;
+    color: #991b1b;
+}
+.ct-toast-error i { color: #ef4444; }
+
+.ct-toast-title {
+    font-weight: 800;
+    font-size: 13.5px;
+    margin-bottom: 3px;
+}
+
+.ct-toast-msg {
+    font-weight: 600;
+    font-size: 12.5px;
+    line-height: 1.5;
+    direction: rtl;
+}
+/* ─────────────────────────────────────────────
+   رفع الهوية – File Upload
+───────────────────────────────────────────── */
+.ct-file-input {
+    display: none;
+}
+
+.ct-file-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 11px 14px;
+    border: 1.5px dashed var(--border);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--gray);
+    background: var(--light);
+    transition: border-color var(--transition), background var(--transition);
+}
+.ct-file-label:hover {
+    border-color: var(--primary);
+    background: var(--primary-bg);
+    color: var(--primary);
+}
+.ct-file-label i {
+    font-size: 16px;
+    color: var(--primary);
+}
+
+/* معاينة صورة الهوية */
+.ct-img-preview-wrap {
+    position: relative;
+    display: inline-block;
+    margin-top: 10px;
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    max-width: 200px;
+}
+.ct-img-preview-wrap.hidden { display: none; }
+
+.ct-img-preview {
+    width: 200px;
+    height: 120px;
+    object-fit: cover;
+    display: block;
+}
+
+.ct-img-remove {
+    position: absolute;
+    top: 6px;
+    left: 6px;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: rgba(239,68,68,0.9);
+    color: white;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    transition: background var(--transition);
+}
+.ct-img-remove:hover { background: #dc2626; }
+
+/* ─────────────────────────────────────────────
+   الحوالة الخارجية – Hero
+───────────────────────────────────────────── */
+.intl-transfer-hero {
+    background: linear-gradient(135deg, #4f46e5 0%, #be185d 100%);
+}
+/* =============================================
+   واجهة التداول المحسّنة – Trade Panel
+   ============================================= */
+
+.trade-panel {
+    margin-top: 20px;
+    padding-top: 18px;
+    border-top: 2px dashed var(--border);
+}
+
+.trade-panel-title {
+    font-size: 12.5px;
+    font-weight: 800;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+}
+.trade-panel-title i { color: var(--primary); }
+
+/* حقل الكمية المشتركة */
+.trade-field-group {
+    background: var(--light);
+    border-radius: var(--radius-sm);
+    padding: 12px 14px;
+    margin-bottom: 14px;
+}
+
+.trade-field-label {
+    font-size: 11.5px;
+    font-weight: 700;
+    color: var(--gray);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+.trade-field-label i { font-size: 10px; }
+
+/* صف الأزرار السريعة */
+.trade-chips-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 8px;
+}
+
+.trade-chip {
+    padding: 5px 11px;
+    border-radius: 20px;
+    border: 1.5px solid var(--border);
+    background: var(--white);
+    color: var(--dark);
+    font-family: 'Cairo', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    line-height: 1;
+}
+.trade-chip:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+    background: var(--primary-bg);
+    transform: translateY(-1px);
+}
+.trade-chip-buy {
+    border-color: #bbf7d0;
+    color: #15803d;
+    background: #f0fdf4;
+}
+.trade-chip-buy:hover {
+    border-color: #16a34a;
+    background: #dcfce7;
+    color: #14532d;
+}
+.trade-chip-sell {
+    border-color: #fecaca;
+    color: #b91c1c;
+    background: #fff1f2;
+}
+.trade-chip-sell:hover {
+    border-color: #dc2626;
+    background: #fee2e2;
+    color: #7f1d1d;
+}
+.trade-chip-active {
+    transform: scale(0.93) !important;
+    opacity: 0.7;
+}
+
+/* حقل الإدخال اليدوي */
+.trade-input-row {
+    margin-top: 4px;
+}
+.trade-input-row .trading-input {
+    width: 100%;
+    padding: 9px 12px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-family: 'Cairo', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--dark);
+    background: var(--white);
+    outline: none;
+    transition: border-color 0.2s;
+    direction: ltr;
+    text-align: right;
+}
+.trade-input-row .trading-input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-bg);
+}
+
+/* شبكة عمليتي الشراء/البيع */
+.trade-ops-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.trade-op {
+    border-radius: var(--radius-sm);
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.trade-op-buy  { background: #f0fdf4; border: 1.5px solid #bbf7d0; }
+.trade-op-sell { background: #fff1f2; border: 1.5px solid #fecaca; }
+
+.trade-op-header {
+    font-size: 12px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 2px;
+}
+.trade-op-buy  .trade-op-header { color: #15803d; }
+.trade-op-sell .trade-op-header { color: #b91c1c; }
+
+.trade-op-buy  .trading-input:focus { border-color: #16a34a; box-shadow: 0 0 0 3px #dcfce7; }
+.trade-op-sell .trading-input:focus { border-color: #dc2626; box-shadow: 0 0 0 3px #fee2e2; }
+
+/* أزرار التنفيذ */
+.trade-exec-btn {
+    width: 100%;
+    padding: 10px;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-family: 'Cairo', sans-serif;
+    font-size: 13px;
+    font-weight: 800;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    margin-top: 4px;
+    transition: all 0.2s ease;
+}
+.trade-exec-buy {
+    background: linear-gradient(135deg, #16a34a, #15803d);
+    color: white;
+    box-shadow: 0 3px 10px rgba(22,163,74,0.3);
+}
+.trade-exec-buy:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 5px 16px rgba(22,163,74,0.4);
+}
+.trade-exec-sell {
+    background: linear-gradient(135deg, #dc2626, #b91c1c);
+    color: white;
+    box-shadow: 0 3px 10px rgba(220,38,38,0.3);
+}
+.trade-exec-sell:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 5px 16px rgba(220,38,38,0.4);
+}
+
+@media (max-width: 600px) {
+    .trade-ops-grid { grid-template-columns: 1fr; }
+    .trade-chips-row { gap: 5px; }
+    .trade-chip { font-size: 11px; padding: 5px 9px; }
+}

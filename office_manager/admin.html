@@ -62,8 +62,8 @@
                     </a>
                 </li>
                 <li>
-                    <a href="#" onclick="setActive(this); showProfitsSection();">
-                        <i class="fa-solid fa-arrows-rotate"></i>
+                    <a href="#" onclick="setActive(this); createIntlTransferSection();">
+                        <i class="fa-solid fa-globe"></i>
                         إنشاء حوالة خارجية
                     </a>
                 </li>
@@ -369,110 +369,469 @@
                 </div>
 
             </div>
-            <!--قسم انشاء حوالة -->
-
-
+            <!-- ===== قسم إنشاء حوالة داخلية ===== -->
             <div class="card" id="createtransfer" style="display:none;">
-    <div class="card-header">
-        <h3><i class="fas fa-paper-plane"></i> إنشاء حوالة مالية جديدة</h3>
-    </div>
-    
-    <div class="card-body">
-        <form action="/transfers" method="POST" id="transferForm">
-            
-            <h4 class="form-section-title">
-                <i class="fas fa-money-bill-wave"></i> تفاصيل المبلغ
-            </h4>
-            <div class="form-row">
-                <div class="form-group">
-                    <label>المبلغ المرسل</label>
-                    <input type="number" name="amount" placeholder="0.00" required min="1">
+
+                <!-- Hero Banner -->
+                <div class="section-hero create-transfer-hero">
+                    <div class="section-hero-text">
+                        <h2><i class="fa-solid fa-paper-plane"></i> إنشاء حوالة داخلية جديدة</h2>
+                        <p>أدخل بيانات الحوالة نيابةً عن الزبون الحاضر في المكتب</p>
+                    </div>
+                    <div class="section-hero-stats">
+                        <div class="hero-stat">
+                            <span id="ct-usd-preview">$0.00</span>
+                            <small>المبلغ بالدولار</small>
+                        </div>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label>عملة الإرسال (الدفع)</label>
-                    <select name="send_currency_id" required>
-                        <option value="">اختر العملة...</option>
-                        <option value="1">دينار عراقي</option>
-                        <option value="2">ليرة تركية</option>
-                    </select>
+
+                <!-- Loading Overlay -->
+                <div id="ct-loading-overlay" class="ct-loading-overlay hidden">
+                    <div class="ct-spinner"></div>
+                    <p>جاري تحميل البيانات...</p>
                 </div>
-                <div class="form-group">
-                    <label>عملة الاستلام</label>
-                    <select name="currency_id" required>
-                        <option value="">اختر عملة الاستلام...</option>
-                        <option value="3">دولار أمريكي</option>
-                        <option value="1">دينار عراقي</option>
-                    </select>
+
+                <div class="ct-form-wrapper" id="ct-form-wrapper">
+                    <form id="ct-transfer-form" novalidate>
+
+                        <!-- ── القسم 1: تفاصيل المبلغ ── -->
+                        <div class="ct-section">
+                            <div class="ct-section-header">
+                                <div class="ct-section-icon" style="background:#dbeafe;color:#1d4ed8;">
+                                    <i class="fa-solid fa-money-bill-wave"></i>
+                                </div>
+                                <div>
+                                    <h4 class="ct-section-title">تفاصيل المبلغ</h4>
+                                    <p class="ct-section-subtitle">حدد المبلغ وعملتي الإرسال والاستلام</p>
+                                </div>
+                            </div>
+
+                            <div class="ct-fields-grid ct-grid-3">
+                                <div class="ct-field-group">
+                                    <label class="ct-label">
+                                        <i class="fa-solid fa-coins"></i> المبلغ المرسل
+                                        <span class="ct-required">*</span>
+                                    </label>
+                                    <input
+                                        type="number"
+                                        id="ct-amount"
+                                        class="ct-input"
+                                        placeholder="0.00"
+                                        min="1"
+                                        step="any"
+                                        oninput="ctCalculateUsd()"
+                                    >
+                                </div>
+
+                                <div class="ct-field-group">
+                                    <label class="ct-label">
+                                        <i class="fa-solid fa-arrow-up-from-bracket"></i> عملة الإرسال (الدفع)
+                                        <span class="ct-required">*</span>
+                                    </label>
+                                    <select id="ct-send-currency" class="ct-select" onchange="ctCalculateUsd()">
+                                        <option value="">جاري التحميل...</option>
+                                    </select>
+                                </div>
+
+                                <div class="ct-field-group">
+                                    <label class="ct-label">
+                                        <i class="fa-solid fa-arrow-down-to-bracket"></i> عملة الاستلام
+                                        <span class="ct-required">*</span>
+                                    </label>
+                                    <select id="ct-recv-currency" class="ct-select">
+                                        <option value="">جاري التحميل...</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- بطاقة معاينة الدولار -->
+                            <div class="ct-usd-card" id="ct-usd-card">
+                                <div class="ct-usd-icon"><i class="fa-solid fa-dollar-sign"></i></div>
+                                <div>
+                                    <div class="ct-usd-label">القيمة المعادلة بالدولار الأمريكي</div>
+                                    <div class="ct-usd-value" id="ct-usd-value">$0.00</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="ct-divider"></div>
+
+                        <!-- ── القسم 2: وجهة الحوالة ── -->
+                        <div class="ct-section">
+                            <div class="ct-section-header">
+                                <div class="ct-section-icon" style="background:#dcfce7;color:#16a34a;">
+                                    <i class="fa-solid fa-location-dot"></i>
+                                </div>
+                                <div>
+                                    <h4 class="ct-section-title">وجهة الحوالة</h4>
+                                    <p class="ct-section-subtitle">اختر المكتب المستلم والوكيل داخل سوريا</p>
+                                </div>
+                            </div>
+
+                            <div class="ct-fields-grid ct-grid-2">
+                                <div class="ct-field-group">
+                                    <label class="ct-label">
+                                        <i class="fa-solid fa-building"></i> المكتب المستلم
+                                        <span class="ct-required">*</span>
+                                    </label>
+                                    <select id="ct-office" class="ct-select">
+                                        <option value="">جاري التحميل...</option>
+                                    </select>
+                                    <span class="ct-hint">المكتب الداخلي المستلم للحوالة</span>
+                                </div>
+
+                                <div class="ct-field-group">
+                                    <label class="ct-label">
+                                        <i class="fa-solid fa-user-tie"></i> الوكيل داخل سوريا
+                                        <span class="ct-required">*</span>
+                                    </label>
+                                    <select id="ct-agent" class="ct-select">
+                                        <option value="">جاري التحميل...</option>
+                                    </select>
+                                    <span class="ct-hint">الوكلاء المتاحون داخل سوريا فقط</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="ct-divider"></div>
+
+                        <!-- ── القسم 3: بيانات المرسل ── -->
+                        <div class="ct-section">
+                            <div class="ct-section-header">
+                                <div class="ct-section-icon" style="background:#ede9fe;color:#7c3aed;">
+                                    <i class="fa-solid fa-id-card"></i>
+                                </div>
+                                <div>
+                                    <h4 class="ct-section-title">بيانات المرسل</h4>
+                                    <p class="ct-section-subtitle">هوية الزبون الحاضر في المكتب</p>
+                                </div>
+                            </div>
+
+                            <div class="ct-fields-grid ct-grid-2">
+                                <div class="ct-field-group">
+                                    <label class="ct-label">
+                                        <i class="fa-solid fa-user-check"></i> اسم المرسل الكامل
+                                        <span class="ct-required">*</span>
+                                    </label>
+                                    <input type="text" id="ct-sender-name" class="ct-input" placeholder="الاسم كما في الهوية">
+                                </div>
+                                <div class="ct-field-group">
+                                    <label class="ct-label">
+                                        <i class="fa-solid fa-camera"></i> صورة هوية المرسل
+                                        <span class="ct-required">*</span>
+                                    </label>
+                                    <label class="ct-file-label" id="ct-sender-id-label" for="ct-sender-id-image">
+                                        <i class="fa-solid fa-cloud-arrow-up"></i>
+                                        <span id="ct-sender-id-filename">اضغط لرفع صورة الهوية</span>
+                                    </label>
+                                    <input type="file" id="ct-sender-id-image" class="ct-file-input" accept="image/jpeg,image/png,image/jpg" onchange="ctOnSenderIdChange(this)">
+                                    <span class="ct-hint">صورة واضحة للهوية الوطنية أو الجواز (JPG/PNG)</span>
+                                </div>
+                            </div>
+
+                            <!-- معاينة الهوية -->
+                            <div id="ct-sender-id-preview-wrap" class="ct-img-preview-wrap hidden">
+                                <img id="ct-sender-id-preview" class="ct-img-preview" src="" alt="معاينة الهوية">
+                                <button type="button" class="ct-img-remove" onclick="ctRemoveSenderId()">
+                                    <i class="fa-solid fa-xmark"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="ct-divider"></div>
+
+                        <!-- ── القسم 4: بيانات المستلم ── -->
+                        <div class="ct-section">
+                            <div class="ct-section-header">
+                                <div class="ct-section-icon" style="background:#fef3c7;color:#d97706;">
+                                    <i class="fa-solid fa-user"></i>
+                                </div>
+                                <div>
+                                    <h4 class="ct-section-title">بيانات المستلم</h4>
+                                    <p class="ct-section-subtitle">معلومات الشخص المستلم للمبلغ</p>
+                                </div>
+                            </div>
+
+                            <div class="ct-fields-grid ct-grid-2">
+                                <div class="ct-field-group">
+                                    <label class="ct-label">
+                                        <i class="fa-solid fa-id-card"></i> اسم المستلم الرباعي
+                                        <span class="ct-required">*</span>
+                                    </label>
+                                    <input type="text" id="ct-receiver-name" class="ct-input" placeholder="أدخل الاسم الكامل للمستلم">
+                                </div>
+
+                                <div class="ct-field-group">
+                                    <label class="ct-label">
+                                        <i class="fa-brands fa-whatsapp"></i> رقم هاتف المستلم (واتساب)
+                                        <span class="ct-required">*</span>
+                                    </label>
+                                    <input type="tel" id="ct-receiver-phone" class="ct-input" placeholder="964xxxxxxxxxx" dir="ltr">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ── Footer الإرسال ── -->
+                        <div class="ct-form-footer">
+                            <div class="ct-footer-note">
+                                <i class="fa-solid fa-shield-halved"></i>
+                                <span>سيتم توليد كود تتبع فريد تلقائياً وحفظ الحوالة بحالة <strong>قيد المراجعة</strong></span>
+                            </div>
+                            <button type="submit" class="ct-submit-btn" id="ct-submit-btn">
+                                <i class="fa-solid fa-paper-plane"></i>
+                                تأكيد وإرسال الحوالة
+                            </button>
+                        </div>
+
+                    </form>
                 </div>
+
+                <!-- Success Toast -->
+                <div id="ct-success-toast" class="ct-toast ct-toast-success hidden">
+                    <i class="fa-solid fa-circle-check"></i>
+                    <div>
+                        <div class="ct-toast-title">تم إرسال الحوالة بنجاح!</div>
+                        <div class="ct-toast-msg" id="ct-toast-msg"></div>
+                    </div>
+                </div>
+
+                <!-- Error Toast -->
+                <div id="ct-error-toast" class="ct-toast ct-toast-error hidden">
+                    <i class="fa-solid fa-circle-exclamation"></i>
+                    <div>
+                        <div class="ct-toast-title">تنبيه</div>
+                        <div class="ct-toast-msg" id="ct-error-msg"></div>
+                    </div>
+                </div>
+
             </div>
 
-            <hr class="section-divider">
+            <!-- ===== قسم إنشاء حوالة خارجية ===== -->
+            <div class="card" id="createtransfer-intl" style="display:none;">
 
-            <h4 class="form-section-title">
-                <i class="fas fa-map-marker-alt"></i> وجهة الحوالة
-            </h4>
-            <div class="form-row">
-                <div class="form-group">
-                    <label>المكتب المستلم (داخلي)</label>
-                    <select name="destination_office_id">
-                        <option value="">اختر المكتب...</option>
-                        <option value="1">مكتب بغداد الرئيسي</option>
-                    </select>
-                    <small class="help-text">اتركه فارغاً إذا كانت الحوالة دولية</small>
+                <!-- Hero Banner -->
+                <div class="section-hero intl-transfer-hero">
+                    <div class="section-hero-text">
+                        <h2><i class="fa-solid fa-globe"></i> إنشاء حوالة خارجية (دولية)</h2>
+                        <p>إرسال حوالة عبر وكيل سوريا إلى وكيل خارجي في الخارج</p>
+                    </div>
+                    <div class="section-hero-stats">
+                        <div class="hero-stat">
+                            <span id="intl-usd-preview">$0.00</span>
+                            <small>المبلغ بالدولار</small>
+                        </div>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label>الوكيل المسؤول</label>
-                    <select name="destination_agent_id" required>
-                        <option value="">اختر الوكيل...</option>
-                        <option value="10">الوكيل أحمد محمد</option>
-                    </select>
+
+                <!-- Loading Overlay -->
+                <div id="intl-loading-overlay" class="ct-loading-overlay hidden">
+                    <div class="ct-spinner"></div>
+                    <p>جاري تحميل البيانات...</p>
                 </div>
+
+                <div class="ct-form-wrapper" id="intl-form-wrapper">
+                    <form id="intl-transfer-form" novalidate>
+
+                        <!-- ── القسم 1: تفاصيل المبلغ ── -->
+                        <div class="ct-section">
+                            <div class="ct-section-header">
+                                <div class="ct-section-icon" style="background:#dbeafe;color:#1d4ed8;">
+                                    <i class="fa-solid fa-money-bill-wave"></i>
+                                </div>
+                                <div>
+                                    <h4 class="ct-section-title">تفاصيل المبلغ</h4>
+                                    <p class="ct-section-subtitle">حدد المبلغ وعملتي الإرسال والاستلام</p>
+                                </div>
+                            </div>
+
+                            <div class="ct-fields-grid ct-grid-3">
+                                <div class="ct-field-group">
+                                    <label class="ct-label"><i class="fa-solid fa-coins"></i> المبلغ المرسل <span class="ct-required">*</span></label>
+                                    <input type="number" id="intl-amount" class="ct-input" placeholder="0.00" min="1" step="any" oninput="intlCalculateUsd()">
+                                </div>
+                                <div class="ct-field-group">
+                                    <label class="ct-label"><i class="fa-solid fa-arrow-up-from-bracket"></i> عملة الإرسال <span class="ct-required">*</span></label>
+                                    <select id="intl-send-currency" class="ct-select" onchange="intlCalculateUsd()">
+                                        <option value="">جاري التحميل...</option>
+                                    </select>
+                                </div>
+                                <div class="ct-field-group">
+                                    <label class="ct-label"><i class="fa-solid fa-arrow-down-to-bracket"></i> عملة الاستلام <span class="ct-required">*</span></label>
+                                    <select id="intl-recv-currency" class="ct-select">
+                                        <option value="">جاري التحميل...</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="ct-usd-card">
+                                <div class="ct-usd-icon"><i class="fa-solid fa-dollar-sign"></i></div>
+                                <div>
+                                    <div class="ct-usd-label">القيمة المعادلة بالدولار الأمريكي</div>
+                                    <div class="ct-usd-value" id="intl-usd-value">$0.00</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="ct-divider"></div>
+
+                        <!-- ── القسم 2: وكيل المرسِل والمكتب ── -->
+                        <div class="ct-section">
+                            <div class="ct-section-header">
+                                <div class="ct-section-icon" style="background:#dcfce7;color:#16a34a;">
+                                    <i class="fa-solid fa-flag"></i>
+                                </div>
+                                <div>
+                                    <h4 class="ct-section-title">وكيل المرسِل والمكتب</h4>
+                                    <p class="ct-section-subtitle">الوكيل الذي جلب الزبون والمكتب المحلي للحوالة</p>
+                                </div>
+                            </div>
+                            <div class="ct-fields-grid ct-grid-2">
+                                <div class="ct-field-group">
+                                    <label class="ct-label"><i class="fa-solid fa-user-tie"></i> وكيل المرسِل <span class="ct-required">*</span></label>
+                                    <select id="intl-agent-local" class="ct-select">
+                                        <option value="">جاري التحميل...</option>
+                                    </select>
+                                </div>
+                                <div class="ct-field-group">
+                                    <label class="ct-label"><i class="fa-solid fa-building"></i> المكتب المحلي <span class="ct-required">*</span></label>
+                                    <select id="intl-office" class="ct-select">
+                                        <option value="">جاري التحميل...</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="ct-divider"></div>
+
+                        <!-- ── القسم 3: الوجهة الخارجية ── -->
+                        <div class="ct-section">
+                            <div class="ct-section-header">
+                                <div class="ct-section-icon" style="background:#fce7f3;color:#be185d;">
+                                    <i class="fa-solid fa-earth-americas"></i>
+                                </div>
+                                <div>
+                                    <h4 class="ct-section-title">الوجهة الخارجية</h4>
+                                    <p class="ct-section-subtitle">اختر الدولة ثم المدينة، وحدد الوكيل الخارجي المستلِم</p>
+                                </div>
+                            </div>
+
+                            <div class="ct-fields-grid ct-grid-3">
+                                <div class="ct-field-group">
+                                    <label class="ct-label"><i class="fa-solid fa-globe"></i> الدولة المستلِمة <span class="ct-required">*</span></label>
+                                    <select id="intl-country" class="ct-select" onchange="intlOnCountryChange()">
+                                        <option value="">جاري التحميل...</option>
+                                    </select>
+                                </div>
+                                <div class="ct-field-group">
+                                    <label class="ct-label"><i class="fa-solid fa-city"></i> المدينة <span class="ct-required">*</span></label>
+                                    <select id="intl-city" class="ct-select" disabled>
+                                        <option value="">اختر الدولة أولاً...</option>
+                                    </select>
+                                </div>
+                                <div class="ct-field-group">
+                                    <label class="ct-label"><i class="fa-solid fa-user-secret"></i> وكيل الخارج <span class="ct-required">*</span></label>
+                                    <select id="intl-agent-foreign" class="ct-select">
+                                        <option value="">اختر الدولة أولاً...</option>
+                                    </select>
+                                    <span class="ct-hint">يتغير تلقائياً بعد اختيار الدولة</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="ct-divider"></div>
+
+                        <!-- ── القسم 4: بيانات المرسل ── -->
+                        <div class="ct-section">
+                            <div class="ct-section-header">
+                                <div class="ct-section-icon" style="background:#ede9fe;color:#7c3aed;">
+                                    <i class="fa-solid fa-id-card"></i>
+                                </div>
+                                <div>
+                                    <h4 class="ct-section-title">بيانات المرسل</h4>
+                                    <p class="ct-section-subtitle">هوية الزبون الحاضر في المكتب</p>
+                                </div>
+                            </div>
+                            <div class="ct-fields-grid ct-grid-2">
+                                <div class="ct-field-group">
+                                    <label class="ct-label"><i class="fa-solid fa-user-check"></i> اسم المرسل الكامل <span class="ct-required">*</span></label>
+                                    <input type="text" id="intl-sender-name" class="ct-input" placeholder="الاسم كما في الهوية">
+                                </div>
+                                <div class="ct-field-group">
+                                    <label class="ct-label"><i class="fa-solid fa-camera"></i> صورة هوية المرسل <span class="ct-required">*</span></label>
+                                    <label class="ct-file-label" for="intl-sender-id-image">
+                                        <i class="fa-solid fa-cloud-arrow-up"></i>
+                                        <span id="intl-sender-id-filename">اضغط لرفع صورة الهوية</span>
+                                    </label>
+                                    <input type="file" id="intl-sender-id-image" class="ct-file-input" accept="image/jpeg,image/png,image/jpg" onchange="intlOnSenderIdChange(this)">
+                                    <span class="ct-hint">صورة واضحة للهوية أو الجواز (JPG/PNG)</span>
+                                </div>
+                            </div>
+                            <div id="intl-sender-id-preview-wrap" class="ct-img-preview-wrap hidden">
+                                <img id="intl-sender-id-preview" class="ct-img-preview" src="" alt="معاينة الهوية">
+                                <button type="button" class="ct-img-remove" onclick="intlRemoveSenderId()">
+                                    <i class="fa-solid fa-xmark"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="ct-divider"></div>
+
+                        <!-- ── القسم 5: بيانات المستلم ── -->
+                        <div class="ct-section">
+                            <div class="ct-section-header">
+                                <div class="ct-section-icon" style="background:#fef3c7;color:#d97706;">
+                                    <i class="fa-solid fa-user"></i>
+                                </div>
+                                <div>
+                                    <h4 class="ct-section-title">بيانات المستلم</h4>
+                                    <p class="ct-section-subtitle">معلومات الشخص المستلم في الخارج</p>
+                                </div>
+                            </div>
+                            <div class="ct-fields-grid ct-grid-2">
+                                <div class="ct-field-group">
+                                    <label class="ct-label"><i class="fa-solid fa-id-card"></i> اسم المستلم الرباعي <span class="ct-required">*</span></label>
+                                    <input type="text" id="intl-receiver-name" class="ct-input" placeholder="أدخل الاسم الكامل للمستلم">
+                                </div>
+                                <div class="ct-field-group">
+                                    <label class="ct-label"><i class="fa-brands fa-whatsapp"></i> رقم هاتف المستلم <span class="ct-required">*</span></label>
+                                    <input type="tel" id="intl-receiver-phone" class="ct-input" placeholder="+1xxxxxxxxxx" dir="ltr">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ── Footer ── -->
+                        <div class="ct-form-footer">
+                            <div class="ct-footer-note">
+                                <i class="fa-solid fa-shield-halved"></i>
+                                <span>حوالة دولية — سيتم توليد كود تتبع فريد تلقائياً</span>
+                            </div>
+                            <button type="submit" class="ct-submit-btn" id="intl-submit-btn" style="background:linear-gradient(135deg,#7c3aed,#4f46e5);box-shadow:0 4px 14px rgba(124,58,237,0.35);">
+                                <i class="fa-solid fa-globe"></i>
+                                إرسال الحوالة الدولية
+                            </button>
+                        </div>
+
+                    </form>
+                </div>
+
+                <!-- Toasts مشتركة مع الحوالة الداخلية -->
+                <div id="intl-success-toast" class="ct-toast ct-toast-success hidden">
+                    <i class="fa-solid fa-circle-check"></i>
+                    <div>
+                        <div class="ct-toast-title">تم إرسال الحوالة الدولية بنجاح!</div>
+                        <div class="ct-toast-msg" id="intl-toast-msg"></div>
+                    </div>
+                </div>
+                <div id="intl-error-toast" class="ct-toast ct-toast-error hidden">
+                    <i class="fa-solid fa-circle-exclamation"></i>
+                    <div>
+                        <div class="ct-toast-title">تنبيه</div>
+                        <div class="ct-toast-msg" id="intl-error-msg"></div>
+                    </div>
+                </div>
+
             </div>
-
-            <div class="form-row">
-                <div class="form-group">
-                    <label>الدولة (للحوالات الدولية)</label>
-                    <select name="destination_country_id">
-                        <option value="">اختر الدولة...</option>
-                        <option value="1">تركيا</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>المدينة</label>
-                    <input type="text" name="destination_city" placeholder="اسم المدينة">
-                </div>
-            </div>
-
-            <hr class="section-divider">
-
-            <h4 class="form-section-title">
-                <i class="fas fa-user"></i> بيانات المستلم
-            </h4>
-            <div class="form-row">
-                <div class="form-group">
-                    <label>اسم المستلم الرباعي</label>
-                    <input type="text" name="receiver_name" placeholder="أدخل الاسم الكامل" required>
-                </div>
-                <div class="form-group">
-                    <label>رقم هاتف المستلم (واتساب)</label>
-                    <input type="tel" name="receiver_phone" placeholder="964xxxxxxxxxx" required>
-                </div>
-            </div>
-
-            <div class="form-footer">
-                <div class="form-footer-note">
-                    <i class="fas fa-info-circle"></i> 
-                    <span>سيتم توليد كود تتبع تلقائياً بعد الحفظ.</span>
-                </div>
-                
-                <button type="submit" class="btn-primary">
-                    <i class="fas fa-check-circle"></i> تأكيد وإرسال الحوالة
-                </button>
-            </div>
-
-        </form>
-    </div>
-</div>
 
         </div><!-- /.content-body -->
     </main>
