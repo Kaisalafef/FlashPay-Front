@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,6 +10,7 @@
     <link rel="stylesheet" href="style_admin.css">
     <link rel="stylesheet" href="mobile_small.css">
 </head>
+
 <body>
 
     <!-- Sidebar Overlay -->
@@ -51,6 +53,18 @@
                     <a href="#" onclick="setActive(this); showProfitsSection();">
                         <i class="fa-solid fa-chart-line"></i>
                         أرباح التداول
+                    </a>
+                </li>
+                <li>
+                    <a href="#" onclick="setActive(this); createTarnsferSection();">
+                        <i class="fa-solid fa-arrows-rotate"></i>
+                        انشاء حوالة جديدة
+                    </a>
+                </li>
+                <li>
+                    <a href="#" onclick="setActive(this); showProfitsSection();">
+                        <i class="fa-solid fa-arrows-rotate"></i>
+                        إنشاء حوالة خارجية
                     </a>
                 </li>
             </ul>
@@ -114,7 +128,8 @@
                 <div class="table-toolbar">
                     <div class="toolbar-search">
                         <i class="fa-solid fa-magnifying-glass"></i>
-                        <input type="text" id="pending-search" placeholder="بحث برقم الحوالة أو المستلم..." oninput="filterPendingTable()">
+                        <input type="text" id="pending-search" placeholder="بحث برقم الحوالة أو المستلم..."
+                            oninput="filterPendingTable()">
                     </div>
                     <div class="toolbar-actions">
                         <button class="toolbar-btn" onclick="loadPendingTransfers()" title="تحديث">
@@ -166,13 +181,18 @@
                 <div class="table-toolbar">
                     <div class="toolbar-search">
                         <i class="fa-solid fa-magnifying-glass"></i>
-                        <input type="text" id="all-transfers-search" placeholder="بحث برقم الحوالة أو المرسل..." oninput="filterAllTransfersTable()">
+                        <input type="text" id="all-transfers-search" placeholder="بحث برقم الحوالة أو المرسل..."
+                            oninput="filterAllTransfersTable()">
                     </div>
                     <div class="toolbar-filters">
-                        <button class="filter-chip active" data-status="all" onclick="setTransferFilter('all', this)">الكل</button>
-                        <button class="filter-chip" data-status="pending" onclick="setTransferFilter('pending', this)">معلقة</button>
-                        <button class="filter-chip" data-status="approved" onclick="setTransferFilter('approved', this)">موافق</button>
-                        <button class="filter-chip" data-status="rejected" onclick="setTransferFilter('rejected', this)">مرفوضة</button>
+                        <button class="filter-chip active" data-status="all"
+                            onclick="setTransferFilter('all', this)">الكل</button>
+                        <button class="filter-chip" data-status="pending"
+                            onclick="setTransferFilter('pending', this)">معلقة</button>
+                        <button class="filter-chip" data-status="approved"
+                            onclick="setTransferFilter('approved', this)">موافق</button>
+                        <button class="filter-chip" data-status="rejected"
+                            onclick="setTransferFilter('rejected', this)">مرفوضة</button>
                     </div>
                     <div class="toolbar-actions">
                         <button class="toolbar-btn" onclick="loadAllTransfers()" title="تحديث">
@@ -301,7 +321,8 @@
                                     <input type="date" id="report-date">
                                 </div>
                                 <div class="form-group" style="flex: 0 0 auto; justify-content:flex-end;">
-                                    <button class="btn-primary" onclick="loadTradingReport()" style="padding:12px 22px;">
+                                    <button class="btn-primary" onclick="loadTradingReport()"
+                                        style="padding:12px 22px;">
                                         <i class="fa-solid fa-magnifying-glass"></i> عرض التقرير
                                     </button>
                                 </div>
@@ -312,7 +333,8 @@
 
                 <!-- بطاقات الملخص -->
                 <div id="profits-summary"
-                     style="display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:16px; margin-bottom:24px;"></div>
+                    style="display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:16px; margin-bottom:24px;">
+                </div>
 
                 <!-- جدول العمليات -->
                 <div class="table-wrapper" id="profits-table-wrapper" style="display:none;">
@@ -347,6 +369,110 @@
                 </div>
 
             </div>
+            <!--قسم انشاء حوالة -->
+
+
+            <div class="card" id="createtransfer" style="display:none;">
+    <div class="card-header">
+        <h3><i class="fas fa-paper-plane"></i> إنشاء حوالة مالية جديدة</h3>
+    </div>
+    
+    <div class="card-body">
+        <form action="/transfers" method="POST" id="transferForm">
+            
+            <h4 class="form-section-title">
+                <i class="fas fa-money-bill-wave"></i> تفاصيل المبلغ
+            </h4>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>المبلغ المرسل</label>
+                    <input type="number" name="amount" placeholder="0.00" required min="1">
+                </div>
+                <div class="form-group">
+                    <label>عملة الإرسال (الدفع)</label>
+                    <select name="send_currency_id" required>
+                        <option value="">اختر العملة...</option>
+                        <option value="1">دينار عراقي</option>
+                        <option value="2">ليرة تركية</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>عملة الاستلام</label>
+                    <select name="currency_id" required>
+                        <option value="">اختر عملة الاستلام...</option>
+                        <option value="3">دولار أمريكي</option>
+                        <option value="1">دينار عراقي</option>
+                    </select>
+                </div>
+            </div>
+
+            <hr class="section-divider">
+
+            <h4 class="form-section-title">
+                <i class="fas fa-map-marker-alt"></i> وجهة الحوالة
+            </h4>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>المكتب المستلم (داخلي)</label>
+                    <select name="destination_office_id">
+                        <option value="">اختر المكتب...</option>
+                        <option value="1">مكتب بغداد الرئيسي</option>
+                    </select>
+                    <small class="help-text">اتركه فارغاً إذا كانت الحوالة دولية</small>
+                </div>
+                <div class="form-group">
+                    <label>الوكيل المسؤول</label>
+                    <select name="destination_agent_id" required>
+                        <option value="">اختر الوكيل...</option>
+                        <option value="10">الوكيل أحمد محمد</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>الدولة (للحوالات الدولية)</label>
+                    <select name="destination_country_id">
+                        <option value="">اختر الدولة...</option>
+                        <option value="1">تركيا</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>المدينة</label>
+                    <input type="text" name="destination_city" placeholder="اسم المدينة">
+                </div>
+            </div>
+
+            <hr class="section-divider">
+
+            <h4 class="form-section-title">
+                <i class="fas fa-user"></i> بيانات المستلم
+            </h4>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>اسم المستلم الرباعي</label>
+                    <input type="text" name="receiver_name" placeholder="أدخل الاسم الكامل" required>
+                </div>
+                <div class="form-group">
+                    <label>رقم هاتف المستلم (واتساب)</label>
+                    <input type="tel" name="receiver_phone" placeholder="964xxxxxxxxxx" required>
+                </div>
+            </div>
+
+            <div class="form-footer">
+                <div class="form-footer-note">
+                    <i class="fas fa-info-circle"></i> 
+                    <span>سيتم توليد كود تتبع تلقائياً بعد الحفظ.</span>
+                </div>
+                
+                <button type="submit" class="btn-primary">
+                    <i class="fas fa-check-circle"></i> تأكيد وإرسال الحوالة
+                </button>
+            </div>
+
+        </form>
+    </div>
+</div>
 
         </div><!-- /.content-body -->
     </main>
@@ -354,39 +480,40 @@
     <script src="admin.js"></script>
 
     <script>
-    // ===== وظائف مساعدة للواجهة =====
+        // ===== وظائف مساعدة للواجهة =====
 
-    function filterPendingTable() {
-        const q = (document.getElementById('pending-search')?.value || '').toLowerCase();
-        document.querySelectorAll('#transfers-list tr').forEach(row => {
-            row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
-        });
-    }
+        function filterPendingTable() {
+            const q = (document.getElementById('pending-search')?.value || '').toLowerCase();
+            document.querySelectorAll('#transfers-list tr').forEach(row => {
+                row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+            });
+        }
 
-    function filterAllTransfersTable() {
-        const q = (document.getElementById('all-transfers-search')?.value || '').toLowerCase();
-        document.querySelectorAll('#all-transfers-list tr').forEach(row => {
-            row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
-        });
-    }
+        function filterAllTransfersTable() {
+            const q = (document.getElementById('all-transfers-search')?.value || '').toLowerCase();
+            document.querySelectorAll('#all-transfers-list tr').forEach(row => {
+                row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+            });
+        }
 
-    let _currentTransferFilter = 'all';
-    function setTransferFilter(status, btn) {
-        _currentTransferFilter = status;
-        document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
-        btn.classList.add('active');
-        document.querySelectorAll('#all-transfers-list tr').forEach(row => {
-            if (status === 'all') { row.style.display = ''; return; }
-            const badge = row.querySelector('.status-badge');
-            const rowStatus = badge ? badge.dataset.status : '';
-            row.style.display = rowStatus === status ? '' : 'none';
-        });
-    }
+        let _currentTransferFilter = 'all';
+        function setTransferFilter(status, btn) {
+            _currentTransferFilter = status;
+            document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+            btn.classList.add('active');
+            document.querySelectorAll('#all-transfers-list tr').forEach(row => {
+                if (status === 'all') { row.style.display = ''; return; }
+                const badge = row.querySelector('.status-badge');
+                const rowStatus = badge ? badge.dataset.status : '';
+                row.style.display = rowStatus === status ? '' : 'none';
+            });
+        }
 
-    // إعادة تهيئة profits table عند التنقل
-    const _origShowProfits = typeof showProfitsSection === 'function' ? showProfitsSection : null;
+        // إعادة تهيئة profits table عند التنقل
+        const _origShowProfits = typeof showProfitsSection === 'function' ? showProfitsSection : null;
     </script>
     <script src="sidebar-mobile.js"></script>
 
 </body>
+
 </html>

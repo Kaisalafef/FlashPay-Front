@@ -1220,3 +1220,58 @@ button { border: none; cursor: pointer; }
 }
 
 .preview-img:hover { transform: scale(1.05); }
+.form-section-title {
+    font-size: 0.95rem;
+    color: var(--primary);
+    margin-bottom: 16px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.form-section-title i {
+    background: var(--primary-bg);
+    color: var(--primary);
+    padding: 8px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+}
+
+/* النص المساعد أسفل حقول الإدخال (مثل: اتركه فارغاً إذا كانت الحوالة دولية) */
+.help-text {
+    color: var(--gray);
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-top: 6px;
+    display: block;
+}
+
+/* حاوية الأزرار والملاحظات في أسفل الفورم */
+.form-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-top: 24px;
+    background: #f8fafc; /* خلفية خفيفة لتمييز القسم السفلي */
+    padding: 16px 24px;
+    border-radius: var(--radius-sm);
+    border: 1px dashed var(--border);
+}
+
+/* ملاحظة أسفل الفورم (مثل: سيتم توليد كود تتبع) */
+.form-footer-note {
+    color: var(--text-muted);
+    font-size: 0.8125rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.form-footer-note i {
+    color: var(--primary);
+    font-size: 1.2rem;
+}
