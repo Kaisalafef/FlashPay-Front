@@ -189,7 +189,11 @@ function hideAllCards() {
     document.getElementById('all-transfers-card').style.display = 'none';
     document.getElementById('office-info-card').style.display = 'none';
     document.getElementById('safes-card').style.display = 'none';
+
     document.getElementById('profits-card').style.display = 'none';
+
+    document.getElementById('createtransfer').style.display = 'none';
+    
 }
 
 async function showOfficeSection() {
@@ -398,6 +402,18 @@ function showAllTransfers() {
     document.getElementById('all-transfers-card').style.display = 'block';
     loadAllTransfers();
 }
+
+
+
+
+
+
+
+
+
+
+
+
 async function loadPendingTransfers() {
     try {
         // التعديل الأهم: جلب الحوالات التي حالتها waiting بدلاً من pending
@@ -526,6 +542,12 @@ function showProfitsSection() {
         dateInput.value = new Date().toISOString().split('T')[0];
     }
     loadTradingReport();
+}
+
+function createTarnsferSection(){
+     hideAllCards();
+    document.getElementById('createtransfer').style.display = 'block';
+
 }
 
 async function loadTradingReport() {
