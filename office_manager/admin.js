@@ -286,29 +286,7 @@ container.innerHTML = mySafes.map(safe => {
         title = 'صندوق المبيعات / التداول';
         icon = 'fa-chart-line';
         bg = '#fff9f0';
-        
-        // واجهة التداول الخاصة بالصندوق
-        tradingUI = `
-            <div style="margin-top: 20px; padding-top: 15px; border-top: 1px dashed #cbd5e1;">
-                <h5 style="color: #475569; margin-bottom: 12px; font-size: 13px;">إدارة عمليات التداول</h5>
-                
-                <div style="display: flex; gap: 8px; margin-bottom: 10px; align-items: center;">
-                    <input type="number" id="buy_amount_${safe.currency_id}" class="trading-input" placeholder="الكمية" min="0" step="any">
-                    <input type="number" id="buy_price_${safe.currency_id}" class="trading-input" placeholder="سعر الشراء" min="0" step="any">
-                    <button class="btn-approve" style="flex: 1;" onclick="executeTrade('buy', ${safe.office_id}, ${safe.currency_id})">
-                        <i class="fa-solid fa-arrow-down"></i> شراء
-                    </button>
-                </div>
-
-                <div style="display: flex; gap: 8px; align-items: center;">
-                    <input type="number" id="sell_amount_${safe.currency_id}" class="trading-input" placeholder="الكمية" min="0" step="any">
-                    <input type="number" id="sell_price_${safe.currency_id}" class="trading-input" placeholder="سعر البيع" min="0" step="any">
-                    <button class="btn-reject" style="flex: 1;" onclick="executeTrade('sell', ${safe.office_id}, ${safe.currency_id})">
-                        <i class="fa-solid fa-arrow-up"></i> بيع
-                    </button>
-                </div>
-            </div>
-        `;
+        tradingUI = buildTradingUI(safe.currency_id, safe.office_id);
     }
 
     const cardClass = safe.type === 'trading' ? 'safe-card safe-card-trading' : 'safe-card safe-card-main';
@@ -336,6 +314,89 @@ container.innerHTML = mySafes.map(safe => {
     } catch (e) { console.error("Error loading safes:", e); }
 }
 
+
+/* =============================================
+   واجهة التداول المحسّنة – زر الاختيار السريع
+   ============================================= */
+function buildTradingUI(currencyId, officeId) {
+    const amountChips = [50, 100, 200, 500, 1000];
+    const priceChips  = [11500, 11700, 11750, 11800, 20000];
+
+    const amountChipsHtml = amountChips.map(v =>
+        `<button type="button" class="trade-chip" onclick="setTradeVal('buy_amount_${currencyId}','sell_amount_${currencyId}',${v})">${v}</button>`
+    ).join('');
+
+    const buyPriceChipsHtml = priceChips.map(v =>
+        `<button type="button" class="trade-chip trade-chip-buy" onclick="setTradeVal('buy_price_${currencyId}',null,${v})">${v.toLocaleString()}</button>`
+    ).join('');
+
+    const sellPriceChipsHtml = priceChips.map(v =>
+        `<button type="button" class="trade-chip trade-chip-sell" onclick="setTradeVal('sell_price_${currencyId}',null,${v})">${v.toLocaleString()}</button>`
+    ).join('');
+
+    return `
+    <div class="trade-panel">
+        <div class="trade-panel-title">
+            <i class="fa-solid fa-sliders"></i> عمليات التداول
+        </div>
+
+        <!-- الكمية مشتركة -->
+        <div class="trade-field-group">
+            <label class="trade-field-label"><i class="fa-solid fa-hashtag"></i> الكمية</label>
+            <div class="trade-chips-row">${amountChipsHtml}</div>
+            <div class="trade-input-row">
+                <input type="number" id="buy_amount_${currencyId}"  class="trading-input" placeholder="أدخل الكمية يدوياً..." min="0" step="any"
+                       oninput="document.getElementById('sell_amount_${currencyId}').value=this.value">
+                <input type="number" id="sell_amount_${currencyId}" class="trading-input" style="display:none;" placeholder="الكمية" min="0" step="any">
+            </div>
+        </div>
+
+        <div class="trade-ops-grid">
+            <!-- شراء -->
+            <div class="trade-op trade-op-buy">
+                <div class="trade-op-header">
+                    <i class="fa-solid fa-arrow-down-to-line"></i> شراء
+                </div>
+                <div class="trade-chips-row">${buyPriceChipsHtml}</div>
+                <div class="trade-input-row">
+                    <input type="number" id="buy_price_${currencyId}" class="trading-input" placeholder="سعر الشراء يدوياً..." min="0" step="any">
+                </div>
+                <button class="trade-exec-btn trade-exec-buy"
+                        onclick="executeTrade('buy', ${officeId}, ${currencyId})">
+                    <i class="fa-solid fa-cart-shopping"></i> تنفيذ الشراء
+                </button>
+            </div>
+
+            <!-- بيع -->
+            <div class="trade-op trade-op-sell">
+                <div class="trade-op-header">
+                    <i class="fa-solid fa-arrow-up-from-line"></i> بيع
+                </div>
+                <div class="trade-chips-row">${sellPriceChipsHtml}</div>
+                <div class="trade-input-row">
+                    <input type="number" id="sell_price_${currencyId}" class="trading-input" placeholder="سعر البيع يدوياً..." min="0" step="any">
+                </div>
+                <button class="trade-exec-btn trade-exec-sell"
+                        onclick="executeTrade('sell', ${officeId}, ${currencyId})">
+                    <i class="fa-solid fa-hand-holding-dollar"></i> تنفيذ البيع
+                </button>
+            </div>
+        </div>
+    </div>`;
+}
+
+// helper: يضبط قيمة input أو inputين
+function setTradeVal(id1, id2, val) {
+    const el1 = document.getElementById(id1);
+    if (el1) { el1.value = val; el1.dispatchEvent(new Event('input')); }
+    if (id2) {
+        const el2 = document.getElementById(id2);
+        if (el2) el2.value = val;
+    }
+    // تأثير بصري على الزر المضغوط
+    event.target.classList.add('trade-chip-active');
+    setTimeout(() => event.target.classList.remove('trade-chip-active'), 600);
+}
 
 async function executeTrade(type, officeId, currencyId) {
     const amountInput = document.getElementById(`${type}_amount_${currencyId}`);
