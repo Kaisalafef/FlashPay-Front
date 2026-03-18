@@ -193,7 +193,8 @@ function hideAllCards() {
     document.getElementById('profits-card').style.display = 'none';
 
     document.getElementById('createtransfer').style.display = 'none';
-    
+    const intlCard = document.getElementById('createtransfer-intl');
+    if (intlCard) intlCard.style.display = 'none';
 }
 
 async function showOfficeSection() {
@@ -544,10 +545,510 @@ function showProfitsSection() {
     loadTradingReport();
 }
 
-function createTarnsferSection(){
-     hideAllCards();
-    document.getElementById('createtransfer').style.display = 'block';
+/* =============================================
+   قسم إنشاء الحوالة الداخلية - Create Transfer
+   ============================================= */
 
+// بيانات مخزّنة مشتركة
+let _ctCurrencies = [];
+let _ctAllAgents  = [];
+const SYRIA_COUNTRY_ID = 1;
+
+/* ─────────────────────────────────────────────
+   helper مشترك: جلب الوكلاء مع country_id كامل
+   نستخدم /users لأن /agents لا يُرجع country_id
+───────────────────────────────────────────── */
+async function _fetchAllAgents() {
+    try {
+        const res = await fetch(`${API_URL}/users`, {
+            headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' }
+        });
+        const json = await res.json();
+        const all = json.data ?? json ?? [];
+        return all.filter(u => u.role === 'agent' && u.is_active !== false);
+    } catch (e) {
+        // fallback على /agents إذا فشل
+        const res2 = await fetch(`${API_URL}/agents`, {
+            headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' }
+        });
+        const json2 = await res2.json();
+        return json2.data ?? [];
+    }
+}
+
+/* ─────────────────────────────────────────────
+   الحوالة الداخلية
+───────────────────────────────────────────── */
+function createTarnsferSection() {
+    hideAllCards();
+    document.getElementById('createtransfer').style.display = 'block';
+    ctInitForm();
+}
+
+async function ctInitForm() {
+    const overlay = document.getElementById('ct-loading-overlay');
+    const wrapper = document.getElementById('ct-form-wrapper');
+    overlay.classList.remove('hidden');
+    wrapper.style.opacity = '0.4';
+    wrapper.style.pointerEvents = 'none';
+
+    try {
+        const [currRes, officeRes] = await Promise.all([
+            fetch(`${API_URL}/currencies`, { headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' } }),
+            fetch(`${API_URL}/offices`,    { headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' } }),
+        ]);
+
+        // ── العملات ──
+        const currJson = await currRes.json();
+        _ctCurrencies = Array.isArray(currJson) ? currJson : (currJson.data ?? []);
+        _fillCurrencySelect('ct-send-currency', 'اختر عملة الإرسال...');
+        _fillCurrencySelect('ct-recv-currency', 'اختر عملة الاستلام...');
+
+        // ── المكاتب ──
+        const officeJson = await officeRes.json();
+        const offices = officeJson.data ?? [];
+        const officeSel = document.getElementById('ct-office');
+        officeSel.innerHTML = '<option value="">اختر المكتب المستلم...</option>';
+        offices.forEach(o => officeSel.appendChild(new Option(`${o.name} — ${o.city?.name ?? ''}`, o.id)));
+
+        // ── الوكلاء: نجلب من /users ليتضمن country_id ──
+        _ctAllAgents = await _fetchAllAgents();
+
+        // فلتر وكلاء سوريا
+        const syAgents = _ctAllAgents.filter(a => parseInt(a.country_id) === SYRIA_COUNTRY_ID);
+        const agentSel = document.getElementById('ct-agent');
+        agentSel.innerHTML = '<option value="">اختر الوكيل داخل سوريا...</option>';
+
+        // إذا لم يُعثر على وكلاء بـ country_id (بيانات غير مكتملة) → اعرض الكل مع تحذير
+        const toShow = syAgents.length > 0 ? syAgents : _ctAllAgents;
+        if (syAgents.length === 0) {
+            console.warn('لم يُعثر على وكلاء بـ country_id=1 — سيتم عرض كل الوكلاء');
+        }
+        toShow.forEach(a =>
+            agentSel.appendChild(new Option(`${a.name}${a.phone ? ' — ' + a.phone : ''}`, a.id))
+        );
+
+    } catch (err) {
+        console.error('ctInitForm error:', err);
+        ctShowError('فشل تحميل البيانات من الخادم. حاول مرة أخرى.');
+    } finally {
+        overlay.classList.add('hidden');
+        wrapper.style.opacity = '1';
+        wrapper.style.pointerEvents = '';
+    }
+}
+
+// helper: يملأ قائمة عملات
+function _fillCurrencySelect(selId, placeholder) {
+    const sel = document.getElementById(selId);
+    if (!sel) return;
+    sel.innerHTML = `<option value="">${placeholder}</option>`;
+    _ctCurrencies.forEach(c => sel.appendChild(new Option(`${c.name} (${c.code})`, c.id)));
+}
+
+// حساب الدولار – داخلية
+function ctCalculateUsd() {
+    const amount     = parseFloat(document.getElementById('ct-amount').value);
+    const sendCurrId = parseInt(document.getElementById('ct-send-currency').value);
+    const usdVal     = document.getElementById('ct-usd-value');
+    const usdPreview = document.getElementById('ct-usd-preview');
+
+    if (!amount || !sendCurrId || isNaN(amount)) {
+        usdVal.textContent = usdPreview.textContent = '$0.00'; return;
+    }
+    const currency = _ctCurrencies.find(c => c.id === sendCurrId);
+    if (!currency?.price) { usdVal.textContent = usdPreview.textContent = '$0.00'; return; }
+
+    const eq = (amount * parseFloat(currency.price)).toFixed(2);
+    usdVal.textContent = usdPreview.textContent = `$${eq}`;
+}
+
+// معالجة رفع هوية المرسل – داخلية
+function ctOnSenderIdChange(input) {
+    const file = input.files[0];
+    if (!file) return;
+    document.getElementById('ct-sender-id-filename').textContent = file.name;
+    const reader = new FileReader();
+    reader.onload = e => {
+        document.getElementById('ct-sender-id-preview').src = e.target.result;
+        document.getElementById('ct-sender-id-preview-wrap').classList.remove('hidden');
+    };
+    reader.readAsDataURL(file);
+}
+function ctRemoveSenderId() {
+    document.getElementById('ct-sender-id-image').value = '';
+    document.getElementById('ct-sender-id-filename').textContent = 'اضغط لرفع صورة الهوية';
+    document.getElementById('ct-sender-id-preview-wrap').classList.add('hidden');
+}
+
+// إرسال الحوالة الداخلية
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('ct-transfer-form')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        await ctSubmitTransfer();
+    });
+    document.getElementById('intl-transfer-form')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        await intlSubmitTransfer();
+    });
+});
+
+async function ctSubmitTransfer() {
+    const amount        = document.getElementById('ct-amount').value.trim();
+    const sendCurrId    = document.getElementById('ct-send-currency').value;
+    const recvCurrId    = document.getElementById('ct-recv-currency').value;
+    const officeId      = document.getElementById('ct-office').value;
+    const agentId       = document.getElementById('ct-agent').value;
+    const senderName    = document.getElementById('ct-sender-name').value.trim();
+    const senderIdFile  = document.getElementById('ct-sender-id-image').files[0];
+    const receiverName  = document.getElementById('ct-receiver-name').value.trim();
+    const receiverPhone = document.getElementById('ct-receiver-phone').value.trim();
+
+    if (!amount || parseFloat(amount) < 1)  return ctShowError('يرجى إدخال مبلغ صحيح (1 أو أكثر)');
+    if (!sendCurrId)    return ctShowError('يرجى اختيار عملة الإرسال');
+    if (!recvCurrId)    return ctShowError('يرجى اختيار عملة الاستلام');
+    if (!officeId)      return ctShowError('يرجى اختيار المكتب المستلم');
+    if (!agentId)       return ctShowError('يرجى اختيار الوكيل');
+    if (!senderName)    return ctShowError('يرجى إدخال اسم المرسل');
+    if (!senderIdFile)  return ctShowError('يرجى رفع صورة هوية المرسل');
+    if (!receiverName)  return ctShowError('يرجى إدخال اسم المستلم');
+    if (!receiverPhone) return ctShowError('يرجى إدخال رقم هاتف المستلم');
+
+    const btn = document.getElementById('ct-submit-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري الإرسال...';
+
+    try {
+        const fd = new FormData();
+        fd.append('amount',                parseFloat(amount));
+        fd.append('send_currency_id',      parseInt(sendCurrId));
+        fd.append('currency_id',           parseInt(recvCurrId));
+        fd.append('destination_office_id', parseInt(officeId));
+        fd.append('destination_agent_id',  parseInt(agentId));
+        fd.append('receiver_name',         receiverName);
+        fd.append('receiver_phone',        receiverPhone);
+        fd.append('sender_name',           senderName);
+        fd.append('sender_id_image',       senderIdFile);
+
+        const res = await fetch(`${API_URL}/transfers`, {
+            method: 'POST',
+            headers: { 'Accept': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: fd
+        });
+
+        const json = await res.json();
+        if (res.status === 201) {
+            ctShowSuccess(`تم إنشاء الحوالة بنجاح — كود التتبع: ${json.data?.tracking_code ?? ''}`);
+            ctResetForm();
+        } else {
+            const msg = json.errors ? Object.values(json.errors).flat().join(' — ') : (json.message ?? 'حدث خطأ');
+            ctShowError(msg);
+        }
+    } catch (err) {
+        console.error('ctSubmitTransfer error:', err);
+        ctShowError('تعذّر الاتصال بالخادم.');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> تأكيد وإرسال الحوالة';
+    }
+}
+
+function ctResetForm() {
+    ['ct-amount','ct-sender-name','ct-receiver-name','ct-receiver-phone'].forEach(id => {
+        const el = document.getElementById(id); if (el) el.value = '';
+    });
+    ['ct-send-currency','ct-recv-currency','ct-office','ct-agent'].forEach(id => {
+        const el = document.getElementById(id); if (el) el.value = '';
+    });
+    document.getElementById('ct-usd-value').textContent = '$0.00';
+    document.getElementById('ct-usd-preview').textContent = '$0.00';
+    ctRemoveSenderId();
+}
+
+function ctShowSuccess(msg) {
+    const t = document.getElementById('ct-success-toast');
+    document.getElementById('ct-toast-msg').textContent = msg;
+    t.classList.remove('hidden');
+    setTimeout(() => t.classList.add('hidden'), 6000);
+    document.getElementById('ct-error-toast').classList.add('hidden');
+}
+function ctShowError(msg) {
+    const t = document.getElementById('ct-error-toast');
+    document.getElementById('ct-error-msg').textContent = msg;
+    t.classList.remove('hidden');
+    setTimeout(() => t.classList.add('hidden'), 6000);
+    document.getElementById('ct-success-toast').classList.add('hidden');
+}
+
+/* ─────────────────────────────────────────────
+   الحوالة الخارجية (الدولية)
+───────────────────────────────────────────── */
+let _intlCurrencies = [];
+let _intlAllAgents  = [];
+let _intlAllCountries = [];
+
+function createIntlTransferSection() {
+    hideAllCards();
+    document.getElementById('createtransfer-intl').style.display = 'block';
+    intlInitForm();
+}
+
+async function intlInitForm() {
+    const overlay = document.getElementById('intl-loading-overlay');
+    const wrapper = document.getElementById('intl-form-wrapper');
+    overlay.classList.remove('hidden');
+    wrapper.style.opacity = '0.4';
+    wrapper.style.pointerEvents = 'none';
+
+    try {
+        const [currRes, officeRes, countryRes] = await Promise.all([
+            fetch(`${API_URL}/currencies`, { headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' } }),
+            fetch(`${API_URL}/offices`,    { headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' } }),
+            fetch(`${API_URL}/countries`,  { headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' } }),
+        ]);
+
+        // ── العملات ──
+        const currJson = await currRes.json();
+        _intlCurrencies = Array.isArray(currJson) ? currJson : (currJson.data ?? []);
+        _ctCurrencies = _intlCurrencies;
+
+        const intlSendSel = document.getElementById('intl-send-currency');
+        const intlRecvSel = document.getElementById('intl-recv-currency');
+        intlSendSel.innerHTML = '<option value="">اختر عملة الإرسال...</option>';
+        intlRecvSel.innerHTML = '<option value="">اختر عملة الاستلام...</option>';
+        _intlCurrencies.forEach(c => {
+            intlSendSel.appendChild(new Option(`${c.name} (${c.code})`, c.id));
+            intlRecvSel.appendChild(new Option(`${c.name} (${c.code})`, c.id));
+        });
+
+        // ── المكاتب (يختارها المدير يدوياً) ──
+        const officeJson = await officeRes.json();
+        const offices = officeJson.data ?? [];
+        const intlOfficeSel = document.getElementById('intl-office');
+        intlOfficeSel.innerHTML = '<option value="">اختر المكتب المحلي...</option>';
+        offices.forEach(o => intlOfficeSel.appendChild(new Option(`${o.name} — ${o.city?.name ?? ''}`, o.id)));
+
+        // ── الوكلاء: نجلب من /users ليتضمن country_id ──
+        _intlAllAgents = await _fetchAllAgents();
+
+        // وكيل المرسِل = كل الوكلاء بدون تقييد
+        const localSel = document.getElementById('intl-agent-local');
+        localSel.innerHTML = '<option value="">اختر وكيل المرسِل...</option>';
+        _intlAllAgents.forEach(a =>
+            localSel.appendChild(new Option(`${a.name}${a.phone ? ' — ' + a.phone : ''}`, a.id))
+        );
+
+        // وكيل الخارج + المدينة = فارغان حتى اختيار الدولة
+        document.getElementById('intl-agent-foreign').innerHTML = '<option value="">اختر الدولة أولاً...</option>';
+        const citySel = document.getElementById('intl-city');
+        citySel.innerHTML = '<option value="">اختر الدولة أولاً...</option>';
+        citySel.disabled = true;
+
+        // ── الدول (كل الدول ما عدا سوريا) ──
+        const countryJson = await countryRes.json();
+        _intlAllCountries = (countryJson.data ?? countryJson).filter(c => c.id !== SYRIA_COUNTRY_ID);
+        const countrySel = document.getElementById('intl-country');
+        countrySel.innerHTML = '<option value="">اختر الدولة المستلِمة...</option>';
+        _intlAllCountries.forEach(c => countrySel.appendChild(new Option(c.name, c.id)));
+
+    } catch (err) {
+        console.error('intlInitForm error:', err);
+        intlShowError('فشل تحميل البيانات من الخادم. حاول مرة أخرى.');
+    } finally {
+        overlay.classList.add('hidden');
+        wrapper.style.opacity = '1';
+        wrapper.style.pointerEvents = '';
+    }
+}
+
+// عند اختيار الدولة → جلب المدن من API + فلترة وكلاء الخارج
+async function intlOnCountryChange() {
+    const countryId = parseInt(document.getElementById('intl-country').value);
+    const citySel   = document.getElementById('intl-city');
+    const agentSel  = document.getElementById('intl-agent-foreign');
+
+    // إعادة تعيين المدينة والوكيل
+    citySel.innerHTML  = '<option value="">اختر الدولة أولاً...</option>';
+    agentSel.innerHTML = '<option value="">اختر الدولة أولاً...</option>';
+    citySel.disabled   = true;
+
+    if (!countryId) return;
+
+    // ── جلب المدن ──
+    citySel.innerHTML = '<option value="">جاري التحميل...</option>';
+    try {
+        const res  = await fetch(`${API_URL}/cities?country_id=${countryId}`, {
+            headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' }
+        });
+        const json = await res.json();
+        const cities = json.data ?? json ?? [];
+
+        citySel.innerHTML = '<option value="">اختر المدينة...</option>';
+        if (cities.length === 0) {
+            citySel.innerHTML = '<option value="" disabled>لا توجد مدن مسجلة لهذه الدولة</option>';
+        } else {
+            cities.forEach(c => citySel.appendChild(new Option(c.name, c.name)));
+        }
+        citySel.disabled = false;
+    } catch (err) {
+        console.error('cities fetch error:', err);
+        citySel.innerHTML = '<option value="" disabled>فشل تحميل المدن</option>';
+        citySel.disabled = false;
+    }
+
+    // ── فلترة وكلاء الخارج ──
+    const foreignAgents = _intlAllAgents.filter(a => parseInt(a.country_id) === countryId);
+    agentSel.innerHTML = '<option value="">اختر الوكيل الخارجي...</option>';
+    if (foreignAgents.length === 0) {
+        const noOpt = new Option('لا يوجد وكلاء مسجلون في هذه الدولة', '');
+        noOpt.disabled = true;
+        agentSel.appendChild(noOpt);
+        agentSel.appendChild(new Option('— بدون وكيل محدد —', '0'));
+    } else {
+        foreignAgents.forEach(a =>
+            agentSel.appendChild(new Option(`${a.name}${a.phone ? ' — ' + a.phone : ''}`, a.id))
+        );
+    }
+}
+
+// حساب الدولار – خارجية
+function intlCalculateUsd() {
+    const amount     = parseFloat(document.getElementById('intl-amount').value);
+    const sendCurrId = parseInt(document.getElementById('intl-send-currency').value);
+    const usdVal     = document.getElementById('intl-usd-value');
+    const usdPreview = document.getElementById('intl-usd-preview');
+
+    if (!amount || !sendCurrId || isNaN(amount)) {
+        usdVal.textContent = usdPreview.textContent = '$0.00'; return;
+    }
+    const currency = _intlCurrencies.find(c => c.id === sendCurrId);
+    if (!currency?.price) { usdVal.textContent = usdPreview.textContent = '$0.00'; return; }
+
+    const eq = (amount * parseFloat(currency.price)).toFixed(2);
+    usdVal.textContent = usdPreview.textContent = `$${eq}`;
+}
+
+// هوية المرسل – خارجية
+function intlOnSenderIdChange(input) {
+    const file = input.files[0];
+    if (!file) return;
+    document.getElementById('intl-sender-id-filename').textContent = file.name;
+    const reader = new FileReader();
+    reader.onload = e => {
+        document.getElementById('intl-sender-id-preview').src = e.target.result;
+        document.getElementById('intl-sender-id-preview-wrap').classList.remove('hidden');
+    };
+    reader.readAsDataURL(file);
+}
+function intlRemoveSenderId() {
+    document.getElementById('intl-sender-id-image').value = '';
+    document.getElementById('intl-sender-id-filename').textContent = 'اضغط لرفع صورة الهوية';
+    document.getElementById('intl-sender-id-preview-wrap').classList.add('hidden');
+}
+
+// إرسال الحوالة الدولية
+async function intlSubmitTransfer() {
+    const amount          = document.getElementById('intl-amount').value.trim();
+    const sendCurrId      = document.getElementById('intl-send-currency').value;
+    const recvCurrId      = document.getElementById('intl-recv-currency').value;
+    const agentLocalId    = document.getElementById('intl-agent-local').value;
+    const officeId        = document.getElementById('intl-office').value;
+    const countryId       = document.getElementById('intl-country').value;
+    const city            = document.getElementById('intl-city').value.trim();
+    const agentForeignId  = document.getElementById('intl-agent-foreign').value;
+    const senderName      = document.getElementById('intl-sender-name').value.trim();
+    const senderIdFile    = document.getElementById('intl-sender-id-image').files[0];
+    const receiverName    = document.getElementById('intl-receiver-name').value.trim();
+    const receiverPhone   = document.getElementById('intl-receiver-phone').value.trim();
+
+    if (!amount || parseFloat(amount) < 1)  return intlShowError('يرجى إدخال مبلغ صحيح');
+    if (!sendCurrId)     return intlShowError('يرجى اختيار عملة الإرسال');
+    if (!recvCurrId)     return intlShowError('يرجى اختيار عملة الاستلام');
+    if (!agentLocalId)   return intlShowError('يرجى اختيار وكيل المرسِل');
+    if (!officeId)       return intlShowError('يرجى اختيار المكتب المحلي');
+    if (!countryId)      return intlShowError('يرجى اختيار الدولة المستلِمة');
+    if (!city)           return intlShowError('يرجى اختيار المدينة في الخارج');
+    if (!agentForeignId) return intlShowError('يرجى اختيار الوكيل الخارجي');
+    if (!senderName)     return intlShowError('يرجى إدخال اسم المرسل');
+    if (!senderIdFile)   return intlShowError('يرجى رفع صورة هوية المرسل');
+    if (!receiverName)   return intlShowError('يرجى إدخال اسم المستلم');
+    if (!receiverPhone)  return intlShowError('يرجى إدخال رقم هاتف المستلم');
+
+    const btn = document.getElementById('intl-submit-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري الإرسال...';
+
+    try {
+        const fd = new FormData();
+        fd.append('amount',                  parseFloat(amount));
+        fd.append('send_currency_id',        parseInt(sendCurrId));
+        fd.append('currency_id',             parseInt(recvCurrId));
+        fd.append('destination_agent_id',    parseInt(agentLocalId));  // وكيل سوريا يستلم أولاً
+        fd.append('destination_office_id',   parseInt(officeId));
+        fd.append('destination_country_id',  parseInt(countryId));
+        fd.append('destination_city',        city);
+        fd.append('destination_agent_id_foreign', parseInt(agentForeignId)); // ملاحظة: Backend قد يحتاج تعديل
+        fd.append('receiver_name',           receiverName);
+        fd.append('receiver_phone',          receiverPhone);
+        fd.append('sender_name',             senderName);
+        fd.append('sender_id_image',         senderIdFile);
+
+        const res = await fetch(`${API_URL}/transfers`, {
+            method: 'POST',
+            headers: { 'Accept': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: fd
+        });
+
+        const json = await res.json();
+        if (res.status === 201) {
+            intlShowSuccess(`تم إنشاء الحوالة الدولية بنجاح — كود التتبع: ${json.data?.tracking_code ?? ''}`);
+            intlResetForm();
+        } else {
+            const msg = json.errors ? Object.values(json.errors).flat().join(' — ') : (json.message ?? 'حدث خطأ');
+            intlShowError(msg);
+        }
+    } catch (err) {
+        console.error('intlSubmitTransfer error:', err);
+        intlShowError('تعذّر الاتصال بالخادم.');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-globe"></i> إرسال الحوالة الدولية';
+    }
+}
+
+function intlResetForm() {
+    // حقول النصوص
+    ['intl-amount','intl-sender-name','intl-receiver-name','intl-receiver-phone'].forEach(id => {
+        const el = document.getElementById(id); if (el) el.value = '';
+    });
+    // القوائم المنسدلة
+    ['intl-send-currency','intl-recv-currency','intl-agent-local','intl-office','intl-country','intl-agent-foreign'].forEach(id => {
+        const el = document.getElementById(id); if (el) el.value = '';
+    });
+    // إعادة تعيين المدينة (select) وتعطيلها
+    const citySel = document.getElementById('intl-city');
+    if (citySel) {
+        citySel.innerHTML = '<option value="">اختر الدولة أولاً...</option>';
+        citySel.disabled = true;
+    }
+    document.getElementById('intl-usd-value').textContent = '$0.00';
+    document.getElementById('intl-usd-preview').textContent = '$0.00';
+    intlRemoveSenderId();
+}
+
+function intlShowSuccess(msg) {
+    const t = document.getElementById('intl-success-toast');
+    document.getElementById('intl-toast-msg').textContent = msg;
+    t.classList.remove('hidden');
+    setTimeout(() => t.classList.add('hidden'), 6000);
+    document.getElementById('intl-error-toast').classList.add('hidden');
+}
+function intlShowError(msg) {
+    const t = document.getElementById('intl-error-toast');
+    document.getElementById('intl-error-msg').textContent = msg;
+    t.classList.remove('hidden');
+    setTimeout(() => t.classList.add('hidden'), 6000);
+    document.getElementById('intl-success-toast').classList.add('hidden');
 }
 
 async function loadTradingReport() {
