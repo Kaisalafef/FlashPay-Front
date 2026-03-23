@@ -113,7 +113,7 @@ async function loadAllTransfers(){
                 switch(transfer.status){
                     case 'pending':
                         statusClass = 'status-badge status-pending';
-                        statusText = 'بانتظار الوكيل';
+                        statusText = 'قيد الانتظار';
                         break;
                     case 'approved':
                         statusClass = 'status-badge status-approved';
@@ -672,23 +672,6 @@ async function ctInitForm() {
         officeSel.innerHTML = '<option value="">اختر المكتب المستلم...</option>';
         offices.forEach(o => officeSel.appendChild(new Option(`${o.name} — ${o.city?.name ?? ''}`, o.id)));
 
-        // ── الوكلاء: نجلب من /users ليتضمن country_id ──
-        _ctAllAgents = await _fetchAllAgents();
-
-        // فلتر وكلاء سوريا
-        const syAgents = _ctAllAgents.filter(a => parseInt(a.country_id) === SYRIA_COUNTRY_ID);
-        const agentSel = document.getElementById('ct-agent');
-        agentSel.innerHTML = '<option value="">اختر الوكيل داخل سوريا...</option>';
-
-        // إذا لم يُعثر على وكلاء بـ country_id (بيانات غير مكتملة) → اعرض الكل مع تحذير
-        const toShow = syAgents.length > 0 ? syAgents : _ctAllAgents;
-        if (syAgents.length === 0) {
-            console.warn('لم يُعثر على وكلاء بـ country_id=1 — سيتم عرض كل الوكلاء');
-        }
-        toShow.forEach(a =>
-            agentSel.appendChild(new Option(`${a.name}${a.phone ? ' — ' + a.phone : ''}`, a.id))
-        );
-
     } catch (err) {
         console.error('ctInitForm error:', err);
         ctShowError('فشل تحميل البيانات من الخادم. حاول مرة أخرى.');
@@ -759,7 +742,6 @@ async function ctSubmitTransfer() {
     const sendCurrId    = document.getElementById('ct-send-currency').value;
     const recvCurrId    = document.getElementById('ct-recv-currency').value;
     const officeId      = document.getElementById('ct-office').value;
-    const agentId       = document.getElementById('ct-agent').value;
     const senderName    = document.getElementById('ct-sender-name').value.trim();
     const senderIdFile  = document.getElementById('ct-sender-id-image').files[0];
     const receiverName  = document.getElementById('ct-receiver-name').value.trim();
@@ -769,7 +751,6 @@ async function ctSubmitTransfer() {
     if (!sendCurrId)    return ctShowError('يرجى اختيار عملة الإرسال');
     if (!recvCurrId)    return ctShowError('يرجى اختيار عملة الاستلام');
     if (!officeId)      return ctShowError('يرجى اختيار المكتب المستلم');
-    if (!agentId)       return ctShowError('يرجى اختيار الوكيل');
     if (!senderName)    return ctShowError('يرجى إدخال اسم المرسل');
     if (!senderIdFile)  return ctShowError('يرجى رفع صورة هوية المرسل');
     if (!receiverName)  return ctShowError('يرجى إدخال اسم المستلم');
@@ -785,7 +766,7 @@ async function ctSubmitTransfer() {
         fd.append('send_currency_id',      parseInt(sendCurrId));
         fd.append('currency_id',           parseInt(recvCurrId));
         fd.append('destination_office_id', parseInt(officeId));
-        fd.append('destination_agent_id',  parseInt(agentId));
+        fd.append('status',                'waiting');
         fd.append('receiver_name',         receiverName);
         fd.append('receiver_phone',        receiverPhone);
         fd.append('sender_name',           senderName);
@@ -818,7 +799,7 @@ function ctResetForm() {
     ['ct-amount','ct-sender-name','ct-receiver-name','ct-receiver-phone'].forEach(id => {
         const el = document.getElementById(id); if (el) el.value = '';
     });
-    ['ct-send-currency','ct-recv-currency','ct-office','ct-agent'].forEach(id => {
+    ['ct-send-currency','ct-recv-currency','ct-office'].forEach(id => {
         const el = document.getElementById(id); if (el) el.value = '';
     });
     document.getElementById('ct-usd-value').textContent = '$0.00';
@@ -889,28 +870,17 @@ async function intlInitForm() {
         intlOfficeSel.innerHTML = '<option value="">اختر المكتب المحلي...</option>';
         offices.forEach(o => intlOfficeSel.appendChild(new Option(`${o.name} — ${o.city?.name ?? ''}`, o.id)));
 
-        // ── الوكلاء: نجلب من /users ليتضمن country_id ──
-        _intlAllAgents = await _fetchAllAgents();
-
-        // وكيل المرسِل = كل الوكلاء بدون تقييد
-        const localSel = document.getElementById('intl-agent-local');
-        localSel.innerHTML = '<option value="">اختر وكيل المرسِل...</option>';
-        _intlAllAgents.forEach(a =>
-            localSel.appendChild(new Option(`${a.name}${a.phone ? ' — ' + a.phone : ''}`, a.id))
-        );
-
-        // وكيل الخارج + المدينة = فارغان حتى اختيار الدولة
-        document.getElementById('intl-agent-foreign').innerHTML = '<option value="">اختر الدولة أولاً...</option>';
-        const citySel = document.getElementById('intl-city');
-        citySel.innerHTML = '<option value="">اختر الدولة أولاً...</option>';
-        citySel.disabled = true;
-
         // ── الدول (كل الدول ما عدا سوريا) ──
         const countryJson = await countryRes.json();
         _intlAllCountries = (countryJson.data ?? countryJson).filter(c => c.id !== SYRIA_COUNTRY_ID);
         const countrySel = document.getElementById('intl-country');
         countrySel.innerHTML = '<option value="">اختر الدولة المستلِمة...</option>';
         _intlAllCountries.forEach(c => countrySel.appendChild(new Option(c.name, c.id)));
+
+        // تهيئة المدينة معطّلة حتى اختيار الدولة
+        const citySel = document.getElementById('intl-city');
+        citySel.innerHTML = '<option value="">اختر الدولة أولاً...</option>';
+        citySel.disabled = true;
 
     } catch (err) {
         console.error('intlInitForm error:', err);
@@ -922,16 +892,14 @@ async function intlInitForm() {
     }
 }
 
-// عند اختيار الدولة → جلب المدن من API + فلترة وكلاء الخارج
+// عند اختيار الدولة → جلب المدن من API
 async function intlOnCountryChange() {
     const countryId = parseInt(document.getElementById('intl-country').value);
     const citySel   = document.getElementById('intl-city');
-    const agentSel  = document.getElementById('intl-agent-foreign');
 
-    // إعادة تعيين المدينة والوكيل
-    citySel.innerHTML  = '<option value="">اختر الدولة أولاً...</option>';
-    agentSel.innerHTML = '<option value="">اختر الدولة أولاً...</option>';
-    citySel.disabled   = true;
+    // إعادة تعيين المدينة
+    citySel.innerHTML = '<option value="">اختر الدولة أولاً...</option>';
+    citySel.disabled  = true;
 
     if (!countryId) return;
 
@@ -955,20 +923,6 @@ async function intlOnCountryChange() {
         console.error('cities fetch error:', err);
         citySel.innerHTML = '<option value="" disabled>فشل تحميل المدن</option>';
         citySel.disabled = false;
-    }
-
-    // ── فلترة وكلاء الخارج ──
-    const foreignAgents = _intlAllAgents.filter(a => parseInt(a.country_id) === countryId);
-    agentSel.innerHTML = '<option value="">اختر الوكيل الخارجي...</option>';
-    if (foreignAgents.length === 0) {
-        const noOpt = new Option('لا يوجد وكلاء مسجلون في هذه الدولة', '');
-        noOpt.disabled = true;
-        agentSel.appendChild(noOpt);
-        agentSel.appendChild(new Option('— بدون وكيل محدد —', '0'));
-    } else {
-        foreignAgents.forEach(a =>
-            agentSel.appendChild(new Option(`${a.name}${a.phone ? ' — ' + a.phone : ''}`, a.id))
-        );
     }
 }
 
@@ -1012,11 +966,9 @@ async function intlSubmitTransfer() {
     const amount          = document.getElementById('intl-amount').value.trim();
     const sendCurrId      = document.getElementById('intl-send-currency').value;
     const recvCurrId      = document.getElementById('intl-recv-currency').value;
-    const agentLocalId    = document.getElementById('intl-agent-local').value;
     const officeId        = document.getElementById('intl-office').value;
     const countryId       = document.getElementById('intl-country').value;
     const city            = document.getElementById('intl-city').value.trim();
-    const agentForeignId  = document.getElementById('intl-agent-foreign').value;
     const senderName      = document.getElementById('intl-sender-name').value.trim();
     const senderIdFile    = document.getElementById('intl-sender-id-image').files[0];
     const receiverName    = document.getElementById('intl-receiver-name').value.trim();
@@ -1025,11 +977,9 @@ async function intlSubmitTransfer() {
     if (!amount || parseFloat(amount) < 1)  return intlShowError('يرجى إدخال مبلغ صحيح');
     if (!sendCurrId)     return intlShowError('يرجى اختيار عملة الإرسال');
     if (!recvCurrId)     return intlShowError('يرجى اختيار عملة الاستلام');
-    if (!agentLocalId)   return intlShowError('يرجى اختيار وكيل المرسِل');
     if (!officeId)       return intlShowError('يرجى اختيار المكتب المحلي');
     if (!countryId)      return intlShowError('يرجى اختيار الدولة المستلِمة');
     if (!city)           return intlShowError('يرجى اختيار المدينة في الخارج');
-    if (!agentForeignId) return intlShowError('يرجى اختيار الوكيل الخارجي');
     if (!senderName)     return intlShowError('يرجى إدخال اسم المرسل');
     if (!senderIdFile)   return intlShowError('يرجى رفع صورة هوية المرسل');
     if (!receiverName)   return intlShowError('يرجى إدخال اسم المستلم');
@@ -1044,11 +994,10 @@ async function intlSubmitTransfer() {
         fd.append('amount',                  parseFloat(amount));
         fd.append('send_currency_id',        parseInt(sendCurrId));
         fd.append('currency_id',             parseInt(recvCurrId));
-        fd.append('destination_agent_id',    parseInt(agentLocalId));  // وكيل سوريا يستلم أولاً
         fd.append('destination_office_id',   parseInt(officeId));
         fd.append('destination_country_id',  parseInt(countryId));
         fd.append('destination_city',        city);
-        fd.append('destination_agent_id_foreign', parseInt(agentForeignId)); // ملاحظة: Backend قد يحتاج تعديل
+        fd.append('status',                  'waiting');
         fd.append('receiver_name',           receiverName);
         fd.append('receiver_phone',          receiverPhone);
         fd.append('sender_name',             senderName);
@@ -1083,7 +1032,7 @@ function intlResetForm() {
         const el = document.getElementById(id); if (el) el.value = '';
     });
     // القوائم المنسدلة
-    ['intl-send-currency','intl-recv-currency','intl-agent-local','intl-office','intl-country','intl-agent-foreign'].forEach(id => {
+    ['intl-send-currency','intl-recv-currency','intl-office','intl-country'].forEach(id => {
         const el = document.getElementById(id); if (el) el.value = '';
     });
     // إعادة تعيين المدينة (select) وتعطيلها
