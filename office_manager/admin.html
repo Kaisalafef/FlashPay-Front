@@ -465,11 +465,11 @@
                                 </div>
                                 <div>
                                     <h4 class="ct-section-title">وجهة الحوالة</h4>
-                                    <p class="ct-section-subtitle">اختر المكتب المستلم والوكيل داخل سوريا</p>
+                                    <p class="ct-section-subtitle">اختر المكتب المستلم للحوالة</p>
                                 </div>
                             </div>
 
-                            <div class="ct-fields-grid ct-grid-2">
+                            <div class="ct-fields-grid ct-grid-1">
                                 <div class="ct-field-group">
                                     <label class="ct-label">
                                         <i class="fa-solid fa-building"></i> المكتب المستلم
@@ -479,17 +479,6 @@
                                         <option value="">جاري التحميل...</option>
                                     </select>
                                     <span class="ct-hint">المكتب الداخلي المستلم للحوالة</span>
-                                </div>
-
-                                <div class="ct-field-group">
-                                    <label class="ct-label">
-                                        <i class="fa-solid fa-user-tie"></i> الوكيل داخل سوريا
-                                        <span class="ct-required">*</span>
-                                    </label>
-                                    <select id="ct-agent" class="ct-select">
-                                        <option value="">جاري التحميل...</option>
-                                    </select>
-                                    <span class="ct-hint">الوكلاء المتاحون داخل سوريا فقط</span>
                                 </div>
                             </div>
                         </div>
@@ -675,24 +664,18 @@
 
                         <div class="ct-divider"></div>
 
-                        <!-- ── القسم 2: وكيل المرسِل والمكتب ── -->
+                        <!-- ── القسم 2: المكتب المحلي ── -->
                         <div class="ct-section">
                             <div class="ct-section-header">
                                 <div class="ct-section-icon" style="background:#dcfce7;color:#16a34a;">
                                     <i class="fa-solid fa-flag"></i>
                                 </div>
                                 <div>
-                                    <h4 class="ct-section-title">وكيل المرسِل والمكتب</h4>
-                                    <p class="ct-section-subtitle">الوكيل الذي جلب الزبون والمكتب المحلي للحوالة</p>
+                                    <h4 class="ct-section-title">المكتب المحلي</h4>
+                                    <p class="ct-section-subtitle">المكتب المحلي الذي سيرسل الحوالة</p>
                                 </div>
                             </div>
-                            <div class="ct-fields-grid ct-grid-2">
-                                <div class="ct-field-group">
-                                    <label class="ct-label"><i class="fa-solid fa-user-tie"></i> وكيل المرسِل <span class="ct-required">*</span></label>
-                                    <select id="intl-agent-local" class="ct-select">
-                                        <option value="">جاري التحميل...</option>
-                                    </select>
-                                </div>
+                            <div class="ct-fields-grid ct-grid-1">
                                 <div class="ct-field-group">
                                     <label class="ct-label"><i class="fa-solid fa-building"></i> المكتب المحلي <span class="ct-required">*</span></label>
                                     <select id="intl-office" class="ct-select">
@@ -716,7 +699,7 @@
                                 </div>
                             </div>
 
-                            <div class="ct-fields-grid ct-grid-3">
+                            <div class="ct-fields-grid ct-grid-2">
                                 <div class="ct-field-group">
                                     <label class="ct-label"><i class="fa-solid fa-globe"></i> الدولة المستلِمة <span class="ct-required">*</span></label>
                                     <select id="intl-country" class="ct-select" onchange="intlOnCountryChange()">
@@ -728,13 +711,6 @@
                                     <select id="intl-city" class="ct-select" disabled>
                                         <option value="">اختر الدولة أولاً...</option>
                                     </select>
-                                </div>
-                                <div class="ct-field-group">
-                                    <label class="ct-label"><i class="fa-solid fa-user-secret"></i> وكيل الخارج <span class="ct-required">*</span></label>
-                                    <select id="intl-agent-foreign" class="ct-select">
-                                        <option value="">اختر الدولة أولاً...</option>
-                                    </select>
-                                    <span class="ct-hint">يتغير تلقائياً بعد اختيار الدولة</span>
                                 </div>
                             </div>
                         </div>
