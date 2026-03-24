@@ -38,6 +38,12 @@
                     </a>
                 </li>
                 <li>
+                    <a href="#" onclick="setActive(this); showTransferHistorySection();">
+                        <i class="fa-solid fa-timeline"></i>
+                        سجل التعديلات
+                    </a>
+                </li>
+                <li>
                     <a href="#" onclick="setActive(this); showOfficeSection();">
                         <i class="fa-solid fa-building"></i>
                         معلومات المكتب والموظفين
@@ -210,8 +216,11 @@
                                 <th>المبلغ</th>
                                 <th>المرسل</th>
                                 <th>المستلم</th>
+                                <th>الوجهة</th>
+                                <th>الرسوم</th>
                                 <th>الحالة</th>
                                 <th>التاريخ</th>
+                                <th>الإجراءات</th>
                             </tr>
                         </thead>
                         <tbody id="all-transfers-list"></tbody>
@@ -369,6 +378,56 @@
                 </div>
 
             </div>
+            <!-- ===== قسم سجل التعديلات ===== -->
+            <div class="card" id="transfer-history-card" style="display:none;">
+
+                <div class="section-hero" style="background:linear-gradient(135deg,#1e3a5f 0%,#2d5986 100%);">
+                    <div class="section-hero-text">
+                        <h2><i class="fa-solid fa-timeline"></i> سجل التعديلات</h2>
+                        <p>جميع التعديلات التي أجراها المديرون على الحوالات مع مقارنة كاملة</p>
+                    </div>
+                    <div class="section-hero-stats">
+                        <div class="hero-stat">
+                            <span id="stat-history-count">—</span>
+                            <small>إجمالي التعديلات</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="table-toolbar">
+                    <div class="toolbar-search">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="text" id="history-search" placeholder="بحث برقم الحوالة أو اسم المدير..."
+                            oninput="filterHistoryTable()">
+                    </div>
+                    <div class="toolbar-actions">
+                        <button class="toolbar-btn" onclick="loadTransferHistory()" title="تحديث">
+                            <i class="fa-solid fa-arrows-rotate"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="table-wrapper">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>رقم الحوالة</th>
+                                <th>المدير المنفذ</th>
+                                <th>الإجراء / السبب</th>
+                                <th>التغييرات</th>
+                                <th>وقت التعديل</th>
+                            </tr>
+                        </thead>
+                        <tbody id="history-list"></tbody>
+                    </table>
+                    <div id="history-empty" class="table-empty hidden">
+                        <i class="fa-solid fa-clock-rotate-left"></i>
+                        <p>لا توجد تعديلات مسجلة بعد</p>
+                    </div>
+                </div>
+            </div>
+
             <!-- ===== قسم إنشاء حوالة داخلية ===== -->
             <div class="card" id="createtransfer" style="display:none;">
 
@@ -812,7 +871,64 @@
         </div><!-- /.content-body -->
     </main>
 
-    <script src="admin.js"></script>
+
+    <!-- ===== مودال تعديل الحوالة ===== -->
+    <div id="edit-transfer-modal" class="modal-overlay hidden">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-pen-to-square"></i> تعديل بيانات الحوالة</h3>
+                <button class="modal-close-btn" onclick="closeEditModal()">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="edit-transfer-id">
+
+                <!-- معلومات الحوالة (للقراءة فقط) -->
+                <div id="edit-transfer-info" style="background:var(--light);border-radius:10px;padding:12px 16px;margin-bottom:18px;font-size:13px;color:var(--gray);font-weight:600;"></div>
+
+                <div class="modal-field-grid">
+                    <div class="modal-field-group">
+                        <label><i class="fa-solid fa-user"></i> اسم المستلم</label>
+                        <input type="text" id="edit-receiver-name" class="modal-input" placeholder="اسم المستلم الكامل">
+                    </div>
+                    <div class="modal-field-group">
+                        <label><i class="fa-solid fa-phone"></i> رقم هاتف المستلم</label>
+                        <input type="tel" id="edit-receiver-phone" class="modal-input" placeholder="+963xxxxxxxxx" dir="ltr">
+                    </div>
+                    <div class="modal-field-group">
+                        <label><i class="fa-solid fa-coins"></i> المبلغ</label>
+                        <input type="number" id="edit-amount" class="modal-input" placeholder="المبلغ" min="1" step="any">
+                    </div>
+                    <div class="modal-field-group">
+                        <label><i class="fa-solid fa-percent"></i> الرسوم ($)</label>
+                        <input type="number" id="edit-fee" class="modal-input" placeholder="0.00" min="0" step="any">
+                    </div>
+                </div>
+
+                <div class="modal-field-group" style="margin-top:14px;">
+                    <label><i class="fa-solid fa-note-sticky"></i> سبب التعديل / ملاحظات</label>
+                    <textarea id="edit-notes" class="modal-input" rows="2"
+                        placeholder="مثال: تصحيح رقم الهاتف بناءً على طلب المرسل..."></textarea>
+                </div>
+
+                <div id="edit-modal-error" class="modal-error hidden">
+                    <i class="fa-solid fa-circle-exclamation"></i>
+                    <span id="edit-modal-error-text"></span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-cancel-btn" onclick="closeEditModal()">
+                    <i class="fa-solid fa-xmark"></i> إلغاء
+                </button>
+                <button class="modal-save-btn" id="edit-save-btn" onclick="saveTransferEdit()">
+                    <i class="fa-solid fa-floppy-disk"></i> حفظ التعديلات
+                </button>
+            </div>
+        </div>
+    </div>
+
+        <script src="admin.js"></script>
 
     <script>
         // ===== وظائف مساعدة للواجهة =====

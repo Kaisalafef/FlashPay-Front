@@ -1858,3 +1858,268 @@ button { border: none; cursor: pointer; }
     .trade-chips-row { gap: 5px; }
     .trade-chip { font-size: 11px; padding: 5px 9px; }
 }
+
+/* ===============================================================
+   مودال تعديل الحوالة + سجل التعديلات
+   =============================================================== */
+
+/* ===== Modal Overlay ===== */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+    animation: fadeInOverlay .25s ease;
+}
+.modal-overlay.hidden { display: none; }
+
+@keyframes fadeInOverlay {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+/* ===== Modal Box ===== */
+.modal-box {
+    background: var(--white);
+    border-radius: 20px;
+    width: 580px;
+    max-width: 95vw;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.3);
+    animation: slideUpModal .3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes slideUpModal {
+    from { opacity: 0; transform: translateY(40px) scale(0.96); }
+    to   { opacity: 1; transform: translateY(0)    scale(1);    }
+}
+
+/* ===== Modal Header ===== */
+.modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px;
+    background: linear-gradient(135deg, #ea580c 0%, #f97316 100%);
+    color: #fff;
+}
+.modal-header h3 {
+    font-size: 16px;
+    font-weight: 800;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.modal-close-btn {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    border-radius: 50%;
+    width: 34px;
+    height: 34px;
+    color: #fff;
+    cursor: pointer;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background var(--transition);
+    flex-shrink: 0;
+}
+.modal-close-btn:hover { background: rgba(255, 255, 255, 0.35); }
+
+/* ===== Modal Body ===== */
+.modal-body {
+    padding: 24px;
+}
+.modal-field-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+.modal-field-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.modal-field-group label {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--dark);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.modal-field-group label i {
+    color: var(--primary);
+    font-size: 12px;
+}
+.modal-input {
+    width: 100%;
+    padding: 10px 14px;
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    font-family: 'Cairo', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--dark);
+    background: var(--light);
+    transition: border-color var(--transition), background var(--transition), box-shadow var(--transition);
+    box-sizing: border-box;
+}
+.modal-input:focus {
+    outline: none;
+    border-color: var(--primary);
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.12);
+}
+textarea.modal-input {
+    resize: vertical;
+    min-height: 72px;
+}
+
+/* ===== Modal Error ===== */
+.modal-error {
+    background: var(--danger-bg);
+    color: var(--danger);
+    border: 1px solid #fca5a5;
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    margin-top: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.modal-error.hidden { display: none; }
+
+/* ===== Modal Footer ===== */
+.modal-footer {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    padding: 16px 24px;
+    border-top: 1px solid var(--border);
+    background: var(--light);
+}
+.modal-cancel-btn {
+    padding: 10px 22px;
+    border-radius: 10px;
+    border: 2px solid var(--border);
+    background: #fff;
+    font-family: 'Cairo', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    color: var(--dark);
+    transition: border-color var(--transition), background var(--transition);
+}
+.modal-cancel-btn:hover {
+    border-color: #9ca3af;
+    background: var(--light);
+}
+.modal-save-btn {
+    padding: 10px 24px;
+    border-radius: 10px;
+    border: none;
+    background: linear-gradient(135deg, #ea580c 0%, #f97316 100%);
+    color: #fff;
+    font-family: 'Cairo', sans-serif;
+    font-size: 13px;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(234, 88, 12, 0.35);
+    transition: opacity var(--transition), transform var(--transition);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.modal-save-btn:hover   { opacity: 0.88; transform: translateY(-1px); }
+.modal-save-btn:active  { transform: translateY(0); }
+.modal-save-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+/* ===== زر التعديل في جدول الحوالات ===== */
+.btn-edit-transfer {
+    padding: 6px 14px;
+    border-radius: 8px;
+    border: none;
+    background: linear-gradient(135deg, #ea580c, #f97316);
+    color: #fff;
+    font-family: 'Cairo', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity .2s, transform .2s;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    box-shadow: 0 2px 6px rgba(234, 88, 12, 0.25);
+}
+.btn-edit-transfer:hover {
+    opacity: 0.85;
+    transform: translateY(-1px);
+}
+
+/* ===== سجل التعديلات: diff badges ===== */
+.diff-old {
+    color: #dc2626;
+    text-decoration: line-through;
+    font-size: 11px;
+    font-weight: 600;
+}
+.diff-new {
+    color: #16a34a;
+    font-size: 11px;
+    font-weight: 700;
+}
+.diff-row {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-bottom: 5px;
+    padding-bottom: 5px;
+    border-bottom: 1px dashed var(--border);
+}
+.diff-row:last-child { border-bottom: none; margin-bottom: 0; }
+.diff-label {
+    font-size: 10px;
+    color: var(--gray);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* ===== تحسين الجدول: رقم التتبع ===== */
+.tracking-code {
+    font-size: 10px;
+    color: var(--gray);
+    direction: ltr;
+    display: inline-block;
+    background: var(--light);
+    border-radius: 4px;
+    padding: 1px 5px;
+    margin-top: 3px;
+    letter-spacing: 0.5px;
+}
+
+/* ===== Responsive للمودال ===== */
+@media (max-width: 600px) {
+    .modal-field-grid {
+        grid-template-columns: 1fr;
+    }
+    .modal-footer {
+        flex-direction: column-reverse;
+    }
+    .modal-cancel-btn,
+    .modal-save-btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
