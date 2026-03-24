@@ -91,94 +91,110 @@ function setActive(element){
 
     element.parentElement.classList.add('active');
 }
-async function loadAllTransfers(){
-    try {
-        const res = await fetch(`${API_URL}/transfers`, {
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Accept': 'application/json'
-            }
-        });
+async function loadAllTransfers() {
+    const tbody  = document.getElementById('all-transfers-list');
+    const emptyEl = document.getElementById('all-transfers-empty');
+    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:24px;color:var(--gray);">جاري التحميل...</td></tr>';
 
+    try {
+        const res  = await fetch(`${API_URL}/transfers`, {
+            headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' }
+        });
         const json = await res.json();
-        const tbody = document.getElementById('all-transfers-list');
         tbody.innerHTML = '';
 
-        if (json.status === 'success' && Array.isArray(json.data)) {
-
-            json.data.forEach(transfer => {
-                let statusClass = '';
-                let statusText = '';
-
-                switch(transfer.status){
-                    case 'pending':
-                        statusClass = 'status-badge status-pending';
-                        statusText = 'قيد الانتظار';
-                        break;
-                    case 'approved':
-                        statusClass = 'status-badge status-approved';
-                        statusText = 'موافق عليها';
-                        break;
-                    case 'waiting':
-                        statusClass = 'status-badge status-pending';
-                        statusText = 'بانتظار موافقة المكتب';
-                        break;
-                    case 'ready':
-                        statusClass = 'status-badge status-approved';
-                        statusText = 'جاهزة للتسليم';
-                        break;
-                    case 'completed':
-                        statusClass = 'status-badge status-approved';
-                        statusText = 'مكتملة';
-                        break;
-                    case 'rejected':
-                        statusClass = 'status-badge status-rejected';
-                        statusText = 'مرفوضة';
-                        break;
-                    case 'cancelled':
-                        statusClass = 'status-badge status-rejected';
-                        statusText = 'ملغاة';
-                        break;
-                    default:
-                        statusClass = 'status-badge';
-                        statusText = transfer.status;
-                }
-
-                // ── المبالغ ──────────────────────────────────────────────
-                const amountUsd    = Number(transfer.amount_in_usd ?? 0);
-                const sendAmount   = Number(transfer.amount ?? 0);
-                const sendCurrency = transfer.send_currency?.code
-                                   ?? transfer.sendCurrency?.code ?? '—';
-                const recvCurrency = transfer.currency?.code ?? '—';
-                const recvPrice    = Number(transfer.currency?.price ?? 1);
-                const deliveryAmt  = recvPrice > 0 ? amountUsd / recvPrice : 0;
-
-                tbody.innerHTML += `
-                    <tr>
-                        <td>#${transfer.id}</td>
-                        <td>
-                            <div style="font-weight:800; color:var(--primary);">
-                                $${amountUsd.toFixed(2)}
-                            </div>
-                            <div style="font-size:11px; color:var(--gray); margin-top:2px; direction:ltr;">
-                                ${sendAmount.toFixed(2)} ${sendCurrency}
-                            </div>
-                        </td>
-                        <td>${transfer.sender ? transfer.sender.name : '-'}</td>
-                        <td>
-                            <div>${transfer.receiver_name}</div>
-                            <div style="font-size:11px; color:var(--gray); margin-top:2px;">
-                                يستلم: <b>${deliveryAmt.toFixed(2)} ${recvCurrency}</b>
-                            </div>
-                        </td>
-                        <td><span class="${statusClass}">${statusText}</span></td>
-                        <td>${new Date(transfer.created_at).toLocaleString('ar-SY')}</td>
-                    </tr>
-                `;
-            });
+        if (!json.data || json.data.length === 0) {
+            emptyEl?.classList.remove('hidden');
+            document.getElementById('stat-all-count').textContent = '0';
+            return;
         }
+
+        emptyEl?.classList.add('hidden');
+        document.getElementById('stat-all-count').textContent = json.data.length;
+
+        const statusMap = {
+            pending:   { cls: 'status-pending',  text: 'قيد الانتظار'      },
+            approved:  { cls: 'status-approved', text: 'موافق عليها'        },
+            waiting:   { cls: 'status-pending',  text: 'بانتظار المكتب'     },
+            ready:     { cls: 'status-approved', text: 'جاهزة للتسليم'      },
+            completed: { cls: 'status-approved', text: 'مكتملة'             },
+            rejected:  { cls: 'status-rejected', text: 'مرفوضة'             },
+            cancelled: { cls: 'status-rejected', text: 'ملغاة'              },
+        };
+
+        json.data.forEach(transfer => {
+            const s = statusMap[transfer.status] ?? { cls: '', text: transfer.status };
+
+            const amountUsd    = Number(transfer.amount_in_usd ?? 0);
+            const sendAmount   = Number(transfer.amount ?? 0);
+            const sendCurrency = transfer.send_currency?.code ?? transfer.sendCurrency?.code ?? '—';
+            const recvCurrency = transfer.currency?.code ?? '—';
+            const recvPrice    = Number(transfer.currency?.price ?? 1);
+            const deliveryAmt  = recvPrice > 0 ? amountUsd / recvPrice : 0;
+            const fee          = Number(transfer.fee ?? 0);
+
+            // الوجهة
+            const destHtml = transfer.destination_office_id
+                ? `<div style="display:flex;align-items:center;gap:5px;font-size:12px;">
+                     <i class="fa-solid fa-building" style="color:var(--primary);"></i>
+                     <span>مكتب #${transfer.destination_office_id}</span>
+                   </div>`
+                : `<div style="display:flex;align-items:center;gap:5px;font-size:12px;">
+                     <i class="fa-solid fa-globe" style="color:#7c3aed;"></i>
+                     <span>${transfer.destination_city ?? '—'}</span>
+                   </div>`;
+
+            // كود التتبع
+            const trackHtml = transfer.tracking_code
+                ? `<span class="tracking-code">${transfer.tracking_code}</span>`
+                : '';
+
+            tbody.innerHTML += `
+                <tr data-status="${transfer.status}">
+                    <td>
+                        <span style="font-weight:800;color:var(--primary);">#${transfer.id}</span>
+                        ${trackHtml}
+                    </td>
+                    <td>
+                        <div style="font-weight:800;color:var(--primary);">$${amountUsd.toFixed(2)}</div>
+                        <div style="font-size:11px;color:var(--gray);direction:ltr;margin-top:2px;">
+                            ${sendAmount.toFixed(2)} ${sendCurrency}
+                        </div>
+                        <div style="font-size:11px;color:#7c3aed;margin-top:2px;">
+                            يستلم: <b>${deliveryAmt.toFixed(2)} ${recvCurrency}</b>
+                        </div>
+                    </td>
+                    <td>
+                        <div style="font-weight:700;">${transfer.sender?.name ?? '—'}</div>
+                        <div style="font-size:11px;color:var(--gray);">${transfer.sender?.phone ?? ''}</div>
+                    </td>
+                    <td>
+                        <div style="font-weight:700;">${transfer.receiver_name ?? '—'}</div>
+                        <div style="font-size:11px;color:var(--gray);direction:ltr;">${transfer.receiver_phone ?? ''}</div>
+                    </td>
+                    <td>${destHtml}</td>
+                    <td style="font-weight:700;color:var(--primary);">
+                        ${fee > 0 ? '$' + fee.toFixed(2) : '<span style="color:var(--gray);">—</span>'}
+                    </td>
+                    <td>
+                        <span class="status-badge ${s.cls}" data-status="${transfer.status}">${s.text}</span>
+                    </td>
+                    <td style="font-size:12px;color:var(--gray);">
+                        ${new Date(transfer.created_at).toLocaleString('ar-SY')}
+                    </td>
+                    <td>
+                        <button class="btn-edit-transfer"
+                            onclick='openEditModal(${JSON.stringify(transfer).replace(/'/g, "\'")} )'>
+                            <i class="fa-solid fa-pen-to-square"></i> تعديل
+                        </button>
+                    </td>
+                </tr>
+            `;
+        });
+
     } catch (error) {
-        console.error(error);
+        console.error('loadAllTransfers error:', error);
+        tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--danger);padding:20px;">خطأ في التحميل</td></tr>';
     }
 }
 
@@ -189,8 +205,9 @@ function hideAllCards() {
     document.getElementById('all-transfers-card').style.display = 'none';
     document.getElementById('office-info-card').style.display = 'none';
     document.getElementById('safes-card').style.display = 'none';
-
     document.getElementById('profits-card').style.display = 'none';
+    const histCard = document.getElementById('transfer-history-card');
+    if (histCard) histCard.style.display = 'none';
 
     document.getElementById('createtransfer').style.display = 'none';
     const intlCard = document.getElementById('createtransfer-intl');
@@ -1176,6 +1193,255 @@ async function handleLogout() {
     await fetch(`${API_URL}/logout`, { method: 'POST', headers: { 'Authorization': `Bearer ${token}` } });
     localStorage.removeItem('auth_token');
     window.location.href = '../login/login.html';
+}
+
+
+/* =====================================================
+   تعديل الحوالة — Modal
+   ===================================================== */
+
+function openEditModal(transfer) {
+    // ملء المعلومات العامة (للقراءة فقط)
+    const infoEl = document.getElementById('edit-transfer-info');
+    if (infoEl) {
+        const amtUsd  = Number(transfer.amount_in_usd ?? 0);
+        const tracking = transfer.tracking_code ? ` | ${transfer.tracking_code}` : '';
+        infoEl.innerHTML = `
+            <span style="color:var(--primary);font-weight:800;">#${transfer.id}${tracking}</span>
+            &nbsp;—&nbsp;
+            <span>$${amtUsd.toFixed(2)}</span>
+            &nbsp;|&nbsp;
+            <span style="color:var(--gray);">المرسل: ${transfer.sender?.name ?? '—'}</span>
+        `;
+    }
+
+    document.getElementById('edit-transfer-id').value     = transfer.id;
+    document.getElementById('edit-receiver-name').value   = transfer.receiver_name   ?? '';
+    document.getElementById('edit-receiver-phone').value  = transfer.receiver_phone  ?? '';
+    document.getElementById('edit-amount').value          = transfer.amount           ?? '';
+    document.getElementById('edit-fee').value             = transfer.fee              ?? '';
+    document.getElementById('edit-notes').value           = '';
+
+    const errEl = document.getElementById('edit-modal-error');
+    if (errEl) errEl.classList.add('hidden');
+
+    document.getElementById('edit-transfer-modal').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeEditModal() {
+    document.getElementById('edit-transfer-modal').classList.add('hidden');
+    document.body.style.overflow = '';
+}
+
+// إغلاق عند الضغط على الخلفية
+document.addEventListener('DOMContentLoaded', () => {
+    const overlay = document.getElementById('edit-transfer-modal');
+    if (overlay) {
+        overlay.addEventListener('click', function(e) {
+            if (e.target === overlay) closeEditModal();
+        });
+    }
+});
+
+async function saveTransferEdit() {
+    const id    = document.getElementById('edit-transfer-id').value;
+    const btn   = document.getElementById('edit-save-btn');
+    const errEl = document.getElementById('edit-modal-error');
+    const errTxt = document.getElementById('edit-modal-error-text');
+
+    const receiverName  = document.getElementById('edit-receiver-name').value.trim();
+    const receiverPhone = document.getElementById('edit-receiver-phone').value.trim();
+    const amount        = parseFloat(document.getElementById('edit-amount').value);
+    const fee           = parseFloat(document.getElementById('edit-fee').value) || 0;
+    const notes         = document.getElementById('edit-notes').value.trim() || 'تعديل بيانات الحوالة';
+
+    // Validation
+    const showErr = (msg) => {
+        errTxt.textContent = msg;
+        errEl.classList.remove('hidden');
+    };
+    errEl.classList.add('hidden');
+
+    if (!receiverName)       return showErr('يرجى إدخال اسم المستلم');
+    if (!receiverPhone)      return showErr('يرجى إدخال رقم هاتف المستلم');
+    if (!amount || amount<1) return showErr('يرجى إدخال مبلغ صحيح (1 أو أكثر)');
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري الحفظ...';
+
+    try {
+        const res = await fetch(`${API_URL}/transfers/${id}/edit`, {
+            method:  'PUT',
+            headers: {
+                'Content-Type':  'application/json',
+                'Authorization': `Bearer ${token}`,
+                'Accept':        'application/json'
+            },
+            body: JSON.stringify({ receiver_name: receiverName, receiver_phone: receiverPhone, amount, fee, notes })
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+            closeEditModal();
+            showAdminToast('✓ تم تعديل الحوالة وحفظ السجل بنجاح', 'success');
+            loadAllTransfers();
+        } else {
+            const msg = data.errors
+                ? Object.values(data.errors).flat().join(' — ')
+                : (data.message || 'حدث خطأ أثناء التعديل');
+            showErr(msg);
+        }
+    } catch (e) {
+        console.error('saveTransferEdit error:', e);
+        showErr('تعذّر الاتصال بالخادم. تحقق من الاتصال وحاول مجدداً.');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> حفظ التعديلات';
+    }
+}
+
+/* =====================================================
+   إشعار Toast عام
+   ===================================================== */
+function showAdminToast(msg, type = 'success') {
+    const old = document.getElementById('admin-global-toast');
+    if (old) old.remove();
+
+    const colors = {
+        success: { bg: '#16a34a', shadow: 'rgba(22,163,74,0.35)' },
+        error:   { bg: '#dc2626', shadow: 'rgba(220,38,38,0.35)'  },
+    };
+    const c = colors[type] || colors.success;
+
+    const toast = document.createElement('div');
+    toast.id = 'admin-global-toast';
+    toast.style.cssText = `
+        position:fixed; top:24px; left:50%; transform:translateX(-50%);
+        background:${c.bg}; color:#fff;
+        padding:13px 28px; border-radius:14px;
+        font-size:14px; font-weight:700; font-family:'Cairo',sans-serif;
+        z-index:9999; box-shadow:0 6px 24px ${c.shadow};
+        direction:rtl; animation:fadeIn .3s ease;
+        display:flex; align-items:center; gap:10px;
+        max-width:90vw; text-align:center;
+    `;
+    toast.textContent = msg;
+    document.body.appendChild(toast);
+    setTimeout(() => { toast.style.opacity = '0'; toast.style.transition = 'opacity .4s'; }, 3000);
+    setTimeout(() => toast.remove(), 3500);
+}
+
+/* =====================================================
+   سجل التعديلات
+   ===================================================== */
+function showTransferHistorySection() {
+    hideAllCards();
+    const card = document.getElementById('transfer-history-card');
+    if (card) card.style.display = 'block';
+    loadTransferHistory();
+}
+
+async function loadTransferHistory() {
+    const tbody    = document.getElementById('history-list');
+    const emptyEl  = document.getElementById('history-empty');
+    const countEl  = document.getElementById('stat-history-count');
+
+    if (!tbody) return;
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:28px;color:var(--gray);">جاري التحميل...</td></tr>';
+    emptyEl?.classList.add('hidden');
+
+    try {
+        const res  = await fetch(`${API_URL}/transfers/history/all`, {
+            headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' }
+        });
+        const json = await res.json();
+        tbody.innerHTML = '';
+
+        if (!json.data || json.data.length === 0) {
+            emptyEl?.classList.remove('hidden');
+            if (countEl) countEl.textContent = '0';
+            return;
+        }
+
+        if (countEl) countEl.textContent = json.data.length;
+
+        const fieldLabels = {
+            receiver_name:  'اسم المستلم',
+            receiver_phone: 'رقم الهاتف',
+            amount:         'المبلغ',
+            fee:            'الرسوم',
+        };
+
+        json.data.forEach((h, idx) => {
+            const oldD = h.old_data || {};
+            const newD = h.new_data || {};
+
+            // بناء خلية التغييرات (مقارنة قديم/جديد)
+            let changesHtml = '';
+            const allKeys = [...new Set([...Object.keys(oldD), ...Object.keys(newD)])];
+            let hasChanges = false;
+
+            allKeys.forEach(key => {
+                const oldVal = oldD[key] ?? '—';
+                const newVal = newD[key] ?? '—';
+                if (String(oldVal) === String(newVal)) return;
+                hasChanges = true;
+                const label = fieldLabels[key] || key;
+                changesHtml += `
+                    <div class="diff-row">
+                        <span class="diff-label">${label}</span>
+                        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                            <span class="diff-old">${oldVal}</span>
+                            <i class="fa-solid fa-arrow-left" style="font-size:10px;color:var(--gray);"></i>
+                            <span class="diff-new">${newVal}</span>
+                        </div>
+                    </div>
+                `;
+            });
+
+            if (!hasChanges) {
+                changesHtml = '<span style="color:var(--gray);font-size:12px;">لا توجد تغييرات</span>';
+            }
+
+            const date = new Date(h.created_at).toLocaleString('ar-SY', {
+                year:'numeric', month:'short', day:'numeric',
+                hour:'2-digit', minute:'2-digit'
+            });
+
+            tbody.innerHTML += `
+                <tr>
+                    <td style="font-weight:700;color:var(--gray);">${idx + 1}</td>
+                    <td>
+                        <span style="font-weight:800;color:var(--primary);font-size:15px;">#${h.transfer_id}</span>
+                    </td>
+                    <td>
+                        <div style="font-weight:700;">${h.admin?.name ?? '—'}</div>
+                        <div style="font-size:11px;color:var(--gray);">${h.admin?.role ?? ''}</div>
+                    </td>
+                    <td>
+                        <span class="status-badge" style="background:#fef3c7;color:#92400e;white-space:normal;max-width:180px;display:inline-block;">
+                            ${h.action ?? 'تعديل'}
+                        </span>
+                    </td>
+                    <td style="min-width:180px;">${changesHtml}</td>
+                    <td style="font-size:12px;color:var(--gray);white-space:nowrap;">${date}</td>
+                </tr>
+            `;
+        });
+
+    } catch (e) {
+        console.error('loadTransferHistory error:', e);
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--danger);padding:20px;">خطأ في التحميل — تحقق من الاتصال</td></tr>';
+    }
+}
+
+function filterHistoryTable() {
+    const q = (document.getElementById('history-search')?.value || '').toLowerCase();
+    document.querySelectorAll('#history-list tr').forEach(row => {
+        row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+    });
 }
 
 let token = null;
