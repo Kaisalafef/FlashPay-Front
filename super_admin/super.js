@@ -932,6 +932,9 @@ function closeSidebar() {
 }
 
 function showSection(sectionId) {
+    // حفظ القسم الحالي في localStorage
+    localStorage.setItem('super_active_section', sectionId);
+
     // إخفاء كل الأقسام
     document.querySelectorAll('.card').forEach(card => card.classList.add('hidden'));
     const dashSection = document.getElementById('dashboard-section');
@@ -1831,8 +1834,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     // تحميل بيانات المستخدم الحالي
     await loadCurrentUser();
 
-    // تهيئة الرئيسية
-    showSection('dashboard');
+    // استعادة القسم الأخير أو الرئيسية افتراضياً
+    const lastSection = localStorage.getItem('super_active_section') || 'dashboard';
+    showSection(lastSection);
 
     // تحديث الوقت كل دقيقة
     setInterval(() => {
