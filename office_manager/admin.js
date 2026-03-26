@@ -294,7 +294,7 @@ container.innerHTML = mySafes.map(safe => {
     let tradingUI = '';
 
     if(safe.type === 'office_main'){
-        title = 'الصندوق الرئيسي';
+        title = 'صندوق الحوالات ';
         icon = 'fa-vault';
         bg = '#f0f9ff';
     }

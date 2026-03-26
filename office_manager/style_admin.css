@@ -2123,3 +2123,51 @@ textarea.modal-input {
         justify-content: center;
     }
 }
+/* تنسيق خزنة المكتب الجديدة */
+.safe-card-office {
+    background: #f8fafc; /* لون هادئ مائل للأبيض/الرمادي الفاتح */
+    border-right: 4px solid #64748b; /* حد جانبي رمادي احترافي */
+}
+
+.safe-card-office .safe-card-icon {
+    background: #64748b;
+    color: white;
+}
+.safe-actions-main {
+    margin-top: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.manual-controls {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-plus, .btn-minus, .btn-transfer-main {
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    padding: 10px;
+}
+
+.btn-plus { background: #dcfce7; color: #16a34a; flex: 1; }
+.btn-plus:hover { background: #16a34a; color: white; }
+
+.btn-minus { background: #fee2e2; color: #dc2626; flex: 1; }
+.btn-minus:hover { background: #dc2626; color: white; }
+
+.btn-transfer-main {
+    background: #3b82f6;
+    color: white;
+    width: 100%;
+    font-size: 13px;
+}
+.btn-transfer-main:hover { background: #2563eb; }
