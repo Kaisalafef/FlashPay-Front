@@ -294,7 +294,7 @@ container.innerHTML = mySafes.map(safe => {
     let tradingUI = '';
 
     if(safe.type === 'office_main'){
-        title = 'صندوق الحوالات ';
+        title = 'الصندوق الرئيسي';
         icon = 'fa-vault';
         bg = '#f0f9ff';
     }
@@ -543,6 +543,14 @@ async function loadPendingTransfers() {
                 </div>
             </td>
             <td><span style="color: orange;">بانتظار الموافقة</span></td>
+            <td>
+                <button class="btn-chat"
+                        onclick="openChat(${transfer.id}, '${transfer.tracking_code ?? transfer.id}', ${transfer.sender?.id ?? 0})"
+                        title="فتح الدردشة مع الزبون">
+                    <i class="fa-solid fa-comments"></i>
+                    دردشة
+                </button>
+            </td>
             <td>
                 <input type="number"
                        id="fee_${transfer.id}"
@@ -1453,3 +1461,220 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 loadPendingTransfers();
 });
+
+// =============================================================================
+//  CHAT PANEL — وظائف لوحة الدردشة
+//  تتواصل مع: GET  /api/transfers/{id}/messages
+//              POST /api/transfers/{id}/messages
+// =============================================================================
+
+/** الحالة الداخلية للدردشة المفتوحة حالياً */
+let _chat = {
+    transferId:   null,
+    trackingCode: null,
+    currentUserId: null,
+    pollInterval: null,
+};
+
+/**
+ * openChat(transferId, trackingCode, senderId)
+ * يُستدعى من زر الدردشة في جدول الحوالات
+ */
+async function openChat(transferId, trackingCode, senderId) {
+    // جلب معرّف المستخدم الحالي (الأدمن/المكتب) إن لم يكن محفوظاً
+    if (!_chat.currentUserId) {
+        try {
+            const meRes  = await fetch(`${API_URL}/me`, {
+                headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' }
+            });
+            const meData = await meRes.json();
+            _chat.currentUserId = meData.user?.id ?? 0;
+        } catch (_) {}
+    }
+
+    // حفظ بيانات الجلسة
+    _chat.transferId   = transferId;
+    _chat.trackingCode = trackingCode;
+
+    // تحديث الهيدر
+    document.getElementById('chat-panel-name').textContent     = `دردشة مع الزبون`;
+    document.getElementById('chat-panel-tracking').textContent = `رقم الحوالة: ${trackingCode}`;
+
+    // إظهار اللوحة
+    document.getElementById('chat-panel').classList.remove('hidden');
+    document.getElementById('chat-panel-overlay').classList.remove('hidden');
+    document.body.classList.add('chat-open');
+
+    // تفريغ القائمة وتحميل الرسائل
+    document.getElementById('chat-messages-list').innerHTML = '';
+    document.getElementById('chat-empty').classList.add('hidden');
+    document.getElementById('chat-loading').classList.remove('hidden');
+    await loadChatMessages();
+
+    // تركيز على حقل الكتابة
+    document.getElementById('chat-message-input').focus();
+
+    // Polling كل 8 ثوانٍ للرسائل الجديدة
+    clearInterval(_chat.pollInterval);
+    _chat.pollInterval = setInterval(loadChatMessages, 8000);
+}
+
+/** إغلاق لوحة الدردشة */
+function closeChatPanel() {
+    clearInterval(_chat.pollInterval);
+    _chat.pollInterval = null;
+
+    document.getElementById('chat-panel').classList.add('hidden');
+    document.getElementById('chat-panel-overlay').classList.add('hidden');
+    document.body.classList.remove('chat-open');
+
+    _chat.transferId   = null;
+    _chat.trackingCode = null;
+}
+
+/** تحميل رسائل الحوالة من API */
+async function loadChatMessages() {
+    if (!_chat.transferId) return;
+
+    const listEl    = document.getElementById('chat-messages-list');
+    const loadingEl = document.getElementById('chat-loading');
+    const emptyEl   = document.getElementById('chat-empty');
+
+    // نحتفظ بالـ scroll position لمنع القفز عند التحديث التلقائي
+    const area         = document.getElementById('chat-messages-area');
+    const wasAtBottom  = area.scrollHeight - area.scrollTop - area.clientHeight < 60;
+    const prevCount    = listEl.querySelectorAll('.chat-bubble').length;
+
+    try {
+        const res  = await fetch(`${API_URL}/transfers/${_chat.transferId}/messages`, {
+            headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' }
+        });
+        const json = await res.json();
+
+        loadingEl.classList.add('hidden');
+
+        const messages = json.data ?? json.messages ?? json ?? [];
+
+        if (!Array.isArray(messages) || messages.length === 0) {
+            emptyEl.classList.remove('hidden');
+            listEl.innerHTML = '';
+            return;
+        }
+
+        emptyEl.classList.add('hidden');
+
+        // إعادة رسم فقط إذا تغيّر العدد (لتجنّب الوميض عند الـ polling)
+        if (messages.length !== prevCount) {
+            listEl.innerHTML = messages.map(msg => buildChatBubble(msg)).join('');
+            if (wasAtBottom || messages.length !== prevCount) scrollChatToBottom();
+        }
+
+    } catch (err) {
+        console.error('loadChatMessages error:', err);
+        loadingEl.classList.add('hidden');
+        if (!listEl.querySelector('.chat-bubble')) {
+            listEl.innerHTML = `<div style="text-align:center;color:var(--danger);padding:20px;font-size:13px;">
+                <i class="fa-solid fa-triangle-exclamation"></i> تعذّر تحميل الرسائل
+            </div>`;
+        }
+    }
+}
+
+/**
+ * بناء فقاعة رسالة واحدة
+ * يعتمد على message.sender_id مقارنةً بـ _chat.currentUserId
+ */
+function buildChatBubble(msg) {
+    const isMe     = msg.sender_id === _chat.currentUserId;
+    const name     = msg.sender?.name ?? (isMe ? 'أنت' : 'الزبون');
+    const text     = escapeHtml(msg.message ?? msg.text ?? '');
+    const time     = msg.created_at
+        ? new Date(msg.created_at).toLocaleTimeString('ar', { hour: '2-digit', minute: '2-digit' })
+        : '';
+    const sideClass = isMe ? 'bubble-me' : 'bubble-other';
+
+    return `
+        <div class="chat-bubble ${sideClass}">
+            ${!isMe ? `<div class="bubble-name">${escapeHtml(name)}</div>` : ''}
+            <div class="bubble-body">
+                <span class="bubble-text">${text}</span>
+                ${time ? `<span class="bubble-time">${time}</span>` : ''}
+            </div>
+        </div>`;
+}
+
+/** إرسال رسالة جديدة */
+async function sendChatMessage() {
+    if (!_chat.transferId) return;
+
+    const input   = document.getElementById('chat-message-input');
+    const sendBtn = document.getElementById('chat-send-btn');
+    const text    = input.value.trim();
+    if (!text) return;
+
+    // حالة الإرسال
+    sendBtn.disabled    = true;
+    sendBtn.innerHTML   = '<i class="fa-solid fa-spinner fa-spin"></i>';
+    input.disabled      = true;
+
+    try {
+        const res = await fetch(`${API_URL}/transfers/${_chat.transferId}/messages`, {
+            method:  'POST',
+            headers: {
+                'Content-Type':  'application/json',
+                'Authorization': `Bearer ${token}`,
+                'Accept':        'application/json'
+            },
+            body: JSON.stringify({ message: text })
+        });
+
+        if (res.ok) {
+            input.value = '';
+            input.style.height = 'auto';
+            await loadChatMessages();
+            scrollChatToBottom();
+        } else {
+            const err = await res.json();
+            alert(err.message ?? 'تعذّر إرسال الرسالة');
+        }
+
+    } catch (e) {
+        console.error('sendChatMessage error:', e);
+        alert('خطأ في الاتصال');
+    } finally {
+        sendBtn.disabled  = false;
+        sendBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i>';
+        input.disabled    = false;
+        input.focus();
+    }
+}
+
+/** Enter = إرسال / Shift+Enter = سطر جديد */
+function handleChatKeydown(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendChatMessage();
+    }
+}
+
+/** تمدّد الـ textarea تلقائياً */
+function autoResizeTextarea(el) {
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+
+/** تمرير منطقة الرسائل للأسفل */
+function scrollChatToBottom() {
+    const area = document.getElementById('chat-messages-area');
+    if (area) area.scrollTop = area.scrollHeight;
+}
+
+/** تهرب HTML لمنع XSS */
+function escapeHtml(str) {
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}

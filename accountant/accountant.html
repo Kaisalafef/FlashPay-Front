@@ -49,6 +49,11 @@
                     <i class="fa-solid fa-file-chart-column"></i> التقارير
                 </a>
             </li>
+            <li id="nav-edit-history">
+                <a href="#" onclick="showSection('edit-history')">
+                    <i class="fa-solid fa-clock-rotate-left"></i> سجل التعديلات
+                </a>
+            </li>
         </ul>
     </nav>
     <div class="logout">
@@ -308,6 +313,7 @@
                                 <th onclick="sortTable('date')" style="cursor:pointer">
                                     التاريخ <i class="fa-solid fa-sort" style="font-size:0.65rem;opacity:0.4;"></i>
                                 </th>
+                                <th>هوية المستلم</th>
                                 <th>إجراءات</th>
                             </tr>
                         </thead>
@@ -708,7 +714,109 @@
         </div>
 
     </div><!-- /content-body -->
+
+<!-- ===== قسم سجل التعديلات ===== -->
+        <div id="edit-history-section" class="section" style="display:none;" data-section>
+
+            <div class="section-hero" style="background:linear-gradient(135deg,#1e3a5f 0%,#1d4ed8 60%,#3b82f6 100%);">
+                <div class="section-hero-content">
+                    <div class="section-hero-icon" style="background:rgba(255,255,255,0.15);">
+                        <i class="fa-solid fa-clock-rotate-left"></i>
+                    </div>
+                    <div>
+                        <h1>سجل التعديلات</h1>
+                        <p>تتبع جميع التعديلات التي أجراها المدراء على الحوالات</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- فلاتر الفترة الزمنية -->
+            <div class="card" style="margin-bottom:16px;">
+                <div class="card-title" style="margin-bottom:14px;">
+                    <i class="fa-solid fa-sliders"></i> تحديد الفترة
+                </div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
+                    <button class="eh-quick-btn active" data-range="week"  onclick="setHistoryRange('week',this)">
+                        <i class="fa-solid fa-calendar-week"></i> هذا الأسبوع
+                    </button>
+                    <button class="eh-quick-btn" data-range="month" onclick="setHistoryRange('month',this)">
+                        <i class="fa-solid fa-calendar"></i> هذا الشهر
+                    </button>
+                    <button class="eh-quick-btn" data-range="all"   onclick="setHistoryRange('all',this)">
+                        <i class="fa-solid fa-database"></i> الكل
+                    </button>
+                </div>
+
+                <!-- ملخص الفترة -->
+                <div id="eh-summary-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:4px;"></div>
+            </div>
+
+            <!-- شريط البحث + تصدير -->
+            <div class="card" style="margin-bottom:0;border-radius:var(--radius) var(--radius) 0 0;">
+                <div class="toolbar">
+                    <div class="search-box">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="text" id="eh-search" placeholder="بحث برقم الحوالة أو اسم المدير..." oninput="filterHistoryTable()">
+                    </div>
+                    <select class="filter-select" id="eh-action-filter" onchange="filterHistoryTable()">
+                        <option value="">كل الإجراءات</option>
+                        <option value="edited">تعديل</option>
+                        <option value="status_change">تغيير حالة</option>
+                    </select>
+                    <button class="btn-success" onclick="exportHistoryCSV()">
+                        <i class="fa-solid fa-file-csv"></i> تصدير CSV
+                    </button>
+                </div>
+            </div>
+
+            <!-- الجدول -->
+            <div class="card" style="border-radius:0 0 var(--radius) var(--radius);border-top:none;padding-top:0;">
+                <div class="table-wrapper">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>رقم الحوالة</th>
+                                <th>المرسل</th>
+                                <th>الإجراء</th>
+                                <th>التغييرات</th>
+                                <th>المدير المنفذ</th>
+                                <th>التاريخ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="eh-tbody"></tbody>
+                    </table>
+                </div>
+                <div id="eh-empty" class="empty-state" style="display:none;">
+                    <i class="fa-solid fa-clock-rotate-left"></i>
+                    <p>لا توجد تعديلات في هذه الفترة</p>
+                </div>
+            </div>
+        </div>
 </main>
+
+<!-- ===== مودال عرض صورة الهوية ===== -->
+<div id="id-img-modal" class="modal-overlay hidden" onclick="closeIdModal(event)">
+    <div style="position:relative;max-width:90vw;max-height:90vh;display:flex;flex-direction:column;align-items:center;">
+        <button onclick="closeIdModal()"
+            style="position:absolute;top:-14px;left:-14px;width:36px;height:36px;border-radius:50%;
+                   background:#1f2937;border:none;color:white;font-size:18px;cursor:pointer;
+                   display:flex;align-items:center;justify-content:center;z-index:10;
+                   box-shadow:0 4px 12px rgba(0,0,0,0.4);">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+        <img id="id-img-viewer" src="" alt="هوية المستلم"
+             style="max-width:88vw;max-height:85vh;border-radius:14px;
+                    box-shadow:0 20px 60px rgba(0,0,0,0.6);object-fit:contain;background:#111;">
+        <a id="id-img-download" href="" download target="_blank"
+           style="margin-top:14px;background:rgba(255,255,255,0.15);color:white;
+                  padding:8px 20px;border-radius:8px;text-decoration:none;font-size:13px;
+                  font-weight:600;backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,0.2);
+                  display:flex;align-items:center;gap:8px;">
+            <i class="fa-solid fa-download"></i> تنزيل الصورة
+        </a>
+    </div>
+</div>
 
 <!-- Transfer Detail Modal -->
 <div class="modal-overlay hidden" id="transfer-modal">
@@ -732,6 +840,16 @@
                 <div class="detail-item"><label>المكتب المستلِم</label><span id="md-office">—</span></div>
                 <div class="detail-item"><label>الوكيل المستلِم</label><span id="md-agent">—</span></div>
                 <div class="detail-item" style="grid-column:1/-1;"><label>تاريخ الإنشاء</label><span id="md-date">—</span></div>
+                <div class="detail-item" id="md-id-image-wrap" style="grid-column:1/-1;display:none;">
+                    <label>صورة هوية المستلم</label>
+                    <div style="margin-top:8px;">
+                        <img id="md-id-image" src="" alt="هوية المستلم"
+                             style="max-width:100%;max-height:220px;border-radius:10px;
+                                    border:1px solid var(--border);cursor:zoom-in;
+                                    object-fit:contain;"
+                             onclick="openIdModal(this.src)">
+                    </div>
+                </div>
             </div>
         </div>
         <div class="modal-actions">

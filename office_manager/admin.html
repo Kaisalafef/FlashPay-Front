@@ -19,9 +19,9 @@
     <!-- ===== الشريط الجانبي ===== -->
     <aside class="sidebar" id="sidebar">
         <div class="logo">
-            <i class="fa-solid fa-wallet"></i>
-            <span>FlashPay</span>
-        </div>
+    <img src="/FlashPay-Front/images/pj.webp" alt="FlashPay Logo">
+<span>FlashPay</span>
+</div>
 
         <nav>
             <ul>
@@ -154,6 +154,7 @@
                                 <th>المرسل</th>
                                 <th>المستلم</th>
                                 <th>الحالة الحالية</th>
+                                <th>الدردشة</th>
                                 <th>الإجراء</th>
                             </tr>
                         </thead>
@@ -286,7 +287,7 @@
                 <div class="section-hero safes-hero">
                     <div class="section-hero-text">
                         <h2><i class="fa-solid fa-vault"></i> صناديق المكتب المالية</h2>
-                        <p>الرصيد الحالي لصندوق المكتب الرئيسي وصندوق الحوالات وصندوق المبيعات</p>
+                        <p>الرصيد الحالي لصندوق المكتب الرئيسي وصندوق المبيعات</p>
                     </div>
                     <div class="section-hero-stats" id="safes-hero-stats">
                         <div class="hero-stat">
@@ -925,6 +926,64 @@
                     <i class="fa-solid fa-floppy-disk"></i> حفظ التعديلات
                 </button>
             </div>
+        </div>
+    </div>
+
+    <!-- ===== Chat Panel (لوحة الدردشة) ===== -->
+    <div id="chat-panel-overlay" class="chat-overlay hidden" onclick="closeChatPanel()"></div>
+
+    <div id="chat-panel" class="chat-panel hidden">
+        <!-- Header -->
+        <div class="chat-panel-header">
+            <div class="chat-panel-title">
+                <div class="chat-panel-avatar">
+                    <i class="fa-solid fa-comments"></i>
+                </div>
+                <div>
+                    <div class="chat-panel-name" id="chat-panel-name">دردشة الحوالة</div>
+                    <div class="chat-panel-sub" id="chat-panel-tracking">—</div>
+                </div>
+            </div>
+            <div class="chat-panel-actions">
+                <button class="chat-reload-btn" onclick="loadChatMessages()" title="تحديث">
+                    <i class="fa-solid fa-arrows-rotate"></i>
+                </button>
+                <button class="chat-close-btn" onclick="closeChatPanel()" title="إغلاق">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Messages Area -->
+        <div class="chat-messages-area" id="chat-messages-area">
+            <div class="chat-loading" id="chat-loading">
+                <div class="chat-spinner"></div>
+                <span>جارٍ تحميل الرسائل...</span>
+            </div>
+            <div class="chat-empty hidden" id="chat-empty">
+                <i class="fa-regular fa-comment-dots"></i>
+                <p>لا توجد رسائل بعد</p>
+                <small>ابدأ المحادثة مع الزبون</small>
+            </div>
+            <div id="chat-messages-list"></div>
+        </div>
+
+        <!-- Input Area -->
+        <div class="chat-input-area">
+            <div class="chat-input-wrapper">
+                <textarea
+                    id="chat-message-input"
+                    class="chat-textarea"
+                    placeholder="اكتب رسالتك هنا..."
+                    rows="1"
+                    onkeydown="handleChatKeydown(event)"
+                    oninput="autoResizeTextarea(this)">
+                </textarea>
+                <button class="chat-send-btn" id="chat-send-btn" onclick="sendChatMessage()" title="إرسال">
+                    <i class="fa-solid fa-paper-plane"></i>
+                </button>
+            </div>
+            <div class="chat-input-hint">Enter للإرسال • Shift+Enter لسطر جديد</div>
         </div>
     </div>
 

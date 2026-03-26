@@ -576,8 +576,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 /* ============================= */
 /*        PRINT RECEIPT         */
-/* ============================= */
-function printTransferReceipt(tx) {
+/* ============================= */function printTransferReceipt(tx) {
   if (!tx) return;
 
   function toEn(val) {
@@ -624,44 +623,49 @@ function printTransferReceipt(tx) {
 
   body {
     font-family: 'Cairo', sans-serif;
-    width: 80mm;
-    padding: 4mm;
+    width: 72mm; 
+    max-width: 72mm;
+    margin: 0 auto !important;
+    padding: 2mm;
     padding-bottom: 0;
-    color: #000;
+    color: #000 !important; /* إجبار كل شيء على اللون الأسود */
     font-size: 13px;
     line-height: 1.45;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
+    overflow: hidden;
   }
 
   .hdr { text-align:center; padding-bottom:5px; border-bottom:2px solid #000; margin-bottom:6px; }
-  .hdr .logo { font-size:17px; font-weight:700; }
-  .hdr .sub  { font-size:11px; color:#333; margin-top:1px; }
-  .hdr .dt   { font-size:10px; color:#555; margin-top:2px; direction:ltr; }
+  .hdr .logo { font-size:18px; font-weight:700; color: #000; }
+  .hdr .sub  { font-size:12px; font-weight:700; color: #000; margin-top:1px; }
+  .hdr .dt   { font-size:11px; font-weight:700; color: #000; margin-top:2px; direction:ltr; }
 
   .track {
     text-align:center; margin:6px 0; padding:5px 4px;
-    border:1.5px dashed #000; border-radius:3px;
-    font-size:15px; font-weight:700; direction:ltr;
+    border:2px dashed #000; border-radius:3px;
+    font-size:15px; font-weight:700; direction:ltr; color: #000;
   }
-  .track-lbl { display:block; font-size:9px; font-weight:400; color:#555; direction:rtl; margin-bottom:2px; }
+  .track-lbl { display:block; font-size:10px; font-weight:700; color:#000; direction:rtl; margin-bottom:2px; }
 
-  .r { display:flex; justify-content:space-between; align-items:baseline; padding:3px 1px; font-size:12px; border-bottom:1px dotted #ccc; }
-  .r .lbl { color:#555; font-size:11px; white-space:nowrap; }
-  .r .val { font-weight:600; text-align:left; direction:ltr; unicode-bidi:embed; max-width:60%; word-break:break-word; }
+  .r { display:flex; justify-content:space-between; align-items:baseline; padding:3px 1px; font-size:12px; border-bottom:1px dotted #000; }
+  .r .lbl { color:#000; font-weight:700; font-size:11px; white-space:nowrap; }
+  .r .val { color:#000; font-weight:700; text-align:left; direction:ltr; unicode-bidi:embed; max-width:60%; word-break:break-word; }
 
-  .divider { border:none; border-top:1px dashed #aaa; margin:6px 0; }
+  .divider { border:none; border-top:1.5px dashed #000; margin:6px 0; }
 
   .amt-wrap { display:flex; gap:4px; margin:6px 0 4px; }
-  .amt-box { flex:1; border:1px solid #bbb; border-radius:4px; padding:5px 3px; text-align:center; }
-  .amt-box .albl { font-size:9px; color:#666; display:block; margin-bottom:2px; }
-  .amt-box .aval { font-size:13px; font-weight:700; direction:ltr; unicode-bidi:embed; display:block; }
-  .amt-box.net { border-color:#000; background:#f5f5f5; }
+  .amt-box { flex:1; border:1.5px solid #000; border-radius:4px; padding:5px 3px; text-align:center; overflow:hidden; }
+  .amt-box .albl { font-size:10px; font-weight:700; color:#000; display:block; margin-bottom:2px; }
+  .amt-box .aval { font-size:13px; font-weight:700; color:#000; direction:ltr; unicode-bidi:embed; display:block; }
+  
+  /* تم إزالة الخلفية الرمادية واستبدالها بإطار أسمك لتمييز الصافي */
+  .amt-box.net { border: 2.5px solid #000; background: transparent; }
   .amt-box.net .aval { font-size:14px; }
 
-  .footer { display:flex; justify-content:space-between; margin-top:8px; padding-top:6px; border-top:1.5px solid #000; }
-  .sig { text-align:center; width:45%; font-size:10px; color:#333; }
-  .sig-line { border-top:1px solid #555; margin-top:16px; padding-top:2px; }
+  .footer { display:flex; justify-content:space-between; margin-top:8px; padding-top:6px; border-top:2px solid #000; }
+  .sig { text-align:center; width:45%; font-size:11px; font-weight:700; color:#000; }
+  .sig-line { border-top:1.5px solid #000; margin-top:16px; padding-top:2px; }
 </style>
 </head>
 <body>
@@ -704,7 +708,6 @@ function printTransferReceipt(tx) {
 </body>
 </html>`;
 
-  // ✅ window.open بدل iframe — أموثق وأضمن في Chrome
   const printWin = window.open('', '_blank', 'width=400,height=600');
 
   if (!printWin) {
@@ -716,15 +719,11 @@ function printTransferReceipt(tx) {
   printWin.document.write(receiptHtml);
   printWin.document.close();
 
-  // ✅ انتظر تحميل الصفحة كاملاً قبل الطباعة
   printWin.onload = function () {
-    // انتظر تحميل الخطوط
     printWin.document.fonts.ready.then(function () {
       printWin.focus();
       printWin.print();
-      // أغلق النافذة بعد الطباعة
       printWin.onafterprint = function () { printWin.close(); };
-      // fallback للإغلاق
       setTimeout(function () {
         if (!printWin.closed) printWin.close();
       }, 5000);
