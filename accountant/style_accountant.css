@@ -546,8 +546,103 @@ body {
     .stats-grid { grid-template-columns: 1fr !important; }
 }
 /* ===================================================
-   أرباح التداول — Trading Section Styles
+   سجل التعديلات — Edit History Styles
    =================================================== */
+
+/* أزرار الفترة الزمنية */
+.eh-quick-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-full);
+    background: var(--white);
+    color: var(--gray);
+    font-family: 'Cairo', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: var(--transition);
+}
+.eh-quick-btn:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+    background: var(--primary-bg);
+}
+.eh-quick-btn.active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: white;
+    box-shadow: 0 3px 10px rgba(124,58,237,0.3);
+}
+
+/* عرض قسم سجل التعديلات */
+#edit-history-section {
+    animation: fadeUp 0.4s cubic-bezier(0.2,0.8,0.2,1);
+}
+
+@keyframes fadeUp {
+    from { opacity:0; transform:translateY(16px); }
+    to   { opacity:1; transform:translateY(0); }
+}
+
+/* مودال صورة الهوية */
+#id-img-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    z-index: 1100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    cursor: zoom-out;
+}
+#id-img-modal.hidden { display: none; }
+
+/* تمييز زر الهوية في الجدول */
+.id-card-btn {
+    width: 32px;
+    height: 32px;
+    border: 1.5px solid var(--border);
+    background: var(--primary-bg);
+    color: var(--primary);
+    border-radius: 8px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    transition: var(--transition);
+}
+.id-card-btn:hover {
+    background: var(--primary);
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 3px 8px rgba(124,58,237,0.3);
+}
+
+/* حقل image في مودال التفاصيل */
+#md-id-image-wrap label {
+    font-size: 0.75rem;
+    color: var(--gray);
+    font-weight: 600;
+    display: block;
+    margin-bottom: 4px;
+}
+
+@media (max-width: 480px) {
+    .eh-quick-btn {
+        padding: 6px 11px;
+        font-size: 11px;
+    }
+    #eh-summary-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+}
 
 /* أزرار الاختصار الزمني */
 .trading-quick-btn {
