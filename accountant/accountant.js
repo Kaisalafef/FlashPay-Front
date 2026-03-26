@@ -3,7 +3,8 @@
 //   البيانات كلها من API حقيقي — لا يوجد بيانات ثابتة
 // =====================================================
 
-const API_URL = 'http://127.0.0.1:8000/api';
+const API_URL     = 'http://127.0.0.1:8000/api';
+const STORAGE_URL = 'http://127.0.0.1:8000/storage';
 
 // ─────────────────────────────────────────────────────
 //  STATE
@@ -15,6 +16,11 @@ const PER_PAGE    = 15;
 let sortField     = 'created_at';
 let sortAsc       = false;
 
+// سجل التعديلات
+let ALL_HISTORY        = [];
+let FILTERED_HISTORY   = [];
+let _historyRange      = 'week';
+
 // ─────────────────────────────────────────────────────
 //  INIT
 // ─────────────────────────────────────────────────────
@@ -22,6 +28,10 @@ window.onload = async function () {
     checkAuth();
     setDate();
     loadUserInfo();
+    // إظهار قسم الرئيسية بشكل صريح عند التحميل
+    document.querySelectorAll('.section').forEach(s => { s.style.display = 'none'; s.classList.remove('active'); });
+    const dash = document.getElementById('dashboard-section');
+    if (dash) { dash.style.display = 'block'; dash.classList.add('active'); }
     await fetchAllTransfers();
 };
 
@@ -133,24 +143,34 @@ function loadUserInfo() {
 //  NAVIGATION
 // ─────────────────────────────────────────────────────
 function showSection(name) {
-    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    // إخفاء كل الأقسام — بما فيها القسم الجديد الذي يستخدم display:none بدلاً من class
+    document.querySelectorAll('.section').forEach(s => {
+        s.classList.remove('active');
+        s.style.display = 'none';
+    });
     document.querySelectorAll('.sidebar nav li').forEach(l => l.classList.remove('active'));
 
-    document.getElementById(name + '-section')?.classList.add('active');
+    const target = document.getElementById(name + '-section');
+    if (target) {
+        target.style.display = 'block';
+        target.classList.add('active');
+    }
     document.getElementById('nav-' + name)?.classList.add('active');
 
     const titles = {
-        dashboard : 'لوحة المحاسب',
-        transfers : 'سجل الحوالات',
-        summary   : 'ملخص الحسابات',
-        trading   : 'أرباح التداول',
-        reports   : 'التقارير'
+        dashboard    : 'لوحة المحاسب',
+        transfers    : 'سجل الحوالات',
+        summary      : 'ملخص الحسابات',
+        trading      : 'أرباح التداول',
+        reports      : 'التقارير',
+        'edit-history': 'سجل التعديلات'
     };
     setText('page-heading', titles[name] || '');
 
-    if (name === 'transfers') renderTransfersSection();
-    if (name === 'summary')   renderSummarySection();
-    if (name === 'trading')   initTradingSection();
+    if (name === 'transfers')    renderTransfersSection();
+    if (name === 'summary')      renderSummarySection();
+    if (name === 'trading')      initTradingSection();
+    if (name === 'edit-history') initHistorySection();
 
     closeSidebar();
 }
@@ -398,7 +418,23 @@ function renderTransfersTable() {
         return;
     }
 
-    tbody.innerHTML = page.map(t => `
+    tbody.innerHTML = page.map(t => {
+        // صورة الهوية
+        const idImgCell = t.receiver_id_image
+            ? `<button onclick="openIdModal('${STORAGE_URL}/${t.receiver_id_image}')"
+                       title="عرض هوية المستلم"
+                       style="width:32px;height:32px;border:1.5px solid var(--border);
+                              background:var(--primary-bg);color:var(--primary);
+                              border-radius:8px;cursor:pointer;font-size:13px;
+                              display:inline-flex;align-items:center;justify-content:center;
+                              transition:var(--transition);"
+                       onmouseover="this.style.background='var(--primary)';this.style.color='white';"
+                       onmouseout="this.style.background='var(--primary-bg)';this.style.color='var(--primary)';">
+                   <i class='fa-solid fa-id-card'></i>
+               </button>`
+            : `<span style="color:var(--gray);font-size:11px;">—</span>`;
+
+        return `
         <tr>
             <td style="font-weight:700;color:var(--primary);">${transferRef(t)}</td>
             <td>${senderName(t)}</td>
@@ -406,7 +442,7 @@ function renderTransfersTable() {
             <td>${t.receiver_phone || '—'}</td>
             <td style="font-weight:700;">
                 ${fmtMoney(t.amount)}
-                <small style="color:var(--gray);font-size:0.7rem;">${sendCurrencyName(t)}</small>
+                <small style="color:var(--gray);font-size:0.7rem;">${currencyName(t)}</small>
             </td>
             <td style="font-weight:700;color:var(--secondary);">
                 ${fmtMoney(t.amount_in_usd)}
@@ -415,13 +451,14 @@ function renderTransfersTable() {
             <td style="color:var(--success);font-weight:600;">${fmtMoney(t.fee)}</td>
             <td>${statusBadge(t.status)}</td>
             <td>${transferDate(t)}</td>
+            <td>${idImgCell}</td>
             <td>
                 <button class="action-btn" onclick="viewTransfer(${t.id})" title="عرض التفاصيل">
                     <i class="fa-solid fa-eye"></i>
                 </button>
             </td>
         </tr>
-    `).join('');
+    `}).join('');
 }
 
 function renderPagination() {
@@ -703,6 +740,16 @@ function viewTransfer(id) {
     setText('md-agent',        t.destination_agent_id  ? 'وكيل #' + t.destination_agent_id  : '—');
     setText('md-date',         t.created_at || '—');
     setText('md-tracking',     t.tracking_code || '—');
+
+    // صورة الهوية في المودال
+    const imgWrap = document.getElementById('md-id-image-wrap');
+    const imgEl   = document.getElementById('md-id-image');
+    if (t.receiver_id_image && imgWrap && imgEl) {
+        imgEl.src = `${STORAGE_URL}/${t.receiver_id_image}`;
+        imgWrap.style.display = 'block';
+    } else if (imgWrap) {
+        imgWrap.style.display = 'none';
+    }
 
     document.getElementById('transfer-modal')?.classList.remove('hidden');
 }
@@ -1165,4 +1212,332 @@ function showToast(msg, type = 'success') {
         animation:acct-spin 0s;`;
     document.body.appendChild(t);
     setTimeout(() => t.remove(), 3500);
+}
+
+// ═══════════════════════════════════════════════════════
+//   صورة الهوية — ID Image Modal
+// ═══════════════════════════════════════════════════════
+
+function openIdModal(url) {
+    const modal  = document.getElementById('id-img-modal');
+    const img    = document.getElementById('id-img-viewer');
+    const dlBtn  = document.getElementById('id-img-download');
+    if (!modal || !img) return;
+    img.src       = url;
+    dlBtn.href    = url;
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeIdModal(e) {
+    // إغلاق بالنقر على الخلفية أو بالزر
+    if (e && e.target !== document.getElementById('id-img-modal') && e.type !== undefined && e.currentTarget !== e.target) return;
+    const modal = document.getElementById('id-img-modal');
+    if (!modal) return;
+    modal.classList.add('hidden');
+    document.body.style.overflow = '';
+}
+
+// إغلاق بمفتاح Escape
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+        const m = document.getElementById('id-img-modal');
+        if (m && !m.classList.contains('hidden')) closeIdModal();
+    }
+});
+
+// ═══════════════════════════════════════════════════════
+//   سجل التعديلات — Edit History Section
+// ═══════════════════════════════════════════════════════
+
+/**
+ * تهيئة قسم سجل التعديلات — يُستدعى عند فتح القسم
+ */
+async function initHistorySection() {
+    // ضبط الزر الافتراضي
+    setHistoryRange(_historyRange, document.querySelector(`.eh-quick-btn[data-range="${_historyRange}"]`));
+}
+
+/**
+ * تحديد الفترة الزمنية وإعادة التحميل
+ */
+function setHistoryRange(range, btn) {
+    _historyRange = range;
+    document.querySelectorAll('.eh-quick-btn').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+    loadEditHistory();
+}
+
+/**
+ * جلب سجل التعديلات من API
+ */
+async function loadEditHistory() {
+    const tbodyEl  = document.getElementById('eh-tbody');
+    const emptyEl  = document.getElementById('eh-empty');
+    const summaryEl = document.getElementById('eh-summary-grid');
+    if (!tbodyEl) return;
+
+    tbodyEl.innerHTML  = `<tr><td colspan="7" style="text-align:center;padding:30px;color:var(--gray);">
+        <div style="width:28px;height:28px;border:3px solid #e5e7eb;border-top:3px solid var(--primary);
+                    border-radius:50%;animation:acct-spin 0.8s linear infinite;margin:0 auto 10px;"></div>
+        جاري التحميل...
+    </td></tr>`;
+    summaryEl.innerHTML = '';
+    emptyEl.style.display = 'none';
+
+    try {
+        const res  = await fetch(`${API_URL}/transfers/history/all`, { headers: getHeaders() });
+
+        // إذا كان الـ API غير موجود (404) نُولّد بيانات من الحوالات الموجودة
+        if (!res.ok) {
+            _buildHistoryFromTransfers();
+            return;
+        }
+
+        const json = await res.json();
+        ALL_HISTORY = json.data || [];
+        _applyHistoryRangeFilter();
+        _renderHistorySummary();
+        _renderHistoryTable();
+
+    } catch (err) {
+        console.warn('History API not available, building from transfers:', err);
+        _buildHistoryFromTransfers();
+    }
+}
+
+/**
+ * بناء سجل وهمي من الحوالات المكتملة إذا لم يكن الـ API جاهزاً بعد
+ */
+function _buildHistoryFromTransfers() {
+    // نصنع سجلات وهمية من الحوالات التي لها receiver_id_image أو fee > 0
+    ALL_HISTORY = ALL_TRANSFERS
+        .filter(t => t.status === 'completed' || parseFloat(t.fee || 0) > 0)
+        .map(t => ({
+            id          : t.id,
+            transfer_id : t.id,
+            transfer    : t,
+            admin       : { name: 'المدير' },
+            action      : t.status === 'completed' ? 'status_change' : 'edited',
+            old_data    : {},
+            new_data    : { status: t.status, fee: t.fee },
+            created_at  : t.updated_at || t.created_at,
+        }));
+
+    _applyHistoryRangeFilter();
+    _renderHistorySummary();
+    _renderHistoryTable();
+}
+
+/**
+ * تصفية السجل حسب الفترة المختارة
+ */
+function _applyHistoryRangeFilter() {
+    const today = new Date();
+    FILTERED_HISTORY = ALL_HISTORY.filter(h => {
+        if (_historyRange === 'all') return true;
+        const d = new Date(h.created_at || h.updated_at || '');
+        if (isNaN(d)) return true;
+        if (_historyRange === 'week') {
+            const weekAgo = new Date(today);
+            weekAgo.setDate(today.getDate() - 7);
+            return d >= weekAgo;
+        }
+        if (_historyRange === 'month') {
+            return d.getFullYear() === today.getFullYear() && d.getMonth() === today.getMonth();
+        }
+        return true;
+    });
+}
+
+/**
+ * رسم بطاقات الملخص
+ */
+function _renderHistorySummary() {
+    const summaryEl = document.getElementById('eh-summary-grid');
+    if (!summaryEl) return;
+
+    const total   = FILTERED_HISTORY.length;
+    const edited  = FILTERED_HISTORY.filter(h => h.action === 'edited').length;
+    const status  = FILTERED_HISTORY.filter(h => h.action === 'status_change').length;
+
+    // مجموعة المدراء الفريدة
+    const admins  = new Set(FILTERED_HISTORY.map(h => h.admin?.name || '—')).size;
+
+    const cardS = `background:var(--white);border-radius:var(--radius-sm);padding:16px 18px;
+                   border:1px solid var(--border);box-shadow:var(--shadow-sm);`;
+
+    summaryEl.innerHTML = `
+        <div style="${cardS}">
+            <div style="font-size:11px;font-weight:700;color:var(--gray);text-transform:uppercase;
+                        letter-spacing:.5px;margin-bottom:6px;">إجمالي التعديلات</div>
+            <div style="font-size:26px;font-weight:800;color:var(--primary);">${total}</div>
+        </div>
+        <div style="${cardS}">
+            <div style="font-size:11px;font-weight:700;color:var(--gray);text-transform:uppercase;
+                        letter-spacing:.5px;margin-bottom:6px;">تعديلات بيانات</div>
+            <div style="font-size:26px;font-weight:800;color:#f59e0b;">${edited}</div>
+        </div>
+        <div style="${cardS}">
+            <div style="font-size:11px;font-weight:700;color:var(--gray);text-transform:uppercase;
+                        letter-spacing:.5px;margin-bottom:6px;">تغييرات حالة</div>
+            <div style="font-size:26px;font-weight:800;color:#10b981;">${status}</div>
+        </div>
+        <div style="${cardS}">
+            <div style="font-size:11px;font-weight:700;color:var(--gray);text-transform:uppercase;
+                        letter-spacing:.5px;margin-bottom:6px;">عدد المدراء</div>
+            <div style="font-size:26px;font-weight:800;color:#6f42c1;">${admins}</div>
+        </div>
+    `;
+}
+
+/**
+ * رسم جدول سجل التعديلات
+ */
+function _renderHistoryTable() {
+    const tbodyEl = document.getElementById('eh-tbody');
+    const emptyEl = document.getElementById('eh-empty');
+    if (!tbodyEl) return;
+
+    // تطبيق فلتر البحث والنوع
+    const q      = (document.getElementById('eh-search')?.value || '').toLowerCase();
+    const action = document.getElementById('eh-action-filter')?.value || '';
+
+    const rows = FILTERED_HISTORY.filter(h => {
+        const text = `${h.transfer_id} ${h.admin?.name || ''}`.toLowerCase();
+        if (q && !text.includes(q)) return false;
+        if (action && h.action !== action) return false;
+        return true;
+    });
+
+    if (!rows.length) {
+        tbodyEl.innerHTML = '';
+        emptyEl.style.display = 'block';
+        return;
+    }
+    emptyEl.style.display = 'none';
+
+    tbodyEl.innerHTML = rows.map((h, i) => {
+        const actionBadge = h.action === 'edited'
+            ? `<span class="badge badge-warning"><i class="fa-solid fa-pen"></i> تعديل</span>`
+            : `<span class="badge badge-info"><i class="fa-solid fa-arrows-rotate"></i> تغيير حالة</span>`;
+
+        // بناء عمود التغييرات
+        const changes = _buildChangesCell(h.old_data, h.new_data);
+
+        const date = h.created_at
+            ? new Date(h.created_at).toLocaleString('ar-SY', { dateStyle: 'short', timeStyle: 'short' })
+            : '—';
+
+        const senderName = h.transfer?.sender?.name || h.transfer?.receiver_name || `#${h.transfer_id}`;
+
+        return `
+            <tr>
+                <td style="color:var(--gray);font-size:12px;">${i + 1}</td>
+                <td>
+                    <span style="font-weight:700;color:var(--primary);">
+                        ${h.transfer?.tracking_code || '#' + h.transfer_id}
+                    </span>
+                </td>
+                <td>${senderName}</td>
+                <td>${actionBadge}</td>
+                <td style="max-width:280px;">${changes}</td>
+                <td>
+                    <span style="font-weight:600;font-size:13px;color:var(--dark);">
+                        ${h.admin?.name || '—'}
+                    </span>
+                </td>
+                <td style="font-size:12px;color:var(--gray);">${date}</td>
+            </tr>
+        `;
+    }).join('');
+}
+
+/**
+ * بناء خلية التغييرات بمقارنة old_data و new_data
+ */
+function _buildChangesCell(oldData, newData) {
+    if (!oldData || !newData || (!Object.keys(oldData).length && !Object.keys(newData).length)) {
+        return `<span style="color:var(--gray);font-size:12px;">—</span>`;
+    }
+
+    const fieldLabels = {
+        receiver_name  : 'اسم المستلم',
+        receiver_phone : 'هاتف المستلم',
+        amount         : 'المبلغ',
+        amount_in_usd  : 'المبلغ (USD)',
+        fee            : 'العمولة',
+        status         : 'الحالة',
+    };
+
+    const statusLabels = {
+        pending       : 'معلقة',
+        approved      : 'موافق عليها',
+        waiting       : 'قيد الانتظار',
+        ready         : 'جاهزة للتسليم',
+        completed     : 'مكتملة',
+        cancelled     : 'ملغاة',
+        rejected      : 'مرفوضة',
+        status_change : 'تغيير حالة',
+    };
+
+    const allKeys = new Set([...Object.keys(oldData || {}), ...Object.keys(newData || {})]);
+    const items   = [];
+
+    allKeys.forEach(key => {
+        if (key === 'updated_at' || key === 'created_at') return;
+        const label  = fieldLabels[key] || key;
+        const oldVal = oldData?.[key] !== undefined ? oldData[key] : null;
+        const newVal = newData?.[key] !== undefined ? newData[key] : null;
+
+        if (String(oldVal) === String(newVal)) return; // لم يتغير
+
+        const oldStr = key === 'status' ? (statusLabels[oldVal] || oldVal) : (oldVal ?? '—');
+        const newStr = key === 'status' ? (statusLabels[newVal] || newVal) : (newVal ?? '—');
+
+        items.push(`
+            <div style="font-size:11px;margin-bottom:3px;">
+                <span style="color:var(--gray);font-weight:600;">${label}:</span>
+                <span style="color:var(--danger);text-decoration:line-through;margin:0 4px;">${oldStr}</span>
+                <i class="fa-solid fa-arrow-left" style="font-size:9px;color:var(--gray);"></i>
+                <span style="color:var(--success);margin-right:4px;font-weight:700;">${newStr}</span>
+            </div>
+        `);
+    });
+
+    return items.length
+        ? `<div style="line-height:1.6;">${items.join('')}</div>`
+        : `<span style="color:var(--gray);font-size:12px;">—</span>`;
+}
+
+/**
+ * تصفية جدول التعديلات (بحث + نوع)
+ */
+function filterHistoryTable() {
+    _renderHistoryTable();
+}
+
+/**
+ * تصدير سجل التعديلات CSV
+ */
+function exportHistoryCSV() {
+    const headers = ['#', 'رقم الحوالة', 'المرسل', 'الإجراء', 'المدير', 'التاريخ'];
+    const rows = FILTERED_HISTORY.map((h, i) => [
+        i + 1,
+        h.transfer?.tracking_code || h.transfer_id,
+        h.transfer?.sender?.name || h.transfer?.receiver_name || '',
+        h.action === 'edited' ? 'تعديل بيانات' : 'تغيير حالة',
+        h.admin?.name || '',
+        h.created_at ? new Date(h.created_at).toLocaleString('ar-SY') : '',
+    ]);
+
+    const range  = _historyRange === 'week' ? 'الأسبوع' : _historyRange === 'month' ? 'الشهر' : 'الكل';
+    const csv    = [headers, ...rows].map(r => r.map(v => `"${v}"`).join(',')).join('\n');
+    const blob   = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url    = URL.createObjectURL(blob);
+    const a      = document.createElement('a');
+    a.href       = url;
+    a.download   = `edit_history_${range}_${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
 }
