@@ -3,7 +3,7 @@ async function checkAuth() {
     const token = localStorage.getItem('auth_token');
 
     if (!token) {
-        window.location.href = '/FlashPay-Front/login/login.html';
+        window.location.href = '../login/login.html';
         return null;
     }
 
@@ -1585,25 +1585,127 @@ async function loadChatMessages() {
  * يعتمد على message.sender_id مقارنةً بـ _chat.currentUserId
  */
 function buildChatBubble(msg) {
-    const isMe     = msg.sender_id === _chat.currentUserId;
-    const name     = msg.sender?.name ?? (isMe ? 'أنت' : 'الزبون');
-    const text     = escapeHtml(msg.message ?? msg.text ?? '');
-    const time     = msg.created_at
+    const isMe      = msg.sender_id === _chat.currentUserId;
+    const name      = msg.sender?.name ?? (isMe ? 'أنت' : 'الزبون');
+    const text      = msg.message ?? msg.text ?? '';
+    const imageUrl  = msg.image_url ?? msg.image ?? null;   // ← حقل الصورة من الـ API
+    const time      = msg.created_at
         ? new Date(msg.created_at).toLocaleTimeString('ar', { hour: '2-digit', minute: '2-digit' })
         : '';
     const sideClass = isMe ? 'bubble-me' : 'bubble-other';
+
+    // ── محتوى الفقاعة: صورة أو نص أو كليهما معاً ──
+    let contentHtml = '';
+
+    if (imageUrl) {
+        // عرض الصورة — نُنشئ رابطاً كاملاً إذا كان relative path
+        const fullUrl = imageUrl.startsWith('http') ? imageUrl : `${API_URL.replace('/api', '')}/${imageUrl.replace(/^\//, '')}`;
+        contentHtml += `
+            <div class="bubble-img-wrap">
+                <img
+                    src="${fullUrl}"
+                    class="bubble-img"
+                    alt="صورة"
+                    loading="lazy"
+                    onclick="openImageLightbox('${fullUrl}')"
+                    onerror="this.closest('.bubble-img-wrap').innerHTML='<span class=\'bubble-img-error\'><i class=\'fa-solid fa-image-slash\'></i> تعذّر تحميل الصورة</span>'"
+                >
+            </div>`;
+    }
+
+    if (text) {
+        contentHtml += `<span class="bubble-text">${escapeHtml(text)}</span>`;
+    }
 
     return `
         <div class="chat-bubble ${sideClass}">
             ${!isMe ? `<div class="bubble-name">${escapeHtml(name)}</div>` : ''}
             <div class="bubble-body">
-                <span class="bubble-text">${text}</span>
+                ${contentHtml}
                 ${time ? `<span class="bubble-time">${time}</span>` : ''}
             </div>
         </div>`;
 }
 
-/** إرسال رسالة جديدة */
+// ── متغير لتتبع الصورة المختارة ──────────────────────────────
+let _chatSelectedImage = null;
+
+/** يُختار عند النقر على زر الصورة */
+function onImageSelected(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // التحقق من نوع الملف
+    if (!file.type.startsWith('image/')) {
+        alert('يرجى اختيار ملف صورة صالح (JPG, PNG, GIF, ...)');
+        event.target.value = '';
+        return;
+    }
+
+    // التحقق من الحجم (الحد الأقصى 5 MB)
+    if (file.size > 5 * 1024 * 1024) {
+        alert('حجم الصورة كبير جداً. الحد الأقصى المسموح 5 ميغابايت');
+        event.target.value = '';
+        return;
+    }
+
+    _chatSelectedImage = file;
+
+    // عرض المعاينة
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        document.getElementById('chat-img-preview-thumb').src = e.target.result;
+        document.getElementById('chat-img-preview-name').textContent = file.name;
+        document.getElementById('chat-img-preview-size').textContent = formatFileSize(file.size);
+        document.getElementById('chat-img-preview-bar').classList.remove('hidden');
+    };
+    reader.readAsDataURL(file);
+    document.getElementById('chat-message-input').focus();
+}
+
+/** إلغاء اختيار الصورة */
+function clearImageSelection() {
+    _chatSelectedImage = null;
+    document.getElementById('chat-image-input').value = '';
+    document.getElementById('chat-img-preview-bar').classList.add('hidden');
+    document.getElementById('chat-img-preview-thumb').src = '';
+}
+
+/** تنسيق حجم الملف */
+function formatFileSize(bytes) {
+    if (bytes < 1024)       return bytes + ' B';
+    if (bytes < 1024*1024)  return (bytes/1024).toFixed(1) + ' KB';
+    return (bytes/(1024*1024)).toFixed(1) + ' MB';
+}
+
+/** مشغّل الصورة fullscreen (lightbox بسيط) */
+function openImageLightbox(url) {
+    const lb = document.createElement('div');
+    lb.style.cssText = `
+        position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:9999;
+        display:flex;align-items:center;justify-content:center;cursor:zoom-out;
+        animation:fadeIn .2s ease;
+    `;
+    lb.innerHTML = `
+        <img src="${url}" style="max-width:92vw;max-height:92vh;border-radius:10px;box-shadow:0 8px 40px rgba(0,0,0,0.6);">
+        <button style="position:absolute;top:18px;left:18px;background:rgba(255,255,255,.15);border:none;color:white;width:38px;height:38px;border-radius:50%;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;" onclick="this.parentElement.remove()">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+    `;
+    lb.onclick = (e) => { if (e.target === lb) lb.remove(); };
+    document.body.appendChild(lb);
+}
+
+/** مُوجِّه: يقرر إرسال نص أو صورة */
+async function sendChatMessageOrImage() {
+    if (_chatSelectedImage) {
+        await sendChatImage();
+    } else {
+        await sendChatMessage();
+    }
+}
+
+/** إرسال رسالة نصية */
 async function sendChatMessage() {
     if (!_chat.transferId) return;
 
@@ -1612,10 +1714,9 @@ async function sendChatMessage() {
     const text    = input.value.trim();
     if (!text) return;
 
-    // حالة الإرسال
-    sendBtn.disabled    = true;
-    sendBtn.innerHTML   = '<i class="fa-solid fa-spinner fa-spin"></i>';
-    input.disabled      = true;
+    sendBtn.disabled  = true;
+    sendBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+    input.disabled    = true;
 
     try {
         const res = await fetch(`${API_URL}/transfers/${_chat.transferId}/messages`, {
@@ -1637,10 +1738,59 @@ async function sendChatMessage() {
             const err = await res.json();
             alert(err.message ?? 'تعذّر إرسال الرسالة');
         }
-
     } catch (e) {
         console.error('sendChatMessage error:', e);
         alert('خطأ في الاتصال');
+    } finally {
+        sendBtn.disabled  = false;
+        sendBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i>';
+        input.disabled    = false;
+        input.focus();
+    }
+}
+
+/** إرسال صورة عبر multipart/form-data */
+async function sendChatImage() {
+    if (!_chat.transferId || !_chatSelectedImage) return;
+
+    const sendBtn = document.getElementById('chat-send-btn');
+    const input   = document.getElementById('chat-message-input');
+
+    sendBtn.disabled  = true;
+    sendBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+    input.disabled    = true;
+
+    try {
+        const fd = new FormData();
+        fd.append('image', _chatSelectedImage);
+
+        // إذا كان هناك نص مرافق للصورة أضفه أيضاً
+        const caption = input.value.trim();
+        if (caption) fd.append('message', caption);
+
+        const res = await fetch(`${API_URL}/transfers/${_chat.transferId}/messages`, {
+            method:  'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Accept':        'application/json'
+                // لا تضف Content-Type — المتصفح يضعها تلقائياً مع الـ boundary
+            },
+            body: fd
+        });
+
+        if (res.ok) {
+            input.value = '';
+            input.style.height = 'auto';
+            clearImageSelection();
+            await loadChatMessages();
+            scrollChatToBottom();
+        } else {
+            const err = await res.json().catch(() => ({}));
+            alert(err.message ?? 'تعذّر إرسال الصورة');
+        }
+    } catch (e) {
+        console.error('sendChatImage error:', e);
+        alert('خطأ في الاتصال أثناء رفع الصورة');
     } finally {
         sendBtn.disabled  = false;
         sendBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i>';
@@ -1653,7 +1803,7 @@ async function sendChatMessage() {
 function handleChatKeydown(e) {
     if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
-        sendChatMessage();
+        sendChatMessageOrImage();
     }
 }
 
