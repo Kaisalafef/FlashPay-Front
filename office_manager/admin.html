@@ -970,7 +970,35 @@
 
         <!-- Input Area -->
         <div class="chat-input-area">
+
+            <!-- معاينة الصورة قبل الإرسال -->
+            <div id="chat-img-preview-bar" class="chat-img-preview-bar hidden">
+                <div class="chat-img-preview-inner">
+                    <img id="chat-img-preview-thumb" src="" alt="معاينة" class="chat-img-preview-thumb">
+                    <div class="chat-img-preview-info">
+                        <span id="chat-img-preview-name" class="chat-img-preview-name"></span>
+                        <span id="chat-img-preview-size" class="chat-img-preview-size"></span>
+                    </div>
+                </div>
+                <button class="chat-img-remove-btn" onclick="clearImageSelection()" title="إلغاء">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- حقل الكتابة + أزرار -->
             <div class="chat-input-wrapper">
+
+                <!-- زر إرفاق صورة -->
+                <label class="chat-attach-btn" for="chat-image-input" title="إرفاق صورة">
+                    <i class="fa-solid fa-image"></i>
+                </label>
+                <input
+                    type="file"
+                    id="chat-image-input"
+                    accept="image/*"
+                    style="display:none;"
+                    onchange="onImageSelected(event)">
+
                 <textarea
                     id="chat-message-input"
                     class="chat-textarea"
@@ -979,7 +1007,8 @@
                     onkeydown="handleChatKeydown(event)"
                     oninput="autoResizeTextarea(this)">
                 </textarea>
-                <button class="chat-send-btn" id="chat-send-btn" onclick="sendChatMessage()" title="إرسال">
+
+                <button class="chat-send-btn" id="chat-send-btn" onclick="sendChatMessageOrImage()" title="إرسال">
                     <i class="fa-solid fa-paper-plane"></i>
                 </button>
             </div>
@@ -1023,6 +1052,7 @@
         const _origShowProfits = typeof showProfitsSection === 'function' ? showProfitsSection : null;
     </script>
     <script src="sidebar-mobile.js"></script>
+    
 
 </body>
 
