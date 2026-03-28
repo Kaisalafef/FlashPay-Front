@@ -1828,3 +1828,486 @@ function escapeHtml(str) {
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#039;');
 }
+
+// =============================================================================
+//  NOTIFICATION SYSTEM — نظام إشعارات الرسائل الجديدة
+//  ─────────────────────────────────────────────────────
+//  ✅ لا يُعدَّل أي كود موجود. كل شيء هنا إضافات خالصة.
+//
+//  المنطق:
+//   1. MutationObserver يراقب جدول الحوالات ويضيف badge لكل زر دردشة.
+//   2. Poll كل 15 ثانية: يجلب رسائل كل حوالة مرئية، يحسب غير المقروءة
+//      (رسائل الزبون فقط = sender_id !== adminId).
+//   3. Monkey-patch لـ openChat لتسجيل "تمت القراءة" عند فتح المحادثة.
+//   4. الإشعارات مخزنة في localStorage لتستمر بين تحديثات الصفحة.
+// =============================================================================
+
+/* ─── حالة النظام ──────────────────────────────────────────────────────────── */
+const _notif = {
+    adminId:       null,
+    seenCounts:    JSON.parse(localStorage.getItem('fp_chat_seen') || '{}'),
+    currentCounts: {},             // { transferId: customerMsgCount }
+    transferMeta:  {},             // { transferId: { tracking, sender } }
+    pollInterval:  null,
+    POLL_MS:       15000,          // فترة الاستعلام: 15 ثانية
+};
+
+/* ─── تهيئة النظام (بعد أن يصبح token متاحاً) ───────────────────────────── */
+async function _notifInit() {
+    // جلب معرّف الأدمن لتصفية رسائله من الإشعارات
+    try {
+        const r = await fetch(`${API_URL}/me`, {
+            headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' }
+        });
+        const d = await r.json();
+        _notif.adminId = d.user?.id ?? null;
+    } catch (_) {}
+
+    // ── تغليف openChat بالطريقة الصحيحة (وقت التشغيل، لا hoisting هنا) ──────
+    // السبب: إعادة تعريف openChat بـ function declaration يتسبب في hoisting
+    // وبالتالي _origOpenChat يلتقط النسخة الجديدة نفسها ← حلقة لا نهائية.
+    // الحل: نلتقط window.openChat هنا أثناء التشغيل بعد اكتمال الـ hoisting،
+    // ثم نستبدلها بنسخة مغلفة تستدعي الأصلية وتسجّل القراءة.
+    const __origOpenChat = window.openChat;
+    window.openChat = async function(transferId, trackingCode, senderId) {
+        await __origOpenChat(transferId, trackingCode, senderId);
+        _notifMarkSeen(transferId);
+    };
+
+    // مراقبة الجدول لإضافة badge تلقائياً عند رسم الصفوف
+    const tbody = document.getElementById('transfers-list');
+    if (tbody) {
+        new MutationObserver(_notifInjectBadges)
+            .observe(tbody, { childList: true, subtree: true });
+    }
+
+    // تشغيل أول poll بعد ثانيتين (وقت كافٍ لرسم الجدول)
+    setTimeout(_notifPoll, 2000);
+
+    // ثم poll دوري
+    _notif.pollInterval = setInterval(_notifPoll, _notif.POLL_MS);
+}
+
+/* ─── إضافة badge span لكل زر دردشة في الجدول ──────────────────────────── */
+function _notifInjectBadges() {
+    document.querySelectorAll('#transfers-list .btn-chat').forEach(btn => {
+        if (btn.dataset.notifWired) return;  // تجنّب التكرار
+
+        const match = btn.getAttribute('onclick')?.match(/openChat\((\d+)/);
+        if (!match) return;
+
+        const tid = parseInt(match[1]);
+        btn.dataset.notifWired  = '1';
+        btn.dataset.transferId  = tid;
+        btn.style.position      = 'relative'; // لتحديد موضع الـ badge
+
+        const badge = document.createElement('span');
+        badge.className = 'chat-unread-badge hidden';
+        badge.id        = `chat-badge-${tid}`;
+        btn.appendChild(badge);
+    });
+}
+
+/* ─── Poll: جلب الرسائل وحساب غير المقروءة لكل حوالة مرئية ─────────────── */
+async function _notifPoll() {
+    const buttons = [...document.querySelectorAll('#transfers-list .btn-chat[data-transfer-id]')];
+    if (!buttons.length) return;
+
+    let totalUnread   = 0;
+    const notifItems  = [];
+
+    for (const btn of buttons) {
+        const tid = parseInt(btn.dataset.transferId);
+        try {
+            const res  = await fetch(`${API_URL}/transfers/${tid}/messages`, {
+                headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' }
+            });
+            if (!res.ok) continue;
+
+            const json = await res.json();
+            const msgs = json.data ?? json.messages ?? (Array.isArray(json) ? json : []);
+            if (!Array.isArray(msgs)) continue;
+
+            // نحسب فقط رسائل الزبون (ليست من الأدمن)
+            const customerMsgs  = _notif.adminId
+                ? msgs.filter(m => m.sender_id !== _notif.adminId)
+                : msgs;
+            const currentCount  = customerMsgs.length;
+            const seenCount     = _notif.seenCounts[tid] ?? 0;
+            const unread        = Math.max(0, currentCount - seenCount);
+
+            _notif.currentCounts[tid] = currentCount;
+
+            // حفظ بيانات الحوالة (رقم التتبع، اسم المرسل) لعرضها في الـ dropdown
+            const row = btn.closest('tr');
+            if (row) {
+                _notif.transferMeta[tid] = {
+                    tracking: row.querySelector('td:first-child')?.textContent?.trim() ?? `#${tid}`,
+                    sender:   row.querySelector('td:nth-child(3)')?.textContent?.trim() ?? '—',
+                };
+            }
+
+            // ── تحديث badge الزر ──
+            const badge = document.getElementById(`chat-badge-${tid}`);
+            if (badge) {
+                if (unread > 0) {
+                    badge.textContent = unread > 9 ? '9+' : String(unread);
+                    badge.classList.remove('hidden');
+                    btn.classList.add('btn-chat-has-unread');
+                } else {
+                    badge.classList.add('hidden');
+                    btn.classList.remove('btn-chat-has-unread');
+                }
+            }
+
+            if (unread > 0) {
+                totalUnread += unread;
+                notifItems.push({ tid, unread, ..._notif.transferMeta[tid] });
+            }
+
+        } catch (_) { /* فشل صامت لكل حوالة على حدة */ }
+    }
+
+    _notifUpdateBell(totalUnread, notifItems);
+}
+
+/* ─── تحديث شارة الجرس وقائمة الإشعارات ────────────────────────────────── */
+function _notifUpdateBell(total, items) {
+    const bellBadge = document.getElementById('notif-bell-badge');
+    const list      = document.getElementById('notif-dropdown-list');
+    if (!bellBadge || !list) return;
+
+    if (total > 0) {
+        bellBadge.textContent = total > 99 ? '99+' : String(total);
+        bellBadge.classList.remove('hidden');
+
+        list.innerHTML = items.map(item => `
+            <div class="notif-item" onclick="_notifClickItem(${item.tid})">
+                <div class="notif-item-icon">
+                    <i class="fa-solid fa-message"></i>
+                </div>
+                <div class="notif-item-body">
+                    <div class="notif-item-title">${escapeHtml(item.tracking)}</div>
+                    <div class="notif-item-sub">
+                        رسائل جديدة من <b>${escapeHtml(item.sender)}</b>
+                    </div>
+                </div>
+                <span class="notif-item-count">${item.unread}</span>
+            </div>
+        `).join('');
+    } else {
+        bellBadge.classList.add('hidden');
+        list.innerHTML = `<div class="notif-empty">
+            <i class="fa-regular fa-bell-slash"></i>
+            لا توجد إشعارات جديدة
+        </div>`;
+    }
+}
+
+/* ─── النقر على عنصر في الـ dropdown → فتح الدردشة مباشرة ──────────────── */
+function _notifClickItem(transferId) {
+    toggleNotifDropdown(false);
+    const btn = document.querySelector(
+        `#transfers-list .btn-chat[data-transfer-id="${transferId}"]`
+    );
+    if (btn) btn.click();
+}
+
+/* ─── تسجيل "تمت القراءة" لحوالة معينة ─────────────────────────────────── */
+function _notifMarkSeen(transferId) {
+    const current = _notif.currentCounts[transferId] ?? 0;
+    _notif.seenCounts[transferId] = current;
+    localStorage.setItem('fp_chat_seen', JSON.stringify(_notif.seenCounts));
+
+    // إخفاء badge الزر فوراً
+    const badge = document.getElementById(`chat-badge-${transferId}`);
+    if (badge) {
+        badge.classList.add('hidden');
+        badge.textContent = '';
+    }
+    const btn = document.querySelector(
+        `#transfers-list .btn-chat[data-transfer-id="${transferId}"]`
+    );
+    if (btn) btn.classList.remove('btn-chat-has-unread');
+
+    // إعادة حساب الجرس بعد إزالة هذه الحوالة
+    _notifPoll();
+}
+
+/* ─── فتح/إغلاق الـ dropdown ─────────────────────────────────────────────── */
+function toggleNotifDropdown(forceState) {
+    const dd = document.getElementById('notif-dropdown');
+    if (!dd) return;
+    if (forceState === false) { dd.classList.add('hidden'); return; }
+    dd.classList.toggle('hidden');
+}
+
+/* ─── مسح جميع الإشعارات ────────────────────────────────────────────────── */
+function clearAllNotifications() {
+    Object.keys(_notif.currentCounts).forEach(tid => {
+        _notif.seenCounts[parseInt(tid)] = _notif.currentCounts[parseInt(tid)] ?? 0;
+    });
+    localStorage.setItem('fp_chat_seen', JSON.stringify(_notif.seenCounts));
+
+    document.getElementById('notif-bell-badge')?.classList.add('hidden');
+    document.getElementById('notif-dropdown-list').innerHTML =
+        '<div class="notif-empty"><i class="fa-regular fa-bell-slash"></i> لا توجد إشعارات جديدة</div>';
+
+    document.querySelectorAll('.chat-unread-badge')
+        .forEach(b => { b.classList.add('hidden'); b.textContent = ''; });
+    document.querySelectorAll('.btn-chat-has-unread')
+        .forEach(b => b.classList.remove('btn-chat-has-unread'));
+}
+
+/* ─── إغلاق الـ dropdown عند النقر خارجه ────────────────────────────────── */
+document.addEventListener('click', (e) => {
+    const wrap = document.getElementById('notif-bell-wrap');
+    if (wrap && !wrap.contains(e.target)) {
+        document.getElementById('notif-dropdown')?.classList.add('hidden');
+    }
+});
+
+/* ─── بدء النظام بمجرد توفر token ────────────────────────────────────────── */
+(function _waitForToken() {
+    if (typeof token !== 'undefined' && token) {
+        _notifInit();
+    } else {
+        setTimeout(_waitForToken, 300);
+    }
+})();
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ★  NEW TRANSFER ARRIVAL NOTIFICATIONS  (حوالات جديدة)
+   ───────────────────────────────────────────────────────────────────────────
+   يُشعر الأدمن فوراً عند وصول أي حوالة جديدة بحالة "waiting"
+   الآلية: polling كل 20 ثانية + toast + orange badge + dropdown section
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── State object ─────────────────────────────────────────────────────────── */
+const _tNotif = {
+    POLL_MS    : 20_000,                      // فترة الـ polling
+    STORAGE_KEY: 'fp_seen_transfer_ids',      // مفتاح localStorage
+    seenIds    : new Set(
+        JSON.parse(localStorage.getItem('fp_seen_transfer_ids') || '[]')
+    ),
+    items      : [],                          // الحوالات الجديدة غير المُشاهَدة
+    pollTimer  : null,
+};
+
+/* ── Init: يُشغَّل مرة واحدة بعد توفر token ─────────────────────────────── */
+function _tNotifInit() {
+    _tNotifObserveList();                              // ابدأ المراقبة أولاً
+    _tNotifPoll();                                     // أول poll فوري
+    _tNotif.pollTimer = setInterval(_tNotifPoll, _tNotif.POLL_MS);
+}
+
+/* ── Poll: جلب الحوالات waiting ومقارنتها بالمُشاهَدة ──────────────────── */
+async function _tNotifPoll() {
+    try {
+        const res = await fetch(`${API_URL}/transfers?status=waiting`, {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Accept'       : 'application/json',
+            },
+        });
+        if (!res.ok) return;
+
+        const json      = await res.json();
+        const transfers = Array.isArray(json.data) ? json.data : [];
+        let   hasNew    = false;
+
+        transfers.forEach(t => {
+            // تجاهل المُشاهَدة مسبقاً أو الموجودة بالقائمة
+            if (_tNotif.seenIds.has(t.id))              return;
+            if (_tNotif.items.find(p => p.id === t.id)) return;
+
+            _tNotif.items.unshift({
+                id    : t.id,
+                sender: t.sender?.name ?? '—',
+                amount: Number(t.amount_in_usd ?? 0).toFixed(2),
+            });
+            hasNew = true;
+        });
+
+        if (hasNew) {
+            _tNotifUpdateBadge();
+            _tNotifInjectSection();
+            _tNotifShowToast(_tNotif.items[0]);   // toast للأحدث واحدة
+        }
+
+    } catch (_) { /* فشل صامت */ }
+}
+
+/* ── Orange badge on bell button ─────────────────────────────────────────── */
+function _tNotifUpdateBadge() {
+    const badge = document.getElementById('tnotif-bell-badge');
+    if (!badge) return;
+
+    if (_tNotif.items.length > 0) {
+        badge.textContent = _tNotif.items.length > 9 ? '9+' : String(_tNotif.items.length);
+        badge.classList.remove('hidden');
+    } else {
+        badge.classList.add('hidden');
+    }
+}
+
+/* ── Inject the transfer section into the bell dropdown ──────────────────── */
+function _tNotifInjectSection() {
+    const list = document.getElementById('notif-dropdown-list');
+    if (!list || !_tNotif.items.length) return;
+
+    // أزل القسم القديم + رسالة "لا يوجد" إن وُجدت
+    list.querySelector('.tnotif-section-wrapper')?.remove();
+    list.querySelector('.notif-empty')?.remove();
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'tnotif-section-wrapper';
+    wrapper.innerHTML = `
+        <div class="tnotif-section-header">
+            <span>
+                <i class="fa-solid fa-arrow-right-to-bracket"></i>
+                حوالات جديدة وصلت
+            </span>
+            <span class="tnotif-section-count">${_tNotif.items.length}</span>
+        </div>
+        ${_tNotif.items.map(item => `
+            <div class="notif-item tnotif-item" onclick="_tNotifClickItem(${item.id})">
+                <div class="notif-item-icon tnotif-icon">
+                    <i class="fa-solid fa-paper-plane-top"></i>
+                </div>
+                <div class="notif-item-body">
+                    <div class="notif-item-title">حوالة جديدة #${item.id}</div>
+                    <div class="notif-item-sub">
+                        من <b>${escapeHtml(item.sender)}</b>&nbsp;·&nbsp;$${item.amount}
+                    </div>
+                </div>
+                <span class="notif-item-count tnotif-badge-new">جديد</span>
+            </div>
+        `).join('')}
+    `;
+
+    list.prepend(wrapper);
+}
+
+/* ── MutationObserver: re-inject after _notifUpdateBell replaces innerHTML ── */
+/*    يضمن ظهور قسم الحوالات حتى بعد كل تحديث لرسائل الدردشة                 */
+function _tNotifObserveList() {
+    const list = document.getElementById('notif-dropdown-list');
+    if (!list) { setTimeout(_tNotifObserveList, 400); return; }
+
+    new MutationObserver(mutations => {
+        // إذا كانت التغييرات هي قسمنا نفسه → تجنّب حلقة لانهائية
+        for (const m of mutations) {
+            for (const node of m.addedNodes) {
+                if (node.classList?.contains('tnotif-section-wrapper')) return;
+            }
+        }
+        // _notifUpdateBell أعاد رسم القائمة → أعد حقن قسم الحوالات
+        if (_tNotif.items.length > 0) {
+            _tNotifInjectSection();
+        }
+    }).observe(list, { childList: true });
+}
+
+/* ── Toast notification (top-left corner) ────────────────────────────────── */
+function _tNotifShowToast(item) {
+    const container = document.getElementById('tnotif-toast-container');
+    if (!container) return;
+
+    const toast = document.createElement('div');
+    toast.className = 'tnotif-toast';
+    toast.innerHTML = `
+        <div class="tnotif-toast-icon">
+            <i class="fa-solid fa-paper-plane-top"></i>
+        </div>
+        <div class="tnotif-toast-body">
+            <div class="tnotif-toast-title">
+                <i class="fa-solid fa-circle-dot" style="font-size:8px;margin-left:4px;"></i>
+                حوالة جديدة وصلت
+            </div>
+            <div class="tnotif-toast-sub">
+                من <b>${escapeHtml(item.sender)}</b>&nbsp;·&nbsp;$${item.amount}
+            </div>
+        </div>
+        <button class="tnotif-toast-close"
+                onclick="event.stopPropagation(); this.closest('.tnotif-toast').remove();"
+                title="إغلاق">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+    `;
+
+    // النقر على جسم الـ toast → انتقال للحوالة
+    toast.addEventListener('click', e => {
+        if (e.target.closest('.tnotif-toast-close')) return;
+        _tNotifClickItem(item.id);
+        toast.remove();
+    });
+
+    container.prepend(toast);
+
+    // إزالة تلقائية بعد 8 ثوان
+    setTimeout(() => toast.classList.add('tnotif-toast-exit'), 7500);
+    setTimeout(() => { toast.remove(); }, 8200);
+}
+
+/* ── Click item: navigate to pending transfers & highlight the row ────────── */
+function _tNotifClickItem(transferId) {
+    toggleNotifDropdown(false);
+
+    // الانتقال لقسم الحوالات المعلقة
+    const pendingLink = document.querySelector('.sidebar nav li:first-child a');
+    if (pendingLink) pendingLink.click();
+    else showPendingTransfers();
+
+    // تمييز الصف المعني بعد انتهاء تحميل الجدول
+    setTimeout(() => {
+        const row = [...document.querySelectorAll('#transfers-list tr')]
+            .find(r => r.querySelector('td')?.textContent?.trim() === `#${transferId}`);
+        if (row) {
+            row.classList.add('tnotif-row-highlight');
+            row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            setTimeout(() => row.classList.remove('tnotif-row-highlight'), 3200);
+        }
+    }, 800);
+
+    _tNotifMarkSeen(transferId);
+}
+
+/* ── Mark a transfer as seen ─────────────────────────────────────────────── */
+function _tNotifMarkSeen(transferId) {
+    _tNotif.seenIds.add(transferId);
+    _tNotif.items = _tNotif.items.filter(p => p.id !== transferId);
+    localStorage.setItem(_tNotif.STORAGE_KEY, JSON.stringify([..._tNotif.seenIds]));
+    _tNotifUpdateBadge();
+
+    // أعد رسم القسم أو أزله إن فرغ
+    document.querySelector('.tnotif-section-wrapper')?.remove();
+    if (_tNotif.items.length > 0) _tNotifInjectSection();
+}
+
+/* ── Hook clearAllNotifications to also clear transfer notifications ───────
+     نلتف حول الدالة الموجودة دون تعديل كودها                               */
+const _tNotif_origClear = clearAllNotifications;
+clearAllNotifications = function () {
+    // سجّل جميع الحوالات المعلقة كمشاهَدة
+    _tNotif.items.forEach(item => _tNotif.seenIds.add(item.id));
+    _tNotif.items = [];
+    localStorage.setItem(_tNotif.STORAGE_KEY, JSON.stringify([..._tNotif.seenIds]));
+
+    // نظّف الـ UI الخاص بالحوالات
+    document.querySelector('.tnotif-section-wrapper')?.remove();
+    document.getElementById('tnotif-bell-badge')?.classList.add('hidden');
+
+    // استدعاء الدالة الأصلية (رسائل الدردشة)
+    _tNotif_origClear();
+};
+
+/* ── Bootstrap: wait for token then init ─────────────────────────────────── */
+(function _tWaitForToken() {
+    if (typeof token !== 'undefined' && token) {
+        _tNotifInit();
+    } else {
+        setTimeout(_tWaitForToken, 300);
+    }
+})();
