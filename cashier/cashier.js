@@ -671,7 +671,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 <body>
 
   <div class="hdr">
-    <div class="logo">FlashPay</div>
+    <div class="logo"><i class="fa-solid fa-bolt-lightning"></i>
+   <span class="pay">Flash</span> <span class="flash">Pay</span></div>
+
     <div class="sub">إيصال تسليم حوالة صادرة</div>
     <div class="dt">${printDate}</div>
   </div>
