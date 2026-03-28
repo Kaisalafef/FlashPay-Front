@@ -47,21 +47,16 @@ async function loadNewTransfers() {
 
     if (json.status === "success" && Array.isArray(json.data) && json.data.length > 0) {
 
-      // تحديث العداد في الهيدر
       document.getElementById('transfers-count').textContent = json.data.length;
 
       json.data.forEach((transfer) => {
-        // amount_in_usd = القيمة المحوّلة للدولار (amount × send_currency.price) محفوظة في البك-اند
-        // currency      = عملة الاستلام التي سيتسلمها المستفيد
-        // deliveryPrice = كم يستلم المستفيد = amount_in_usd ÷ currency.price
-        const amountUsd     = Number(transfer.amount_in_usd ?? 0);
+        const amountUsd = Number(transfer.amount_in_usd ?? 0);
         const currencyPrice = Number(transfer.currency?.price ?? 1);
-        const currencyCode  = transfer.currency?.code ?? "USD";
+        const currencyCode = transfer.currency?.code ?? "USD";
         const deliveryPrice = currencyPrice > 0 ? amountUsd / currencyPrice : 0;
 
-        // عملة الإرسال للعرض فقط
-        const sendAmount     = Number(transfer.amount ?? 0);
-        const sendCurrency   = transfer.send_currency?.code ?? transfer.sendCurrency?.code ?? "—";
+        const sendAmount = Number(transfer.amount ?? 0);
+        const sendCurrency = transfer.send_currency?.code ?? transfer.sendCurrency?.code ?? "—";
 
         tbody.innerHTML += `
           <tr>
@@ -145,13 +140,13 @@ function previewImage(event, id) {
 
 async function acceptTransfer(transferId) {
   const fileInput = document.getElementById(`id_image_${transferId}`);
-  const button    = document.getElementById(`btn_${transferId}`);
-  const file      = fileInput.files[0];
+  const button = document.getElementById(`btn_${transferId}`);
+  const file = fileInput.files[0];
 
   if (!file) { alert("يرجى اختيار صورة الهوية أولاً"); return; }
 
-  button.disabled   = true;
-  button.innerHTML  = `<div class="loading-spinner" style="width:16px;height:16px;border-width:2px;margin:0;display:inline-block;"></div> جاري المعالجة...`;
+  button.disabled = true;
+  button.innerHTML = `<div class="loading-spinner" style="width:16px;height:16px;border-width:2px;margin:0;display:inline-block;"></div> جاري المعالجة...`;
 
   const formData = new FormData();
   formData.append("_method", "PATCH");
@@ -170,16 +165,21 @@ async function acceptTransfer(transferId) {
     if (res.ok) {
       alert("✅ تم تسليم الحوالة بنجاح");
       loadNewTransfers();
+      if (data && data.data) {
+        printTransferReceipt(data.data);
+      } else {
+        console.error("بيانات الحوالة غير مكتملة في رد السيرفر:", data);
+      }
     } else {
       alert(data.message || "فشل التحديث");
-      button.disabled  = false;
+      button.disabled = false;
       button.innerHTML = `<i class="fa-solid fa-circle-check"></i> تأكيد التسليم`;
     }
 
   } catch (error) {
     console.error(error);
     alert("خطأ في الاتصال");
-    button.disabled  = false;
+    button.disabled = false;
     button.innerHTML = `<i class="fa-solid fa-circle-check"></i> تأكيد التسليم`;
   }
 }
@@ -208,36 +208,36 @@ function setActive(element) {
 
 function showTransfersSection() {
   document.getElementById('section-transfers').style.display = 'block';
-  document.getElementById('section-safes').style.display    = 'none';
-  document.getElementById('section-profits').style.display  = 'none';
+  document.getElementById('section-safes').style.display = 'none';
+  document.getElementById('section-profits').style.display = 'none';
 
   document.getElementById('page-heading').textContent = 'الحوالات';
-  document.querySelector('.page-sub').textContent     = 'جاهزة للتسليم';
-  document.querySelector('.page-icon').innerHTML      = '<i class="fa-solid fa-money-bill-transfer"></i>';
+  document.querySelector('.page-sub').textContent = 'جاهزة للتسليم';
+  document.querySelector('.page-icon').innerHTML = '<i class="fa-solid fa-money-bill-transfer"></i>';
 
   loadNewTransfers();
 }
 
 function showSafesSection() {
   document.getElementById('section-transfers').style.display = 'none';
-  document.getElementById('section-safes').style.display    = 'block';
-  document.getElementById('section-profits').style.display  = 'none';
+  document.getElementById('section-safes').style.display = 'block';
+  document.getElementById('section-profits').style.display = 'none';
 
   document.getElementById('page-heading').textContent = 'التداول';
-  document.querySelector('.page-sub').textContent     = 'صناديق التداول';
-  document.querySelector('.page-icon').innerHTML      = '<i class="fa-solid fa-vault"></i>';
+  document.querySelector('.page-sub').textContent = 'صناديق التداول';
+  document.querySelector('.page-icon').innerHTML = '<i class="fa-solid fa-vault"></i>';
 
   loadTradingSafes();
 }
 
 function showProfitsSection() {
   document.getElementById('section-transfers').style.display = 'none';
-  document.getElementById('section-safes').style.display    = 'none';
-  document.getElementById('section-profits').style.display  = 'block';
+  document.getElementById('section-safes').style.display = 'none';
+  document.getElementById('section-profits').style.display = 'block';
 
   document.getElementById('page-heading').textContent = 'أرباح التداول';
-  document.querySelector('.page-sub').textContent     = 'تقرير يومي';
-  document.querySelector('.page-icon').innerHTML      = '<i class="fa-solid fa-chart-line"></i>';
+  document.querySelector('.page-sub').textContent = 'تقرير يومي';
+  document.querySelector('.page-icon').innerHTML = '<i class="fa-solid fa-chart-line"></i>';
 }
 
 /* ============================= */
@@ -249,18 +249,16 @@ async function loadTradingSafes() {
   container.innerHTML = `<div class="loading-row" style="padding:40px; text-align:center; grid-column:1/-1;"><div class="loading-spinner" style="margin:0 auto 10px;"></div> جاري التحميل...</div>`;
 
   try {
-    // جلب الصناديق و بيانات المستخدم معاً
     const [safesRes, meRes] = await Promise.all([
       fetch(`${API_URL}/main-safes`, { headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' } }),
-      fetch(`${API_URL}/me`,         { headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' } })
+      fetch(`${API_URL}/me`, { headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' } })
     ]);
 
     const safesJson = await safesRes.json();
-    const meData    = await meRes.json();
+    const meData = await meRes.json();
 
     if (safesRes.ok && safesJson.data) {
       const myOfficeId = meData.user?.office_id;
-      // فلترة الصناديق الخاصة بمكتب الكاشير فقط (رئيسي + تداول)
       const mySafes = safesJson.data.filter(s =>
         s.office_id === myOfficeId &&
         (s.type === 'office_main' || s.type === 'trading')
@@ -288,11 +286,11 @@ function renderTradingSafes(safes) {
   }
 
   container.innerHTML = safes.map(safe => {
-    const isMain    = safe.type === 'office_main';
+    const isMain = safe.type === 'office_main';
     const isTrading = safe.type === 'trading';
 
-    const title     = isMain ? 'الصندوق الرئيسي' : `صندوق التداول (${safe.currency})`;
-    const icon      = isMain ? 'fa-vault' : 'fa-chart-line';
+    const title = isMain ? 'الصندوق الرئيسي' : `صندوق التداول (${safe.currency})`;
+    const icon = isMain ? 'fa-vault' : 'fa-chart-line';
     const cardClass = isMain ? 'safe-card safe-card-main' : 'safe-card safe-card-trading';
 
     const costRow = (!isMain && safe.cost !== null && safe.cost !== undefined) ? `
@@ -325,32 +323,28 @@ function renderTradingSafes(safes) {
 /*        EXECUTE TRADE         */
 /* ============================= */
 
-/* =============================================
-   واجهة التداول المحسّنة – زر الاختيار السريع
-   ============================================= */
 function buildTradingUI(currencyId, officeId) {
-    const amountChips = [50, 100, 200, 500, 1000];
-    const priceChips  = [11500, 11700, 11750, 11800, 20000];
+  const amountChips = [50, 100, 200, 500, 1000];
+  const priceChips = [11500, 11700, 11750, 11800, 20000];
 
-    const amountChipsHtml = amountChips.map(v =>
-        `<button type="button" class="trade-chip" onclick="setTradeVal('buy_amount_${currencyId}','sell_amount_${currencyId}',${v})">${v}</button>`
-    ).join('');
+  const amountChipsHtml = amountChips.map(v =>
+    `<button type="button" class="trade-chip" onclick="setTradeVal('buy_amount_${currencyId}','sell_amount_${currencyId}',${v})">${v}</button>`
+  ).join('');
 
-    const buyPriceChipsHtml = priceChips.map(v =>
-        `<button type="button" class="trade-chip trade-chip-buy" onclick="setTradeVal('buy_price_${currencyId}',null,${v})">${v.toLocaleString()}</button>`
-    ).join('');
+  const buyPriceChipsHtml = priceChips.map(v =>
+    `<button type="button" class="trade-chip trade-chip-buy" onclick="setTradeVal('buy_price_${currencyId}',null,${v})">${v.toLocaleString()}</button>`
+  ).join('');
 
-    const sellPriceChipsHtml = priceChips.map(v =>
-        `<button type="button" class="trade-chip trade-chip-sell" onclick="setTradeVal('sell_price_${currencyId}',null,${v})">${v.toLocaleString()}</button>`
-    ).join('');
+  const sellPriceChipsHtml = priceChips.map(v =>
+    `<button type="button" class="trade-chip trade-chip-sell" onclick="setTradeVal('sell_price_${currencyId}',null,${v})">${v.toLocaleString()}</button>`
+  ).join('');
 
-    return `
+  return `
     <div class="trade-panel">
         <div class="trade-panel-title">
             <i class="fa-solid fa-sliders"></i> عمليات التداول
         </div>
 
-        <!-- الكمية مشتركة -->
         <div class="trade-field-group">
             <label class="trade-field-label"><i class="fa-solid fa-hashtag"></i> الكمية</label>
             <div class="trade-chips-row">${amountChipsHtml}</div>
@@ -362,7 +356,6 @@ function buildTradingUI(currencyId, officeId) {
         </div>
 
         <div class="trade-ops-grid">
-            <!-- شراء -->
             <div class="trade-op trade-op-buy">
                 <div class="trade-op-header">
                     <i class="fa-solid fa-arrow-down-to-line"></i> شراء
@@ -377,7 +370,6 @@ function buildTradingUI(currencyId, officeId) {
                 </button>
             </div>
 
-            <!-- بيع -->
             <div class="trade-op trade-op-sell">
                 <div class="trade-op-header">
                     <i class="fa-solid fa-arrow-up-from-line"></i> بيع
@@ -396,22 +388,21 @@ function buildTradingUI(currencyId, officeId) {
 }
 
 function setTradeVal(id1, id2, val) {
-    const el1 = document.getElementById(id1);
-    if (el1) { el1.value = val; el1.dispatchEvent(new Event('input')); }
-    if (id2) { const el2 = document.getElementById(id2); if (el2) el2.value = val; }
-    event.target.classList.add('trade-chip-active');
-    setTimeout(() => event.target.classList.remove('trade-chip-active'), 600);
+  const el1 = document.getElementById(id1);
+  if (el1) { el1.value = val; el1.dispatchEvent(new Event('input')); }
+  if (id2) { const el2 = document.getElementById(id2); if (el2) el2.value = val; }
+  event.target.classList.add('trade-chip-active');
+  setTimeout(() => event.target.classList.remove('trade-chip-active'), 600);
 }
 
 async function executeTrade(type, officeId, currencyId) {
-  // التحقق من وجود office_id و currency_id قبل الإرسال
   if (!officeId || !currencyId) {
     alert('بيانات الصندوق غير مكتملة، يرجى تحديث الصفحة');
     return;
   }
 
   const amount = parseFloat(document.getElementById(`${type}_amount_${currencyId}`)?.value);
-  const price  = parseFloat(document.getElementById(`${type}_price_${currencyId}`)?.value);
+  const price = parseFloat(document.getElementById(`${type}_price_${currencyId}`)?.value);
 
   if (!amount || amount <= 0 || !price || price <= 0) {
     alert('يرجى إدخال قيم صحيحة للكمية والسعر');
@@ -419,8 +410,8 @@ async function executeTrade(type, officeId, currencyId) {
   }
 
   const payload = { office_id: officeId, currency_id: currencyId, amount: amount };
-  if (type === 'buy') payload.buy_price  = parseFloat(price);
-  else                payload.sell_price = parseFloat(price);
+  if (type === 'buy') payload.buy_price = parseFloat(price);
+  else payload.sell_price = parseFloat(price);
 
   try {
     const res = await fetch(`${API_URL}/trading/${type}`, {
@@ -452,17 +443,17 @@ async function executeTrade(type, officeId, currencyId) {
 
 async function loadTradingReport() {
   const dateInput = document.getElementById('report-date');
-  const date      = dateInput.value || new Date().toISOString().split('T')[0];
+  const date = dateInput.value || new Date().toISOString().split('T')[0];
 
   const summaryEl = document.getElementById('profits-summary');
-  const tableEl   = document.getElementById('profits-table');
-  const emptyEl   = document.getElementById('profits-empty');
-  const tbodyEl   = document.getElementById('profits-list');
+  const tableEl = document.getElementById('profits-table');
+  const emptyEl = document.getElementById('profits-empty');
+  const tbodyEl = document.getElementById('profits-list');
 
-  summaryEl.innerHTML    = `<div class="loading-row" style="grid-column:1/-1;"><div class="loading-spinner" style="margin:0 auto 8px;"></div> جاري التحميل...</div>`;
-  tableEl.style.display  = 'none';
-  emptyEl.style.display  = 'none';
-  tbodyEl.innerHTML      = '';
+  summaryEl.innerHTML = `<div class="loading-row" style="grid-column:1/-1;"><div class="loading-spinner" style="margin:0 auto 8px;"></div> جاري التحميل...</div>`;
+  tableEl.style.display = 'none';
+  emptyEl.style.display = 'none';
+  tbodyEl.innerHTML = '';
 
   try {
     const res = await fetch(`${API_URL}/trading/report/details?date=${date}`, {
@@ -477,12 +468,12 @@ async function loadTradingReport() {
     }
 
     const transactions = json.transactions || [];
-    const summary      = json.summary     || {};
+    const summary = json.summary || {};
 
     const totalProfit = parseFloat(summary.total_net_profit || 0);
     const profitColor = totalProfit >= 0 ? 'var(--success)' : 'var(--danger)';
-    const profitBg    = totalProfit >= 0 ? 'var(--success-soft)' : 'var(--danger-soft)';
-    const profitIcon  = totalProfit >= 0 ? 'fa-arrow-trend-up' : 'fa-arrow-trend-down';
+    const profitBg = totalProfit >= 0 ? 'var(--success-soft)' : 'var(--danger-soft)';
+    const profitIcon = totalProfit >= 0 ? 'fa-arrow-trend-up' : 'fa-arrow-trend-down';
 
     summaryEl.innerHTML = `
       <div class="stat-card">
@@ -520,10 +511,10 @@ async function loadTradingReport() {
     if (transactions.length === 0) { emptyEl.style.display = 'block'; return; }
 
     transactions.forEach((tx, index) => {
-      const isBuy      = tx.type === 'buy';
-      const profit     = parseFloat(tx.profit || 0);
-      const pColor     = profit > 0 ? 'var(--success)' : profit < 0 ? 'var(--danger)' : 'var(--gray)';
-      const typeLabel  = isBuy
+      const isBuy = tx.type === 'buy';
+      const profit = parseFloat(tx.profit || 0);
+      const pColor = profit > 0 ? 'var(--success)' : profit < 0 ? 'var(--danger)' : 'var(--gray)';
+      const typeLabel = isBuy
         ? `<span class="badge-buy">شراء</span>`
         : `<span class="badge-sell">بيع</span>`;
       const profitCell = isBuy
@@ -561,9 +552,9 @@ function updateClock() {
   const el = document.getElementById('time-display');
   if (!el) return;
   const now = new Date();
-  const hh  = String(now.getHours()).padStart(2, '0');
-  const mm  = String(now.getMinutes()).padStart(2, '0');
-  const ss  = String(now.getSeconds()).padStart(2, '0');
+  const hh = String(now.getHours()).padStart(2, '0');
+  const mm = String(now.getMinutes()).padStart(2, '0');
+  const ss = String(now.getSeconds()).padStart(2, '0');
   el.textContent = `${hh}:${mm}:${ss}`;
 }
 
@@ -575,13 +566,169 @@ document.addEventListener("DOMContentLoaded", async () => {
   token = await checkAuth();
   if (!token) return;
 
-  // ضبط تاريخ اليوم لحقل التقرير
   document.getElementById('report-date').value = new Date().toISOString().split('T')[0];
 
-  // ساعة مباشرة
   updateClock();
   setInterval(updateClock, 1000);
 
-  // تحميل الحوالات بشكل افتراضي
   loadNewTransfers();
 });
+
+/* ============================= */
+/*        PRINT RECEIPT         */
+/* ============================= */function printTransferReceipt(tx) {
+  if (!tx) return;
+
+  function toEn(val) {
+    return String(val ?? '---')
+      .replace(/[\u0660-\u0669]/g, d => d.charCodeAt(0) - 0x0660)
+      .replace(/[\u06F0-\u06F9]/g, d => d.charCodeAt(0) - 0x06F0);
+  }
+
+  function fmtNum(val, decimals = 2) {
+    const num = parseFloat(val ?? 0);
+    return toEn(isNaN(num) ? '0.00'
+      : num.toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals }));
+  }
+
+  const trackingCode          = toEn(tx.tracking_code       ?? '---');
+  const senderName            = tx.sender?.name              ?? 'غير معروف';
+  const senderCountry         = tx.sender?.country?.name     ?? '---';
+  const sendAmount            = fmtNum(tx.amount);
+  const sendCurrencyCode      = tx.send_currency?.code       ?? 'USD';
+  const amountUsd             = parseFloat(tx.amount_in_usd  ?? 0);
+  const deliveryCurrencyPrice = parseFloat(tx.currency?.price ?? 1);
+  const deliveryCurrencyCode  = tx.currency?.code            ?? '---';
+  const deliveryAmount        = fmtNum(deliveryCurrencyPrice > 0 ? amountUsd / deliveryCurrencyPrice : 0);
+  const receiverName          = tx.receiver_name             ?? '---';
+  const receiverPhone         = toEn(tx.receiver_phone       ?? '---');
+
+  const now = new Date();
+  const pad = n => String(n).padStart(2, '0');
+  const printDate = `${now.getFullYear()}/${pad(now.getMonth()+1)}/${pad(now.getDate())}  ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+
+  const receiptHtml = `<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap');
+
+  @page {
+    size: 80mm auto;
+    margin: 0 !important;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Cairo', sans-serif;
+    width: 72mm; 
+    max-width: 72mm;
+    margin: 0 auto !important;
+    padding: 2mm;
+    padding-bottom: 0;
+    color: #000 !important; /* إجبار كل شيء على اللون الأسود */
+    font-size: 13px;
+    line-height: 1.45;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    overflow: hidden;
+  }
+
+  .hdr { text-align:center; padding-bottom:5px; border-bottom:2px solid #000; margin-bottom:6px; }
+  .hdr .logo { font-size:18px; font-weight:700; color: #000; }
+  .hdr .sub  { font-size:12px; font-weight:700; color: #000; margin-top:1px; }
+  .hdr .dt   { font-size:11px; font-weight:700; color: #000; margin-top:2px; direction:ltr; }
+
+  .track {
+    text-align:center; margin:6px 0; padding:5px 4px;
+    border:2px dashed #000; border-radius:3px;
+    font-size:15px; font-weight:700; direction:ltr; color: #000;
+  }
+  .track-lbl { display:block; font-size:10px; font-weight:700; color:#000; direction:rtl; margin-bottom:2px; }
+
+  .r { display:flex; justify-content:space-between; align-items:baseline; padding:3px 1px; font-size:12px; border-bottom:1px dotted #000; }
+  .r .lbl { color:#000; font-weight:700; font-size:11px; white-space:nowrap; }
+  .r .val { color:#000; font-weight:700; text-align:left; direction:ltr; unicode-bidi:embed; max-width:60%; word-break:break-word; }
+
+  .divider { border:none; border-top:1.5px dashed #000; margin:6px 0; }
+
+  .amt-wrap { display:flex; gap:4px; margin:6px 0 4px; }
+  .amt-box { flex:1; border:1.5px solid #000; border-radius:4px; padding:5px 3px; text-align:center; overflow:hidden; }
+  .amt-box .albl { font-size:10px; font-weight:700; color:#000; display:block; margin-bottom:2px; }
+  .amt-box .aval { font-size:13px; font-weight:700; color:#000; direction:ltr; unicode-bidi:embed; display:block; }
+  
+  /* تم إزالة الخلفية الرمادية واستبدالها بإطار أسمك لتمييز الصافي */
+  .amt-box.net { border: 2.5px solid #000; background: transparent; }
+  .amt-box.net .aval { font-size:14px; }
+
+  .footer { display:flex; justify-content:space-between; margin-top:8px; padding-top:6px; border-top:2px solid #000; }
+  .sig { text-align:center; width:45%; font-size:11px; font-weight:700; color:#000; }
+  .sig-line { border-top:1.5px solid #000; margin-top:16px; padding-top:2px; }
+</style>
+</head>
+<body>
+
+  <div class="hdr">
+    <div class="logo"><i class="fa-solid fa-bolt-lightning"></i>
+   <span class="pay">Flash</span> <span class="flash">Pay</span></div>
+
+    <div class="sub">إيصال تسليم حوالة صادرة</div>
+    <div class="dt">${printDate}</div>
+  </div>
+
+  <div class="track">
+    <span class="track-lbl">رمز التتبع (Tracking Code)</span>
+    ${trackingCode}
+  </div>
+
+  <div class="r"><span class="lbl">المرسل</span>      <span class="val">${senderName}</span></div>
+  <div class="r"><span class="lbl">دولة المرسل</span> <span class="val">${senderCountry}</span></div>
+  <hr class="divider">
+  <div class="r"><span class="lbl">المستلم</span>     <span class="val">${receiverName}</span></div>
+  <div class="r"><span class="lbl">رقم الهاتف</span>  <span class="val">${receiverPhone}</span></div>
+
+  <div class="amt-wrap">
+    <div class="amt-box">
+      <span class="albl">المبلغ المرسل</span>
+      <span class="aval">${sendAmount}</span>
+      <span class="albl">${sendCurrencyCode}</span>
+    </div>
+    <div class="amt-box net">
+      <span class="albl">صافي التسليم</span>
+      <span class="aval">${deliveryAmount}</span>
+      <span class="albl">${deliveryCurrencyCode}</span>
+    </div>
+  </div>
+
+  <div class="footer">
+    <div class="sig">توقيع الموظف<div class="sig-line"></div></div>
+    <div class="sig">توقيع المستلم<div class="sig-line"></div></div>
+  </div>
+
+</body>
+</html>`;
+
+  const printWin = window.open('', '_blank', 'width=400,height=600');
+
+  if (!printWin) {
+    alert('يرجى السماح بالنوافذ المنبثقة (Popups) لهذا الموقع ثم أعد المحاولة');
+    return;
+  }
+
+  printWin.document.open();
+  printWin.document.write(receiptHtml);
+  printWin.document.close();
+
+  printWin.onload = function () {
+    printWin.document.fonts.ready.then(function () {
+      printWin.focus();
+      printWin.print();
+      printWin.onafterprint = function () { printWin.close(); };
+      setTimeout(function () {
+        if (!printWin.closed) printWin.close();
+      }, 5000);
+    });
+  };
+}
