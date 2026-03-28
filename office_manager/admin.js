@@ -394,8 +394,22 @@ async function showSafesSection() {
                 <div class="safe-card-subtitle">USD</div>
             </div>
         </div>
-        <div class="safe-card-balance">${parseFloat(mainSafe.balance).toLocaleString()}</div>
+        <div class="safe-card-balance" id="main-safe-balance">${parseFloat(mainSafe.balance).toLocaleString()}</div>
         <div class="safe-card-currency">USD</div>
+
+        <div class="office-safe-panel">
+            <div class="office-safe-panel-title">
+                <i class="fa-solid fa-arrow-right-to-bracket"></i> تحويل إلى خزنة المكتب
+            </div>
+            <div class="office-safe-row">
+                <input type="number" id="main-to-office-amount" class="trading-input"
+                       placeholder="المبلغ بالدولار..." min="0.01" step="any">
+                <button class="osafe-btn osafe-btn-tra"
+                        onclick="transferToOfficeSafe('office_main', ${myOfficeId})">
+                    <i class="fa-solid fa-paper-plane"></i> تحويل
+                </button>
+            </div>
+        </div>
     </div>` : "";
 
     // ─── 3. بطاقات صناديق التداول (TradingSafe) ──────────────
@@ -408,7 +422,7 @@ async function showSafesSection() {
                 <div class="safe-card-subtitle">${safe.currency || "USD"}</div>
             </div>
         </div>
-        <div class="safe-card-balance">${parseFloat(safe.balance).toLocaleString()}</div>
+        <div class="safe-card-balance" id="trading-safe-balance-${safe.currency_id}">${parseFloat(safe.balance).toLocaleString()}</div>
         <div class="safe-card-currency">${safe.currency || "USD"}</div>
         ${safe.cost !== null && safe.cost !== undefined ? `
         <div style="font-size:12px;color:var(--gray);margin-top:8px;font-weight:600;
@@ -419,6 +433,20 @@ async function showSafesSection() {
             </span>
         </div>` : ""}
         ${buildTradingUI(safe.currency_id, safe.office_id)}
+
+        <div class="office-safe-panel" style="margin-top:12px;">
+            <div class="office-safe-panel-title">
+                <i class="fa-solid fa-arrow-right-to-bracket"></i> تحويل إلى خزنة المكتب
+            </div>
+            <div class="office-safe-row">
+                <input type="number" id="trading-to-office-amount" class="trading-input"
+                       placeholder="المبلغ..." min="0.01" step="any">
+                <button class="osafe-btn osafe-btn-tra"
+                        onclick="transferToOfficeSafe('trading', ${myOfficeId})">
+                    <i class="fa-solid fa-paper-plane"></i> تحويل
+                </button>
+            </div>
+        </div>
     </div>`).join("");
 
     container.innerHTML = officeSafeCard + mainSafeCard + tradingCards;
@@ -481,6 +509,39 @@ async function officeSafeTransfer(officeId) {
     if (res.ok) {
       amountInput.value = "";
       showAdminToast("✅ تم التحويل بنجاح");
+      setTimeout(() => showSafesSection(), 500);
+    } else {
+      alert(data.message || "حدث خطأ أثناء التحويل");
+    }
+  } catch (e) { alert("تعذر الاتصال بالخادم"); }
+  finally { btn.disabled = false; btn.innerHTML = orig; }
+}
+
+/* ── تحويل من صندوق رئيسي أو تداول → خزنة المكتب ──────────────────── */
+async function transferToOfficeSafe(fromType, officeId, currencyId = null) {
+  const inputId = fromType === "trading"
+    ? `trading-to-office-amount`
+    : "main-to-office-amount";
+  const amountInput = document.getElementById(inputId);
+  const amount = parseFloat(amountInput.value);
+  if (!amount || amount <= 0) { alert("يرجى إدخال مبلغ صحيح"); return; }
+
+  // نجد الزر الصح داخل نفس الـ panel
+  const btn = amountInput.closest(".office-safe-panel").querySelector(".osafe-btn-tra");
+  const orig = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i>`;
+
+  try {
+    const res = await fetch(`${API_URL}/safes/transfer-to-office`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ office_id: officeId, from_type: fromType, amount }),
+    });
+    const data = await res.json();
+    if (res.ok) {
+      amountInput.value = "";
+      showAdminToast("✅ تم التحويل إلى خزنة المكتب بنجاح");
       setTimeout(() => showSafesSection(), 500);
     } else {
       alert(data.message || "حدث خطأ أثناء التحويل");
