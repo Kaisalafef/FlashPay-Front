@@ -99,6 +99,34 @@
                 </div>
             </div>
             <div class="header-actions">
+
+                <!-- ===== زر الإشعارات ===== -->
+                <div class="notif-bell-wrap" id="notif-bell-wrap">
+                    <button class="notif-bell-btn" id="notif-bell-btn"
+                            onclick="toggleNotifDropdown()"
+                            title="إشعارات الرسائل الجديدة">
+                        <i class="fa-solid fa-bell"></i>
+                        <span class="notif-bell-badge hidden" id="notif-bell-badge">0</span>
+                        <span class="tnotif-bell-badge hidden" id="tnotif-bell-badge"></span>
+                    </button>
+
+                    <!-- Dropdown panel -->
+                    <div class="notif-dropdown hidden" id="notif-dropdown">
+                        <div class="notif-dropdown-header">
+                            <span><i class="fa-solid fa-bell"></i> رسائل غير مقروءة</span>
+                            <button class="notif-clear-btn" onclick="clearAllNotifications()">
+                                مسح الكل
+                            </button>
+                        </div>
+                        <div id="notif-dropdown-list">
+                            <div class="notif-empty">
+                                <i class="fa-regular fa-bell-slash"></i>
+                                لا توجد إشعارات جديدة
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="profile-box">
                     <div class="avatar">
                         <i class="fa-solid fa-user"></i>
@@ -1052,7 +1080,7 @@
         const _origShowProfits = typeof showProfitsSection === 'function' ? showProfitsSection : null;
     </script>
     <script src="sidebar-mobile.js"></script>
-    
+    <div id="tnotif-toast-container" class="tnotif-toast-container" aria-live="polite"></div>
 
 </body>
 

@@ -869,6 +869,67 @@ button { border: none; cursor: pointer; }
     background: linear-gradient(90deg, #f59e0b, #fbbf24);
 }
 
+/* ═══════════════════════════════════════
+   خزنة المكتب  (OfficeSafe)
+   ═══════════════════════════════════════ */
+.safe-card-office {
+    border-color: #10b981;
+}
+.safe-card-office::after {
+    background: linear-gradient(90deg, #10b981, #34d399);
+}
+.safe-card-office .safe-card-icon {
+    background: #d1fae5;
+    color: #059669;
+}
+.office-safe-panel {
+    margin-top: 14px;
+    padding: 13px 14px;
+    background: var(--light);
+    border-radius: 10px;
+    border: 1px solid var(--border);
+}
+.office-safe-panel-title {
+    font-size: 12px;
+    font-weight: 800;
+    color: var(--dark);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.office-safe-row {
+    display: flex;
+    gap: 7px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+.office-safe-row .trading-input {
+    flex: 1;
+    min-width: 90px;
+}
+.osafe-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 9px 13px;
+    border: none;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: var(--transition);
+    white-space: nowrap;
+    font-family: 'Cairo', sans-serif;
+}
+.osafe-btn:disabled { opacity: .6; cursor: not-allowed; }
+.osafe-btn-dep       { background: #d1fae5; color: #065f46; }
+.osafe-btn-dep:hover  { background: #a7f3d0; }
+.osafe-btn-wit       { background: #fee2e2; color: #991b1b; }
+.osafe-btn-wit:hover  { background: #fecaca; }
+.osafe-btn-tra       { background: #ede9fe; color: #5b21b6; }
+.osafe-btn-tra:hover  { background: #ddd6fe; }
+
 .safe-card-header {
     display: flex;
     align-items: center;
@@ -2618,4 +2679,417 @@ body.chat-open { overflow: hidden; }
 @keyframes fadeIn {
     from { opacity: 0; }
     to   { opacity: 1; }
+}
+
+/* =============================================================
+   NOTIFICATION SYSTEM — نظام الإشعارات
+   (إضافات فقط — لا تعديل على أي CSS موجود)
+   ============================================================= */
+
+/* ── حاوية الجرس (wrapper للـ positioning) ── */
+.notif-bell-wrap {
+    position: relative;
+}
+
+/* ── زر الجرس ── */
+.notif-bell-btn {
+    position: relative;
+    width: 40px;
+    height: 40px;
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 16px;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition);
+    flex-shrink: 0;
+}
+
+.notif-bell-btn:hover {
+    border-color: var(--primary-light);
+    color: var(--primary);
+    box-shadow: var(--shadow-sm);
+}
+
+/* ── شارة العدد على الجرس ── */
+.notif-bell-badge {
+    position: absolute;
+    top: -5px;
+    left: -5px;
+    min-width: 18px;
+    height: 18px;
+    background: #ef4444;
+    color: #fff;
+    border-radius: var(--radius-full);
+    font-size: 10px;
+    font-weight: 800;
+    line-height: 18px;
+    text-align: center;
+    padding: 0 4px;
+    border: 2px solid var(--white);
+    animation: notif-pop 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    pointer-events: none;
+}
+
+@keyframes notif-pop {
+    from { transform: scale(0); opacity: 0; }
+    to   { transform: scale(1); opacity: 1; }
+}
+
+/* ── Dropdown panel ── */
+.notif-dropdown {
+    position: absolute;
+    top: calc(100% + 10px);
+    left: 0;
+    width: 320px;
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-lg);
+    z-index: 500;
+    overflow: hidden;
+    animation: notif-slide-in 0.22s ease-out;
+}
+
+@keyframes notif-slide-in {
+    from { opacity: 0; transform: translateY(-8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Header الـ dropdown ── */
+.notif-dropdown-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px 12px;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--dark);
+    background: var(--light);
+}
+
+.notif-dropdown-header i {
+    color: var(--primary);
+    margin-left: 6px;
+}
+
+/* ── زر "مسح الكل" ── */
+.notif-clear-btn {
+    background: none;
+    border: none;
+    font-family: 'Cairo', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--gray);
+    cursor: pointer;
+    padding: 3px 8px;
+    border-radius: 6px;
+    transition: color 0.2s, background 0.2s;
+}
+
+.notif-clear-btn:hover {
+    color: var(--danger);
+    background: var(--danger-bg);
+}
+
+/* ── عنصر الإشعار الواحد ── */
+.notif-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    cursor: pointer;
+    transition: background 0.18s ease;
+    border-bottom: 1px solid var(--border);
+}
+
+.notif-item:last-child { border-bottom: none; }
+
+.notif-item:hover { background: var(--primary-bg); }
+
+/* أيقونة الإشعار */
+.notif-item-icon {
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    color: #fff;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+}
+
+/* نص الإشعار */
+.notif-item-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.notif-item-title {
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--dark);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.notif-item-sub {
+    font-size: 11px;
+    color: var(--gray);
+    margin-top: 2px;
+}
+
+/* عداد الرسائل (يمين العنصر) */
+.notif-item-count {
+    background: #ef4444;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 800;
+    min-width: 20px;
+    height: 20px;
+    line-height: 20px;
+    text-align: center;
+    padding: 0 5px;
+    border-radius: var(--radius-full);
+    flex-shrink: 0;
+}
+
+/* ── حالة "لا توجد إشعارات" ── */
+.notif-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 32px 20px;
+    color: var(--gray);
+    font-size: 13px;
+    font-weight: 600;
+    text-align: center;
+}
+
+.notif-empty i {
+    font-size: 28px;
+    opacity: 0.35;
+}
+
+/* =============================================================
+   CHAT BUTTON — شارة الرسائل غير المقروءة على زر الدردشة
+   ============================================================= */
+
+/* الشارة (badge) على زر الدردشة */
+.chat-unread-badge {
+    position: absolute;
+    top: -7px;
+    left: -7px;
+    min-width: 18px;
+    height: 18px;
+    background: #ef4444;
+    color: #fff;
+    border-radius: var(--radius-full);
+    font-size: 10px;
+    font-weight: 800;
+    line-height: 18px;
+    text-align: center;
+    padding: 0 4px;
+    border: 2px solid var(--white);
+    pointer-events: none;
+    animation: notif-pop 0.3s cubic-bezier(0.34,1.56,0.64,1);
+}
+
+/* حالة "يوجد رسائل جديدة" — نبضة على الزر */
+.btn-chat-has-unread {
+    animation: btn-chat-pulse 1.8s ease-in-out infinite;
+    box-shadow: 0 0 0 0 rgba(59,130,246,0.5);
+}
+
+@keyframes btn-chat-pulse {
+    0%   { box-shadow: 0 0 0 0   rgba(59,130,246,0.50); }
+    60%  { box-shadow: 0 0 0 7px rgba(59,130,246,0.00); }
+    100% { box-shadow: 0 0 0 0   rgba(59,130,246,0.00); }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ★  NEW TRANSFER ARRIVAL NOTIFICATIONS — tnotif styles
+   أضف هذا الكود في نهاية style_admin.css
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Orange badge on bell (bottom-right, distinct from the red chat badge) ── */
+.tnotif-bell-badge {
+    position    : absolute;
+    bottom      : -4px;
+    right       : -4px;
+    min-width   : 16px;
+    height      : 16px;
+    background  : var(--primary);
+    color       : #fff;
+    border-radius: var(--radius-full);
+    font-size   : 9px;
+    font-weight : 800;
+    line-height : 16px;
+    text-align  : center;
+    padding     : 0 3px;
+    border      : 2px solid var(--white);
+    pointer-events: none;
+    animation   : notif-pop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    z-index     : 1;
+}
+
+/* ── Section divider header inside the dropdown ─────────────────────────── */
+.tnotif-section-header {
+    display         : flex;
+    align-items     : center;
+    justify-content : space-between;
+    padding         : 8px 14px;
+    font-size       : 11px;
+    font-weight     : 700;
+    color           : var(--primary);
+    background      : var(--primary-bg);
+    border-bottom   : 1px solid rgba(234, 88, 12, 0.18);
+    letter-spacing  : 0.02em;
+}
+
+.tnotif-section-header i {
+    margin-left : 5px;
+    font-size   : 10px;
+}
+
+/* pill showing count of new transfers */
+.tnotif-section-count {
+    background    : var(--primary);
+    color         : #fff;
+    font-size     : 10px;
+    font-weight   : 800;
+    min-width     : 18px;
+    height        : 18px;
+    line-height   : 18px;
+    text-align    : center;
+    padding       : 0 5px;
+    border-radius : var(--radius-full);
+}
+
+/* ── Transfer item icon (orange gradient, overrides blue) ────────────────── */
+.tnotif-icon {
+    background: linear-gradient(135deg, var(--primary-light), var(--primary-dark)) !important;
+}
+
+/* ── "جديد" pill badge ───────────────────────────────────────────────────── */
+.tnotif-badge-new {
+    background  : var(--primary) !important;
+    font-size   : 9px !important;
+    padding     : 0 7px !important;
+    letter-spacing: 0.02em;
+}
+
+/* ── Toast container (fixed, top-left to match RTL layout) ──────────────── */
+.tnotif-toast-container {
+    position      : fixed;
+    top           : 76px;
+    left          : 24px;
+    z-index       : 9999;
+    display       : flex;
+    flex-direction: column;
+    gap           : 10px;
+    pointer-events: none;
+}
+
+/* ── Single toast card ───────────────────────────────────────────────────── */
+.tnotif-toast {
+    display       : flex;
+    align-items   : center;
+    gap           : 12px;
+    background    : var(--white);
+    border        : 1px solid var(--border);
+    border-right  : 4px solid var(--primary);   /* RTL accent stripe */
+    border-radius : var(--radius-sm);
+    box-shadow    : var(--shadow-lg);
+    padding       : 12px 14px;
+    min-width     : 280px;
+    max-width     : 340px;
+    pointer-events: all;
+    cursor        : pointer;
+    animation     : tnotif-toast-in 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    transition    : opacity 0.45s ease, transform 0.45s ease;
+}
+
+.tnotif-toast:hover {
+    box-shadow: var(--shadow-hover);
+}
+
+.tnotif-toast.tnotif-toast-exit {
+    opacity  : 0;
+    transform: translateX(-20px);
+}
+
+@keyframes tnotif-toast-in {
+    from { opacity: 0; transform: translateX(-30px); }
+    to   { opacity: 1; transform: translateX(0);     }
+}
+
+/* toast icon circle */
+.tnotif-toast-icon {
+    width           : 38px;
+    height          : 38px;
+    background      : linear-gradient(135deg, var(--primary-light), var(--primary-dark));
+    color           : #fff;
+    border-radius   : 10px;
+    display         : flex;
+    align-items     : center;
+    justify-content : center;
+    font-size       : 15px;
+    flex-shrink     : 0;
+}
+
+.tnotif-toast-body {
+    flex     : 1;
+    min-width: 0;
+}
+
+.tnotif-toast-title {
+    font-size  : 13px;
+    font-weight: 800;
+    color      : var(--dark);
+}
+
+.tnotif-toast-sub {
+    font-size : 11px;
+    color     : var(--gray);
+    margin-top: 2px;
+}
+
+/* close button */
+.tnotif-toast-close {
+    background   : none;
+    border       : none;
+    color        : var(--gray);
+    cursor       : pointer;
+    font-size    : 14px;
+    padding      : 4px 6px;
+    border-radius: 6px;
+    flex-shrink  : 0;
+    transition   : color 0.2s, background 0.2s;
+    line-height  : 1;
+}
+
+.tnotif-toast-close:hover {
+    color     : var(--danger);
+    background: var(--danger-bg);
+}
+
+/* ── Row highlight on the pending-transfers table ────────────────────────── */
+.tnotif-row-highlight {
+    animation: tnotif-row-flash 3.2s ease-in-out forwards;
+}
+
+@keyframes tnotif-row-flash {
+    0%   { background-color: var(--warning-bg); }
+    70%  { background-color: var(--warning-bg); }
+    100% { background-color: transparent;       }
 }
