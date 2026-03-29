@@ -327,6 +327,11 @@
 
                 <!-- شبكة الصناديق -->
                 <div class="safes-grid" id="safes-container"></div>
+                <div style="margin-top: 24px; display: flex; justify-content: flex-end;">
+    <button class="btn-primary" onclick="openExtraBoxesModal()" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);">
+        <i class="fa-solid fa-boxes-stacked"></i> الصناديق الإضافية
+    </button>
+</div>
             </div>
 
             <!-- ===== قسم أرباح التداول ===== -->
@@ -1045,7 +1050,52 @@
             <div class="chat-input-hint">Enter للإرسال • Shift+Enter لسطر جديد</div>
         </div>
     </div>
+       <div id="extra-boxes-modal" class="modal-overlay hidden">
+    <div class="modal-box" style="width: 600px; max-width: 95vw;">
+        <div class="modal-header">
+            <h3><i class="fa-solid fa-boxes-stacked"></i> إدارة الصناديق الإضافية</h3>
+            <button class="modal-close-btn" onclick="closeExtraBoxesModal()">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div style="background: var(--light); padding: 18px; border-radius: 12px; margin-bottom: 24px; border: 1px solid var(--border);">
+                <h4 style="margin-bottom: 12px; color: var(--dark); font-size: 14px;"><i class="fa-solid fa-plus"></i> إضافة صندوق جديد</h4>
+                <div class="form-row" style="margin-bottom: 0; align-items: flex-end;">
+                    <div class="form-group" style="flex: 2; min-width: 150px;">
+                        <label>اسم الصندوق</label>
+                        <input type="text" id="eb-name" class="modal-input" placeholder="مثال: صندوق المصاريف">
+                    </div>
+                    <div class="form-group" style="flex: 1; min-width: 100px;">
+                        <label>المبلغ الأولي</label>
+                        <input type="number" id="eb-amount" class="modal-input" placeholder="0.00" min="0" step="any">
+                    </div>
+                    <div class="form-group" style="flex: 0 0 auto;">
+                        <button class="btn-primary" onclick="createExtraBox()" style="padding: 12px 24px; margin-bottom: 2px;">
+                            <i class="fa-solid fa-check"></i> إضافة
+                        </button>
+                    </div>
+                </div>
+            </div>
 
+            <h4 style="margin-bottom: 12px; color: var(--dark); font-size: 14px;"><i class="fa-solid fa-list"></i> الصناديق الحالية</h4>
+            <div class="table-wrapper" style="max-height: 250px; overflow-y: auto;">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>اسم الصندوق</th>
+                            <th>الرصيد</th>
+                            <th style="text-align: left;">الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="extra-boxes-list">
+                        <tr><td colspan="3" style="text-align:center;">جاري التحميل...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
         <script src="admin.js"></script>
 
     <script>

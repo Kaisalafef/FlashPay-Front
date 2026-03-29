@@ -2645,7 +2645,282 @@ function _tNotifObserveList() {
         }
     }).observe(list, { childList: true });
 }
+/* =====================================================
+   إدارة الصناديق الإضافية (Extra Boxes)
+   ===================================================== */
+let _currentOfficeIdForBoxes = null;
 
+async function openExtraBoxesModal() {
+    document.getElementById('extra-boxes-modal').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+    await loadExtraBoxes();
+}
+
+function closeExtraBoxesModal() {
+    document.getElementById('extra-boxes-modal').classList.add('hidden');
+    document.body.style.overflow = '';
+}
+
+// إغلاق المودال عند النقر في الخلفية
+document.addEventListener("DOMContentLoaded", () => {
+    const extraOverlay = document.getElementById("extra-boxes-modal");
+    if (extraOverlay) {
+        extraOverlay.addEventListener("click", function (e) {
+            if (e.target === extraOverlay) closeExtraBoxesModal();
+        });
+    }
+});
+
+async function loadExtraBoxes() {
+    const tbody = document.getElementById('extra-boxes-list');
+    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding: 20px;">جاري التحميل... <i class="fa-solid fa-spinner fa-spin"></i></td></tr>';
+
+    try {
+        // التأكد من جلب office_id للمستخدم الحالي
+        if (!_currentOfficeIdForBoxes) {
+            const meRes = await fetch(`${API_URL}/me`, { headers: { Authorization: `Bearer ${token}` } });
+            const meData = await meRes.json();
+            _currentOfficeIdForBoxes = meData.user?.office_id;
+        }
+
+        const res = await fetch(`${API_URL}/extra-boxes`, {
+            headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' }
+        });
+        const json = await res.json();
+        const allBoxes = json.data || [];
+
+        // فلترة الصناديق بحيث تظهر فقط التابعة لمكتب المدير الحالي
+        const myBoxes = allBoxes.filter(b => b.office_id === _currentOfficeIdForBoxes);
+
+        if (myBoxes.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color: var(--gray); padding: 20px;">لا توجد صناديق إضافية مسجلة حالياً.</td></tr>';
+            return;
+        }
+
+        // ابحث عن هذا الجزء داخل دالة loadExtraBoxes في ملف admin.js وقم باستبداله
+// ابحث عن الجزء المسؤول عن رسم الجدول في loadExtraBoxes واستبدله بهذا:
+tbody.innerHTML = myBoxes.map(box => `
+    <tr>
+        <td style="font-weight:700; color: var(--dark);">${box.name}</td>
+        <td style="font-weight:800; color: var(--primary);">${parseFloat(box.amount).toLocaleString()}</td>
+        <td style="text-align: left;">
+            <button class="osafe-btn" onclick="handleBoxTransaction(${box.id}, ${box.amount}, '${box.name}', 'deposit')" title="إيداع" style="background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; padding: 7px 10px;">
+                <i class="fa-solid fa-plus-circle"></i> إيداع
+            </button>
+            
+            <button class="osafe-btn" onclick="handleBoxTransaction(${box.id}, ${box.amount}, '${box.name}', 'withdraw')" title="سحب" style="background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; padding: 7px 10px;">
+                <i class="fa-solid fa-minus-circle"></i> سحب
+            </button>
+
+            <button class="osafe-btn osafe-btn-tra" onclick="transferExtraBoxToOffice(${box.id}, ${box.amount}, '${box.name}')" title="نقل إلى خزنة المكتب">
+                <i class="fa-solid fa-right-left"></i> نقل للخزنة
+            </button>
+            
+            <button class="osafe-btn osafe-btn-wit" onclick="deleteExtraBox(${box.id})" title="حذف" style="padding: 7px 10px;">
+                <i class="fa-solid fa-trash"></i>
+            </button>
+        </td>
+    </tr>
+`).join('');
+
+    } catch (e) {
+        console.error(e);
+        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color: var(--danger); padding: 20px;">حدث خطأ أثناء تحميل البيانات</td></tr>';
+    }
+}
+/**
+ * تعديل رصيد الصندوق الإضافي يدوياً
+ */
+
+/**
+ * معالجة عمليات السحب والإيداع للصناديق الإضافية
+ * @param {number} boxId - معرف الصندوق
+ * @param {number} currentAmount - الرصيد الحالي
+ * @param {string} boxName - اسم الصندوق
+ * @param {string} type - 'deposit' (إيداع) أو 'withdraw' (سحب)
+ */
+async function handleBoxTransaction(boxId, currentAmount, boxName, type) {
+    const actionText = type === 'deposit' ? 'إيداع في' : 'سحب من';
+    const amountStr = prompt(`أدخل المبلغ المراد ${actionText} صندوق (${boxName}):`);
+    
+    if (amountStr === null) return;
+    
+    const amountValue = parseFloat(amountStr);
+    if (isNaN(amountValue) || amountValue <= 0) {
+        alert("يرجى إدخال مبلغ صحيح أكبر من الصفر.");
+        return;
+    }
+
+    let newTotal;
+    if (type === 'deposit') {
+        newTotal = currentAmount + amountValue;
+    } else {
+        if (amountValue > currentAmount) {
+            alert("عذراً، الرصيد الحالي غير كافٍ لإتمام عملية السحب.");
+            return;
+        }
+        newTotal = currentAmount - amountValue;
+    }
+
+    try {
+        const res = await fetch(`${API_URL}/extra-boxes/${boxId}`, {
+            method: 'PUT',
+            headers: { 
+                'Content-Type': 'application/json', 
+                'Authorization': `Bearer ${token}`,
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({ amount: newTotal })
+        });
+
+        if (res.ok) {
+            showAdminToast(`تمت عملية ${type === 'deposit' ? 'الإيداع' : 'السحب'} بنجاح.`);
+            loadExtraBoxes(); // تحديث القائمة
+        } else {
+            const err = await res.json();
+            alert(err.message || "فشل في تحديث بيانات الصندوق.");
+        }
+    } catch (e) {
+        console.error(e);
+        alert("خطأ في الاتصال بالخادم.");
+    }
+}
+async function editExtraBoxAmount(boxId, currentAmount, boxName) {
+    const newAmountStr = prompt(`تعديل رصيد صندوق "${boxName}":`, currentAmount);
+    
+    // إذا ضغط المستخدم إلغاء أو لم يدخل شيئاً
+    if (newAmountStr === null) return;
+    
+    const newAmount = parseFloat(newAmountStr);
+    if (isNaN(newAmount) || newAmount < 0) {
+        alert("يرجى إدخال مبلغ صحيح.");
+        return;
+    }
+
+    try {
+        const res = await fetch(`${API_URL}/extra-boxes/${boxId}`, {
+            method: 'PUT',
+            headers: { 
+                'Content-Type': 'application/json', 
+                'Authorization': `Bearer ${token}`,
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({ amount: newAmount })
+        });
+
+        const data = await res.json();
+        if (res.ok) {
+            showAdminToast("تم تحديث مبلغ الصندوق بنجاح.");
+            loadExtraBoxes(); // إعادة تحميل القائمة لتحديث الأرقام
+        } else {
+            alert(data.message || "فشل في تحديث المبلغ.");
+        }
+    } catch (e) {
+        console.error(e);
+        alert("خطأ في الاتصال بالخادم.");
+    }
+}
+async function createExtraBox() {
+    const nameInput = document.getElementById('eb-name');
+    const amountInput = document.getElementById('eb-amount');
+    const name = nameInput.value.trim();
+    const amount = parseFloat(amountInput.value);
+
+    if (!name || isNaN(amount) || amount < 0) {
+        alert("يرجى إدخال اسم للصندوق ومبلغ صالح.");
+        return;
+    }
+
+    try {
+        const res = await fetch(`${API_URL}/extra-boxes`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ name, amount, office_id: _currentOfficeIdForBoxes })
+        });
+
+        const data = await res.json();
+        if (res.ok) {
+            nameInput.value = '';
+            amountInput.value = '';
+            showAdminToast("تم إضافة الصندوق بنجاح!");
+            loadExtraBoxes();
+        } else {
+            alert(data.message || "حدث خطأ أثناء الإضافة.");
+        }
+    } catch (e) {
+        console.error(e);
+        alert("خطأ في الاتصال بالخادم.");
+    }
+}
+
+async function transferExtraBoxToOffice(boxId, maxAmount, boxName) {
+    const amountStr = prompt(`كم تريد أن تنقل من صندوق "${boxName}" إلى خزنة المكتب؟\nالرصيد المتاح: ${parseFloat(maxAmount).toLocaleString()}`);
+    if (!amountStr) return;
+
+    const transferAmount = parseFloat(amountStr);
+    if (isNaN(transferAmount) || transferAmount <= 0 || transferAmount > maxAmount) {
+        alert("المبلغ المدخل غير صحيح أو يتجاوز الرصيد المتاح في الصندوق.");
+        return;
+    }
+
+    try {
+        // 1. خصم المبلغ من الصندوق الإضافي
+        const newBoxAmount = maxAmount - transferAmount;
+        const resBox = await fetch(`${API_URL}/extra-boxes/${boxId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ amount: newBoxAmount })
+        });
+
+        if (!resBox.ok) {
+            alert("فشل في تحديث رصيد الصندوق الإضافي.");
+            return;
+        }
+
+        // 2. إيداع المبلغ المخصوم في خزنة المكتب
+        const resOffice = await fetch(`${API_URL}/offices/${_currentOfficeIdForBoxes}/safe`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ amount: transferAmount, type: 'deposit' })
+        });
+
+        if (resOffice.ok) {
+            showAdminToast("✅ تم نقل المبلغ إلى خزنة المكتب بنجاح.");
+            loadExtraBoxes();
+            
+            // تحديث العرض الخلفي للصناديق الأساسية لتظهر القيمة الجديدة
+            if(document.getElementById('safes-card').style.display !== 'none') {
+                showSafesSection(); 
+            }
+        } else {
+            alert("تنبيه: تم خصم المبلغ من الصندوق ولكن فشل إيداعه في الخزنة. يرجى مراجعة الدعم الفني.");
+        }
+
+    } catch (e) {
+        console.error(e);
+        alert("حدث خطأ في الاتصال بالخادم أثناء النقل.");
+    }
+}
+
+async function deleteExtraBox(boxId) {
+    if (!confirm("هل أنت متأكد من حذف هذا الصندوق؟\n(ملاحظة: سيتم حذفه مع الرصيد المتبقي فيه)")) return;
+
+    try {
+        const res = await fetch(`${API_URL}/extra-boxes/${boxId}`, {
+            method: 'DELETE',
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        
+        if (res.ok) {
+            showAdminToast("تم حذف الصندوق بنجاح.");
+            loadExtraBoxes();
+        } else {
+            alert("فشل في حذف الصندوق.");
+        }
+    } catch (e) {
+        alert("حدث خطأ في الاتصال بالخادم.");
+    }
+}
 /* ── Toast notification (top-left corner) ────────────────────────────────── */
 function _tNotifShowToast(item) {
     const container = document.getElementById('tnotif-toast-container');
