@@ -106,59 +106,94 @@ function fillSelect(select, data, placeholder = "اختر من القائمة") 
 }
 
 async function loadSafes() {
-    const tbody = document.getElementById('safes-table-body');
-    if (!tbody) return;
+    const grid = document.getElementById('office-safes-grid');
+    const emptyEl = document.getElementById('safes-empty');
+    if (!grid) return;
+
+    grid.innerHTML = '<div class="safes-skeleton-grid">' +
+        Array(4).fill('<div class="safe-card-skeleton"></div>').join('') +
+        '</div>';
+    if (emptyEl) emptyEl.classList.add('hidden');
 
     try {
-        const res = await fetch(`${API_URL}/safes`, {
-            headers: getHeaders()
-        });
-
+        const res = await fetch(`${API_URL}/safes`, { headers: getHeaders() });
         const json = await res.json();
 
-     const sortedSafes = json.data.sort((a, b) =>
-  (a.owner || '').localeCompare(b.owner || '')
-);
+        // فلترة صناديق المكاتب فقط
+        const officeSafes = (json.data || [])
+            .filter(s => s.type === 'office_main')
+            .sort((a, b) => (a.owner || '').localeCompare(b.owner || ''));
 
-        tbody.innerHTML = '';
+        grid.innerHTML = '';
 
-        // 2️⃣ استخدم sortedSafes بدل json.data
-        sortedSafes.forEach((safe, index) => {
-            let typeLabel = '';
+        // تحديث Hero stats
+        const total = officeSafes.reduce((sum, s) => sum + parseFloat(s.balance || 0), 0);
+        const totalEl = document.getElementById('safes-total-balance');
+        const countEl = document.getElementById('safes-office-count');
+        if (totalEl) totalEl.textContent = '$' + total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        if (countEl) countEl.textContent = officeSafes.length;
 
-            switch (safe.type) {
-                case 'office_main':
-                    typeLabel = 'صندوق مكتب';
-                    break;
-                case 'agent_main':
-                    typeLabel = 'صندوق مندوب';
-                    break;
-                case 'trading':
-                    typeLabel = ' صندوق مبيعات المكتب';
-                    break;
-            }
+        // تحديث عداد الداشبورد
+        const dashSafes = document.getElementById('dash-safes-count');
+        if (dashSafes) dashSafes.textContent = officeSafes.length;
 
-           tbody.innerHTML += `
-    <tr>
-        <td>${index + 1}</td>
-        <td>${typeLabel}</td>
-        <td>${safe.owner}</td>
-        <td>${safe.currency ?? '-'}</td>
-        <td>$${parseFloat(safe.balance).toFixed(2)}</td>
-        <td>${safe.cost ?? '-'}</td>
-        <td>
-            <button class="safes-view-btn" onclick='openSafeDetails(${JSON.stringify(safe)})'>
-                <i class="fa-solid fa-eye"></i> عرض
-            </button>
-        </td>
-    </tr>
-`;
+        if (officeSafes.length === 0) {
+            if (emptyEl) emptyEl.classList.remove('hidden');
+            return;
+        }
 
+        officeSafes.forEach(safe => {
+            const balance = parseFloat(safe.balance || 0);
+            const isPositive = balance >= 0;
+            const initials = (safe.owner || '?').charAt(0).toUpperCase();
+            // تصنيف لوني حسب الرصيد
+            const levelClass = balance >= 10000 ? 'safe-level-high'
+                             : balance >= 1000  ? 'safe-level-mid'
+                             : 'safe-level-low';
+
+            const card = document.createElement('div');
+            card.className = `office-safe-card ${levelClass}`;
+            card.dataset.owner = (safe.owner || '').toLowerCase();
+            card.innerHTML = `
+                <div class="osc-header">
+                    <div class="osc-avatar">${initials}</div>
+                    <div class="osc-info">
+                        <div class="osc-name">${safe.owner || '—'}</div>
+                        <div class="osc-badge"><i class="fa-solid fa-building"></i> صندوق مكتب</div>
+                    </div>
+                    <div class="osc-status-dot ${isPositive ? 'dot-green' : 'dot-red'}"></div>
+                </div>
+                <div class="osc-divider"></div>
+                <div class="osc-balance">
+                    <span class="osc-balance-label">الرصيد الحالي</span>
+                    <span class="osc-balance-value ${isPositive ? 'bal-positive' : 'bal-negative'}">
+                        $${balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </span>
+                </div>
+                <div class="osc-footer">
+                    <div class="osc-meta">
+                        <i class="fa-solid fa-circle-dollar-to-slot"></i>
+                        <span>USD</span>
+                    </div>
+                    <button class="osc-detail-btn" onclick='openSafeDetails(${JSON.stringify(safe)})'>
+                        <i class="fa-solid fa-eye"></i> التفاصيل
+                    </button>
+                </div>
+            `;
+            grid.appendChild(card);
         });
 
     } catch (e) {
-        console.error(e);
+        console.error('loadSafes error:', e);
+        grid.innerHTML = '<p style="text-align:center;color:var(--danger);padding:32px;">تعذّر تحميل الصناديق</p>';
     }
+}
+
+function filterSafeCards() {
+    const q = (document.getElementById('safes-search')?.value || '').toLowerCase();
+    document.querySelectorAll('.office-safe-card').forEach(card => {
+        card.style.display = card.dataset.owner?.includes(q) ? '' : 'none';
+    });
 }
 
 function openSafeDetails(safe) {
@@ -849,6 +884,17 @@ async function renderCurrenciesTable() {
                 </td>
                 <td style="font-weight: bold; color: var(--secondary); direction: ltr; text-align: right;">
                     ${priceInSypHtml}
+                </td>
+                <td>
+                    ${currency.rates && currency.rates.length > 0
+                        ? `<span class="tiers-count-badge"><i class="fa-solid fa-layer-group"></i> ${currency.rates.length} شريحة</span>`
+                        : `<span class="tiers-count-badge tiers-empty"><i class="fa-solid fa-minus"></i> لا يوجد</span>`
+                    }
+                </td>
+                <td>
+                    <button class="btn-manage-rates" onclick="openRatesModal(${currency.id}, '${currency.name}', '${currency.code}', ${JSON.stringify(currency.rates || []).replace(/"/g, '&quot;')})">
+                        <i class="fa-solid fa-sliders"></i> إدارة الشرائح
+                    </button>
                 </td>
             </tr>
         `;
@@ -1991,4 +2037,166 @@ function filterSafesTable() {
     rows.forEach(row => {
         row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
     });
+}
+/* ==============================================
+   إدارة شرائح أسعار الصرف - Currency Rate Tiers
+   ============================================== */
+
+let currentRatesCurrencyId = null;
+
+function openRatesModal(currencyId, name, code, rates) {
+    currentRatesCurrencyId = currencyId;
+    document.getElementById('rates-modal-currency-name').textContent = name;
+    document.getElementById('rates-modal-currency-code').textContent = code;
+
+    const container = document.getElementById('rates-tiers-container');
+    container.innerHTML = '';
+
+    if (rates && rates.length > 0) {
+        rates.forEach(tier => addRateTier(tier));
+    } else {
+        // شريحة افتراضية واحدة فارغة
+        addRateTier();
+    }
+
+    document.getElementById('rates-modal').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeRatesModal() {
+    document.getElementById('rates-modal').classList.add('hidden');
+    document.body.style.overflow = '';
+    currentRatesCurrencyId = null;
+}
+
+function handleRatesModalBackdrop(e) {
+    if (e.target === document.getElementById('rates-modal')) {
+        closeRatesModal();
+    }
+}
+
+function addRateTier(data = null) {
+    const container = document.getElementById('rates-tiers-container');
+    const index = container.querySelectorAll('.rate-tier-row').length + 1;
+
+    const row = document.createElement('div');
+    row.className = 'rate-tier-row';
+    row.innerHTML = `
+        <div class="tier-number">${index}</div>
+        <div class="tier-fields">
+            <div class="tier-field">
+                <label><i class="fa-solid fa-arrow-down"></i> من (USD)</label>
+                <input type="number" class="tier-min" placeholder="0" min="0" step="any"
+                    value="${data ? data.min_amount : ''}">
+            </div>
+            <div class="tier-field">
+                <label><i class="fa-solid fa-arrow-up"></i> إلى (USD)</label>
+                <input type="number" class="tier-max" placeholder="∞ لا نهاية" min="0" step="any"
+                    value="${data && data.max_amount != null ? data.max_amount : ''}">
+                <small class="tier-hint">اتركه فارغاً = ما لا نهاية</small>
+            </div>
+            <div class="tier-field">
+                <label><i class="fa-solid fa-dollar-sign"></i> السعر مقابل الدولار</label>
+                <input type="number" class="tier-rate" placeholder="1.0000" min="0" step="any"
+                    value="${data ? data.rate : ''}">
+            </div>
+        </div>
+        <button class="tier-delete-btn" onclick="removeTierRow(this)" title="حذف هذه الشريحة">
+            <i class="fa-solid fa-trash"></i>
+        </button>
+    `;
+    container.appendChild(row);
+    reindexTiers();
+}
+
+function removeTierRow(btn) {
+    const row = btn.closest('.rate-tier-row');
+    row.style.opacity = '0';
+    row.style.transform = 'translateX(20px)';
+    setTimeout(() => {
+        row.remove();
+        reindexTiers();
+    }, 250);
+}
+
+function reindexTiers() {
+    const rows = document.querySelectorAll('.rate-tier-row');
+    rows.forEach((row, i) => {
+        row.querySelector('.tier-number').textContent = i + 1;
+    });
+}
+
+async function saveRates() {
+    if (!currentRatesCurrencyId) return;
+
+    const rows = document.querySelectorAll('.rate-tier-row');
+    const rates = [];
+    let hasError = false;
+
+    rows.forEach((row, i) => {
+        const min = row.querySelector('.tier-min').value;
+        const max = row.querySelector('.tier-max').value;
+        const rate = row.querySelector('.tier-rate').value;
+
+        if (min === '' || rate === '') {
+            row.querySelector('.tier-min').style.borderColor = min === '' ? 'var(--danger)' : '';
+            row.querySelector('.tier-rate').style.borderColor = rate === '' ? 'var(--danger)' : '';
+            hasError = true;
+            return;
+        }
+
+        // إعادة تلوين الحقول الصحيحة
+        row.querySelector('.tier-min').style.borderColor = '';
+        row.querySelector('.tier-rate').style.borderColor = '';
+
+        rates.push({
+            min_amount: parseFloat(min),
+            max_amount: max !== '' ? parseFloat(max) : null,
+            rate: parseFloat(rate)
+        });
+    });
+
+    if (hasError) {
+        if (typeof notyf !== 'undefined') notyf.error('يرجى ملء جميع حقول الشريحة (من، السعر)');
+        else alert('يرجى ملء جميع حقول الشريحة (من، السعر)');
+        return;
+    }
+
+    if (rates.length === 0) {
+        if (typeof notyf !== 'undefined') notyf.error('أضف شريحة واحدة على الأقل');
+        else alert('أضف شريحة واحدة على الأقل');
+        return;
+    }
+
+    const saveBtn = document.querySelector('.btn-save-rates');
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري الحفظ...';
+
+    try {
+        const res = await fetch(`${API_URL}/currencies/${currentRatesCurrencyId}/rates`, {
+            method: 'POST',
+            headers: getHeaders(),
+            body: JSON.stringify({ rates })
+        });
+
+        const data = await res.json();
+
+        if (data.status === 'success') {
+            if (typeof notyf !== 'undefined') notyf.success('تم حفظ الشرائح بنجاح');
+            else alert('تم حفظ الشرائح بنجاح');
+            closeRatesModal();
+            // إعادة تحميل جدول العملات لعرض عدد الشرائح المحدث
+            renderCurrenciesTable();
+        } else {
+            if (typeof notyf !== 'undefined') notyf.error(data.message ?? 'فشل الحفظ');
+            else alert('فشل الحفظ: ' + (data.message ?? ''));
+        }
+    } catch (err) {
+        console.error(err);
+        if (typeof notyf !== 'undefined') notyf.error('تعذر الاتصال بالسيرفر');
+        else alert('تعذر الاتصال بالسيرفر');
+    } finally {
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> حفظ الشرائح';
+    }
 }
