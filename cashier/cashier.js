@@ -311,7 +311,7 @@ function renderTradingSafes(safes) {
           <div class="safe-card-subtitle">${safe.currency || 'USD'}</div>
         </div>
       </div>
-      <div class="safe-card-balance">${parseFloat(safe.balance).toLocaleString('ar-SY')}</div>
+      <div class="safe-card-balance">${parseFloat(safe.balance)}</div>
       <div class="safe-card-currency">${safe.currency || 'USD'}</div>
       ${costRow}
       ${tradingUI}

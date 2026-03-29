@@ -442,7 +442,7 @@ function renderTransfersTable() {
             <td>${t.receiver_phone || '—'}</td>
             <td style="font-weight:700;">
                 ${fmtMoney(t.amount)}
-                <small style="color:var(--gray);font-size:0.7rem;">${currencyName(t)}</small>
+                <small style="color:var(--gray);font-size:0.7rem;">${sendCurrencyName(t)}</small>
             </td>
             <td style="font-weight:700;color:var(--secondary);">
                 ${fmtMoney(t.amount_in_usd)}
