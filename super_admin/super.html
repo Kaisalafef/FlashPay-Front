@@ -344,17 +344,26 @@
     <!-- Hero Banner للصناديق -->
     <div class="section-hero safes-hero">
         <div class="section-hero-text">
-            <h2><i class="fa-solid fa-vault"></i> إدارة الصناديق</h2>
-            <p>عرض وإدارة جميع صناديق المكاتب والمندوبين في النظام</p>
+            <h2><i class="fa-solid fa-building-columns"></i> صناديق المكاتب</h2>
+            <p>رصيد صناديق جميع المكاتب المسجّلة في النظام</p>
         </div>
-       
+        <div class="section-hero-stats">
+            <div class="hero-stat">
+                <span id="safes-total-balance">$0.00</span>
+                <small>إجمالي الأرصدة</small>
+            </div>
+            <div class="hero-stat">
+                <span id="safes-office-count">0</span>
+                <small>عدد المكاتب</small>
+            </div>
+        </div>
     </div>
 
     <!-- شريط أدوات -->
-    <div class="table-toolbar">
+    <div class="table-toolbar" style="margin-bottom:24px;">
         <div class="toolbar-search">
             <i class="fa-solid fa-magnifying-glass"></i>
-            <input type="text" id="safes-search" placeholder="بحث بالمالك أو نوع الصندوق..." oninput="filterSafesTable()">
+            <input type="text" id="safes-search" placeholder="بحث باسم المكتب..." oninput="filterSafeCards()">
         </div>
         <div class="toolbar-actions">
             <button class="toolbar-btn" onclick="loadSafes()" title="تحديث">
@@ -363,25 +372,13 @@
         </div>
     </div>
 
-    <!-- جدول الصناديق -->
-    <div class="table-wrapper">
-        <table class="data-table">
-            <thead>
-                <tr>
-                    <th>#</th>
-                    <th>نوع الصندوق</th>
-                    <th>المالك</th>
-                    <th>العملة</th>
-                    <th>الرصيد</th>
-                    <th>Cost</th>
-                </tr>
-            </thead>
-            <tbody id="safes-table-body"></tbody>
-        </table>
-        <div id="safes-empty" class="table-empty hidden">
-            <i class="fa-solid fa-vault"></i>
-            <p>لا توجد صناديق مسجلة بعد</p>
-        </div>
+    <!-- شبكة بطاقات المكاتب -->
+    <div id="office-safes-grid" class="office-safes-grid"></div>
+
+    <!-- حالة فارغة -->
+    <div id="safes-empty" class="table-empty hidden">
+        <i class="fa-solid fa-building-columns"></i>
+        <p>لا توجد صناديق مكاتب مسجّلة بعد</p>
     </div>
 
 </div>

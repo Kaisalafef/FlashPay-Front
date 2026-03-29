@@ -106,59 +106,94 @@ function fillSelect(select, data, placeholder = "اختر من القائمة") 
 }
 
 async function loadSafes() {
-    const tbody = document.getElementById('safes-table-body');
-    if (!tbody) return;
+    const grid = document.getElementById('office-safes-grid');
+    const emptyEl = document.getElementById('safes-empty');
+    if (!grid) return;
+
+    grid.innerHTML = '<div class="safes-skeleton-grid">' +
+        Array(4).fill('<div class="safe-card-skeleton"></div>').join('') +
+        '</div>';
+    if (emptyEl) emptyEl.classList.add('hidden');
 
     try {
-        const res = await fetch(`${API_URL}/safes`, {
-            headers: getHeaders()
-        });
-
+        const res = await fetch(`${API_URL}/safes`, { headers: getHeaders() });
         const json = await res.json();
 
-     const sortedSafes = json.data.sort((a, b) =>
-  (a.owner || '').localeCompare(b.owner || '')
-);
+        // فلترة صناديق المكاتب فقط
+        const officeSafes = (json.data || [])
+            .filter(s => s.type === 'office_main')
+            .sort((a, b) => (a.owner || '').localeCompare(b.owner || ''));
 
-        tbody.innerHTML = '';
+        grid.innerHTML = '';
 
-        // 2️⃣ استخدم sortedSafes بدل json.data
-        sortedSafes.forEach((safe, index) => {
-            let typeLabel = '';
+        // تحديث Hero stats
+        const total = officeSafes.reduce((sum, s) => sum + parseFloat(s.balance || 0), 0);
+        const totalEl = document.getElementById('safes-total-balance');
+        const countEl = document.getElementById('safes-office-count');
+        if (totalEl) totalEl.textContent = '$' + total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        if (countEl) countEl.textContent = officeSafes.length;
 
-            switch (safe.type) {
-                case 'office_main':
-                    typeLabel = 'صندوق مكتب';
-                    break;
-                case 'agent_main':
-                    typeLabel = 'صندوق مندوب';
-                    break;
-                case 'trading':
-                    typeLabel = ' صندوق مبيعات المكتب';
-                    break;
-            }
+        // تحديث عداد الداشبورد
+        const dashSafes = document.getElementById('dash-safes-count');
+        if (dashSafes) dashSafes.textContent = officeSafes.length;
 
-           tbody.innerHTML += `
-    <tr>
-        <td>${index + 1}</td>
-        <td>${typeLabel}</td>
-        <td>${safe.owner}</td>
-        <td>${safe.currency ?? '-'}</td>
-        <td>$${parseFloat(safe.balance).toFixed(2)}</td>
-        <td>${safe.cost ?? '-'}</td>
-        <td>
-            <button class="safes-view-btn" onclick='openSafeDetails(${JSON.stringify(safe)})'>
-                <i class="fa-solid fa-eye"></i> عرض
-            </button>
-        </td>
-    </tr>
-`;
+        if (officeSafes.length === 0) {
+            if (emptyEl) emptyEl.classList.remove('hidden');
+            return;
+        }
 
+        officeSafes.forEach(safe => {
+            const balance = parseFloat(safe.balance || 0);
+            const isPositive = balance >= 0;
+            const initials = (safe.owner || '?').charAt(0).toUpperCase();
+            // تصنيف لوني حسب الرصيد
+            const levelClass = balance >= 10000 ? 'safe-level-high'
+                             : balance >= 1000  ? 'safe-level-mid'
+                             : 'safe-level-low';
+
+            const card = document.createElement('div');
+            card.className = `office-safe-card ${levelClass}`;
+            card.dataset.owner = (safe.owner || '').toLowerCase();
+            card.innerHTML = `
+                <div class="osc-header">
+                    <div class="osc-avatar">${initials}</div>
+                    <div class="osc-info">
+                        <div class="osc-name">${safe.owner || '—'}</div>
+                        <div class="osc-badge"><i class="fa-solid fa-building"></i> صندوق مكتب</div>
+                    </div>
+                    <div class="osc-status-dot ${isPositive ? 'dot-green' : 'dot-red'}"></div>
+                </div>
+                <div class="osc-divider"></div>
+                <div class="osc-balance">
+                    <span class="osc-balance-label">الرصيد الحالي</span>
+                    <span class="osc-balance-value ${isPositive ? 'bal-positive' : 'bal-negative'}">
+                        $${balance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </span>
+                </div>
+                <div class="osc-footer">
+                    <div class="osc-meta">
+                        <i class="fa-solid fa-circle-dollar-to-slot"></i>
+                        <span>USD</span>
+                    </div>
+                    <button class="osc-detail-btn" onclick='openSafeDetails(${JSON.stringify(safe)})'>
+                        <i class="fa-solid fa-eye"></i> التفاصيل
+                    </button>
+                </div>
+            `;
+            grid.appendChild(card);
         });
 
     } catch (e) {
-        console.error(e);
+        console.error('loadSafes error:', e);
+        grid.innerHTML = '<p style="text-align:center;color:var(--danger);padding:32px;">تعذّر تحميل الصناديق</p>';
     }
+}
+
+function filterSafeCards() {
+    const q = (document.getElementById('safes-search')?.value || '').toLowerCase();
+    document.querySelectorAll('.office-safe-card').forEach(card => {
+        card.style.display = card.dataset.owner?.includes(q) ? '' : 'none';
+    });
 }
 
 function openSafeDetails(safe) {
