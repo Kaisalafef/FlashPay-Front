@@ -950,6 +950,32 @@ function _fillCurrencySelect(selId, placeholder) {
 }
 
 // حساب الدولار – داخلية
+/**
+ * يجلب السعر الفعلي للعملة بناءً على الشرائح (rates)
+ * إن وُجدت شريحة تنطبق على المبلغ → يستخدم سعرها
+ * وإلا → يستخدم السعر الأساسي (currency.price)
+ * يُرجع: { rate, tierLabel }
+ */
+function getEffectiveRate(currency, amount) {
+  const rates = currency.rates ?? [];
+  if (rates.length > 0 && amount > 0) {
+    // ترتيب تصاعدي حسب min_amount (الباك يُرجعها مرتبة لكن نضمن)
+    const sorted = [...rates].sort((a, b) => parseFloat(a.min_amount) - parseFloat(b.min_amount));
+    for (const tier of sorted) {
+      const min = parseFloat(tier.min_amount);
+      const max = tier.max_amount != null ? parseFloat(tier.max_amount) : Infinity;
+      if (amount >= min && amount <= max) {
+        const label = tier.max_amount != null
+          ? `شريحة ${min.toLocaleString()} – ${parseFloat(tier.max_amount).toLocaleString()}`
+          : `شريحة ${min.toLocaleString()}+`;
+        return { rate: parseFloat(tier.rate), tierLabel: label };
+      }
+    }
+  }
+  // fallback: السعر الأساسي
+  return { rate: parseFloat(currency.price ?? 1), tierLabel: null };
+}
+
 function ctCalculateUsd() {
   const amount = parseFloat(document.getElementById("ct-amount").value);
   const sendCurrId = parseInt(
@@ -957,19 +983,33 @@ function ctCalculateUsd() {
   );
   const usdVal = document.getElementById("ct-usd-value");
   const usdPreview = document.getElementById("ct-usd-preview");
+  const tierHint = document.getElementById("ct-tier-hint");
 
   if (!amount || !sendCurrId || isNaN(amount)) {
     usdVal.textContent = usdPreview.textContent = "$0.00";
+    if (tierHint) tierHint.style.display = "none";
     return;
   }
   const currency = _ctCurrencies.find((c) => c.id === sendCurrId);
-  if (!currency?.price) {
+  if (!currency) {
     usdVal.textContent = usdPreview.textContent = "$0.00";
+    if (tierHint) tierHint.style.display = "none";
     return;
   }
 
-  const eq = (amount * parseFloat(currency.price)).toFixed(2);
+  const { rate, tierLabel } = getEffectiveRate(currency, amount);
+  const eq = (amount * rate).toFixed(2);
   usdVal.textContent = usdPreview.textContent = `$${eq}`;
+
+  if (tierHint) {
+    if (tierLabel) {
+      tierHint.textContent = `السعر المطبّق: ${rate} (${tierLabel})`;
+      tierHint.style.display = "inline-flex";
+    } else {
+      tierHint.textContent = `السعر الأساسي: ${rate}`;
+      tierHint.style.display = "inline-flex";
+    }
+  }
 }
 
 // معالجة رفع هوية المرسل – داخلية
@@ -1246,19 +1286,33 @@ function intlCalculateUsd() {
   );
   const usdVal = document.getElementById("intl-usd-value");
   const usdPreview = document.getElementById("intl-usd-preview");
+  const tierHint = document.getElementById("intl-tier-hint");
 
   if (!amount || !sendCurrId || isNaN(amount)) {
     usdVal.textContent = usdPreview.textContent = "$0.00";
+    if (tierHint) tierHint.style.display = "none";
     return;
   }
   const currency = _intlCurrencies.find((c) => c.id === sendCurrId);
-  if (!currency?.price) {
+  if (!currency) {
     usdVal.textContent = usdPreview.textContent = "$0.00";
+    if (tierHint) tierHint.style.display = "none";
     return;
   }
 
-  const eq = (amount * parseFloat(currency.price)).toFixed(2);
+  const { rate, tierLabel } = getEffectiveRate(currency, amount);
+  const eq = (amount * rate).toFixed(2);
   usdVal.textContent = usdPreview.textContent = `$${eq}`;
+
+  if (tierHint) {
+    if (tierLabel) {
+      tierHint.textContent = `السعر المطبّق: ${rate} (${tierLabel})`;
+      tierHint.style.display = "inline-flex";
+    } else {
+      tierHint.textContent = `السعر الأساسي: ${rate}`;
+      tierHint.style.display = "inline-flex";
+    }
+  }
 }
 
 // هوية المرسل – خارجية

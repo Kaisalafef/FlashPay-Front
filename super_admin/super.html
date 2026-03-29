@@ -789,8 +789,10 @@
                     <th>#</th>
                     <th>العملة</th>
                     <th>الرمز</th>
-                    <th>السعر (مقابل الدولار)</th>
-                    <th>السعر (بالليرة السورية)</th>
+                    <th>السعر الأساسي (USD)</th>
+                    <th>السعر (ل.س)</th>
+                    <th>الشرائح</th>
+                    <th>إجراءات</th>
                 </tr>
             </thead>
             <tbody id="currencies-table-body"></tbody>
@@ -1185,6 +1187,59 @@
            style="margin-top:14px; background:rgba(255,255,255,0.15); color:white; padding:8px 20px; border-radius:8px; text-decoration:none; font-size:13px; font-weight:600; backdrop-filter:blur(6px); border:1px solid rgba(255,255,255,0.2); display:flex; align-items:center; gap:8px;">
             <i class="fa-solid fa-download"></i> تنزيل الصورة
         </a>
+    </div>
+</div>
+
+<!-- ===== Modal إدارة شرائح أسعار الصرف ===== -->
+<div id="rates-modal" class="modal-overlay hidden" onclick="handleRatesModalBackdrop(event)">
+    <div class="modal-content rates-modal-content" onclick="event.stopPropagation()">
+
+        <!-- Header -->
+        <div class="rates-modal-header">
+            <div class="rates-modal-title">
+                <div class="rates-modal-icon">
+                    <i class="fa-solid fa-layer-group"></i>
+                </div>
+                <div>
+                    <h3 id="rates-modal-currency-name">شرائح سعر الصرف</h3>
+                    <p id="rates-modal-currency-code" style="margin:0; font-size:12px; opacity:0.7; font-weight:600;"></p>
+                </div>
+            </div>
+            <button class="rates-modal-close" onclick="closeRatesModal()">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <!-- Body -->
+        <div class="rates-modal-body">
+
+            <!-- شرح سريع -->
+            <div class="rates-info-banner">
+                <i class="fa-solid fa-circle-info"></i>
+                <span>حدد سعر مختلف لكل نطاق مبلغ. مثلاً: من 0 إلى 100 دولار → سعر 1.2، ومن 100 إلى ما لا نهاية → سعر 1.4</span>
+            </div>
+
+            <!-- شرائح الأسعار -->
+            <div id="rates-tiers-container">
+                <!-- تُضاف الشرائح هنا ديناميكياً -->
+            </div>
+
+            <!-- زر إضافة شريحة -->
+            <button class="rates-add-tier-btn" onclick="addRateTier()">
+                <i class="fa-solid fa-plus"></i>
+                إضافة شريحة جديدة
+            </button>
+        </div>
+
+        <!-- Footer -->
+        <div class="rates-modal-footer">
+            <button class="btn-cancel" onclick="closeRatesModal()">
+                <i class="fa-solid fa-xmark"></i> إلغاء
+            </button>
+            <button class="btn-save-rates" onclick="saveRates()">
+                <i class="fa-solid fa-floppy-disk"></i> حفظ الشرائح
+            </button>
+        </div>
     </div>
 </div>
 
