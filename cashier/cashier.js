@@ -211,6 +211,8 @@ function showTransfersSection() {
   document.getElementById('section-safes').style.display = 'none';
   document.getElementById('section-profits').style.display = 'none';
   document.getElementById('section-internal').style.display = 'none';
+document.getElementById('section-internal').style.display = 'none';
+ document.getElementById('section-completed').style.display = 'none';
 
   document.getElementById('page-heading').textContent = 'الحوالات';
   document.querySelector('.page-sub').textContent = 'جاهزة للتسليم';
@@ -224,7 +226,7 @@ function showSafesSection() {
   document.getElementById('section-safes').style.display = 'block';
   document.getElementById('section-profits').style.display = 'none';
   document.getElementById('section-internal').style.display = 'none';
-
+ document.getElementById('section-completed').style.display = 'none';
   document.getElementById('page-heading').textContent = 'التداول';
   document.querySelector('.page-sub').textContent = 'صناديق التداول';
   document.querySelector('.page-icon').innerHTML = '<i class="fa-solid fa-vault"></i>';
@@ -237,6 +239,9 @@ function showProfitsSection() {
   document.getElementById('section-safes').style.display = 'none';
   document.getElementById('section-profits').style.display = 'block';
   document.getElementById('section-internal').style.display = 'none';
+   document.getElementById('section-completed').style.display = 'none';
+   
+
 
   document.getElementById('page-heading').textContent = 'أرباح التداول';
   document.querySelector('.page-sub').textContent = 'تقرير يومي';
@@ -248,6 +253,7 @@ function showInternalSection() {
   document.getElementById('section-safes').style.display = 'none';
   document.getElementById('section-profits').style.display = 'none';
   document.getElementById('section-internal').style.display = 'block';
+ document.getElementById('section-completed').style.display = 'none';
 
   document.getElementById('page-heading').textContent = 'الحوالات الداخلية';
   document.querySelector('.page-sub').textContent = 'حوالات داخل المنطقة';
@@ -1025,6 +1031,237 @@ function showInternalToast(msg) {
   }, 3200);
 }
 
+
+
+function showCompletedSection() {
+  document.getElementById('section-transfers').style.display = 'none';
+  document.getElementById('section-safes').style.display = 'none';
+  document.getElementById('section-profits').style.display = 'none';
+  document.getElementById('section-internal').style.display = 'none';
+  document.getElementById('section-completed').style.display = 'block';
+
+  document.getElementById('page-heading').textContent = 'سجل المكتملة';
+  document.querySelector('.page-sub').textContent = 'الحوالات المسلّمة';
+  document.querySelector('.page-icon').innerHTML = '<i class="fa-solid fa-circle-check"></i>';
+
+  loadCompletedTransfers();
+}
+
+let _completedAll  = [];   // كل الحوالات المجلوبة
+let _completedPage = 1;    // الصفحة الحالية
+const COMPLETED_PER_PAGE = 20;
+
+/**
+ * جلب الحوالات المكتملة من API
+ */
+async function loadCompletedTransfers() {
+  const tbody = document.getElementById('completed-list');
+  const pagination = document.getElementById('completed-pagination');
+  tbody.innerHTML = `<tr><td colspan="10" class="loading-row"><div class="loading-spinner"></div> جاري التحميل...</td></tr>`;
+  pagination.innerHTML = '';
+
+  try {
+    const res = await fetch(`${API_URL}/transfers?status=completed`, {
+      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' }
+    });
+    const json = await res.json();
+
+    if (json.status === 'success' && Array.isArray(json.data)) {
+      _completedAll  = json.data;
+      _completedPage = 1;
+      _renderCompleted();
+    } else {
+      tbody.innerHTML = `<tr><td colspan="10"><div class="empty-state"><i class="fa-solid fa-inbox"></i><p>لا توجد حوالات مكتملة</p></div></td></tr>`;
+    }
+  } catch (err) {
+    console.error(err);
+    tbody.innerHTML = `<tr><td colspan="10" class="loading-row" style="color:var(--danger);">خطأ في الاتصال بالسيرفر</td></tr>`;
+  }
+}
+
+/**
+ * تصفية حسب البحث والتواريخ (client-side)
+ */
+function filterCompleted() {
+  _completedPage = 1;
+  _renderCompleted();
+}
+
+function resetCompletedFilters() {
+  document.getElementById('cf-search').value    = '';
+  document.getElementById('cf-date-from').value = '';
+  document.getElementById('cf-date-to').value   = '';
+  _completedPage = 1;
+  _renderCompleted();
+}
+
+/**
+ * الدالة الرئيسية للعرض
+ */
+function _renderCompleted() {
+  const search   = (document.getElementById('cf-search')?.value    || '').trim().toLowerCase();
+  const dateFrom = document.getElementById('cf-date-from')?.value  || '';
+  const dateTo   = document.getElementById('cf-date-to')?.value    || '';
+
+  // --- تصفية ---
+  let filtered = _completedAll.filter(tx => {
+    const senderName   = (tx.sender?.name    || '').toLowerCase();
+    const receiverName = (tx.receiver_name   || '').toLowerCase();
+    const tracking     = (tx.tracking_code   || '').toLowerCase();
+
+    const matchSearch = !search ||
+      senderName.includes(search)   ||
+      receiverName.includes(search) ||
+      tracking.includes(search);
+
+    const txDate = (tx.updated_at || tx.created_at || '').slice(0, 10);
+    const matchFrom = !dateFrom || txDate >= dateFrom;
+    const matchTo   = !dateTo   || txDate <= dateTo;
+
+    return matchSearch && matchFrom && matchTo;
+  });
+
+  // --- إحصاءات ---
+  const totalUsd = filtered.reduce((s, t) => s + parseFloat(t.amount_in_usd || 0), 0);
+  const countEl  = document.getElementById('completed-count');
+  const totalEl  = document.getElementById('completed-total');
+  if (countEl) countEl.textContent = filtered.length;
+  if (totalEl) totalEl.textContent = '$' + totalUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+  // --- Pagination ---
+  const totalPages = Math.max(1, Math.ceil(filtered.length / COMPLETED_PER_PAGE));
+  if (_completedPage > totalPages) _completedPage = totalPages;
+  const start  = (_completedPage - 1) * COMPLETED_PER_PAGE;
+  const paged  = filtered.slice(start, start + COMPLETED_PER_PAGE);
+
+  _renderCompletedRows(paged, filtered.length === 0);
+  _renderCompletedPagination(totalPages, filtered.length);
+}
+
+/**
+ * رسم صفوف الجدول
+ */
+function _renderCompletedRows(rows, empty) {
+  const tbody = document.getElementById('completed-list');
+
+  if (empty) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="10">
+          <div class="empty-state">
+            <i class="fa-solid fa-circle-check"></i>
+            <p>لا توجد نتائج تطابق البحث</p>
+          </div>
+        </td>
+      </tr>`;
+    return;
+  }
+
+  function fmtDate(str) {
+    if (!str) return '—';
+    const d = new Date(str);
+    const pad = n => String(n).padStart(2,'0');
+    return `${d.getFullYear()}/${pad(d.getMonth()+1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  }
+
+  tbody.innerHTML = rows.map(tx => {
+    const amountUsd   = parseFloat(tx.amount_in_usd  ?? 0);
+    const currPrice   = parseFloat(tx.currency?.price ?? 1);
+    const currCode    = tx.currency?.code ?? '—';
+    const sendAmt     = parseFloat(tx.amount ?? 0);
+    const sendCur     = tx.send_currency?.code ?? tx.sendCurrency?.code ?? '—';
+    const deliveryAmt = currPrice > 0 ? amountUsd / currPrice : 0;
+
+    const txDate = fmtDate(tx.updated_at || tx.created_at);
+
+    // نحتاج لتمرير بيانات الحوالة كاملةً لدالة الطباعة
+    const txJson = JSON.stringify(tx).replace(/'/g, "\\'").replace(/"/g, '&quot;');
+
+    return `
+      <tr>
+        <td><span class="transfer-id">${tx.tracking_code ?? '#' + tx.id}</span></td>
+        <td>
+          ${tx.sender?.name ?? '—'}
+          <div style="font-size:11px;color:var(--gray);margin-top:1px;">${tx.sender?.country?.name ?? ''}</div>
+        </td>
+        <td>${tx.receiver_name ?? '—'}</td>
+        <td style="direction:ltr;text-align:right;font-size:12px;">${tx.receiver_phone ?? '—'}</td>
+        <td>
+          <span style="direction:ltr;display:inline-block;">
+            ${sendAmt.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}
+            <small style="color:var(--gray);font-size:11px;"> ${sendCur}</small>
+          </span>
+        </td>
+        <td><span class="amount-cell">$${amountUsd.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</span></td>
+        <td><span class="delivery-price">${deliveryAmt.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</span></td>
+        <td>${currCode}</td>
+        <td style="font-size:12px;color:var(--gray);direction:ltr;text-align:right;">${txDate}</td>
+        <td>
+          <button class="btn-print-completed" onclick='printTransferReceipt(${txJson})'>
+            <i class="fa-solid fa-print"></i> طباعة
+          </button>
+        </td>
+      </tr>`;
+  }).join('');
+}
+
+/**
+ * رسم أزرار Pagination
+ */
+function _renderCompletedPagination(totalPages, totalCount) {
+  const el = document.getElementById('completed-pagination');
+  if (!el) return;
+
+  if (totalPages <= 1) { el.innerHTML = ''; return; }
+
+  const start = (_completedPage - 1) * COMPLETED_PER_PAGE + 1;
+  const end   = Math.min(_completedPage * COMPLETED_PER_PAGE, totalCount);
+
+  let html = `
+    <button class="pg-btn" onclick="_goPage(${_completedPage - 1})" ${_completedPage === 1 ? 'disabled' : ''}>
+      <i class="fa-solid fa-chevron-right"></i>
+    </button>`;
+
+  // أزرار الأرقام (max 5 ظاهرة)
+  const range = 2;
+  for (let p = 1; p <= totalPages; p++) {
+    if (p === 1 || p === totalPages || (p >= _completedPage - range && p <= _completedPage + range)) {
+      html += `<button class="pg-btn ${p === _completedPage ? 'active' : ''}" onclick="_goPage(${p})">${p}</button>`;
+    } else if (p === _completedPage - range - 1 || p === _completedPage + range + 1) {
+      html += `<span class="pg-info">…</span>`;
+    }
+  }
+
+  html += `
+    <button class="pg-btn" onclick="_goPage(${_completedPage + 1})" ${_completedPage === totalPages ? 'disabled' : ''}>
+      <i class="fa-solid fa-chevron-left"></i>
+    </button>
+    <span class="pg-info">${start}–${end} من ${totalCount}</span>`;
+
+  el.innerHTML = html;
+}
+
+function _goPage(p) {
+  const totalPages = Math.max(1, Math.ceil(
+    (() => {
+      const search   = (document.getElementById('cf-search')?.value    || '').trim().toLowerCase();
+      const dateFrom = document.getElementById('cf-date-from')?.value  || '';
+      const dateTo   = document.getElementById('cf-date-to')?.value    || '';
+      return _completedAll.filter(tx => {
+        const matchSearch = !search ||
+          (tx.sender?.name || '').toLowerCase().includes(search) ||
+          (tx.receiver_name || '').toLowerCase().includes(search) ||
+          (tx.tracking_code || '').toLowerCase().includes(search);
+        const txDate = (tx.updated_at || tx.created_at || '').slice(0,10);
+        return matchSearch && (!dateFrom || txDate >= dateFrom) && (!dateTo || txDate <= dateTo);
+      }).length;
+    })() / COMPLETED_PER_PAGE
+  ));
+  if (p < 1 || p > totalPages) return;
+  _completedPage = p;
+  _renderCompleted();
+  document.getElementById('section-completed')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
 /* ======================================= */
 /*    PRINT INTERNAL TRANSFER RECEIPT     */
 /* ======================================= */
