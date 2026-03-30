@@ -211,6 +211,8 @@ function showTransfersSection() {
   document.getElementById('section-safes').style.display = 'none';
   document.getElementById('section-profits').style.display = 'none';
   document.getElementById('section-internal').style.display = 'none';
+document.getElementById('section-internal').style.display = 'none';
+ document.getElementById('section-completed').style.display = 'none';
 
   document.getElementById('page-heading').textContent = 'الحوالات';
   document.querySelector('.page-sub').textContent = 'جاهزة للتسليم';
@@ -224,7 +226,7 @@ function showSafesSection() {
   document.getElementById('section-safes').style.display = 'block';
   document.getElementById('section-profits').style.display = 'none';
   document.getElementById('section-internal').style.display = 'none';
-
+ document.getElementById('section-completed').style.display = 'none';
   document.getElementById('page-heading').textContent = 'التداول';
   document.querySelector('.page-sub').textContent = 'صناديق التداول';
   document.querySelector('.page-icon').innerHTML = '<i class="fa-solid fa-vault"></i>';
@@ -237,6 +239,9 @@ function showProfitsSection() {
   document.getElementById('section-safes').style.display = 'none';
   document.getElementById('section-profits').style.display = 'block';
   document.getElementById('section-internal').style.display = 'none';
+   document.getElementById('section-completed').style.display = 'none';
+   
+
 
   document.getElementById('page-heading').textContent = 'أرباح التداول';
   document.querySelector('.page-sub').textContent = 'تقرير يومي';
@@ -248,6 +253,7 @@ function showInternalSection() {
   document.getElementById('section-safes').style.display = 'none';
   document.getElementById('section-profits').style.display = 'none';
   document.getElementById('section-internal').style.display = 'block';
+ document.getElementById('section-completed').style.display = 'none';
 
   document.getElementById('page-heading').textContent = 'الحوالات الداخلية';
   document.querySelector('.page-sub').textContent = 'حوالات داخل المنطقة';
