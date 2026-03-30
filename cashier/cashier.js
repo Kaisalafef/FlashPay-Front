@@ -210,6 +210,9 @@ function showTransfersSection() {
   document.getElementById('section-transfers').style.display = 'block';
   document.getElementById('section-safes').style.display = 'none';
   document.getElementById('section-profits').style.display = 'none';
+  document.getElementById('section-internal').style.display = 'none';
+document.getElementById('section-internal').style.display = 'none';
+ document.getElementById('section-completed').style.display = 'none';
 
   document.getElementById('page-heading').textContent = 'الحوالات';
   document.querySelector('.page-sub').textContent = 'جاهزة للتسليم';
@@ -222,7 +225,8 @@ function showSafesSection() {
   document.getElementById('section-transfers').style.display = 'none';
   document.getElementById('section-safes').style.display = 'block';
   document.getElementById('section-profits').style.display = 'none';
-
+  document.getElementById('section-internal').style.display = 'none';
+ document.getElementById('section-completed').style.display = 'none';
   document.getElementById('page-heading').textContent = 'التداول';
   document.querySelector('.page-sub').textContent = 'صناديق التداول';
   document.querySelector('.page-icon').innerHTML = '<i class="fa-solid fa-vault"></i>';
@@ -234,10 +238,30 @@ function showProfitsSection() {
   document.getElementById('section-transfers').style.display = 'none';
   document.getElementById('section-safes').style.display = 'none';
   document.getElementById('section-profits').style.display = 'block';
+  document.getElementById('section-internal').style.display = 'none';
+   document.getElementById('section-completed').style.display = 'none';
+   
+
 
   document.getElementById('page-heading').textContent = 'أرباح التداول';
   document.querySelector('.page-sub').textContent = 'تقرير يومي';
   document.querySelector('.page-icon').innerHTML = '<i class="fa-solid fa-chart-line"></i>';
+}
+
+function showInternalSection() {
+  document.getElementById('section-transfers').style.display = 'none';
+  document.getElementById('section-safes').style.display = 'none';
+  document.getElementById('section-profits').style.display = 'none';
+  document.getElementById('section-internal').style.display = 'block';
+ document.getElementById('section-completed').style.display = 'none';
+
+  document.getElementById('page-heading').textContent = 'الحوالات الداخلية';
+  document.querySelector('.page-sub').textContent = 'حوالات داخل المنطقة';
+  document.querySelector('.page-icon').innerHTML = '<i class="fa-solid fa-right-left"></i>';
+
+  loadInternalTransfers();
+  updateInternalSummary();
+  updateFeeRadio();
 }
 
 /* ============================= */
@@ -572,6 +596,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   setInterval(updateClock, 1000);
 
   loadNewTransfers();
+  bindInternalListeners();
 });
 
 /* ============================= */
@@ -730,6 +755,688 @@ document.addEventListener("DOMContentLoaded", async () => {
       setTimeout(function () {
         if (!printWin.closed) printWin.close();
       }, 5000);
+    });
+  };
+}
+/* ======================================= */
+/*        INTERNAL TRANSFERS              */
+/* ======================================= */
+
+/* تحديث الـ radio UI */
+function updateFeeRadio() {
+  const senderCard   = document.getElementById('radio-sender-card');
+  const receiverCard = document.getElementById('radio-receiver-card');
+  const senderRadio  = document.getElementById('fee-sender');
+  if (!senderCard) return;
+  if (senderRadio.checked) {
+    senderCard.classList.add('active');
+    receiverCard.classList.remove('active');
+  } else {
+    receiverCard.classList.add('active');
+    senderCard.classList.remove('active');
+  }
+  updateInternalSummary();
+}
+
+/* تحديث ملخص الحوالة */
+function updateInternalSummary() {
+  const amount     = parseFloat(document.getElementById('int-amount')?.value)    || 0;
+  const commission = parseFloat(document.getElementById('int-commission')?.value) || 0;
+  const currency   = document.getElementById('int-currency')?.value              || 'SYP';
+  const feePayer   = document.querySelector('input[name="fee_payer"]:checked')?.value || 'sender';
+
+  const net = feePayer === 'receiver' ? amount - commission : amount;
+  const fmt = v => v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+  const sentEl = document.getElementById('sum-sent');
+  const feeEl  = document.getElementById('sum-fee');
+  const netEl  = document.getElementById('sum-net');
+
+  if (sentEl) sentEl.textContent = `${fmt(amount)} ${currency}`;
+  if (feeEl)  feeEl.textContent  = commission > 0 ? `−${fmt(commission)} ${currency}` : '— لا توجد رسوم';
+  if (netEl)  netEl.textContent  = `${fmt(net)} ${currency}`;
+}
+
+/* ربط الأحداث على الحقول */
+function bindInternalListeners() {
+  ['int-amount', 'int-commission', 'int-currency'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', updateInternalSummary);
+  });
+  document.querySelectorAll('input[name="fee_payer"]').forEach(r =>
+    r.addEventListener('change', updateFeeRadio)
+  );
+}
+
+/* ────────────────────────────────────────
+   حفظ الحوالة → POST /api/internal-transfers
+   ──────────────────────────────────────── */
+async function saveInternalTransfer() {
+  const senderName   = document.getElementById('int-sender').value.trim();
+  const receiverName = document.getElementById('int-receiver').value.trim();
+  const phone        = document.getElementById('int-phone').value.trim();
+  const amount       = parseFloat(document.getElementById('int-amount').value)    || 0;
+  const commission   = parseFloat(document.getElementById('int-commission').value) || 0;
+  const currency     = document.getElementById('int-currency').value;
+  const feePayer     = document.querySelector('input[name="fee_payer"]:checked')?.value || 'sender';
+
+  // تحقق أساسي
+  if (!senderName)   { alert('يرجى إدخال اسم المرسل');            return; }
+  if (!receiverName) { alert('يرجى إدخال اسم المستلم');           return; }
+  if (!phone)        { alert('يرجى إدخال رقم موبايل المستلم');    return; }
+  if (amount <= 0)   { alert('يرجى إدخال مبلغ صحيح');             return; }
+
+  // تعطيل الزر
+  const btn = document.querySelector('.int-btn-save');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<div class="loading-spinner" style="width:16px;height:16px;border-width:2px;margin:0 auto;"></div>'; }
+
+  // جلب office_id من /me
+  let officeId = null;
+  try {
+    const meRes  = await fetch(`${API_URL}/me`, { headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' } });
+    const meData = await meRes.json();
+    officeId = meData?.user?.office_id ?? null;
+  } catch (e) { /* سنتابع بدون office_id إذا فشل */ }
+
+  const today = new Date().toISOString().slice(0, 10);
+
+  const payload = {
+    office_id:      officeId,
+    sender_name:    senderName,
+    receiver_name:  receiverName,
+    receiver_phone: phone,
+    amount,
+    commission,
+    currency,
+    fee_payer:      feePayer,
+    is_paid:        false,
+    transfer_date:  today,
+  };
+
+  try {
+    const res  = await fetch(`${API_URL}/internal-transfers`, {
+      method:  'POST',
+      headers: {
+        Authorization:  `Bearer ${token}`,
+        Accept:         'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await res.json();
+
+    if (res.ok && data.status === 'success') {
+      // بناء كائن الطباعة من رد الـ API
+      const saved = data.data;
+      const printObj = {
+        id:         saved.id,
+        sender:     saved.sender_name,
+        receiver:   saved.receiver_name,
+        phone:      saved.receiver_phone,
+        amount:     parseFloat(saved.amount),
+        commission: parseFloat(saved.commission),
+        currency:   saved.currency,
+        feePayer:   saved.fee_payer,
+        net:        saved.fee_payer === 'receiver'
+                      ? parseFloat(saved.amount) - parseFloat(saved.commission)
+                      : parseFloat(saved.amount),
+        date:       saved.created_at ?? new Date().toISOString(),
+      };
+
+      printInternalReceipt(printObj);
+      resetInternalForm();
+      loadInternalTransfers();
+      showInternalToast('✅ تم حفظ الحوالة الداخلية وطباعة الإيصال');
+    } else {
+      alert(data.message || 'فشل الحفظ، يرجى المحاولة مجدداً');
+    }
+
+  } catch (err) {
+    console.error('Internal transfer save error:', err);
+    alert('خطأ في الاتصال بالسيرفر');
+  } finally {
+    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> حفظ وطباعة الإيصال'; }
+  }
+}
+
+/* إعادة تعيين النموذج */
+function resetInternalForm() {
+  document.getElementById('int-sender').value     = '';
+  document.getElementById('int-receiver').value   = '';
+  document.getElementById('int-phone').value      = '';
+  document.getElementById('int-amount').value     = '';
+  document.getElementById('int-commission').value = '0';
+  document.getElementById('fee-sender').checked   = true;
+  updateFeeRadio();
+  updateInternalSummary();
+}
+
+/* ────────────────────────────────────────
+   تحميل سجل الحوالات الداخلية من API
+   GET /api/internal-transfers
+   ──────────────────────────────────────── */
+async function loadInternalTransfers() {
+  const tbody = document.getElementById('internal-list');
+  if (!tbody) return;
+
+  tbody.innerHTML = `
+    <tr>
+      <td colspan="10" class="loading-row">
+        <div class="loading-spinner"></div> جاري التحميل...
+      </td>
+    </tr>`;
+
+  try {
+    const res  = await fetch(`${API_URL}/internal-transfers`, {
+      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+    });
+    const data = await res.json();
+
+    if (!res.ok || data.status !== 'success' || !Array.isArray(data.data) || data.data.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="10">
+            <div class="empty-state">
+              <i class="fa-solid fa-right-left"></i>
+              <p>لا توجد حوالات داخلية مسجّلة بعد</p>
+            </div>
+          </td>
+        </tr>`;
+      return;
+    }
+
+    const fmt = (v, cur) =>
+      `${parseFloat(v).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${cur ?? ''}`;
+
+    const fmtDate = iso => {
+      if (!iso) return '—';
+      const d   = new Date(iso);
+      const pad = n => String(n).padStart(2, '0');
+      return `${d.getFullYear()}/${pad(d.getMonth()+1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    };
+
+    tbody.innerHTML = data.data.map((t, i) => {
+      const currency   = t.currency  ?? '';
+      const feePayer   = t.fee_payer ?? 'sender';
+      const amount     = parseFloat(t.amount     ?? 0);
+      const commission = parseFloat(t.commission ?? 0);
+      const net        = feePayer === 'receiver' ? amount - commission : amount;
+
+      // كائن الطباعة
+      const printObj = JSON.stringify({
+        id: t.id, sender: t.sender_name, receiver: t.receiver_name,
+        phone: t.receiver_phone, amount, commission, currency, feePayer, net,
+        date: t.created_at,
+      }).replace(/"/g, '&quot;');
+
+      return `
+        <tr>
+          <td><span class="transfer-id">#${t.id}</span></td>
+          <td>${t.sender_name   ?? '—'}</td>
+          <td>${t.receiver_name ?? '—'}</td>
+          <td style="direction:ltr;text-align:right;">${t.receiver_phone ?? '—'}</td>
+          <td><span class="amount-cell">${fmt(amount, currency)}</span></td>
+          <td>${commission > 0 ? fmt(commission, currency) : '—'}</td>
+          <td><span class="delivery-price">${fmt(net, currency)}</span></td>
+          <td>
+            <span class="fee-payer-badge ${feePayer}">
+              <i class="fa-solid fa-${feePayer === 'sender' ? 'user-tie' : 'user-check'}"></i>
+              ${feePayer === 'sender' ? 'المرسل' : 'المستلم'}
+            </span>
+          </td>
+          <td style="direction:ltr;text-align:right;font-size:12px;color:var(--gray);">${fmtDate(t.created_at)}</td>
+          <td>
+            <button class="btn-reprint" onclick='printInternalReceipt(JSON.parse(this.dataset.tx))' data-tx="${printObj}">
+              <i class="fa-solid fa-print"></i> طباعة
+            </button>
+          </td>
+        </tr>`;
+    }).join('');
+
+  } catch (err) {
+    console.error('loadInternalTransfers error:', err);
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="10" class="loading-row" style="color:var(--danger);">
+          خطأ في الاتصال بالسيرفر
+        </td>
+      </tr>`;
+  }
+}
+
+/* Toast بسيط */
+function showInternalToast(msg) {
+  let toast = document.getElementById('int-toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'int-toast';
+    toast.style.cssText = `
+      position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(20px);
+      background:var(--dark); color:#fff; padding:12px 24px; border-radius:30px;
+      font-family:'Cairo',sans-serif; font-size:14px; font-weight:700;
+      box-shadow:0 8px 30px rgba(0,0,0,0.25); z-index:9999;
+      opacity:0; transition:all 0.35s cubic-bezier(0.4,0,0.2,1);
+      white-space:nowrap;
+    `;
+    document.body.appendChild(toast);
+  }
+  toast.textContent = msg;
+  requestAnimationFrame(() => {
+    toast.style.opacity = '1';
+    toast.style.transform = 'translateX(-50%) translateY(0)';
+  });
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transform = 'translateX(-50%) translateY(20px)';
+  }, 3200);
+}
+
+
+
+function showCompletedSection() {
+  document.getElementById('section-transfers').style.display = 'none';
+  document.getElementById('section-safes').style.display = 'none';
+  document.getElementById('section-profits').style.display = 'none';
+  document.getElementById('section-internal').style.display = 'none';
+  document.getElementById('section-completed').style.display = 'block';
+
+  document.getElementById('page-heading').textContent = 'سجل المكتملة';
+  document.querySelector('.page-sub').textContent = 'الحوالات المسلّمة';
+  document.querySelector('.page-icon').innerHTML = '<i class="fa-solid fa-circle-check"></i>';
+
+  loadCompletedTransfers();
+}
+
+let _completedAll  = [];   // كل الحوالات المجلوبة
+let _completedPage = 1;    // الصفحة الحالية
+const COMPLETED_PER_PAGE = 20;
+
+/**
+ * جلب الحوالات المكتملة من API
+ */
+async function loadCompletedTransfers() {
+  const tbody = document.getElementById('completed-list');
+  const pagination = document.getElementById('completed-pagination');
+  tbody.innerHTML = `<tr><td colspan="10" class="loading-row"><div class="loading-spinner"></div> جاري التحميل...</td></tr>`;
+  pagination.innerHTML = '';
+
+  try {
+    const res = await fetch(`${API_URL}/transfers?status=completed`, {
+      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' }
+    });
+    const json = await res.json();
+
+    if (json.status === 'success' && Array.isArray(json.data)) {
+      _completedAll  = json.data;
+      _completedPage = 1;
+      _renderCompleted();
+    } else {
+      tbody.innerHTML = `<tr><td colspan="10"><div class="empty-state"><i class="fa-solid fa-inbox"></i><p>لا توجد حوالات مكتملة</p></div></td></tr>`;
+    }
+  } catch (err) {
+    console.error(err);
+    tbody.innerHTML = `<tr><td colspan="10" class="loading-row" style="color:var(--danger);">خطأ في الاتصال بالسيرفر</td></tr>`;
+  }
+}
+
+/**
+ * تصفية حسب البحث والتواريخ (client-side)
+ */
+function filterCompleted() {
+  _completedPage = 1;
+  _renderCompleted();
+}
+
+function resetCompletedFilters() {
+  document.getElementById('cf-search').value    = '';
+  document.getElementById('cf-date-from').value = '';
+  document.getElementById('cf-date-to').value   = '';
+  _completedPage = 1;
+  _renderCompleted();
+}
+
+/**
+ * الدالة الرئيسية للعرض
+ */
+function _renderCompleted() {
+  const search   = (document.getElementById('cf-search')?.value    || '').trim().toLowerCase();
+  const dateFrom = document.getElementById('cf-date-from')?.value  || '';
+  const dateTo   = document.getElementById('cf-date-to')?.value    || '';
+
+  // --- تصفية ---
+  let filtered = _completedAll.filter(tx => {
+    const senderName   = (tx.sender?.name    || '').toLowerCase();
+    const receiverName = (tx.receiver_name   || '').toLowerCase();
+    const tracking     = (tx.tracking_code   || '').toLowerCase();
+
+    const matchSearch = !search ||
+      senderName.includes(search)   ||
+      receiverName.includes(search) ||
+      tracking.includes(search);
+
+    const txDate = (tx.updated_at || tx.created_at || '').slice(0, 10);
+    const matchFrom = !dateFrom || txDate >= dateFrom;
+    const matchTo   = !dateTo   || txDate <= dateTo;
+
+    return matchSearch && matchFrom && matchTo;
+  });
+
+  // --- إحصاءات ---
+  const totalUsd = filtered.reduce((s, t) => s + parseFloat(t.amount_in_usd || 0), 0);
+  const countEl  = document.getElementById('completed-count');
+  const totalEl  = document.getElementById('completed-total');
+  if (countEl) countEl.textContent = filtered.length;
+  if (totalEl) totalEl.textContent = '$' + totalUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+  // --- Pagination ---
+  const totalPages = Math.max(1, Math.ceil(filtered.length / COMPLETED_PER_PAGE));
+  if (_completedPage > totalPages) _completedPage = totalPages;
+  const start  = (_completedPage - 1) * COMPLETED_PER_PAGE;
+  const paged  = filtered.slice(start, start + COMPLETED_PER_PAGE);
+
+  _renderCompletedRows(paged, filtered.length === 0);
+  _renderCompletedPagination(totalPages, filtered.length);
+}
+
+/**
+ * رسم صفوف الجدول
+ */
+function _renderCompletedRows(rows, empty) {
+  const tbody = document.getElementById('completed-list');
+
+  if (empty) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="10">
+          <div class="empty-state">
+            <i class="fa-solid fa-circle-check"></i>
+            <p>لا توجد نتائج تطابق البحث</p>
+          </div>
+        </td>
+      </tr>`;
+    return;
+  }
+
+  function fmtDate(str) {
+    if (!str) return '—';
+    const d = new Date(str);
+    const pad = n => String(n).padStart(2,'0');
+    return `${d.getFullYear()}/${pad(d.getMonth()+1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  }
+
+  tbody.innerHTML = rows.map(tx => {
+    const amountUsd   = parseFloat(tx.amount_in_usd  ?? 0);
+    const currPrice   = parseFloat(tx.currency?.price ?? 1);
+    const currCode    = tx.currency?.code ?? '—';
+    const sendAmt     = parseFloat(tx.amount ?? 0);
+    const sendCur     = tx.send_currency?.code ?? tx.sendCurrency?.code ?? '—';
+    const deliveryAmt = currPrice > 0 ? amountUsd / currPrice : 0;
+
+    const txDate = fmtDate(tx.updated_at || tx.created_at);
+
+    // نحتاج لتمرير بيانات الحوالة كاملةً لدالة الطباعة
+    const txJson = JSON.stringify(tx).replace(/'/g, "\\'").replace(/"/g, '&quot;');
+
+    return `
+      <tr>
+        <td><span class="transfer-id">${tx.tracking_code ?? '#' + tx.id}</span></td>
+        <td>
+          ${tx.sender?.name ?? '—'}
+          <div style="font-size:11px;color:var(--gray);margin-top:1px;">${tx.sender?.country?.name ?? ''}</div>
+        </td>
+        <td>${tx.receiver_name ?? '—'}</td>
+        <td style="direction:ltr;text-align:right;font-size:12px;">${tx.receiver_phone ?? '—'}</td>
+        <td>
+          <span style="direction:ltr;display:inline-block;">
+            ${sendAmt.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}
+            <small style="color:var(--gray);font-size:11px;"> ${sendCur}</small>
+          </span>
+        </td>
+        <td><span class="amount-cell">$${amountUsd.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</span></td>
+        <td><span class="delivery-price">${deliveryAmt.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</span></td>
+        <td>${currCode}</td>
+        <td style="font-size:12px;color:var(--gray);direction:ltr;text-align:right;">${txDate}</td>
+        <td>
+          <button class="btn-print-completed" onclick='printTransferReceipt(${txJson})'>
+            <i class="fa-solid fa-print"></i> طباعة
+          </button>
+        </td>
+      </tr>`;
+  }).join('');
+}
+
+/**
+ * رسم أزرار Pagination
+ */
+function _renderCompletedPagination(totalPages, totalCount) {
+  const el = document.getElementById('completed-pagination');
+  if (!el) return;
+
+  if (totalPages <= 1) { el.innerHTML = ''; return; }
+
+  const start = (_completedPage - 1) * COMPLETED_PER_PAGE + 1;
+  const end   = Math.min(_completedPage * COMPLETED_PER_PAGE, totalCount);
+
+  let html = `
+    <button class="pg-btn" onclick="_goPage(${_completedPage - 1})" ${_completedPage === 1 ? 'disabled' : ''}>
+      <i class="fa-solid fa-chevron-right"></i>
+    </button>`;
+
+  // أزرار الأرقام (max 5 ظاهرة)
+  const range = 2;
+  for (let p = 1; p <= totalPages; p++) {
+    if (p === 1 || p === totalPages || (p >= _completedPage - range && p <= _completedPage + range)) {
+      html += `<button class="pg-btn ${p === _completedPage ? 'active' : ''}" onclick="_goPage(${p})">${p}</button>`;
+    } else if (p === _completedPage - range - 1 || p === _completedPage + range + 1) {
+      html += `<span class="pg-info">…</span>`;
+    }
+  }
+
+  html += `
+    <button class="pg-btn" onclick="_goPage(${_completedPage + 1})" ${_completedPage === totalPages ? 'disabled' : ''}>
+      <i class="fa-solid fa-chevron-left"></i>
+    </button>
+    <span class="pg-info">${start}–${end} من ${totalCount}</span>`;
+
+  el.innerHTML = html;
+}
+
+function _goPage(p) {
+  const totalPages = Math.max(1, Math.ceil(
+    (() => {
+      const search   = (document.getElementById('cf-search')?.value    || '').trim().toLowerCase();
+      const dateFrom = document.getElementById('cf-date-from')?.value  || '';
+      const dateTo   = document.getElementById('cf-date-to')?.value    || '';
+      return _completedAll.filter(tx => {
+        const matchSearch = !search ||
+          (tx.sender?.name || '').toLowerCase().includes(search) ||
+          (tx.receiver_name || '').toLowerCase().includes(search) ||
+          (tx.tracking_code || '').toLowerCase().includes(search);
+        const txDate = (tx.updated_at || tx.created_at || '').slice(0,10);
+        return matchSearch && (!dateFrom || txDate >= dateFrom) && (!dateTo || txDate <= dateTo);
+      }).length;
+    })() / COMPLETED_PER_PAGE
+  ));
+  if (p < 1 || p > totalPages) return;
+  _completedPage = p;
+  _renderCompleted();
+  document.getElementById('section-completed')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+/* ======================================= */
+/*    PRINT INTERNAL TRANSFER RECEIPT     */
+/* ======================================= */
+
+function printInternalReceipt(t) {
+  if (!t) return;
+
+  function toEn(val) {
+    return String(val ?? '—')
+      .replace(/[\u0660-\u0669]/g, d => d.charCodeAt(0) - 0x0660)
+      .replace(/[\u06F0-\u06F9]/g, d => d.charCodeAt(0) - 0x06F0);
+  }
+  function fmtN(val, dec = 2) {
+    const n = parseFloat(val ?? 0);
+    return toEn(isNaN(n) ? '0.00' : n.toLocaleString('en-US',{minimumFractionDigits:dec,maximumFractionDigits:dec}));
+  }
+
+  const now = new Date(t.date || Date.now());
+  const pad = n => String(n).padStart(2,'0');
+  const printDate = `${now.getFullYear()}/${pad(now.getMonth()+1)}/${pad(now.getDate())}  ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+
+  const feePayerAr = t.feePayer === 'sender' ? 'المرسل' : 'المستلم';
+  const commissionLine = t.commission > 0
+    ? `<div class="r"><span class="lbl">الرسوم (على ${feePayerAr})</span><span class="val">−${fmtN(t.commission)} ${t.currency}</span></div>`
+    : `<div class="r"><span class="lbl">الرسوم</span><span class="val">لا توجد رسوم</span></div>`;
+
+  const receiptHtml = `<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap');
+  @page { size: 80mm auto; margin: 0 !important; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Cairo', sans-serif;
+    width: 72mm; max-width: 72mm;
+    margin: 0 auto !important; padding: 2mm; padding-bottom: 0;
+    color: #000; font-size: 13px; line-height: 1.45;
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+    overflow: hidden;
+  }
+
+  /* الهيدر مع شريط مميز للداخلية */
+  .hdr {
+    text-align: center; padding-bottom: 5px;
+    border-bottom: 2px solid #000; margin-bottom: 6px;
+  }
+  .hdr .logo { font-size: 18px; font-weight: 700; color: #000; }
+  .hdr .type-badge {
+    display: inline-block;
+    background: #000; color: #fff;
+    font-size: 10px; font-weight: 800;
+    padding: 2px 10px; border-radius: 20px;
+    margin: 4px 0; letter-spacing: 0.5px;
+  }
+  .hdr .sub { font-size: 12px; font-weight: 700; color: #000; margin-top: 1px; }
+  .hdr .dt  { font-size: 11px; font-weight: 700; color: #000; margin-top: 2px; direction: ltr; }
+
+  /* رمز الحوالة المتسلسل */
+  .ref {
+    text-align: center; margin: 6px 0; padding: 5px 4px;
+    border: 2px dashed #000; border-radius: 3px;
+    font-size: 13px; font-weight: 700; direction: ltr; color: #000;
+  }
+  .ref-lbl { display: block; font-size: 10px; font-weight: 700; color: #000; direction: rtl; margin-bottom: 2px; }
+
+  .section-title {
+    font-size: 10px; font-weight: 800; text-transform: uppercase;
+    letter-spacing: 0.5px; color: #000;
+    border-top: 1px solid #000; border-bottom: 1px solid #000;
+    padding: 3px 0; margin: 6px 0; text-align: center;
+  }
+
+  .r { display: flex; justify-content: space-between; align-items: baseline; padding: 3px 1px; font-size: 12px; border-bottom: 1px dotted #000; }
+  .r .lbl { color: #000; font-weight: 700; font-size: 11px; white-space: nowrap; }
+  .r .val { color: #000; font-weight: 700; text-align: left; direction: ltr; unicode-bidi: embed; max-width: 60%; word-break: break-word; }
+
+  .divider { border: none; border-top: 1.5px dashed #000; margin: 6px 0; }
+
+  .amt-wrap { display: flex; gap: 4px; margin: 6px 0 4px; }
+  .amt-box {
+    flex: 1; border: 1.5px solid #000; border-radius: 4px;
+    padding: 5px 3px; text-align: center; overflow: hidden;
+  }
+  .amt-box .albl { font-size: 10px; font-weight: 700; color: #000; display: block; margin-bottom: 2px; }
+  .amt-box .aval { font-size: 13px; font-weight: 700; color: #000; direction: ltr; unicode-bidi: embed; display: block; }
+  .amt-box.net   { border: 2.5px solid #000; }
+  .amt-box.net .aval { font-size: 14px; }
+
+  /* شريط من يدفع الرسوم */
+  .fee-strip {
+    text-align: center; font-size: 10.5px; font-weight: 800;
+    padding: 4px; border: 1.5px solid #000; border-radius: 4px;
+    margin: 4px 0;
+  }
+
+  .internal-badge {
+    text-align: center;
+    font-size: 9px; font-weight: 800; color: #000;
+    border: 1px solid #000; border-radius: 3px; padding: 2px 6px;
+    margin: 4px auto; display: inline-block;
+  }
+
+  .footer { display: flex; justify-content: space-between; margin-top: 8px; padding-top: 6px; border-top: 2px solid #000; }
+  .sig { text-align: center; width: 45%; font-size: 11px; font-weight: 700; color: #000; }
+  .sig-line { border-top: 1.5px solid #000; margin-top: 16px; padding-top: 2px; }
+</style>
+</head>
+<body>
+
+  <div class="hdr">
+    <div class="logo">Flash<span>Pay</span></div>
+    <div><span class="type-badge">⇄ حوالة داخلية</span></div>
+    <div class="sub">إيصال حوالة داخلية</div>
+    <div class="dt">${printDate}</div>
+  </div>
+
+  <div class="ref">
+    <span class="ref-lbl">رقم العملية</span>
+    INT-${toEn(t.id)}
+  </div>
+
+  <div class="section-title">بيانات المرسل</div>
+  <div class="r"><span class="lbl">الاسم</span><span class="val">${t.sender}</span></div>
+
+  <hr class="divider">
+
+  <div class="section-title">بيانات المستلم</div>
+  <div class="r"><span class="lbl">الاسم</span>      <span class="val">${t.receiver}</span></div>
+  <div class="r"><span class="lbl">رقم الموبايل</span><span class="val">${toEn(t.phone)}</span></div>
+
+  <hr class="divider">
+
+  <div class="amt-wrap">
+    <div class="amt-box">
+      <span class="albl">المبلغ المرسل</span>
+      <span class="aval">${fmtN(t.amount)}</span>
+      <span class="albl">${t.currency}</span>
+    </div>
+    <div class="amt-box net">
+      <span class="albl">صافي التسليم</span>
+      <span class="aval">${fmtN(t.net)}</span>
+      <span class="albl">${t.currency}</span>
+    </div>
+  </div>
+
+  ${commissionLine}
+
+  ${t.commission > 0 ? `<div class="fee-strip">الرسوم مدفوعة من: ${feePayerAr}</div>` : ''}
+
+  <div class="footer">
+    <div class="sig">توقيع الموظف<div class="sig-line"></div></div>
+    <div class="sig">توقيع المستلم<div class="sig-line"></div></div>
+  </div>
+
+</body>
+</html>`;
+
+  const printWin = window.open('', '_blank', 'width=400,height=620');
+  if (!printWin) {
+    alert('يرجى السماح بالنوافذ المنبثقة (Popups) ثم أعد المحاولة');
+    return;
+  }
+  printWin.document.open();
+  printWin.document.write(receiptHtml);
+  printWin.document.close();
+  printWin.onload = function () {
+    printWin.document.fonts.ready.then(function () {
+      printWin.focus();
+      printWin.print();
+      printWin.onafterprint = function () { printWin.close(); };
+      setTimeout(function () { if (!printWin.closed) printWin.close(); }, 5000);
     });
   };
 }

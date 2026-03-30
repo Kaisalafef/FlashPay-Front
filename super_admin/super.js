@@ -121,7 +121,7 @@ async function loadSafes() {
 
         // فلترة صناديق المكاتب فقط
         const officeSafes = (json.data || [])
-            .filter(s => s.type === 'office_main')
+            .filter(s => s.type === 'office_safe')
             .sort((a, b) => (a.owner || '').localeCompare(b.owner || ''));
 
         grid.innerHTML = '';
