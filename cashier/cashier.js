@@ -210,6 +210,7 @@ function showTransfersSection() {
   document.getElementById('section-transfers').style.display = 'block';
   document.getElementById('section-safes').style.display = 'none';
   document.getElementById('section-profits').style.display = 'none';
+  document.getElementById('section-internal').style.display = 'none';
 
   document.getElementById('page-heading').textContent = 'الحوالات';
   document.querySelector('.page-sub').textContent = 'جاهزة للتسليم';
@@ -222,6 +223,7 @@ function showSafesSection() {
   document.getElementById('section-transfers').style.display = 'none';
   document.getElementById('section-safes').style.display = 'block';
   document.getElementById('section-profits').style.display = 'none';
+  document.getElementById('section-internal').style.display = 'none';
 
   document.getElementById('page-heading').textContent = 'التداول';
   document.querySelector('.page-sub').textContent = 'صناديق التداول';
@@ -234,10 +236,26 @@ function showProfitsSection() {
   document.getElementById('section-transfers').style.display = 'none';
   document.getElementById('section-safes').style.display = 'none';
   document.getElementById('section-profits').style.display = 'block';
+  document.getElementById('section-internal').style.display = 'none';
 
   document.getElementById('page-heading').textContent = 'أرباح التداول';
   document.querySelector('.page-sub').textContent = 'تقرير يومي';
   document.querySelector('.page-icon').innerHTML = '<i class="fa-solid fa-chart-line"></i>';
+}
+
+function showInternalSection() {
+  document.getElementById('section-transfers').style.display = 'none';
+  document.getElementById('section-safes').style.display = 'none';
+  document.getElementById('section-profits').style.display = 'none';
+  document.getElementById('section-internal').style.display = 'block';
+
+  document.getElementById('page-heading').textContent = 'الحوالات الداخلية';
+  document.querySelector('.page-sub').textContent = 'حوالات داخل المنطقة';
+  document.querySelector('.page-icon').innerHTML = '<i class="fa-solid fa-right-left"></i>';
+
+  loadInternalTransfers();
+  updateInternalSummary();
+  updateFeeRadio();
 }
 
 /* ============================= */
@@ -572,6 +590,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   setInterval(updateClock, 1000);
 
   loadNewTransfers();
+  bindInternalListeners();
 });
 
 /* ============================= */
@@ -729,6 +748,457 @@ document.addEventListener("DOMContentLoaded", async () => {
       setTimeout(function () {
         if (!printWin.closed) printWin.close();
       }, 5000);
+    });
+  };
+}
+/* ======================================= */
+/*        INTERNAL TRANSFERS              */
+/* ======================================= */
+
+/* تحديث الـ radio UI */
+function updateFeeRadio() {
+  const senderCard   = document.getElementById('radio-sender-card');
+  const receiverCard = document.getElementById('radio-receiver-card');
+  const senderRadio  = document.getElementById('fee-sender');
+  if (!senderCard) return;
+  if (senderRadio.checked) {
+    senderCard.classList.add('active');
+    receiverCard.classList.remove('active');
+  } else {
+    receiverCard.classList.add('active');
+    senderCard.classList.remove('active');
+  }
+  updateInternalSummary();
+}
+
+/* تحديث ملخص الحوالة */
+function updateInternalSummary() {
+  const amount     = parseFloat(document.getElementById('int-amount')?.value)    || 0;
+  const commission = parseFloat(document.getElementById('int-commission')?.value) || 0;
+  const currency   = document.getElementById('int-currency')?.value              || 'SYP';
+  const feePayer   = document.querySelector('input[name="fee_payer"]:checked')?.value || 'sender';
+
+  const net = feePayer === 'receiver' ? amount - commission : amount;
+  const fmt = v => v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+  const sentEl = document.getElementById('sum-sent');
+  const feeEl  = document.getElementById('sum-fee');
+  const netEl  = document.getElementById('sum-net');
+
+  if (sentEl) sentEl.textContent = `${fmt(amount)} ${currency}`;
+  if (feeEl)  feeEl.textContent  = commission > 0 ? `−${fmt(commission)} ${currency}` : '— لا توجد رسوم';
+  if (netEl)  netEl.textContent  = `${fmt(net)} ${currency}`;
+}
+
+/* ربط الأحداث على الحقول */
+function bindInternalListeners() {
+  ['int-amount', 'int-commission', 'int-currency'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', updateInternalSummary);
+  });
+  document.querySelectorAll('input[name="fee_payer"]').forEach(r =>
+    r.addEventListener('change', updateFeeRadio)
+  );
+}
+
+/* ────────────────────────────────────────
+   حفظ الحوالة → POST /api/internal-transfers
+   ──────────────────────────────────────── */
+async function saveInternalTransfer() {
+  const senderName   = document.getElementById('int-sender').value.trim();
+  const receiverName = document.getElementById('int-receiver').value.trim();
+  const phone        = document.getElementById('int-phone').value.trim();
+  const amount       = parseFloat(document.getElementById('int-amount').value)    || 0;
+  const commission   = parseFloat(document.getElementById('int-commission').value) || 0;
+  const currency     = document.getElementById('int-currency').value;
+  const feePayer     = document.querySelector('input[name="fee_payer"]:checked')?.value || 'sender';
+
+  // تحقق أساسي
+  if (!senderName)   { alert('يرجى إدخال اسم المرسل');            return; }
+  if (!receiverName) { alert('يرجى إدخال اسم المستلم');           return; }
+  if (!phone)        { alert('يرجى إدخال رقم موبايل المستلم');    return; }
+  if (amount <= 0)   { alert('يرجى إدخال مبلغ صحيح');             return; }
+
+  // تعطيل الزر
+  const btn = document.querySelector('.int-btn-save');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<div class="loading-spinner" style="width:16px;height:16px;border-width:2px;margin:0 auto;"></div>'; }
+
+  // جلب office_id من /me
+  let officeId = null;
+  try {
+    const meRes  = await fetch(`${API_URL}/me`, { headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' } });
+    const meData = await meRes.json();
+    officeId = meData?.user?.office_id ?? null;
+  } catch (e) { /* سنتابع بدون office_id إذا فشل */ }
+
+  const today = new Date().toISOString().slice(0, 10);
+
+  const payload = {
+    office_id:      officeId,
+    sender_name:    senderName,
+    receiver_name:  receiverName,
+    receiver_phone: phone,
+    amount,
+    commission,
+    currency,
+    fee_payer:      feePayer,
+    is_paid:        false,
+    transfer_date:  today,
+  };
+
+  try {
+    const res  = await fetch(`${API_URL}/internal-transfers`, {
+      method:  'POST',
+      headers: {
+        Authorization:  `Bearer ${token}`,
+        Accept:         'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await res.json();
+
+    if (res.ok && data.status === 'success') {
+      // بناء كائن الطباعة من رد الـ API
+      const saved = data.data;
+      const printObj = {
+        id:         saved.id,
+        sender:     saved.sender_name,
+        receiver:   saved.receiver_name,
+        phone:      saved.receiver_phone,
+        amount:     parseFloat(saved.amount),
+        commission: parseFloat(saved.commission),
+        currency:   saved.currency,
+        feePayer:   saved.fee_payer,
+        net:        saved.fee_payer === 'receiver'
+                      ? parseFloat(saved.amount) - parseFloat(saved.commission)
+                      : parseFloat(saved.amount),
+        date:       saved.created_at ?? new Date().toISOString(),
+      };
+
+      printInternalReceipt(printObj);
+      resetInternalForm();
+      loadInternalTransfers();
+      showInternalToast('✅ تم حفظ الحوالة الداخلية وطباعة الإيصال');
+    } else {
+      alert(data.message || 'فشل الحفظ، يرجى المحاولة مجدداً');
+    }
+
+  } catch (err) {
+    console.error('Internal transfer save error:', err);
+    alert('خطأ في الاتصال بالسيرفر');
+  } finally {
+    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> حفظ وطباعة الإيصال'; }
+  }
+}
+
+/* إعادة تعيين النموذج */
+function resetInternalForm() {
+  document.getElementById('int-sender').value     = '';
+  document.getElementById('int-receiver').value   = '';
+  document.getElementById('int-phone').value      = '';
+  document.getElementById('int-amount').value     = '';
+  document.getElementById('int-commission').value = '0';
+  document.getElementById('fee-sender').checked   = true;
+  updateFeeRadio();
+  updateInternalSummary();
+}
+
+/* ────────────────────────────────────────
+   تحميل سجل الحوالات الداخلية من API
+   GET /api/internal-transfers
+   ──────────────────────────────────────── */
+async function loadInternalTransfers() {
+  const tbody = document.getElementById('internal-list');
+  if (!tbody) return;
+
+  tbody.innerHTML = `
+    <tr>
+      <td colspan="10" class="loading-row">
+        <div class="loading-spinner"></div> جاري التحميل...
+      </td>
+    </tr>`;
+
+  try {
+    const res  = await fetch(`${API_URL}/internal-transfers`, {
+      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+    });
+    const data = await res.json();
+
+    if (!res.ok || data.status !== 'success' || !Array.isArray(data.data) || data.data.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="10">
+            <div class="empty-state">
+              <i class="fa-solid fa-right-left"></i>
+              <p>لا توجد حوالات داخلية مسجّلة بعد</p>
+            </div>
+          </td>
+        </tr>`;
+      return;
+    }
+
+    const fmt = (v, cur) =>
+      `${parseFloat(v).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${cur ?? ''}`;
+
+    const fmtDate = iso => {
+      if (!iso) return '—';
+      const d   = new Date(iso);
+      const pad = n => String(n).padStart(2, '0');
+      return `${d.getFullYear()}/${pad(d.getMonth()+1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    };
+
+    tbody.innerHTML = data.data.map((t, i) => {
+      const currency   = t.currency  ?? '';
+      const feePayer   = t.fee_payer ?? 'sender';
+      const amount     = parseFloat(t.amount     ?? 0);
+      const commission = parseFloat(t.commission ?? 0);
+      const net        = feePayer === 'receiver' ? amount - commission : amount;
+
+      // كائن الطباعة
+      const printObj = JSON.stringify({
+        id: t.id, sender: t.sender_name, receiver: t.receiver_name,
+        phone: t.receiver_phone, amount, commission, currency, feePayer, net,
+        date: t.created_at,
+      }).replace(/"/g, '&quot;');
+
+      return `
+        <tr>
+          <td><span class="transfer-id">#${t.id}</span></td>
+          <td>${t.sender_name   ?? '—'}</td>
+          <td>${t.receiver_name ?? '—'}</td>
+          <td style="direction:ltr;text-align:right;">${t.receiver_phone ?? '—'}</td>
+          <td><span class="amount-cell">${fmt(amount, currency)}</span></td>
+          <td>${commission > 0 ? fmt(commission, currency) : '—'}</td>
+          <td><span class="delivery-price">${fmt(net, currency)}</span></td>
+          <td>
+            <span class="fee-payer-badge ${feePayer}">
+              <i class="fa-solid fa-${feePayer === 'sender' ? 'user-tie' : 'user-check'}"></i>
+              ${feePayer === 'sender' ? 'المرسل' : 'المستلم'}
+            </span>
+          </td>
+          <td style="direction:ltr;text-align:right;font-size:12px;color:var(--gray);">${fmtDate(t.created_at)}</td>
+          <td>
+            <button class="btn-reprint" onclick='printInternalReceipt(JSON.parse(this.dataset.tx))' data-tx="${printObj}">
+              <i class="fa-solid fa-print"></i> طباعة
+            </button>
+          </td>
+        </tr>`;
+    }).join('');
+
+  } catch (err) {
+    console.error('loadInternalTransfers error:', err);
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="10" class="loading-row" style="color:var(--danger);">
+          خطأ في الاتصال بالسيرفر
+        </td>
+      </tr>`;
+  }
+}
+
+/* Toast بسيط */
+function showInternalToast(msg) {
+  let toast = document.getElementById('int-toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'int-toast';
+    toast.style.cssText = `
+      position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(20px);
+      background:var(--dark); color:#fff; padding:12px 24px; border-radius:30px;
+      font-family:'Cairo',sans-serif; font-size:14px; font-weight:700;
+      box-shadow:0 8px 30px rgba(0,0,0,0.25); z-index:9999;
+      opacity:0; transition:all 0.35s cubic-bezier(0.4,0,0.2,1);
+      white-space:nowrap;
+    `;
+    document.body.appendChild(toast);
+  }
+  toast.textContent = msg;
+  requestAnimationFrame(() => {
+    toast.style.opacity = '1';
+    toast.style.transform = 'translateX(-50%) translateY(0)';
+  });
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transform = 'translateX(-50%) translateY(20px)';
+  }, 3200);
+}
+
+/* ======================================= */
+/*    PRINT INTERNAL TRANSFER RECEIPT     */
+/* ======================================= */
+
+function printInternalReceipt(t) {
+  if (!t) return;
+
+  function toEn(val) {
+    return String(val ?? '—')
+      .replace(/[\u0660-\u0669]/g, d => d.charCodeAt(0) - 0x0660)
+      .replace(/[\u06F0-\u06F9]/g, d => d.charCodeAt(0) - 0x06F0);
+  }
+  function fmtN(val, dec = 2) {
+    const n = parseFloat(val ?? 0);
+    return toEn(isNaN(n) ? '0.00' : n.toLocaleString('en-US',{minimumFractionDigits:dec,maximumFractionDigits:dec}));
+  }
+
+  const now = new Date(t.date || Date.now());
+  const pad = n => String(n).padStart(2,'0');
+  const printDate = `${now.getFullYear()}/${pad(now.getMonth()+1)}/${pad(now.getDate())}  ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+
+  const feePayerAr = t.feePayer === 'sender' ? 'المرسل' : 'المستلم';
+  const commissionLine = t.commission > 0
+    ? `<div class="r"><span class="lbl">الرسوم (على ${feePayerAr})</span><span class="val">−${fmtN(t.commission)} ${t.currency}</span></div>`
+    : `<div class="r"><span class="lbl">الرسوم</span><span class="val">لا توجد رسوم</span></div>`;
+
+  const receiptHtml = `<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap');
+  @page { size: 80mm auto; margin: 0 !important; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Cairo', sans-serif;
+    width: 72mm; max-width: 72mm;
+    margin: 0 auto !important; padding: 2mm; padding-bottom: 0;
+    color: #000; font-size: 13px; line-height: 1.45;
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+    overflow: hidden;
+  }
+
+  /* الهيدر مع شريط مميز للداخلية */
+  .hdr {
+    text-align: center; padding-bottom: 5px;
+    border-bottom: 2px solid #000; margin-bottom: 6px;
+  }
+  .hdr .logo { font-size: 18px; font-weight: 700; color: #000; }
+  .hdr .type-badge {
+    display: inline-block;
+    background: #000; color: #fff;
+    font-size: 10px; font-weight: 800;
+    padding: 2px 10px; border-radius: 20px;
+    margin: 4px 0; letter-spacing: 0.5px;
+  }
+  .hdr .sub { font-size: 12px; font-weight: 700; color: #000; margin-top: 1px; }
+  .hdr .dt  { font-size: 11px; font-weight: 700; color: #000; margin-top: 2px; direction: ltr; }
+
+  /* رمز الحوالة المتسلسل */
+  .ref {
+    text-align: center; margin: 6px 0; padding: 5px 4px;
+    border: 2px dashed #000; border-radius: 3px;
+    font-size: 13px; font-weight: 700; direction: ltr; color: #000;
+  }
+  .ref-lbl { display: block; font-size: 10px; font-weight: 700; color: #000; direction: rtl; margin-bottom: 2px; }
+
+  .section-title {
+    font-size: 10px; font-weight: 800; text-transform: uppercase;
+    letter-spacing: 0.5px; color: #000;
+    border-top: 1px solid #000; border-bottom: 1px solid #000;
+    padding: 3px 0; margin: 6px 0; text-align: center;
+  }
+
+  .r { display: flex; justify-content: space-between; align-items: baseline; padding: 3px 1px; font-size: 12px; border-bottom: 1px dotted #000; }
+  .r .lbl { color: #000; font-weight: 700; font-size: 11px; white-space: nowrap; }
+  .r .val { color: #000; font-weight: 700; text-align: left; direction: ltr; unicode-bidi: embed; max-width: 60%; word-break: break-word; }
+
+  .divider { border: none; border-top: 1.5px dashed #000; margin: 6px 0; }
+
+  .amt-wrap { display: flex; gap: 4px; margin: 6px 0 4px; }
+  .amt-box {
+    flex: 1; border: 1.5px solid #000; border-radius: 4px;
+    padding: 5px 3px; text-align: center; overflow: hidden;
+  }
+  .amt-box .albl { font-size: 10px; font-weight: 700; color: #000; display: block; margin-bottom: 2px; }
+  .amt-box .aval { font-size: 13px; font-weight: 700; color: #000; direction: ltr; unicode-bidi: embed; display: block; }
+  .amt-box.net   { border: 2.5px solid #000; }
+  .amt-box.net .aval { font-size: 14px; }
+
+  /* شريط من يدفع الرسوم */
+  .fee-strip {
+    text-align: center; font-size: 10.5px; font-weight: 800;
+    padding: 4px; border: 1.5px solid #000; border-radius: 4px;
+    margin: 4px 0;
+  }
+
+  .internal-badge {
+    text-align: center;
+    font-size: 9px; font-weight: 800; color: #000;
+    border: 1px solid #000; border-radius: 3px; padding: 2px 6px;
+    margin: 4px auto; display: inline-block;
+  }
+
+  .footer { display: flex; justify-content: space-between; margin-top: 8px; padding-top: 6px; border-top: 2px solid #000; }
+  .sig { text-align: center; width: 45%; font-size: 11px; font-weight: 700; color: #000; }
+  .sig-line { border-top: 1.5px solid #000; margin-top: 16px; padding-top: 2px; }
+</style>
+</head>
+<body>
+
+  <div class="hdr">
+    <div class="logo">Flash<span>Pay</span></div>
+    <div><span class="type-badge">⇄ حوالة داخلية</span></div>
+    <div class="sub">إيصال حوالة داخلية</div>
+    <div class="dt">${printDate}</div>
+  </div>
+
+  <div class="ref">
+    <span class="ref-lbl">رقم العملية</span>
+    INT-${toEn(t.id)}
+  </div>
+
+  <div class="section-title">بيانات المرسل</div>
+  <div class="r"><span class="lbl">الاسم</span><span class="val">${t.sender}</span></div>
+
+  <hr class="divider">
+
+  <div class="section-title">بيانات المستلم</div>
+  <div class="r"><span class="lbl">الاسم</span>      <span class="val">${t.receiver}</span></div>
+  <div class="r"><span class="lbl">رقم الموبايل</span><span class="val">${toEn(t.phone)}</span></div>
+
+  <hr class="divider">
+
+  <div class="amt-wrap">
+    <div class="amt-box">
+      <span class="albl">المبلغ المرسل</span>
+      <span class="aval">${fmtN(t.amount)}</span>
+      <span class="albl">${t.currency}</span>
+    </div>
+    <div class="amt-box net">
+      <span class="albl">صافي التسليم</span>
+      <span class="aval">${fmtN(t.net)}</span>
+      <span class="albl">${t.currency}</span>
+    </div>
+  </div>
+
+  ${commissionLine}
+
+  ${t.commission > 0 ? `<div class="fee-strip">الرسوم مدفوعة من: ${feePayerAr}</div>` : ''}
+
+  <div class="footer">
+    <div class="sig">توقيع الموظف<div class="sig-line"></div></div>
+    <div class="sig">توقيع المستلم<div class="sig-line"></div></div>
+  </div>
+
+</body>
+</html>`;
+
+  const printWin = window.open('', '_blank', 'width=400,height=620');
+  if (!printWin) {
+    alert('يرجى السماح بالنوافذ المنبثقة (Popups) ثم أعد المحاولة');
+    return;
+  }
+  printWin.document.open();
+  printWin.document.write(receiptHtml);
+  printWin.document.close();
+  printWin.onload = function () {
+    printWin.document.fonts.ready.then(function () {
+      printWin.focus();
+      printWin.print();
+      printWin.onafterprint = function () { printWin.close(); };
+      setTimeout(function () { if (!printWin.closed) printWin.close(); }, 5000);
     });
   };
 }
