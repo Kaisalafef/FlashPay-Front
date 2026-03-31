@@ -351,17 +351,26 @@ function buildTradingUI(currencyId, officeId) {
   const amountChips = [50, 100, 200, 500, 1000];
   const priceChips = [11500, 11700, 11750, 11800, 20000];
 
-  const amountChipsHtml = amountChips.map(v =>
-    `<button type="button" class="trade-chip" onclick="setTradeVal('buy_amount_${currencyId}','sell_amount_${currencyId}',${v})">${v}</button>`
-  ).join('');
+  const amountChipsHtml = amountChips
+    .map(
+      (v) =>
+        `<button type="button" class="trade-chip" onclick="setTradeVal('buy_amount_${currencyId}','sell_amount_${currencyId}',${v})">${v}</button>`,
+    )
+    .join("");
 
-  const buyPriceChipsHtml = priceChips.map(v =>
-    `<button type="button" class="trade-chip trade-chip-buy" onclick="setTradeVal('buy_price_${currencyId}',null,${v})">${v.toLocaleString()}</button>`
-  ).join('');
+  const buyPriceChipsHtml = priceChips
+    .map(
+      (v) =>
+        `<button type="button" class="trade-chip trade-chip-buy" onclick="setTradeVal('buy_price_${currencyId}',null,${v})">${v.toLocaleString()}</button>`,
+    )
+    .join("");
 
-  const sellPriceChipsHtml = priceChips.map(v =>
-    `<button type="button" class="trade-chip trade-chip-sell" onclick="setTradeVal('sell_price_${currencyId}',null,${v})">${v.toLocaleString()}</button>`
-  ).join('');
+  const sellPriceChipsHtml = priceChips
+    .map(
+      (v) =>
+        `<button type="button" class="trade-chip trade-chip-sell" onclick="setTradeVal('sell_price_${currencyId}',null,${v})">${v.toLocaleString()}</button>`,
+    )
+    .join("");
 
   return `
     <div class="trade-panel">
@@ -369,17 +378,19 @@ function buildTradingUI(currencyId, officeId) {
             <i class="fa-solid fa-sliders"></i> عمليات التداول
         </div>
 
+        <!-- الكمية مشتركة -->
         <div class="trade-field-group">
             <label class="trade-field-label"><i class="fa-solid fa-hashtag"></i> الكمية</label>
             <div class="trade-chips-row">${amountChipsHtml}</div>
             <div class="trade-input-row">
-                <input type="number" id="buy_amount_${currencyId}" class="trading-input" placeholder="أدخل الكمية يدوياً..." min="0" step="any"
+                <input type="number" id="buy_amount_${currencyId}"  class="trading-input" placeholder="أدخل الكمية يدوياً..." min="0" step="any"
                        oninput="document.getElementById('sell_amount_${currencyId}').value=this.value">
-                <input type="number" id="sell_amount_${currencyId}" class="trading-input" style="display:none;" min="0" step="any">
+                <input type="number" id="sell_amount_${currencyId}" class="trading-input" style="display:none;" placeholder="الكمية" min="0" step="any">
             </div>
         </div>
 
         <div class="trade-ops-grid">
+            <!-- شراء -->
             <div class="trade-op trade-op-buy">
                 <div class="trade-op-header">
                     <i class="fa-solid fa-arrow-down-to-line"></i> شراء
@@ -394,6 +405,7 @@ function buildTradingUI(currencyId, officeId) {
                 </button>
             </div>
 
+            <!-- بيع -->
             <div class="trade-op trade-op-sell">
                 <div class="trade-op-header">
                     <i class="fa-solid fa-arrow-up-from-line"></i> بيع
@@ -413,10 +425,17 @@ function buildTradingUI(currencyId, officeId) {
 
 function setTradeVal(id1, id2, val) {
   const el1 = document.getElementById(id1);
-  if (el1) { el1.value = val; el1.dispatchEvent(new Event('input')); }
-  if (id2) { const el2 = document.getElementById(id2); if (el2) el2.value = val; }
-  event.target.classList.add('trade-chip-active');
-  setTimeout(() => event.target.classList.remove('trade-chip-active'), 600);
+  if (el1) {
+    el1.value = val;
+    el1.dispatchEvent(new Event("input"));
+  }
+  if (id2) {
+    const el2 = document.getElementById(id2);
+    if (el2) el2.value = val;
+  }
+  // تأثير بصري على الزر المضغوط
+  event.target.classList.add("trade-chip-active");
+  setTimeout(() => event.target.classList.remove("trade-chip-active"), 600);
 }
 
 async function executeTrade(type, officeId, currencyId) {

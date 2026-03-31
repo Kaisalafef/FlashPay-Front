@@ -386,7 +386,7 @@ async function showSafesSection() {
 
     // ─── 2. بطاقة الصندوق الرئيسي (MainSafe) ────────────────
     const mainSafeCard = mainSafe ? `
-    <div class="safe-card safe-card-main">
+    <div class="safe-card safe-card-main" id="safe-card-main">
         <div class="safe-card-header">
             <div class="safe-card-icon"><i class="fa-solid fa-vault"></i></div>
             <div>
@@ -414,7 +414,7 @@ async function showSafesSection() {
 
     // ─── 3. بطاقات صناديق التداول (TradingSafe) ──────────────
     const tradingCards = tradingSafes.map((safe) => `
-    <div class="safe-card safe-card-trading">
+    <div class="safe-card safe-card-trading" id="trading-safe-card">
         <div class="safe-card-header">
             <div class="safe-card-icon"><i class="fa-solid fa-chart-line"></i></div>
             <div>
