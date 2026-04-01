@@ -1,474 +1,611 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FlashPay - Cashier</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="cashier.css">
-    <link rel="stylesheet" href="mobile_small.css">
-</head>
-<body>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>FlashPay - Cashier</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+        <link
+            href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap"
+            rel="stylesheet">
+        <link rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+        <link rel="stylesheet" href="cashier.css">
+        <link rel="stylesheet" href="mobile_small.css">
+    </head>
+    <body>
 
-    <!-- Sidebar Overlay -->
-    <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+        <!-- Sidebar Overlay -->
+        <div class="sidebar-overlay" id="sidebar-overlay"
+            onclick="closeSidebar()"></div>
 
-    <!-- Sidebar -->
-    <aside class="sidebar" id="sidebar">
-        <div class="logo">
-            <div class="logo-icon"><i class="fa-solid fa-wallet"></i></div>
-            <span>FlashPay</span>
-        </div>
-
-        <nav>
-            <ul>
-                <li class="active">
-                    <a href="#" onclick="setActive(this); showTransfersSection();">
-                        <span class="nav-icon"><i class="fa-solid fa-money-bill-transfer"></i></span>
-                        <span>الحوالات</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="#" onclick="setActive(this); showSafesSection();">
-                        <span class="nav-icon"><i class="fa-solid fa-vault"></i></span>
-                        <span>التداول</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="#" onclick="setActive(this); showProfitsSection();">
-                        <span class="nav-icon"><i class="fa-solid fa-chart-line"></i></span>
-                        <span>أرباح التداول</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="#" onclick="setActive(this); showInternalSection();">
-                        <span class="nav-icon"><i class="fa-solid fa-right-left"></i></span>
-                        <span>حوالات داخلية</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="#" onclick="setActive(this); showCompletedSection();">
-                        <span class="nav-icon"><i class="fa-solid fa-circle-check"></i></span>
-                        <span>سجل المكتملة</span>
-                    </a>
-                </li>
-            </ul>
-        </nav>
-
-        <div class="sidebar-user">
-            <div class="user-avatar"><i class="fa-solid fa-user"></i></div>
-            <div class="user-info">
-                <span class="user-role">صندوق</span>
-                <span class="user-name" id="user-name">—</span>
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="logo">
+                <div class="logo-icon"><i class="fa-solid fa-wallet"></i></div>
+                <span>FlashPay</span>
             </div>
-        </div>
 
-        <div class="logout">
-            <a href="#" onclick="handleLogout()">
-                <i class="fa-solid fa-arrow-right-from-bracket"></i>
-                <span>تسجيل الخروج</span>
-            </a>
-        </div>
-    </aside>
+            <nav>
+                <ul>
+                    <li class="active">
+                        <a href="#"
+                            onclick="setActive(this); showTransfersSection();">
+                            <span class="nav-icon"><i
+                                    class="fa-solid fa-money-bill-transfer"></i></span>
+                            <span>الحوالات</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#"
+                            onclick="setActive(this); showSafesSection();">
+                            <span class="nav-icon"><i
+                                    class="fa-solid fa-vault"></i></span>
+                            <span>التداول</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#"
+                            onclick="setActive(this); showProfitsSection();">
+                            <span class="nav-icon"><i
+                                    class="fa-solid fa-chart-line"></i></span>
+                            <span>أرباح التداول</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#"
+                            onclick="setActive(this); showInternalSection();">
+                            <span class="nav-icon"><i
+                                    class="fa-solid fa-right-left"></i></span>
+                            <span>حوالات داخلية</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#"
+                            onclick="setActive(this); showCompletedSection();">
+                            <span class="nav-icon"><i
+                                    class="fa-solid fa-circle-check"></i></span>
+                            <span>سجل المكتملة</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
 
-    <!-- Main -->
-    <main class="main-content">
-
-        <header>
-            <div class="header-left">
-                <button class="hamburger-btn" id="hamburger-btn" onclick="toggleSidebar()" title="فتح القائمة الجانبية">
-                    <i class="fa-solid fa-bars"></i>
-                </button>
-                <div class="page-title">
-                    <span class="page-icon" id="page-icon"><i class="fa-solid fa-money-bill-transfer"></i></span>
-                    <div>
-                        <h2 id="page-heading">الحوالات</h2>
-                        <p class="page-sub">جاهزة للتسليم</p>
-                    </div>
-                </div>
-            </div>
-            <div class="header-right">
-                <div class="header-badge">
-                    <i class="fa-solid fa-circle-check"></i>
-                    <span id="transfers-count">0</span> حوالة
-                </div>
-                <div class="time-display" id="time-display">--:--</div>
-            </div>
-        </header>
-
-        <div class="content-body">
-
-            <!-- ===== قسم الحوالات ===== -->
-            <div id="section-transfers" class="section active-section">
-                <div class="card fade-in">
-                    <div class="card-header">
-                        <div class="card-title">
-                            <i class="fa-solid fa-inbox"></i>
-                            <h3>الحوالات الجاهزة للتسليم</h3>
-                        </div>
-                        <button class="btn-refresh" onclick="loadNewTransfers()">
-                            <i class="fa-solid fa-rotate"></i> تحديث
-                        </button>
-                    </div>
-                    <div class="table-wrapper">
-                        <table class="data-table">
-                            <thead>
-                                <tr>
-                                    <th>رقم الحوالة</th>
-                                    <th>المرسل</th>
-                                    <th>المبلغ (USD)</th>
-                                    <th>العملة</th>
-                                    <th>سعر التسليم</th>
-                                    <th>صورة الهوية</th>
-                                    <th>الإجراء</th>
-                                </tr>
-                            </thead>
-                            <tbody id="new-transfers-list">
-                                <tr>
-                                    <td colspan="7" class="loading-row">
-                                        <div class="loading-spinner"></div>
-                                        جاري التحميل...
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
+            <div class="sidebar-user">
+                <div class="user-avatar"><i class="fa-solid fa-user"></i></div>
+                <div class="user-info">
+                    <span class="user-role">صندوق</span>
+                    <span class="user-name" id="user-name">—</span>
                 </div>
             </div>
 
-            <!-- ===== قسم التداول ===== -->
-            <div id="section-safes" class="section" style="display:none;">
-                <div class="card fade-in" id="safes-card">
-                    <div class="card-header">
-                        <div class="card-title">
-                            <i class="fa-solid fa-vault"></i>
-                            <h3>صناديق التداول</h3>
-                        </div>
-                    </div>
-                    <div class="safes-grid" id="safes-container">
-                        <div class="loading-row" style="padding:40px; text-align:center;">
-                            <div class="loading-spinner" style="margin:0 auto 10px;"></div>
-                            جاري التحميل...
+            <div class="logout">
+                <a href="#" onclick="handleLogout()">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                    <span>تسجيل الخروج</span>
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main -->
+        <main class="main-content">
+
+            <header>
+                <div class="header-left">
+                    <button class="hamburger-btn" id="hamburger-btn"
+                        onclick="toggleSidebar()" title="فتح القائمة الجانبية">
+                        <i class="fa-solid fa-bars"></i>
+                    </button>
+                    <div class="page-title">
+                        <span class="page-icon" id="page-icon"><i
+                                class="fa-solid fa-money-bill-transfer"></i></span>
+                        <div>
+                            <h2 id="page-heading">الحوالات</h2>
+                            <p class="page-sub">جاهزة للتسليم</p>
                         </div>
                     </div>
                 </div>
-            </div>
+                <div class="header-right">
+                    <div class="header-badge">
+                        <i class="fa-solid fa-circle-check"></i>
+                        <span id="transfers-count">0</span> حوالة
+                    </div>
+                    <div class="time-display" id="time-display">--:--</div>
+                </div>
+            </header>
 
-            <!-- ===== قسم الأرباح ===== -->
-            <div id="section-profits" class="section" style="display:none;">
-                <div class="card fade-in" id="profits-card">
-                    <div class="card-header" style="flex-wrap:wrap; gap:12px;">
-                        <div class="card-title">
-                            <i class="fa-solid fa-chart-line"></i>
-                            <h3>تقرير أرباح التداول</h3>
-                        </div>
-                        <div class="date-filter">
-                            <label><i class="fa-regular fa-calendar"></i> اختر التاريخ:</label>
-                            <input type="date" id="report-date">
-                            <button class="btn-primary" onclick="loadTradingReport()">
-                                <i class="fa-solid fa-magnifying-glass"></i> عرض
+            <div class="content-body">
+
+                <!-- ===== قسم الحوالات ===== -->
+                <div id="section-transfers" class="section active-section">
+                    <div class="card fade-in">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <i class="fa-solid fa-inbox"></i>
+                                <h3>الحوالات الجاهزة للتسليم</h3>
+                            </div>
+                            <button class="btn-refresh"
+                                onclick="loadNewTransfers()">
+                                <i class="fa-solid fa-rotate"></i> تحديث
                             </button>
                         </div>
-                    </div>
-
-                    <div class="stats-grid" id="profits-summary"></div>
-
-                    <table class="data-table" id="profits-table" style="display:none;">
-                        <thead>
-                            <tr>
-                                <th>#</th>
-                                <th>النوع</th>
-                                <th>العملة</th>
-                                <th>الكمية</th>
-                                <th>السعر</th>
-                                <th>متوسط التكلفة</th>
-                                <th>الربح / الخسارة</th>
-                                <th>التاريخ</th>
-                                <th>المنفذ</th>
-                            </tr>
-                        </thead>
-                        <tbody id="profits-list"></tbody>
-                    </table>
-
-                    <div id="profits-empty" style="display:none;" class="empty-state">
-                        <i class="fa-solid fa-inbox"></i>
-                        <p>لا توجد عمليات تداول في هذا التاريخ</p>
+                        <div class="table-wrapper">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>رقم الحوالة</th>
+                                        <th>المرسل</th>
+                                        <th>المبلغ (USD)</th>
+                                        <th>العملة</th>
+                                        <th>سعر التسليم</th>
+                                        <th>صورة الهوية</th>
+                                        <th>الإجراء</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="new-transfers-list">
+                                    <tr>
+                                        <td colspan="7" class="loading-row">
+                                            <div class="loading-spinner"></div>
+                                            جاري التحميل...
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- ===== قسم الحوالات الداخلية ===== -->
-            <div id="section-internal" class="section" style="display:none;">
-
-                <!-- بطاقة النموذج -->
-                <div class="card fade-in internal-form-card">
-                    <div class="internal-card-hero">
-                        <div class="internal-hero-icon">
-                            <i class="fa-solid fa-right-left"></i>
+                <!-- ===== قسم التداول ===== -->
+                <div id="section-safes" class="section" style="display:none;">
+                    <div class="card fade-in" id="safes-card">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <i class="fa-solid fa-vault"></i>
+                                <h3>صناديق التداول</h3>
+                            </div>
                         </div>
-                        <div class="internal-hero-text">
-                            <h3>إنشاء حوالة داخلية</h3>
-                            <p>حوالة داخل نفس المنطقة · فورية · بدون رسوم بنكية</p>
+                        <div class="safes-grid" id="safes-container">
+                            <div class="loading-row"
+                                style="padding:40px; text-align:center;">
+                                <div class="loading-spinner"
+                                    style="margin:0 auto 10px;"></div>
+                                جاري التحميل...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ===== قسم الأرباح ===== -->
+                <div id="section-profits" class="section" style="display:none;">
+                    <div class="card fade-in" id="profits-card">
+                        <div class="card-header"
+                            style="flex-wrap:wrap; gap:12px;">
+                            <div class="card-title">
+                                <i class="fa-solid fa-chart-line"></i>
+                                <h3>تقرير أرباح التداول</h3>
+                            </div>
+                            <div class="date-filter">
+                                <label><i class="fa-regular fa-calendar"></i>
+                                    اختر التاريخ:</label>
+                                <input type="date" id="report-date">
+                                <button class="btn-primary"
+                                    onclick="loadTradingReport()">
+                                    <i class="fa-solid fa-magnifying-glass"></i>
+                                    عرض
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="stats-grid" id="profits-summary"></div>
+
+                        <table class="data-table" id="profits-table"
+                            style="display:none;">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>النوع</th>
+                                    <th>العملة</th>
+                                    <th>الكمية</th>
+                                    <th>السعر</th>
+                                    <th>متوسط التكلفة</th>
+                                    <th>الربح / الخسارة</th>
+                                    <th>التاريخ</th>
+                                    <th>المنفذ</th>
+                                </tr>
+                            </thead>
+                            <tbody id="profits-list"></tbody>
+                        </table>
+
+                        <div id="profits-empty" style="display:none;"
+                            class="empty-state">
+                            <i class="fa-solid fa-inbox"></i>
+                            <p>لا توجد عمليات تداول في هذا التاريخ</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ===== قسم الحوالات الداخلية ===== -->
+                <div id="section-internal" class="section"
+                    style="display:none;">
+
+                    <!-- بطاقة النموذج -->
+                    <div class="card fade-in internal-form-card">
+                        <div class="internal-card-hero">
+                            <div class="internal-hero-icon">
+                                <i class="fa-solid fa-right-left"></i>
+                            </div>
+                            <div class="internal-hero-text">
+                                <h3>إنشاء حوالة داخلية</h3>
+                                <p>حوالة داخل نفس المنطقة · فورية · بدون رسوم
+                                    بنكية</p>
+                            </div>
+                        </div>
+
+                        <div class="internal-form-body">
+
+                            <!-- الصف الأول: المرسل والمستلم -->
+                            <div class="int-row">
+                                <div class="int-field">
+                                    <label class="int-label">
+                                        <span
+                                            class="int-label-icon sender-icon"><i
+                                                class="fa-solid fa-user-tie"></i></span>
+                                        اسم المرسل
+                                    </label>
+                                    <input type="text" id="int-sender"
+                                        class="int-input"
+                                        placeholder="الاسم الكامل للمرسل...">
+                                </div>
+                                <div class="int-field">
+                                    <label class="int-label">
+                                        <span
+                                            class="int-label-icon receiver-icon"><i
+                                                class="fa-solid fa-user-check"></i></span>
+                                        اسم المستلم
+                                    </label>
+                                    <input type="text" id="int-receiver"
+                                        class="int-input"
+                                        placeholder="الاسم الكامل للمستلم...">
+                                </div>
+                            </div>
+
+                            <!-- الصف الثاني: رقم موبايل المستلم -->
+                            <div class="int-row">
+                                <div class="int-field">
+                                    <label class="int-label">
+                                        <span
+                                            class="int-label-icon phone-icon"><i
+                                                class="fa-solid fa-mobile-screen-button"></i></span>
+                                        رقم موبايل المستلم
+                                    </label>
+                                    <input type="tel" id="int-phone"
+                                        class="int-input"
+                                        placeholder="09xxxxxxxx" dir="ltr">
+                                </div>
+                                <div class="int-field">
+                                    <label class="int-label">
+                                        <span class="int-label-icon"
+                                            style="background: #e0e7ff; color: #4f46e5;"><i
+                                                class="fa-solid fa-map-location-dot"></i></span>
+                                        المحافظة (الوجهة)
+                                    </label>
+                                    <select id="int-province"
+                                        class="int-input int-select">
+                                        <option value disabled selected>اختر
+                                            المحافظة...</option>
+                                        <option value="دمشق">دمشق</option>
+                                        <option value="ريف دمشق">ريف
+                                            دمشق</option>
+                                        <option value="حلب">حلب</option>
+                                        <option value="حمص">حمص</option>
+                                        <option value="حماة">حماة</option>
+                                        <option
+                                            value="اللاذقية">اللاذقية</option>
+                                        <option value="طرطوس">طرطوس</option>
+                                        <option value="إدلب">إدلب</option>
+                                        <option value="درعا">درعا</option>
+                                        <option
+                                            value="السويداء">السويداء</option>
+                                        <option value="دير الزور">دير
+                                            الزور</option>
+                                        <option value="الحسكة">الحسكة</option>
+                                        <option
+                                            value="القامشلي">القامشلي</option>
+                                        <option value="منبج">منبج</option>
+                                        <option
+                                            value="البوكمال">البوكمال</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="int-row">
+                                <div class="int-field">
+                                    <label class="int-label">
+                                        <span
+                                            class="int-label-icon amount-icon"><i
+                                                class="fa-solid fa-coins"></i></span>
+                                        المبلغ
+                                    </label>
+                                    <input type="number" id="int-amount"
+                                        class="int-input" placeholder="0.00"
+                                        min="0" step="any">
+                                </div>
+                                <div class="int-field">
+                                    <label class="int-label">
+                                        <span
+                                            class="int-label-icon currency-icon"><i
+                                                class="fa-solid fa-circle-dollar-to-slot"></i></span>
+                                        العملة
+                                    </label>
+                                    <select id="int-currency"
+                                        class="int-input int-select">
+                                        <option value="SYP">ليرة سورية —
+                                            SYP</option>
+                                        <option value="USD">دولار — USD</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- الصف الثالث: الرسوم وصاحب الرسوم -->
+                            <div class="int-row int-row-fee">
+                                <div class="int-field int-field-quarter">
+                                    <label class="int-label">
+                                        <span class="int-label-icon fee-icon"><i
+                                                class="fa-solid fa-percent"></i></span>
+                                        الرسوم
+                                    </label>
+                                    <input type="number" id="int-commission"
+                                        class="int-input" placeholder="0.00"
+                                        min="0" step="any" value="0">
+                                </div>
+
+                                <!-- Radio: من يدفع الرسوم -->
+                                <div class="int-field int-field-grow">
+                                    <label class="int-label">
+                                        <span class="int-label-icon who-icon"><i
+                                                class="fa-solid fa-scale-balanced"></i></span>
+                                        الرسوم على عاتق
+                                    </label>
+                                    <div class="fee-radio-group">
+                                        <label class="fee-radio-card"
+                                            id="radio-sender-card">
+                                            <input type="radio" name="fee_payer"
+                                                value="sender" id="fee-sender"
+                                                checked
+                                                onchange="updateFeeRadio()">
+                                            <span class="fee-radio-inner">
+                                                <i
+                                                    class="fa-solid fa-user-tie"></i>
+                                                <span
+                                                    class="fee-radio-title">المرسل</span>
+                                                <span
+                                                    class="fee-radio-sub">يُخصم
+                                                    من المبلغ المرسل</span>
+                                            </span>
+                                            <span class="fee-radio-check"><i
+                                                    class="fa-solid fa-circle-check"></i></span>
+                                        </label>
+                                        <label class="fee-radio-card"
+                                            id="radio-receiver-card">
+                                            <input type="radio" name="fee_payer"
+                                                value="receiver"
+                                                id="fee-receiver"
+                                                onchange="updateFeeRadio()">
+                                            <span class="fee-radio-inner">
+                                                <i
+                                                    class="fa-solid fa-user-check"></i>
+                                                <span
+                                                    class="fee-radio-title">المستلم</span>
+                                                <span
+                                                    class="fee-radio-sub">يُخصم
+                                                    من المبلغ المستلم</span>
+                                            </span>
+                                            <span class="fee-radio-check"><i
+                                                    class="fa-solid fa-circle-check"></i></span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- ملخص الحوالة -->
+                            <div class="int-summary" id="int-summary">
+                                <div class="int-summary-row">
+                                    <span class="int-summary-label"><i
+                                            class="fa-solid fa-arrow-up-right-dots"></i>
+                                        المبلغ المرسل</span>
+                                    <span class="int-summary-val"
+                                        id="sum-sent">—</span>
+                                </div>
+                                <div class="int-summary-sep"></div>
+                                <div class="int-summary-row">
+                                    <span class="int-summary-label"><i
+                                            class="fa-solid fa-minus"></i>
+                                        الرسوم</span>
+                                    <span class="int-summary-val fee-val"
+                                        id="sum-fee">—</span>
+                                </div>
+                                <div class="int-summary-sep"></div>
+                                <div class="int-summary-row net-row">
+                                    <span class="int-summary-label"><i
+                                            class="fa-solid fa-hand-holding-dollar"></i>
+                                        صافي التسليم</span>
+                                    <span class="int-summary-val net-val"
+                                        id="sum-net">—</span>
+                                </div>
+                            </div>
+
+                            <!-- زر الحفظ والطباعة -->
+                            <div class="int-actions">
+                                <button class="int-btn-save"
+                                    onclick="saveInternalTransfer()">
+                                    <i class="fa-solid fa-floppy-disk"></i>
+                                    حفظ وطباعة الإيصال
+                                </button>
+                                <button class="int-btn-reset"
+                                    onclick="resetInternalForm()">
+                                    <i class="fa-solid fa-rotate-left"></i>
+                                    مسح البيانات
+                                </button>
+                            </div>
+
                         </div>
                     </div>
 
-                    <div class="internal-form-body">
-
-                        <!-- الصف الأول: المرسل والمستلم -->
-                        <div class="int-row">
-                            <div class="int-field">
-                                <label class="int-label">
-                                    <span class="int-label-icon sender-icon"><i class="fa-solid fa-user-tie"></i></span>
-                                    اسم المرسل
-                                </label>
-                                <input type="text" id="int-sender" class="int-input" placeholder="الاسم الكامل للمرسل...">
+                    <!-- جدول الحوالات الداخلية المحفوظة -->
+                    <div class="card fade-in" style="margin-top:20px;">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <i class="fa-solid fa-clock-rotate-left"></i>
+                                <h3>سجل الحوالات الداخلية</h3>
                             </div>
-                            <div class="int-field">
-                                <label class="int-label">
-                                    <span class="int-label-icon receiver-icon"><i class="fa-solid fa-user-check"></i></span>
-                                    اسم المستلم
-                                </label>
-                                <input type="text" id="int-receiver" class="int-input" placeholder="الاسم الكامل للمستلم...">
-                            </div>
+                            <button class="btn-refresh"
+                                onclick="loadInternalTransfers()">
+                                <i class="fa-solid fa-rotate"></i> تحديث
+                            </button>
                         </div>
-
-                        <!-- الصف الثاني: رقم موبايل المستلم -->
-                        <div class="int-row">
-                            <div class="int-field int-field-half">
-                                <label class="int-label">
-                                    <span class="int-label-icon phone-icon"><i class="fa-solid fa-mobile-screen-button"></i></span>
-                                    رقم موبايل المستلم
-                                </label>
-                                <input type="tel" id="int-phone" class="int-input" placeholder="09xxxxxxxx" dir="ltr">
-                            </div>
-                            <div class="int-field int-field-quarter">
-                                <label class="int-label">
-                                    <span class="int-label-icon amount-icon"><i class="fa-solid fa-coins"></i></span>
-                                    المبلغ
-                                </label>
-                                <input type="number" id="int-amount" class="int-input" placeholder="0.00" min="0" step="any">
-                            </div>
-                            <div class="int-field int-field-quarter">
-                                <label class="int-label">
-                                    <span class="int-label-icon currency-icon"><i class="fa-solid fa-circle-dollar-to-slot"></i></span>
-                                    العملة
-                                </label>
-                                <select id="int-currency" class="int-input int-select">
-                                    <option value="SYP">ليرة سورية — SYP</option>
-                                    <option value="USD">دولار — USD</option>
-                                    <option value="TRY">ليرة تركية — TRY</option>
-                                    <option value="EUR">يورو — EUR</option>
-                                    <option value="SAR">ريال سعودي — SAR</option>
-                                    <option value="AED">درهم إماراتي — AED</option>
-                                </select>
-                            </div>
+                        <div class="table-wrapper">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>المرسل</th>
+                                        <th>المستلم</th>
+                                        <th>الوجهة</th>
+                                        <th>رقم الموبايل</th>
+                                        <th>المبلغ</th>
+                                        <th>الرسوم</th>
+                                        <th>الصافي</th>
+                                        <th>الرسوم على</th>
+                                        <th>التاريخ</th>
+                                        <th>إعادة طباعة</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="internal-list">
+                                    <tr>
+                                        <td colspan="10" class="loading-row">
+                                            <div class="loading-spinner"></div>
+                                            جاري التحميل...
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
+                    </div>
 
-                        <!-- الصف الثالث: الرسوم وصاحب الرسوم -->
-                        <div class="int-row int-row-fee">
-                            <div class="int-field int-field-quarter">
-                                <label class="int-label">
-                                    <span class="int-label-icon fee-icon"><i class="fa-solid fa-percent"></i></span>
-                                    الرسوم
-                                </label>
-                                <input type="number" id="int-commission" class="int-input" placeholder="0.00" min="0" step="any" value="0">
+                </div>
+
+                <!-- ===== قسم سجل الحوالات المكتملة ===== -->
+                <div id="section-completed" class="section"
+                    style="display:none;">
+
+                    <!-- Hero + فلاتر -->
+                    <div class="card fade-in completed-hero-card">
+                        <div class="completed-hero">
+                            <div class="completed-hero-icon">
+                                <i class="fa-solid fa-circle-check"></i>
                             </div>
-
-                            <!-- Radio: من يدفع الرسوم -->
-                            <div class="int-field int-field-grow">
-                                <label class="int-label">
-                                    <span class="int-label-icon who-icon"><i class="fa-solid fa-scale-balanced"></i></span>
-                                    الرسوم على عاتق
-                                </label>
-                                <div class="fee-radio-group">
-                                    <label class="fee-radio-card" id="radio-sender-card">
-                                        <input type="radio" name="fee_payer" value="sender" id="fee-sender" checked onchange="updateFeeRadio()">
-                                        <span class="fee-radio-inner">
-                                            <i class="fa-solid fa-user-tie"></i>
-                                            <span class="fee-radio-title">المرسل</span>
-                                            <span class="fee-radio-sub">يُخصم من المبلغ المرسل</span>
-                                        </span>
-                                        <span class="fee-radio-check"><i class="fa-solid fa-circle-check"></i></span>
-                                    </label>
-                                    <label class="fee-radio-card" id="radio-receiver-card">
-                                        <input type="radio" name="fee_payer" value="receiver" id="fee-receiver" onchange="updateFeeRadio()">
-                                        <span class="fee-radio-inner">
-                                            <i class="fa-solid fa-user-check"></i>
-                                            <span class="fee-radio-title">المستلم</span>
-                                            <span class="fee-radio-sub">يُخصم من المبلغ المستلم</span>
-                                        </span>
-                                        <span class="fee-radio-check"><i class="fa-solid fa-circle-check"></i></span>
-                                    </label>
+                            <div class="completed-hero-text">
+                                <h3>سجل الحوالات المكتملة</h3>
+                                <p>جميع الحوالات التي تم تسليمها بنجاح</p>
+                            </div>
+                            <div class="completed-stats" id="completed-stats">
+                                <div class="cstat-box">
+                                    <span class="cstat-num"
+                                        id="completed-count">—</span>
+                                    <span class="cstat-lbl">حوالة</span>
+                                </div>
+                                <div class="cstat-sep"></div>
+                                <div class="cstat-box">
+                                    <span class="cstat-num"
+                                        id="completed-total">—</span>
+                                    <span class="cstat-lbl">إجمالي USD</span>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- ملخص الحوالة -->
-                        <div class="int-summary" id="int-summary">
-                            <div class="int-summary-row">
-                                <span class="int-summary-label"><i class="fa-solid fa-arrow-up-right-dots"></i> المبلغ المرسل</span>
-                                <span class="int-summary-val" id="sum-sent">—</span>
+                        <!-- فلاتر البحث -->
+                        <div class="completed-filters">
+                            <div class="cf-group">
+                                <label class="cf-label"><i
+                                        class="fa-solid fa-magnifying-glass"></i>
+                                    بحث</label>
+                                <input type="text" id="cf-search"
+                                    class="cf-input"
+                                    placeholder="اسم المرسل أو المستلم أو رمز التتبع..."
+                                    oninput="filterCompleted()">
                             </div>
-                            <div class="int-summary-sep"></div>
-                            <div class="int-summary-row">
-                                <span class="int-summary-label"><i class="fa-solid fa-minus"></i> الرسوم</span>
-                                <span class="int-summary-val fee-val" id="sum-fee">—</span>
+                            <div class="cf-group cf-group-sm">
+                                <label class="cf-label"><i
+                                        class="fa-regular fa-calendar"></i>
+                                    من</label>
+                                <input type="date" id="cf-date-from"
+                                    class="cf-input"
+                                    onchange="filterCompleted()">
                             </div>
-                            <div class="int-summary-sep"></div>
-                            <div class="int-summary-row net-row">
-                                <span class="int-summary-label"><i class="fa-solid fa-hand-holding-dollar"></i> صافي التسليم</span>
-                                <span class="int-summary-val net-val" id="sum-net">—</span>
+                            <div class="cf-group cf-group-sm">
+                                <label class="cf-label"><i
+                                        class="fa-regular fa-calendar"></i>
+                                    إلى</label>
+                                <input type="date" id="cf-date-to"
+                                    class="cf-input"
+                                    onchange="filterCompleted()">
                             </div>
-                        </div>
-
-                        <!-- زر الحفظ والطباعة -->
-                        <div class="int-actions">
-                            <button class="int-btn-save" onclick="saveInternalTransfer()">
-                                <i class="fa-solid fa-floppy-disk"></i>
-                                حفظ وطباعة الإيصال
+                            <button class="cf-btn-reset"
+                                onclick="resetCompletedFilters()">
+                                <i class="fa-solid fa-filter-circle-xmark"></i>
+                                مسح
                             </button>
-                            <button class="int-btn-reset" onclick="resetInternalForm()">
-                                <i class="fa-solid fa-rotate-left"></i>
-                                مسح البيانات
+                            <button class="btn-refresh"
+                                onclick="loadCompletedTransfers()">
+                                <i class="fa-solid fa-rotate"></i> تحديث
                             </button>
                         </div>
-
                     </div>
-                </div>
 
-                <!-- جدول الحوالات الداخلية المحفوظة -->
-                <div class="card fade-in" style="margin-top:20px;">
-                    <div class="card-header">
-                        <div class="card-title">
-                            <i class="fa-solid fa-clock-rotate-left"></i>
-                            <h3>سجل الحوالات الداخلية</h3>
+                    <!-- الجدول -->
+                    <div class="card fade-in"
+                        style="margin-top:16px; padding:0; overflow:hidden;">
+                        <div class="table-wrapper">
+                            <table class="data-table" id="completed-table">
+                                <thead>
+                                    <tr>
+                                        <th>رمز التتبع</th>
+                                        <th>المرسل</th>
+                                        <th>المستلم</th>
+                                        <th>رقم الهاتف</th>
+                                        <th>المبلغ المرسل</th>
+                                        <th>USD</th>
+                                        <th>صافي التسليم</th>
+                                        <th>العملة</th>
+                                        <th>تاريخ الإنجاز</th>
+                                        <th>طباعة</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="completed-list">
+                                    <tr>
+                                        <td colspan="10" class="loading-row">
+                                            <div class="loading-spinner"></div>
+                                            جاري التحميل...
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
-                        <button class="btn-refresh" onclick="loadInternalTransfers()">
-                            <i class="fa-solid fa-rotate"></i> تحديث
-                        </button>
+
+                        <!-- Pagination -->
+                        <div class="completed-pagination"
+                            id="completed-pagination"></div>
                     </div>
-                    <div class="table-wrapper">
-                        <table class="data-table">
-                            <thead>
-                                <tr>
-                                    <th>#</th>
-                                    <th>المرسل</th>
-                                    <th>المستلم</th>
-                                    <th>رقم الموبايل</th>
-                                    <th>المبلغ</th>
-                                    <th>الرسوم</th>
-                                    <th>الصافي</th>
-                                    <th>الرسوم على</th>
-                                    <th>التاريخ</th>
-                                    <th>إعادة طباعة</th>
-                                </tr>
-                            </thead>
-                            <tbody id="internal-list">
-                                <tr>
-                                    <td colspan="10" class="loading-row">
-                                        <div class="loading-spinner"></div>
-                                        جاري التحميل...
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
+
                 </div>
 
             </div>
+        </main>
 
-            <!-- ===== قسم سجل الحوالات المكتملة ===== -->
-            <div id="section-completed" class="section" style="display:none;">
-
-                <!-- Hero + فلاتر -->
-                <div class="card fade-in completed-hero-card">
-                    <div class="completed-hero">
-                        <div class="completed-hero-icon">
-                            <i class="fa-solid fa-circle-check"></i>
-                        </div>
-                        <div class="completed-hero-text">
-                            <h3>سجل الحوالات المكتملة</h3>
-                            <p>جميع الحوالات التي تم تسليمها بنجاح</p>
-                        </div>
-                        <div class="completed-stats" id="completed-stats">
-                            <div class="cstat-box">
-                                <span class="cstat-num" id="completed-count">—</span>
-                                <span class="cstat-lbl">حوالة</span>
-                            </div>
-                            <div class="cstat-sep"></div>
-                            <div class="cstat-box">
-                                <span class="cstat-num" id="completed-total">—</span>
-                                <span class="cstat-lbl">إجمالي USD</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- فلاتر البحث -->
-                    <div class="completed-filters">
-                        <div class="cf-group">
-                            <label class="cf-label"><i class="fa-solid fa-magnifying-glass"></i> بحث</label>
-                            <input type="text" id="cf-search" class="cf-input" placeholder="اسم المرسل أو المستلم أو رمز التتبع..." oninput="filterCompleted()">
-                        </div>
-                        <div class="cf-group cf-group-sm">
-                            <label class="cf-label"><i class="fa-regular fa-calendar"></i> من</label>
-                            <input type="date" id="cf-date-from" class="cf-input" onchange="filterCompleted()">
-                        </div>
-                        <div class="cf-group cf-group-sm">
-                            <label class="cf-label"><i class="fa-regular fa-calendar"></i> إلى</label>
-                            <input type="date" id="cf-date-to" class="cf-input" onchange="filterCompleted()">
-                        </div>
-                        <button class="cf-btn-reset" onclick="resetCompletedFilters()">
-                            <i class="fa-solid fa-filter-circle-xmark"></i> مسح
-                        </button>
-                        <button class="btn-refresh" onclick="loadCompletedTransfers()">
-                            <i class="fa-solid fa-rotate"></i> تحديث
-                        </button>
-                    </div>
-                </div>
-
-                <!-- الجدول -->
-                <div class="card fade-in" style="margin-top:16px; padding:0; overflow:hidden;">
-                    <div class="table-wrapper">
-                        <table class="data-table" id="completed-table">
-                            <thead>
-                                <tr>
-                                    <th>رمز التتبع</th>
-                                    <th>المرسل</th>
-                                    <th>المستلم</th>
-                                    <th>رقم الهاتف</th>
-                                    <th>المبلغ المرسل</th>
-                                    <th>USD</th>
-                                    <th>صافي التسليم</th>
-                                    <th>العملة</th>
-                                    <th>تاريخ الإنجاز</th>
-                                    <th>طباعة</th>
-                                </tr>
-                            </thead>
-                            <tbody id="completed-list">
-                                <tr>
-                                    <td colspan="10" class="loading-row">
-                                        <div class="loading-spinner"></div>
-                                        جاري التحميل...
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <!-- Pagination -->
-                    <div class="completed-pagination" id="completed-pagination"></div>
-                </div>
-
-            </div>
-
-        </div>
-    </main>
-
-    <script src="cashier.js"></script>
-    <script src="sidebar-mobile.js"></script>
-</body>
+        <script src="cashier.js"></script>
+        <script src="sidebar-mobile.js"></script>
+    </body>
 </html>

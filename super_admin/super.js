@@ -1006,6 +1006,7 @@ function showSection(sectionId) {
     if (sectionId === 'customers') loadCustomers();
     if (sectionId === 'employees') renderEmployeesStats();
     if (sectionId === 'offices') renderOfficesStats();
+    if (sectionId === 'pending-transfers') loadPendingTransfers();
 }
 
 function updateDashboardStats() {
@@ -1857,6 +1858,206 @@ async function handleLogout() {
     window.location.href = '../login/login.html';
 }
 /* =========================
+   قسم الحوالات المعلقة
+========================= */
+let allPendingTransfers = [];
+let filteredPendingTransfers = [];
+let pendingApproveId = null;
+
+async function loadPendingTransfers() {
+    // أيقونة تحديث دوّارة
+    const refreshIcon = document.getElementById('pt-refresh-icon');
+    if (refreshIcon) refreshIcon.classList.add('fa-spin');
+
+    try {
+        const res = await fetch(`${API_URL}/transfers`, { headers: getHeaders() });
+        const json = await res.json();
+        const all = json.data || [];
+
+        // فلتر: الحوالات المعلقة فقط (waiting)
+        allPendingTransfers = all.filter(t => t.status === 'waiting');
+        filteredPendingTransfers = [...allPendingTransfers];
+
+        renderPendingHeroStats(allPendingTransfers);
+        populatePendingOfficeFilter(allPendingTransfers);
+        renderPendingTable(filteredPendingTransfers);
+        updatePendingBadge(allPendingTransfers.length);
+
+    } catch (e) {
+        console.error('Error loading pending transfers:', e);
+        const tbody = document.getElementById('pt-tbody');
+        if (tbody) tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:40px;color:#dc2626;"><i class="fa-solid fa-triangle-exclamation" style="font-size:24px;display:block;margin-bottom:10px;"></i>خطأ في تحميل البيانات</td></tr>`;
+    } finally {
+        if (refreshIcon) refreshIcon.classList.remove('fa-spin');
+    }
+}
+
+function renderPendingHeroStats(transfers) {
+    const totalUsd = transfers.reduce((s, t) => s + parseFloat(t.amount_in_usd || 0), 0);
+    const offices  = new Set(transfers.map(t => t.destination_office_id).filter(Boolean)).size;
+
+    const countEl   = document.getElementById('stat-pt-count');
+    const usdEl     = document.getElementById('stat-pt-usd');
+    const officesEl = document.getElementById('stat-pt-offices');
+
+    if (countEl)   countEl.textContent   = transfers.length;
+    if (usdEl)     usdEl.textContent     = '$' + totalUsd.toFixed(0);
+    if (officesEl) officesEl.textContent = offices;
+}
+
+function populatePendingOfficeFilter(transfers) {
+    const sel = document.getElementById('pt-office-filter');
+    if (!sel) return;
+
+    const officeMap = {};
+    transfers.forEach(t => {
+        if (t.destination_office_id) {
+            const name = t.sender?.office?.name || `مكتب #${t.destination_office_id}`;
+            officeMap[t.destination_office_id] = name;
+        }
+    });
+
+    // إبقاء الخيار الأول
+    const first = sel.options[0];
+    sel.innerHTML = '';
+    sel.appendChild(first);
+
+    Object.entries(officeMap).forEach(([id, name]) => {
+        const opt = document.createElement('option');
+        opt.value = id;
+        opt.textContent = name;
+        sel.appendChild(opt);
+    });
+}
+
+function filterPendingTransfers() {
+    const q = (document.getElementById('pt-search')?.value || '').toLowerCase().trim();
+    const officeId = document.getElementById('pt-office-filter')?.value || '';
+
+    filteredPendingTransfers = allPendingTransfers.filter(t => {
+        const matchQ = !q ||
+            (t.tracking_code || '').toLowerCase().includes(q) ||
+            (t.receiver_name || '').toLowerCase().includes(q) ||
+            (t.receiver_phone || '').includes(q) ||
+            (t.sender?.name || '').toLowerCase().includes(q);
+
+        const matchOffice = !officeId || String(t.destination_office_id) === String(officeId);
+
+        return matchQ && matchOffice;
+    });
+
+    renderPendingTable(filteredPendingTransfers);
+}
+
+function renderPendingTable(transfers) {
+    const tbody   = document.getElementById('pt-tbody');
+    const emptyEl = document.getElementById('pt-empty');
+    if (!tbody) return;
+
+    if (transfers.length === 0) {
+        tbody.innerHTML = '';
+        if (emptyEl) emptyEl.style.display = 'block';
+        return;
+    }
+    if (emptyEl) emptyEl.style.display = 'none';
+
+    tbody.innerHTML = transfers.map(t => {
+        const date        = t.created_at ? new Date(t.created_at).toLocaleDateString('ar-SY') : '—';
+        const senderName  = t.sender?.name || '—';
+        const currCode    = t.send_currency?.code || t.currency?.code || '—';
+        const destOffice  = t.destination_office_id ? `مكتب #${t.destination_office_id}` : (t.destination_city || '—');
+        const amount      = parseFloat(t.amount).toLocaleString('ar-SY');
+
+        return `
+        <tr>
+            <td style="font-family:monospace;font-size:11px;direction:ltr;color:#6366f1;font-weight:700;">${t.tracking_code || '—'}</td>
+            <td style="font-weight:700;">${senderName}</td>
+            <td style="font-weight:600;">${t.receiver_name || '—'}</td>
+            <td style="direction:ltr;font-size:13px;color:var(--gray);">${t.receiver_phone || '—'}</td>
+            <td style="font-weight:800;">${amount}</td>
+            <td><span class="role-badge">${currCode}</span></td>
+            <td style="font-size:13px;color:var(--gray);">${destOffice}</td>
+            <td style="font-size:12px;color:var(--gray);">${date}</td>
+            <td>
+                <button onclick="openApproveModal(${t.id},'${t.tracking_code}','${t.receiver_name}')"
+                    class="pt-approve-btn">
+                    <i class="fa-solid fa-circle-check"></i> موافقة
+                </button>
+            </td>
+        </tr>`;
+    }).join('');
+}
+
+function updatePendingBadge(count) {
+    const badge = document.getElementById('pending-transfers-badge');
+    if (!badge) return;
+    if (count > 0) {
+        badge.textContent = count > 99 ? '99+' : count;
+        badge.style.display = 'flex';
+    } else {
+        badge.style.display = 'none';
+    }
+}
+
+// ---- مودال الموافقة ----
+function openApproveModal(id, trackingCode, receiverName) {
+    pendingApproveId = id;
+    const desc = document.getElementById('approve-modal-desc');
+    if (desc) desc.innerHTML = `هل تريد الموافقة على الحوالة <strong style="color:#4338ca;">${trackingCode}</strong> للمستلم <strong>${receiverName}</strong>؟<br><br>سيتم تغيير حالتها إلى <strong style="color:#0c4a6e;">جاهزة للتسليم</strong> فوراً.`;
+    const modal = document.getElementById('approve-modal');
+    if (modal) { modal.style.display = 'flex'; }
+}
+
+function closeApproveModal() {
+    const modal = document.getElementById('approve-modal');
+    if (modal) modal.style.display = 'none';
+    pendingApproveId = null;
+}
+
+async function confirmApproveTransfer() {
+    if (!pendingApproveId) return;
+
+    const btn = document.getElementById('approve-confirm-btn');
+    const originalHTML = btn.innerHTML;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري الموافقة...';
+    btn.disabled = true;
+
+    try {
+        const res = await fetch(`${API_URL}/transfers/${pendingApproveId}/update-status`, {
+            method: 'PATCH',
+            headers: getHeaders(),
+            body: JSON.stringify({ status: 'ready', fee: 0 })
+        });
+
+        const json = await res.json();
+        if (res.ok && json.status === 'success') {
+            closeApproveModal();
+            showToast('✅ تمت الموافقة على الحوالة بنجاح', 'success');
+            await loadPendingTransfers();
+        } else {
+            showToast('❌ فشل تحديث الحوالة: ' + (json.message || 'خطأ غير معروف'), 'error');
+        }
+    } catch (e) {
+        showToast('❌ خطأ في الاتصال بالخادم', 'error');
+        console.error(e);
+    } finally {
+        btn.innerHTML = originalHTML;
+        btn.disabled = false;
+    }
+}
+
+// toast بسيط إن لم يكن موجوداً
+function showToast(msg, type = 'success') {
+    // إن كان هناك showNotification أو toast مخصص، استخدمه
+    if (typeof showNotification === 'function') { showNotification(msg, type); return; }
+    const t = document.createElement('div');
+    t.textContent = msg;
+    t.style.cssText = `position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:${type==='success'?'#16a34a':'#dc2626'};color:#fff;padding:14px 28px;border-radius:12px;font-weight:700;font-size:14px;z-index:99999;box-shadow:0 8px 24px rgba(0,0,0,0.2);`;
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 3500);
+}
+
+/* =========================
    Init App
 ========================= */
 let token = null;
@@ -1876,6 +2077,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     await renderCurrenciesTable();
     await initPricePreview();
     await loadSafes();
+
+    // تحميل عدد الحوالات المعلقة لعرض الـ badge
+    loadPendingTransfers();
 
     // تحميل بيانات المستخدم الحالي
     await loadCurrentUser();

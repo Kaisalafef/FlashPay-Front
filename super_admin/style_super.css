@@ -2181,9 +2181,154 @@ select:focus {
 .customers-hero {
     background: linear-gradient(135deg, #134e4a 0%, #0d9488 60%, #2dd4bf 100%);
     color: white;
-}   
-/* =====================================================
-   شرائح أسعار الصرف - Currency Rate Tiers Modal
+}
+
+/* ── Pending Transfers Hero ── */
+.pending-hero {
+    background: linear-gradient(135deg, #1e1b4b 0%, #312e81 60%, #4338ca 100%);
+    color: white;
+}
+
+/* ── Pending: شريط الفلاتر ── */
+.pt-filters-bar {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.pt-search-wrap {
+    position: relative;
+}
+
+.pt-search-icon {
+    position: absolute;
+    right: 13px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #94a3b8;
+    font-size: 13px;
+    pointer-events: none;
+}
+
+.pt-search-wrap input {
+    width: 100%;
+    padding: 10px 38px 10px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    font-family: inherit;
+    font-size: 13px;
+    background: var(--white);
+    color: var(--dark);
+    box-sizing: border-box;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+#pt-office-filter {
+    padding: 10px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    font-family: inherit;
+    font-size: 13px;
+    background: var(--white);
+    color: var(--dark);
+    cursor: pointer;
+    outline: none;
+    white-space: nowrap;
+}
+
+.pt-refresh-btn {
+    padding: 10px 18px;
+    border-radius: 10px;
+    border: 1.5px solid #6366f1;
+    background: #ede9fe;
+    color: #4338ca;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    transition: background 0.2s, color 0.2s;
+}
+
+.pt-refresh-btn.hovered,
+.pt-refresh-btn:hover {
+    background: #6366f1;
+    color: #fff;
+}
+
+/* ── Pending: wrapper الجدول ── */
+.pt-table-wrap {
+    overflow-x: auto;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+}
+
+.pt-loading-cell {
+    text-align: center;
+    padding: 40px;
+    color: var(--gray);
+}
+
+.pt-loading-cell i {
+    font-size: 24px;
+    margin-bottom: 10px;
+    display: block;
+}
+
+/* ── Pending: حالة فراغ ── */
+.pt-empty-state {
+    display: none;
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--gray);
+}
+
+.pt-empty-state i {
+    font-size: 48px;
+    color: #22c55e;
+    margin-bottom: 14px;
+    display: block;
+}
+
+.pt-empty-state p {
+    font-size: 16px;
+    font-weight: 700;
+    margin: 0 0 6px 0;
+    color: var(--dark);
+}
+
+.pt-empty-state small {
+    font-size: 13px;
+}
+
+/* ── زر الموافقة في الجدول ── */
+.pt-approve-btn {
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: none;
+    background: linear-gradient(135deg, #4338ca, #6366f1);
+    color: #fff;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    transition: opacity 0.2s, transform 0.15s;
+}
+
+.pt-approve-btn:hover {
+    opacity: 0.85;
+    transform: translateY(-1px);
+}
    ===================================================== */
 
 /* زر إدارة الشرائح في الجدول */
