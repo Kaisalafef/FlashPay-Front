@@ -7,18 +7,28 @@ let token = null;
 
 async function checkAuth() {
   const storedToken = localStorage.getItem("auth_token");
-  if (!storedToken) { window.location.href = "../login/login.html"; return null; }
+  if (!storedToken) {
+    window.location.href = "../login/login.html";
+    return null;
+  }
 
   try {
     const res = await fetch(`${API_URL}/me`, {
-      headers: { Authorization: `Bearer ${storedToken}`, Accept: "application/json" },
+      headers: {
+        Authorization: `Bearer ${storedToken}`,
+        Accept: "application/json",
+      },
     });
 
-    if (!res.ok) { localStorage.clear(); window.location.href = "../login/login.html"; return null; }
+    if (!res.ok) {
+      localStorage.clear();
+      window.location.href = "../login/login.html";
+      return null;
+    }
 
     const data = await res.json();
     if (data?.user?.name) {
-      document.getElementById('user-name').textContent = data.user.name;
+      document.getElementById("user-name").textContent = data.user.name;
     }
 
     return storedToken;
@@ -45,9 +55,12 @@ async function loadNewTransfers() {
     const json = await res.json();
     tbody.innerHTML = "";
 
-    if (json.status === "success" && Array.isArray(json.data) && json.data.length > 0) {
-
-      document.getElementById('transfers-count').textContent = json.data.length;
+    if (
+      json.status === "success" &&
+      Array.isArray(json.data) &&
+      json.data.length > 0
+    ) {
+      document.getElementById("transfers-count").textContent = json.data.length;
 
       json.data.forEach((transfer) => {
         const amountUsd = Number(transfer.amount_in_usd ?? 0);
@@ -56,7 +69,8 @@ async function loadNewTransfers() {
         const deliveryPrice = currencyPrice > 0 ? amountUsd / currencyPrice : 0;
 
         const sendAmount = Number(transfer.amount ?? 0);
-        const sendCurrency = transfer.send_currency?.code ?? transfer.sendCurrency?.code ?? "—";
+        const sendCurrency =
+          transfer.send_currency?.code ?? transfer.sendCurrency?.code ?? "—";
 
         tbody.innerHTML += `
           <tr>
@@ -94,9 +108,8 @@ async function loadNewTransfers() {
           </tr>
         `;
       });
-
     } else {
-      document.getElementById('transfers-count').textContent = '0';
+      document.getElementById("transfers-count").textContent = "0";
       tbody.innerHTML = `
         <tr>
           <td colspan="7">
@@ -108,7 +121,6 @@ async function loadNewTransfers() {
         </tr>
       `;
     }
-
   } catch (error) {
     console.error("Error loading transfers:", error);
     tbody.innerHTML = `<tr><td colspan="7" class="loading-row" style="color:var(--danger);">خطأ في الاتصال بالسيرفر</td></tr>`;
@@ -143,7 +155,10 @@ async function acceptTransfer(transferId) {
   const button = document.getElementById(`btn_${transferId}`);
   const file = fileInput.files[0];
 
-  if (!file) { alert("يرجى اختيار صورة الهوية أولاً"); return; }
+  if (!file) {
+    alert("يرجى اختيار صورة الهوية أولاً");
+    return;
+  }
 
   button.disabled = true;
   button.innerHTML = `<div class="loading-spinner" style="width:16px;height:16px;border-width:2px;margin:0;display:inline-block;"></div> جاري المعالجة...`;
@@ -154,11 +169,17 @@ async function acceptTransfer(transferId) {
   formData.append("receiver_id_image", file);
 
   try {
-    const res = await fetch(`${API_URL}/transfers/${transferId}/update-status`, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
-      body: formData,
-    });
+    const res = await fetch(
+      `${API_URL}/transfers/${transferId}/update-status`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/json",
+        },
+        body: formData,
+      },
+    );
 
     const data = await res.json();
 
@@ -175,7 +196,6 @@ async function acceptTransfer(transferId) {
       button.disabled = false;
       button.innerHTML = `<i class="fa-solid fa-circle-check"></i> تأكيد التسليم`;
     }
-
   } catch (error) {
     console.error(error);
     alert("خطأ في الاتصال");
@@ -202,62 +222,66 @@ async function handleLogout() {
 /* ============================= */
 
 function setActive(element) {
-  document.querySelectorAll('.sidebar nav ul li').forEach(li => li.classList.remove('active'));
-  element.parentElement.classList.add('active');
+  document
+    .querySelectorAll(".sidebar nav ul li")
+    .forEach((li) => li.classList.remove("active"));
+  element.parentElement.classList.add("active");
 }
 
 function showTransfersSection() {
-  document.getElementById('section-transfers').style.display = 'block';
-  document.getElementById('section-safes').style.display = 'none';
-  document.getElementById('section-profits').style.display = 'none';
-  document.getElementById('section-internal').style.display = 'none';
-document.getElementById('section-internal').style.display = 'none';
- document.getElementById('section-completed').style.display = 'none';
+  document.getElementById("section-transfers").style.display = "block";
+  document.getElementById("section-safes").style.display = "none";
+  document.getElementById("section-profits").style.display = "none";
+  document.getElementById("section-internal").style.display = "none";
+  document.getElementById("section-internal").style.display = "none";
+  document.getElementById("section-completed").style.display = "none";
 
-  document.getElementById('page-heading').textContent = 'الحوالات';
-  document.querySelector('.page-sub').textContent = 'جاهزة للتسليم';
-  document.querySelector('.page-icon').innerHTML = '<i class="fa-solid fa-money-bill-transfer"></i>';
+  document.getElementById("page-heading").textContent = "الحوالات";
+  document.querySelector(".page-sub").textContent = "جاهزة للتسليم";
+  document.querySelector(".page-icon").innerHTML =
+    '<i class="fa-solid fa-money-bill-transfer"></i>';
 
   loadNewTransfers();
 }
 
 function showSafesSection() {
-  document.getElementById('section-transfers').style.display = 'none';
-  document.getElementById('section-safes').style.display = 'block';
-  document.getElementById('section-profits').style.display = 'none';
-  document.getElementById('section-internal').style.display = 'none';
- document.getElementById('section-completed').style.display = 'none';
-  document.getElementById('page-heading').textContent = 'التداول';
-  document.querySelector('.page-sub').textContent = 'صناديق التداول';
-  document.querySelector('.page-icon').innerHTML = '<i class="fa-solid fa-vault"></i>';
+  document.getElementById("section-transfers").style.display = "none";
+  document.getElementById("section-safes").style.display = "block";
+  document.getElementById("section-profits").style.display = "none";
+  document.getElementById("section-internal").style.display = "none";
+  document.getElementById("section-completed").style.display = "none";
+  document.getElementById("page-heading").textContent = "التداول";
+  document.querySelector(".page-sub").textContent = "صناديق التداول";
+  document.querySelector(".page-icon").innerHTML =
+    '<i class="fa-solid fa-vault"></i>';
 
   loadTradingSafes();
 }
 
 function showProfitsSection() {
-  document.getElementById('section-transfers').style.display = 'none';
-  document.getElementById('section-safes').style.display = 'none';
-  document.getElementById('section-profits').style.display = 'block';
-  document.getElementById('section-internal').style.display = 'none';
-   document.getElementById('section-completed').style.display = 'none';
-   
+  document.getElementById("section-transfers").style.display = "none";
+  document.getElementById("section-safes").style.display = "none";
+  document.getElementById("section-profits").style.display = "block";
+  document.getElementById("section-internal").style.display = "none";
+  document.getElementById("section-completed").style.display = "none";
 
-
-  document.getElementById('page-heading').textContent = 'أرباح التداول';
-  document.querySelector('.page-sub').textContent = 'تقرير يومي';
-  document.querySelector('.page-icon').innerHTML = '<i class="fa-solid fa-chart-line"></i>';
+  document.getElementById("page-heading").textContent = "أرباح التداول";
+  document.querySelector(".page-sub").textContent = "تقرير يومي";
+  document.querySelector(".page-icon").innerHTML =
+    '<i class="fa-solid fa-chart-line"></i>';
 }
 
 function showInternalSection() {
-  document.getElementById('section-transfers').style.display = 'none';
-  document.getElementById('section-safes').style.display = 'none';
-  document.getElementById('section-profits').style.display = 'none';
-  document.getElementById('section-internal').style.display = 'block';
- document.getElementById('section-completed').style.display = 'none';
+  document.getElementById("section-transfers").style.display = "none";
+  document.getElementById("section-safes").style.display = "none";
+  document.getElementById("section-profits").style.display = "none";
+  document.getElementById("section-internal").style.display = "block";
+  document.getElementById("section-completed").style.display = "none";
 
-  document.getElementById('page-heading').textContent = 'الحوالات الداخلية';
-  document.querySelector('.page-sub').textContent = 'حوالات داخل المنطقة';
-  document.querySelector('.page-icon').innerHTML = '<i class="fa-solid fa-right-left"></i>';
+  document.getElementById("page-heading").textContent = "الحوالات الداخلية";
+  document.querySelector(".page-sub").textContent = "حوالات داخل المنطقة";
+  document.querySelector(".page-icon").innerHTML =
+    '<i class="fa-solid fa-right-left"></i>';
 
   loadInternalTransfers();
   updateInternalSummary();
@@ -269,13 +293,23 @@ function showInternalSection() {
 /* ============================= */
 
 async function loadTradingSafes() {
-  const container = document.getElementById('safes-container');
+  const container = document.getElementById("safes-container");
   container.innerHTML = `<div class="loading-row" style="padding:40px; text-align:center; grid-column:1/-1;"><div class="loading-spinner" style="margin:0 auto 10px;"></div> جاري التحميل...</div>`;
 
   try {
     const [safesRes, meRes] = await Promise.all([
-      fetch(`${API_URL}/main-safes`, { headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' } }),
-      fetch(`${API_URL}/me`, { headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' } })
+      fetch(`${API_URL}/main-safes`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/json",
+        },
+      }),
+      fetch(`${API_URL}/me`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/json",
+        },
+      }),
     ]);
 
     const safesJson = await safesRes.json();
@@ -283,13 +317,14 @@ async function loadTradingSafes() {
 
     if (safesRes.ok && safesJson.data) {
       const myOfficeId = meData.user?.office_id;
-      const mySafes = safesJson.data.filter(s =>
-        s.office_id === myOfficeId &&
-        (s.type === 'office_main' || s.type === 'trading')
+      const mySafes = safesJson.data.filter(
+        (s) =>
+          s.office_id === myOfficeId &&
+          (s.type === "office_main" || s.type === "trading"),
       );
       renderTradingSafes(mySafes);
     } else {
-      container.innerHTML = `<p style="grid-column:1/-1; text-align:center; padding:40px; color:var(--danger);">${safesJson.message || 'فشل تحميل البيانات'}</p>`;
+      container.innerHTML = `<p style="grid-column:1/-1; text-align:center; padding:40px; color:var(--danger);">${safesJson.message || "فشل تحميل البيانات"}</p>`;
     }
   } catch (error) {
     console.error("Error loading safes:", error);
@@ -298,7 +333,7 @@ async function loadTradingSafes() {
 }
 
 function renderTradingSafes(safes) {
-  const container = document.getElementById('safes-container');
+  const container = document.getElementById("safes-container");
 
   if (!safes || safes.length === 0) {
     container.innerHTML = `
@@ -309,22 +344,32 @@ function renderTradingSafes(safes) {
     return;
   }
 
-  container.innerHTML = safes.map(safe => {
-    const isMain = safe.type === 'office_main';
-    const isTrading = safe.type === 'trading';
+  container.innerHTML = safes
+    .map((safe) => {
+      const isMain = safe.type === "office_main";
+      const isTrading = safe.type === "trading";
 
-    const title = isMain ? 'الصندوق الرئيسي' : `صندوق التداول (${safe.currency})`;
-    const icon = isMain ? 'fa-vault' : 'fa-chart-line';
-    const cardClass = isMain ? 'safe-card safe-card-main' : 'safe-card safe-card-trading';
+      const title = isMain
+        ? "الصندوق الرئيسي"
+        : `صندوق التداول (${safe.currency})`;
+      const icon = isMain ? "fa-vault" : "fa-chart-line";
+      const cardClass = isMain
+        ? "safe-card safe-card-main"
+        : "safe-card safe-card-trading";
 
-    const costRow = (!isMain && safe.cost !== null && safe.cost !== undefined) ? `
+      const costRow =
+        !isMain && safe.cost !== null && safe.cost !== undefined
+          ? `
       <div class="safe-cost">
         متوسط التكلفة: <span>${parseFloat(safe.cost).toFixed(2)}</span>
-      </div>` : '';
+      </div>`
+          : "";
 
-    const tradingUI = isTrading ? buildTradingUI(safe.currency_id, safe.office_id) : '';
+      const tradingUI = isTrading
+        ? buildTradingUI(safe.currency_id, safe.office_id)
+        : "";
 
-    return `
+      return `
     <div class="${cardClass}">
       <div class="safe-card-header">
         <div class="safe-card-icon">
@@ -332,15 +377,16 @@ function renderTradingSafes(safes) {
         </div>
         <div>
           <div class="safe-card-title">${title}</div>
-          <div class="safe-card-subtitle">${safe.currency || 'USD'}</div>
+          <div class="safe-card-subtitle">${safe.currency || "USD"}</div>
         </div>
       </div>
       <div class="safe-card-balance">${parseFloat(safe.balance)}</div>
-      <div class="safe-card-currency">${safe.currency || 'USD'}</div>
+      <div class="safe-card-currency">${safe.currency || "USD"}</div>
       ${costRow}
       ${tradingUI}
     </div>`;
-  }).join('');
+    })
+    .join("");
 }
 
 /* ============================= */
@@ -440,43 +486,55 @@ function setTradeVal(id1, id2, val) {
 
 async function executeTrade(type, officeId, currencyId) {
   if (!officeId || !currencyId) {
-    alert('بيانات الصندوق غير مكتملة، يرجى تحديث الصفحة');
+    alert("بيانات الصندوق غير مكتملة، يرجى تحديث الصفحة");
     return;
   }
 
-  const amount = parseFloat(document.getElementById(`${type}_amount_${currencyId}`)?.value);
-  const price = parseFloat(document.getElementById(`${type}_price_${currencyId}`)?.value);
+  const amount = parseFloat(
+    document.getElementById(`${type}_amount_${currencyId}`)?.value,
+  );
+  const price = parseFloat(
+    document.getElementById(`${type}_price_${currencyId}`)?.value,
+  );
 
   if (!amount || amount <= 0 || !price || price <= 0) {
-    alert('يرجى إدخال قيم صحيحة للكمية والسعر');
+    alert("يرجى إدخال قيم صحيحة للكمية والسعر");
     return;
   }
 
-  const payload = { office_id: officeId, currency_id: currencyId, amount: amount };
-  if (type === 'buy') payload.buy_price = parseFloat(price);
+  const payload = {
+    office_id: officeId,
+    currency_id: currencyId,
+    amount: amount,
+  };
+  if (type === "buy") payload.buy_price = parseFloat(price);
   else payload.sell_price = parseFloat(price);
 
   try {
     const res = await fetch(`${API_URL}/trading/${type}`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-        'Accept': 'application/json'
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+        Accept: "application/json",
       },
-      body: JSON.stringify(payload)
+      body: JSON.stringify(payload),
     });
 
     const data = await res.json();
 
     if (res.ok) {
-      alert(type === 'buy' ? '✅ تمت عملية الشراء بنجاح' : `✅ تمت عملية البيع!\nالربح: ${data.profit}`);
+      alert(
+        type === "buy"
+          ? "✅ تمت عملية الشراء بنجاح"
+          : `✅ تمت عملية البيع!\nالربح: ${data.profit}`,
+      );
       loadTradingSafes();
     } else {
-      alert(data.message || 'فشلت العملية');
+      alert(data.message || "فشلت العملية");
     }
   } catch (error) {
-    alert('خطأ في الاتصال بالسيرفر');
+    alert("خطأ في الاتصال بالسيرفر");
   }
 }
 
@@ -485,28 +543,28 @@ async function executeTrade(type, officeId, currencyId) {
 /* ============================= */
 
 async function loadTradingReport() {
-  const dateInput = document.getElementById('report-date');
-  const date = dateInput.value || new Date().toISOString().split('T')[0];
+  const dateInput = document.getElementById("report-date");
+  const date = dateInput.value || new Date().toISOString().split("T")[0];
 
-  const summaryEl = document.getElementById('profits-summary');
-  const tableEl = document.getElementById('profits-table');
-  const emptyEl = document.getElementById('profits-empty');
-  const tbodyEl = document.getElementById('profits-list');
+  const summaryEl = document.getElementById("profits-summary");
+  const tableEl = document.getElementById("profits-table");
+  const emptyEl = document.getElementById("profits-empty");
+  const tbodyEl = document.getElementById("profits-list");
 
   summaryEl.innerHTML = `<div class="loading-row" style="grid-column:1/-1;"><div class="loading-spinner" style="margin:0 auto 8px;"></div> جاري التحميل...</div>`;
-  tableEl.style.display = 'none';
-  emptyEl.style.display = 'none';
-  tbodyEl.innerHTML = '';
+  tableEl.style.display = "none";
+  emptyEl.style.display = "none";
+  tbodyEl.innerHTML = "";
 
   try {
     const res = await fetch(`${API_URL}/trading/report/details?date=${date}`, {
-      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' }
+      headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
     });
 
     const json = await res.json();
 
     if (!res.ok) {
-      summaryEl.innerHTML = `<p style="color:var(--danger); grid-column:1/-1;">${json.message || 'فشل تحميل البيانات'}</p>`;
+      summaryEl.innerHTML = `<p style="color:var(--danger); grid-column:1/-1;">${json.message || "فشل تحميل البيانات"}</p>`;
       return;
     }
 
@@ -514,9 +572,11 @@ async function loadTradingReport() {
     const summary = json.summary || {};
 
     const totalProfit = parseFloat(summary.total_net_profit || 0);
-    const profitColor = totalProfit >= 0 ? 'var(--success)' : 'var(--danger)';
-    const profitBg = totalProfit >= 0 ? 'var(--success-soft)' : 'var(--danger-soft)';
-    const profitIcon = totalProfit >= 0 ? 'fa-arrow-trend-up' : 'fa-arrow-trend-down';
+    const profitColor = totalProfit >= 0 ? "var(--success)" : "var(--danger)";
+    const profitBg =
+      totalProfit >= 0 ? "var(--success-soft)" : "var(--danger-soft)";
+    const profitIcon =
+      totalProfit >= 0 ? "fa-arrow-trend-up" : "fa-arrow-trend-down";
 
     summaryEl.innerHTML = `
       <div class="stat-card">
@@ -538,7 +598,7 @@ async function loadTradingReport() {
         <div>
           <div style="font-size:12px; color:var(--gray); margin-bottom:4px;">صافي الربح / الخسارة</div>
           <div style="font-size:20px; font-weight:800; color:${profitColor}; direction:ltr; text-align:right;">
-            ${totalProfit >= 0 ? '+' : ''}${totalProfit.toFixed(2)}
+            ${totalProfit >= 0 ? "+" : ""}${totalProfit.toFixed(2)}
           </div>
         </div>
       </div>
@@ -551,38 +611,45 @@ async function loadTradingReport() {
       </div>
     `;
 
-    if (transactions.length === 0) { emptyEl.style.display = 'block'; return; }
+    if (transactions.length === 0) {
+      emptyEl.style.display = "block";
+      return;
+    }
 
     transactions.forEach((tx, index) => {
-      const isBuy = tx.type === 'buy';
+      const isBuy = tx.type === "buy";
       const profit = parseFloat(tx.profit || 0);
-      const pColor = profit > 0 ? 'var(--success)' : profit < 0 ? 'var(--danger)' : 'var(--gray)';
+      const pColor =
+        profit > 0
+          ? "var(--success)"
+          : profit < 0
+            ? "var(--danger)"
+            : "var(--gray)";
       const typeLabel = isBuy
         ? `<span class="badge-buy">شراء</span>`
         : `<span class="badge-sell">بيع</span>`;
       const profitCell = isBuy
         ? `<span style="color:var(--gray-light); font-size:12px;">—</span>`
-        : `<span style="color:${pColor}; font-weight:700; direction:ltr; display:inline-block;">${profit >= 0 ? '+' : ''}${profit.toFixed(2)}</span>`;
+        : `<span style="color:${pColor}; font-weight:700; direction:ltr; display:inline-block;">${profit >= 0 ? "+" : ""}${profit.toFixed(2)}</span>`;
 
       tbodyEl.innerHTML += `
         <tr>
           <td>${index + 1}</td>
           <td>${typeLabel}</td>
-          <td>${tx.currency?.code ?? '—'}</td>
+          <td>${tx.currency?.code ?? "—"}</td>
           <td style="direction:ltr; text-align:right;">${parseFloat(tx.amount).toFixed(2)}</td>
           <td style="direction:ltr; text-align:right;">${parseFloat(tx.price).toFixed(2)}</td>
           <td style="color:var(--gray); direction:ltr; text-align:right;">${parseFloat(tx.cost_at_time || 0).toFixed(2)}</td>
           <td>${profitCell}</td>
-          <td style="direction:ltr; text-align:right;">${tx.transaction_date ?? '—'}</td>
-          <td>${tx.user?.name ?? '—'}</td>
+          <td style="direction:ltr; text-align:right;">${tx.transaction_date ?? "—"}</td>
+          <td>${tx.user?.name ?? "—"}</td>
         </tr>
       `;
     });
 
-    tableEl.style.display = 'table';
-
+    tableEl.style.display = "table";
   } catch (error) {
-    console.error('Error loading report:', error);
+    console.error("Error loading report:", error);
     summaryEl.innerHTML = `<p style="color:var(--danger); grid-column:1/-1;">خطأ في الاتصال بالسيرفر</p>`;
   }
 }
@@ -592,12 +659,12 @@ async function loadTradingReport() {
 /* ============================= */
 
 function updateClock() {
-  const el = document.getElementById('time-display');
+  const el = document.getElementById("time-display");
   if (!el) return;
   const now = new Date();
-  const hh = String(now.getHours()).padStart(2, '0');
-  const mm = String(now.getMinutes()).padStart(2, '0');
-  const ss = String(now.getSeconds()).padStart(2, '0');
+  const hh = String(now.getHours()).padStart(2, "0");
+  const mm = String(now.getMinutes()).padStart(2, "0");
+  const ss = String(now.getSeconds()).padStart(2, "0");
   el.textContent = `${hh}:${mm}:${ss}`;
 }
 
@@ -609,7 +676,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   token = await checkAuth();
   if (!token) return;
 
-  document.getElementById('report-date').value = new Date().toISOString().split('T')[0];
+  document.getElementById("report-date").value = new Date()
+    .toISOString()
+    .split("T")[0];
 
   updateClock();
   setInterval(updateClock, 1000);
@@ -620,36 +689,44 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 /* ============================= */
 /*        PRINT RECEIPT         */
-/* ============================= */function printTransferReceipt(tx) {
+/* ============================= */ function printTransferReceipt(tx) {
   if (!tx) return;
 
   function toEn(val) {
-    return String(val ?? '---')
-      .replace(/[\u0660-\u0669]/g, d => d.charCodeAt(0) - 0x0660)
-      .replace(/[\u06F0-\u06F9]/g, d => d.charCodeAt(0) - 0x06F0);
+    return String(val ?? "---")
+      .replace(/[\u0660-\u0669]/g, (d) => d.charCodeAt(0) - 0x0660)
+      .replace(/[\u06F0-\u06F9]/g, (d) => d.charCodeAt(0) - 0x06f0);
   }
 
   function fmtNum(val, decimals = 2) {
     const num = parseFloat(val ?? 0);
-    return toEn(isNaN(num) ? '0.00'
-      : num.toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals }));
+    return toEn(
+      isNaN(num)
+        ? "0.00"
+        : num.toLocaleString("en-US", {
+            minimumFractionDigits: decimals,
+            maximumFractionDigits: decimals,
+          }),
+    );
   }
 
-  const trackingCode          = toEn(tx.tracking_code       ?? '---');
-  const senderName            = tx.sender?.name              ?? 'غير معروف';
-  const senderCountry         = tx.sender?.country?.name     ?? '---';
-  const sendAmount            = fmtNum(tx.amount);
-  const sendCurrencyCode      = tx.send_currency?.code       ?? 'USD';
-  const amountUsd             = parseFloat(tx.amount_in_usd  ?? 0);
+  const trackingCode = toEn(tx.tracking_code ?? "---");
+  const senderName = tx.sender?.name ?? "غير معروف";
+  const senderCountry = tx.sender?.country?.name ?? "---";
+  const sendAmount = fmtNum(tx.amount);
+  const sendCurrencyCode = tx.send_currency?.code ?? "USD";
+  const amountUsd = parseFloat(tx.amount_in_usd ?? 0);
   const deliveryCurrencyPrice = parseFloat(tx.currency?.price ?? 1);
-  const deliveryCurrencyCode  = tx.currency?.code            ?? '---';
-  const deliveryAmount        = fmtNum(deliveryCurrencyPrice > 0 ? amountUsd / deliveryCurrencyPrice : 0);
-  const receiverName          = tx.receiver_name             ?? '---';
-  const receiverPhone         = toEn(tx.receiver_phone       ?? '---');
+  const deliveryCurrencyCode = tx.currency?.code ?? "---";
+  const deliveryAmount = fmtNum(
+    deliveryCurrencyPrice > 0 ? amountUsd / deliveryCurrencyPrice : 0,
+  );
+  const receiverName = tx.receiver_name ?? "---";
+  const receiverPhone = toEn(tx.receiver_phone ?? "---");
 
   const now = new Date();
-  const pad = n => String(n).padStart(2, '0');
-  const printDate = `${now.getFullYear()}/${pad(now.getMonth()+1)}/${pad(now.getDate())}  ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  const pad = (n) => String(n).padStart(2, "0");
+  const printDate = `${now.getFullYear()}/${pad(now.getMonth() + 1)}/${pad(now.getDate())}  ${pad(now.getHours())}:${pad(now.getMinutes())}`;
 
   const receiptHtml = `<!DOCTYPE html>
 <html lang="ar" dir="rtl">
@@ -754,10 +831,10 @@ document.addEventListener("DOMContentLoaded", async () => {
 </body>
 </html>`;
 
-  const printWin = window.open('', '_blank', 'width=400,height=600');
+  const printWin = window.open("", "_blank", "width=400,height=600");
 
   if (!printWin) {
-    alert('يرجى السماح بالنوافذ المنبثقة (Popups) لهذا الموقع ثم أعد المحاولة');
+    alert("يرجى السماح بالنوافذ المنبثقة (Popups) لهذا الموقع ثم أعد المحاولة");
     return;
   }
 
@@ -769,7 +846,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     printWin.document.fonts.ready.then(function () {
       printWin.focus();
       printWin.print();
-      printWin.onafterprint = function () { printWin.close(); };
+      printWin.onafterprint = function () {
+        printWin.close();
+      };
       setTimeout(function () {
         if (!printWin.closed) printWin.close();
       }, 5000);
@@ -782,150 +861,196 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 /* تحديث الـ radio UI */
 function updateFeeRadio() {
-  const senderCard   = document.getElementById('radio-sender-card');
-  const receiverCard = document.getElementById('radio-receiver-card');
-  const senderRadio  = document.getElementById('fee-sender');
+  const senderCard = document.getElementById("radio-sender-card");
+  const receiverCard = document.getElementById("radio-receiver-card");
+  const senderRadio = document.getElementById("fee-sender");
   if (!senderCard) return;
   if (senderRadio.checked) {
-    senderCard.classList.add('active');
-    receiverCard.classList.remove('active');
+    senderCard.classList.add("active");
+    receiverCard.classList.remove("active");
   } else {
-    receiverCard.classList.add('active');
-    senderCard.classList.remove('active');
+    receiverCard.classList.add("active");
+    senderCard.classList.remove("active");
   }
   updateInternalSummary();
 }
 
 /* تحديث ملخص الحوالة */
 function updateInternalSummary() {
-  const amount     = parseFloat(document.getElementById('int-amount')?.value)    || 0;
-  const commission = parseFloat(document.getElementById('int-commission')?.value) || 0;
-  const currency   = document.getElementById('int-currency')?.value              || 'SYP';
-  const feePayer   = document.querySelector('input[name="fee_payer"]:checked')?.value || 'sender';
+  const amount = parseFloat(document.getElementById("int-amount")?.value) || 0;
+  const commission =
+    parseFloat(document.getElementById("int-commission")?.value) || 0;
+  const currency = document.getElementById("int-currency")?.value || "SYP";
+  const feePayer =
+    document.querySelector('input[name="fee_payer"]:checked')?.value ||
+    "sender";
 
-  const net = feePayer === 'receiver' ? amount - commission : amount;
-  const fmt = v => v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const net = feePayer === "receiver" ? amount - commission : amount;
+  const fmt = (v) =>
+    v.toLocaleString("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
 
-  const sentEl = document.getElementById('sum-sent');
-  const feeEl  = document.getElementById('sum-fee');
-  const netEl  = document.getElementById('sum-net');
+  const sentEl = document.getElementById("sum-sent");
+  const feeEl = document.getElementById("sum-fee");
+  const netEl = document.getElementById("sum-net");
 
   if (sentEl) sentEl.textContent = `${fmt(amount)} ${currency}`;
-  if (feeEl)  feeEl.textContent  = commission > 0 ? `−${fmt(commission)} ${currency}` : '— لا توجد رسوم';
-  if (netEl)  netEl.textContent  = `${fmt(net)} ${currency}`;
+  if (feeEl)
+    feeEl.textContent =
+      commission > 0 ? `−${fmt(commission)} ${currency}` : "— لا توجد رسوم";
+  if (netEl) netEl.textContent = `${fmt(net)} ${currency}`;
 }
 
 /* ربط الأحداث على الحقول */
 function bindInternalListeners() {
-  ['int-amount', 'int-commission', 'int-currency'].forEach(id => {
+  ["int-amount", "int-commission", "int-currency"].forEach((id) => {
     const el = document.getElementById(id);
-    if (el) el.addEventListener('input', updateInternalSummary);
+    if (el) el.addEventListener("input", updateInternalSummary);
   });
-  document.querySelectorAll('input[name="fee_payer"]').forEach(r =>
-    r.addEventListener('change', updateFeeRadio)
-  );
+  document
+    .querySelectorAll('input[name="fee_payer"]')
+    .forEach((r) => r.addEventListener("change", updateFeeRadio));
 }
 
 /* ────────────────────────────────────────
    حفظ الحوالة → POST /api/internal-transfers
    ──────────────────────────────────────── */
 async function saveInternalTransfer() {
-  const senderName   = document.getElementById('int-sender').value.trim();
-  const receiverName = document.getElementById('int-receiver').value.trim();
-  const phone        = document.getElementById('int-phone').value.trim();
-  const amount       = parseFloat(document.getElementById('int-amount').value)    || 0;
-  const commission   = parseFloat(document.getElementById('int-commission').value) || 0;
-  const currency     = document.getElementById('int-currency').value;
-  const feePayer     = document.querySelector('input[name="fee_payer"]:checked')?.value || 'sender';
+  const senderName = document.getElementById("int-sender").value.trim();
+  const receiverName = document.getElementById("int-receiver").value.trim();
+  const phone = document.getElementById("int-phone").value.trim();
+  const province = document.getElementById("int-province").value;
+  const amount = parseFloat(document.getElementById("int-amount").value) || 0;
+  const commission =
+    parseFloat(document.getElementById("int-commission").value) || 0;
+  const currency = document.getElementById("int-currency").value;
+  const feePayer =
+    document.querySelector('input[name="fee_payer"]:checked')?.value ||
+    "sender";
 
   // تحقق أساسي
-  if (!senderName)   { alert('يرجى إدخال اسم المرسل');            return; }
-  if (!receiverName) { alert('يرجى إدخال اسم المستلم');           return; }
-  if (!phone)        { alert('يرجى إدخال رقم موبايل المستلم');    return; }
-  if (amount <= 0)   { alert('يرجى إدخال مبلغ صحيح');             return; }
+  if (!senderName) {
+    alert("يرجى إدخال اسم المرسل");
+    return;
+  }
+  if (!receiverName) {
+    alert("يرجى إدخال اسم المستلم");
+    return;
+  }
+  if (!phone) {
+    alert("يرجى إدخال رقم موبايل المستلم");
+    return;
+  }
+  if (amount <= 0) {
+    alert("يرجى إدخال مبلغ صحيح");
+    return;
+  }
+  if (!province) {
+    alert("يرجى اختيار المحافظة (الوجهة)");
+    return;
+  }
 
   // تعطيل الزر
-  const btn = document.querySelector('.int-btn-save');
-  if (btn) { btn.disabled = true; btn.innerHTML = '<div class="loading-spinner" style="width:16px;height:16px;border-width:2px;margin:0 auto;"></div>'; }
+  const btn = document.querySelector(".int-btn-save");
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML =
+      '<div class="loading-spinner" style="width:16px;height:16px;border-width:2px;margin:0 auto;"></div>';
+  }
 
   // جلب office_id من /me
   let officeId = null;
   try {
-    const meRes  = await fetch(`${API_URL}/me`, { headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' } });
+    const meRes = await fetch(`${API_URL}/me`, {
+      headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
+    });
     const meData = await meRes.json();
     officeId = meData?.user?.office_id ?? null;
-  } catch (e) { /* سنتابع بدون office_id إذا فشل */ }
+  } catch (e) {
+    /* سنتابع بدون office_id إذا فشل */
+  }
 
   const today = new Date().toISOString().slice(0, 10);
 
   const payload = {
-    office_id:      officeId,
-    sender_name:    senderName,
-    receiver_name:  receiverName,
+    office_id: officeId,
+    sender_name: senderName,
+    receiver_name: receiverName,
     receiver_phone: phone,
+    destination_province: province,
     amount,
     commission,
     currency,
-    fee_payer:      feePayer,
-    is_paid:        false,
-    transfer_date:  today,
+    fee_payer: feePayer,
+    is_paid: false,
+    transfer_date: today,
   };
 
   try {
-    const res  = await fetch(`${API_URL}/internal-transfers`, {
-      method:  'POST',
+    const res = await fetch(`${API_URL}/internal-transfers`, {
+      method: "POST",
       headers: {
-        Authorization:  `Bearer ${token}`,
-        Accept:         'application/json',
-        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+        Accept: "application/json",
+        "Content-Type": "application/json",
       },
       body: JSON.stringify(payload),
     });
 
     const data = await res.json();
 
-    if (res.ok && data.status === 'success') {
+    if (res.ok && data.status === "success") {
       // بناء كائن الطباعة من رد الـ API
       const saved = data.data;
       const printObj = {
-        id:         saved.id,
-        sender:     saved.sender_name,
-        receiver:   saved.receiver_name,
-        phone:      saved.receiver_phone,
-        amount:     parseFloat(saved.amount),
+        id: saved.id,
+        sender: saved.sender_name,
+        receiver: saved.receiver_name,
+        province: saved.destination_province,
+        phone: saved.receiver_phone,
+
+        amount: parseFloat(saved.amount),
+
         commission: parseFloat(saved.commission),
-        currency:   saved.currency,
-        feePayer:   saved.fee_payer,
-        net:        saved.fee_payer === 'receiver'
-                      ? parseFloat(saved.amount) - parseFloat(saved.commission)
-                      : parseFloat(saved.amount),
-        date:       saved.created_at ?? new Date().toISOString(),
+        currency: saved.currency,
+        feePayer: saved.fee_payer,
+        net:
+          saved.fee_payer === "receiver"
+            ? parseFloat(saved.amount) - parseFloat(saved.commission)
+            : parseFloat(saved.amount),
+        date: saved.created_at ?? new Date().toISOString(),
       };
 
       printInternalReceipt(printObj);
       resetInternalForm();
       loadInternalTransfers();
-      showInternalToast('✅ تم حفظ الحوالة الداخلية وطباعة الإيصال');
+      showInternalToast("✅ تم حفظ الحوالة الداخلية وطباعة الإيصال");
     } else {
-      alert(data.message || 'فشل الحفظ، يرجى المحاولة مجدداً');
+      alert(data.message || "فشل الحفظ، يرجى المحاولة مجدداً");
     }
-
   } catch (err) {
-    console.error('Internal transfer save error:', err);
-    alert('خطأ في الاتصال بالسيرفر');
+    console.error("Internal transfer save error:", err);
+    alert("خطأ في الاتصال بالسيرفر");
   } finally {
-    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> حفظ وطباعة الإيصال'; }
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML =
+        '<i class="fa-solid fa-floppy-disk"></i> حفظ وطباعة الإيصال';
+    }
   }
 }
 
 /* إعادة تعيين النموذج */
 function resetInternalForm() {
-  document.getElementById('int-sender').value     = '';
-  document.getElementById('int-receiver').value   = '';
-  document.getElementById('int-phone').value      = '';
-  document.getElementById('int-amount').value     = '';
-  document.getElementById('int-commission').value = '0';
-  document.getElementById('fee-sender').checked   = true;
+  document.getElementById("int-sender").value = "";
+  document.getElementById("int-receiver").value = "";
+  document.getElementById("int-phone").value = "";
+  document.getElementById("int-amount").value = "";
+  document.getElementById("int-commission").value = "0";
+  document.getElementById("int-province").value = ""; // <--- لإعادة التعيين
+  document.getElementById("fee-sender").checked = true;
   updateFeeRadio();
   updateInternalSummary();
 }
@@ -935,7 +1060,7 @@ function resetInternalForm() {
    GET /api/internal-transfers
    ──────────────────────────────────────── */
 async function loadInternalTransfers() {
-  const tbody = document.getElementById('internal-list');
+  const tbody = document.getElementById("internal-list");
   if (!tbody) return;
 
   tbody.innerHTML = `
@@ -946,12 +1071,17 @@ async function loadInternalTransfers() {
     </tr>`;
 
   try {
-    const res  = await fetch(`${API_URL}/internal-transfers`, {
-      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+    const res = await fetch(`${API_URL}/internal-transfers`, {
+      headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
     });
     const data = await res.json();
 
-    if (!res.ok || data.status !== 'success' || !Array.isArray(data.data) || data.data.length === 0) {
+    if (
+      !res.ok ||
+      data.status !== "success" ||
+      !Array.isArray(data.data) ||
+      data.data.length === 0
+    ) {
       tbody.innerHTML = `
         <tr>
           <td colspan="10">
@@ -965,42 +1095,52 @@ async function loadInternalTransfers() {
     }
 
     const fmt = (v, cur) =>
-      `${parseFloat(v).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${cur ?? ''}`;
+      `${parseFloat(v).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${cur ?? ""}`;
 
-    const fmtDate = iso => {
-      if (!iso) return '—';
-      const d   = new Date(iso);
-      const pad = n => String(n).padStart(2, '0');
-      return `${d.getFullYear()}/${pad(d.getMonth()+1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    const fmtDate = (iso) => {
+      if (!iso) return "—";
+      const d = new Date(iso);
+      const pad = (n) => String(n).padStart(2, "0");
+      return `${d.getFullYear()}/${pad(d.getMonth() + 1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
     };
 
-    tbody.innerHTML = data.data.map((t, i) => {
-      const currency   = t.currency  ?? '';
-      const feePayer   = t.fee_payer ?? 'sender';
-      const amount     = parseFloat(t.amount     ?? 0);
-      const commission = parseFloat(t.commission ?? 0);
-      const net        = feePayer === 'receiver' ? amount - commission : amount;
+    tbody.innerHTML = data.data
+      .map((t, i) => {
+        const currency = t.currency ?? "";
+        const feePayer = t.fee_payer ?? "sender";
+        const amount = parseFloat(t.amount ?? 0);
+        const commission = parseFloat(t.commission ?? 0);
+        const net = feePayer === "receiver" ? amount - commission : amount;
 
-      // كائن الطباعة
-      const printObj = JSON.stringify({
-        id: t.id, sender: t.sender_name, receiver: t.receiver_name,
-        phone: t.receiver_phone, amount, commission, currency, feePayer, net,
-        date: t.created_at,
-      }).replace(/"/g, '&quot;');
+        // كائن الطباعة
+        const printObj = JSON.stringify({
+          id: t.id,
+          sender: t.sender_name,
+          receiver: t.receiver_name,
+          province: t.destination_province,
+          phone: t.receiver_phone,
+          amount,
+          commission,
+          currency,
+          feePayer,
+          net,
+          date: t.created_at,
+        }).replace(/"/g, "&quot;");
 
-      return `
+        return `
         <tr>
           <td><span class="transfer-id">#${t.id}</span></td>
-          <td>${t.sender_name   ?? '—'}</td>
-          <td>${t.receiver_name ?? '—'}</td>
-          <td style="direction:ltr;text-align:right;">${t.receiver_phone ?? '—'}</td>
+          <td>${t.sender_name ?? "—"}</td>
+          <td>${t.receiver_name ?? "—"}</td>
+         <td>${t.destination_province ?? "—"}</td> <td style="direction:ltr;text-align:right;">${t.receiver_phone ?? "—"}</td>
+          
           <td><span class="amount-cell">${fmt(amount, currency)}</span></td>
-          <td>${commission > 0 ? fmt(commission, currency) : '—'}</td>
+          <td>${commission > 0 ? fmt(commission, currency) : "—"}</td>
           <td><span class="delivery-price">${fmt(net, currency)}</span></td>
           <td>
             <span class="fee-payer-badge ${feePayer}">
-              <i class="fa-solid fa-${feePayer === 'sender' ? 'user-tie' : 'user-check'}"></i>
-              ${feePayer === 'sender' ? 'المرسل' : 'المستلم'}
+              <i class="fa-solid fa-${feePayer === "sender" ? "user-tie" : "user-check"}"></i>
+              ${feePayer === "sender" ? "المرسل" : "المستلم"}
             </span>
           </td>
           <td style="direction:ltr;text-align:right;font-size:12px;color:var(--gray);">${fmtDate(t.created_at)}</td>
@@ -1010,10 +1150,10 @@ async function loadInternalTransfers() {
             </button>
           </td>
         </tr>`;
-    }).join('');
-
+      })
+      .join("");
   } catch (err) {
-    console.error('loadInternalTransfers error:', err);
+    console.error("loadInternalTransfers error:", err);
     tbody.innerHTML = `
       <tr>
         <td colspan="10" class="loading-row" style="color:var(--danger);">
@@ -1025,10 +1165,10 @@ async function loadInternalTransfers() {
 
 /* Toast بسيط */
 function showInternalToast(msg) {
-  let toast = document.getElementById('int-toast');
+  let toast = document.getElementById("int-toast");
   if (!toast) {
-    toast = document.createElement('div');
-    toast.id = 'int-toast';
+    toast = document.createElement("div");
+    toast.id = "int-toast";
     toast.style.cssText = `
       position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(20px);
       background:var(--dark); color:#fff; padding:12px 24px; border-radius:30px;
@@ -1041,52 +1181,51 @@ function showInternalToast(msg) {
   }
   toast.textContent = msg;
   requestAnimationFrame(() => {
-    toast.style.opacity = '1';
-    toast.style.transform = 'translateX(-50%) translateY(0)';
+    toast.style.opacity = "1";
+    toast.style.transform = "translateX(-50%) translateY(0)";
   });
   setTimeout(() => {
-    toast.style.opacity = '0';
-    toast.style.transform = 'translateX(-50%) translateY(20px)';
+    toast.style.opacity = "0";
+    toast.style.transform = "translateX(-50%) translateY(20px)";
   }, 3200);
 }
 
-
-
 function showCompletedSection() {
-  document.getElementById('section-transfers').style.display = 'none';
-  document.getElementById('section-safes').style.display = 'none';
-  document.getElementById('section-profits').style.display = 'none';
-  document.getElementById('section-internal').style.display = 'none';
-  document.getElementById('section-completed').style.display = 'block';
+  document.getElementById("section-transfers").style.display = "none";
+  document.getElementById("section-safes").style.display = "none";
+  document.getElementById("section-profits").style.display = "none";
+  document.getElementById("section-internal").style.display = "none";
+  document.getElementById("section-completed").style.display = "block";
 
-  document.getElementById('page-heading').textContent = 'سجل المكتملة';
-  document.querySelector('.page-sub').textContent = 'الحوالات المسلّمة';
-  document.querySelector('.page-icon').innerHTML = '<i class="fa-solid fa-circle-check"></i>';
+  document.getElementById("page-heading").textContent = "سجل المكتملة";
+  document.querySelector(".page-sub").textContent = "الحوالات المسلّمة";
+  document.querySelector(".page-icon").innerHTML =
+    '<i class="fa-solid fa-circle-check"></i>';
 
   loadCompletedTransfers();
 }
 
-let _completedAll  = [];   // كل الحوالات المجلوبة
-let _completedPage = 1;    // الصفحة الحالية
+let _completedAll = []; // كل الحوالات المجلوبة
+let _completedPage = 1; // الصفحة الحالية
 const COMPLETED_PER_PAGE = 20;
 
 /**
  * جلب الحوالات المكتملة من API
  */
 async function loadCompletedTransfers() {
-  const tbody = document.getElementById('completed-list');
-  const pagination = document.getElementById('completed-pagination');
+  const tbody = document.getElementById("completed-list");
+  const pagination = document.getElementById("completed-pagination");
   tbody.innerHTML = `<tr><td colspan="10" class="loading-row"><div class="loading-spinner"></div> جاري التحميل...</td></tr>`;
-  pagination.innerHTML = '';
+  pagination.innerHTML = "";
 
   try {
     const res = await fetch(`${API_URL}/transfers?status=completed`, {
-      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' }
+      headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
     });
     const json = await res.json();
 
-    if (json.status === 'success' && Array.isArray(json.data)) {
-      _completedAll  = json.data;
+    if (json.status === "success" && Array.isArray(json.data)) {
+      _completedAll = json.data;
       _completedPage = 1;
       _renderCompleted();
     } else {
@@ -1107,9 +1246,9 @@ function filterCompleted() {
 }
 
 function resetCompletedFilters() {
-  document.getElementById('cf-search').value    = '';
-  document.getElementById('cf-date-from').value = '';
-  document.getElementById('cf-date-to').value   = '';
+  document.getElementById("cf-search").value = "";
+  document.getElementById("cf-date-from").value = "";
+  document.getElementById("cf-date-to").value = "";
   _completedPage = 1;
   _renderCompleted();
 }
@@ -1118,40 +1257,55 @@ function resetCompletedFilters() {
  * الدالة الرئيسية للعرض
  */
 function _renderCompleted() {
-  const search   = (document.getElementById('cf-search')?.value    || '').trim().toLowerCase();
-  const dateFrom = document.getElementById('cf-date-from')?.value  || '';
-  const dateTo   = document.getElementById('cf-date-to')?.value    || '';
+  const search = (document.getElementById("cf-search")?.value || "")
+    .trim()
+    .toLowerCase();
+  const dateFrom = document.getElementById("cf-date-from")?.value || "";
+  const dateTo = document.getElementById("cf-date-to")?.value || "";
 
   // --- تصفية ---
-  let filtered = _completedAll.filter(tx => {
-    const senderName   = (tx.sender?.name    || '').toLowerCase();
-    const receiverName = (tx.receiver_name   || '').toLowerCase();
-    const tracking     = (tx.tracking_code   || '').toLowerCase();
+  let filtered = _completedAll.filter((tx) => {
+    const senderName = (tx.sender?.name || "").toLowerCase();
+    const receiverName = (tx.receiver_name || "").toLowerCase();
+    const tracking = (tx.tracking_code || "").toLowerCase();
 
-    const matchSearch = !search ||
-      senderName.includes(search)   ||
+    const matchSearch =
+      !search ||
+      senderName.includes(search) ||
       receiverName.includes(search) ||
       tracking.includes(search);
 
-    const txDate = (tx.updated_at || tx.created_at || '').slice(0, 10);
+    const txDate = (tx.updated_at || tx.created_at || "").slice(0, 10);
     const matchFrom = !dateFrom || txDate >= dateFrom;
-    const matchTo   = !dateTo   || txDate <= dateTo;
+    const matchTo = !dateTo || txDate <= dateTo;
 
     return matchSearch && matchFrom && matchTo;
   });
 
   // --- إحصاءات ---
-  const totalUsd = filtered.reduce((s, t) => s + parseFloat(t.amount_in_usd || 0), 0);
-  const countEl  = document.getElementById('completed-count');
-  const totalEl  = document.getElementById('completed-total');
+  const totalUsd = filtered.reduce(
+    (s, t) => s + parseFloat(t.amount_in_usd || 0),
+    0,
+  );
+  const countEl = document.getElementById("completed-count");
+  const totalEl = document.getElementById("completed-total");
   if (countEl) countEl.textContent = filtered.length;
-  if (totalEl) totalEl.textContent = '$' + totalUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  if (totalEl)
+    totalEl.textContent =
+      "$" +
+      totalUsd.toLocaleString("en-US", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      });
 
   // --- Pagination ---
-  const totalPages = Math.max(1, Math.ceil(filtered.length / COMPLETED_PER_PAGE));
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filtered.length / COMPLETED_PER_PAGE),
+  );
   if (_completedPage > totalPages) _completedPage = totalPages;
-  const start  = (_completedPage - 1) * COMPLETED_PER_PAGE;
-  const paged  = filtered.slice(start, start + COMPLETED_PER_PAGE);
+  const start = (_completedPage - 1) * COMPLETED_PER_PAGE;
+  const paged = filtered.slice(start, start + COMPLETED_PER_PAGE);
 
   _renderCompletedRows(paged, filtered.length === 0);
   _renderCompletedPagination(totalPages, filtered.length);
@@ -1161,7 +1315,7 @@ function _renderCompleted() {
  * رسم صفوف الجدول
  */
 function _renderCompletedRows(rows, empty) {
-  const tbody = document.getElementById('completed-list');
+  const tbody = document.getElementById("completed-list");
 
   if (empty) {
     tbody.innerHTML = `
@@ -1177,42 +1331,45 @@ function _renderCompletedRows(rows, empty) {
   }
 
   function fmtDate(str) {
-    if (!str) return '—';
+    if (!str) return "—";
     const d = new Date(str);
-    const pad = n => String(n).padStart(2,'0');
-    return `${d.getFullYear()}/${pad(d.getMonth()+1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    const pad = (n) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}/${pad(d.getMonth() + 1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
   }
 
-  tbody.innerHTML = rows.map(tx => {
-    const amountUsd   = parseFloat(tx.amount_in_usd  ?? 0);
-    const currPrice   = parseFloat(tx.currency?.price ?? 1);
-    const currCode    = tx.currency?.code ?? '—';
-    const sendAmt     = parseFloat(tx.amount ?? 0);
-    const sendCur     = tx.send_currency?.code ?? tx.sendCurrency?.code ?? '—';
-    const deliveryAmt = currPrice > 0 ? amountUsd / currPrice : 0;
+  tbody.innerHTML = rows
+    .map((tx) => {
+      const amountUsd = parseFloat(tx.amount_in_usd ?? 0);
+      const currPrice = parseFloat(tx.currency?.price ?? 1);
+      const currCode = tx.currency?.code ?? "—";
+      const sendAmt = parseFloat(tx.amount ?? 0);
+      const sendCur = tx.send_currency?.code ?? tx.sendCurrency?.code ?? "—";
+      const deliveryAmt = currPrice > 0 ? amountUsd / currPrice : 0;
 
-    const txDate = fmtDate(tx.updated_at || tx.created_at);
+      const txDate = fmtDate(tx.updated_at || tx.created_at);
 
-    // نحتاج لتمرير بيانات الحوالة كاملةً لدالة الطباعة
-    const txJson = JSON.stringify(tx).replace(/'/g, "\\'").replace(/"/g, '&quot;');
+      // نحتاج لتمرير بيانات الحوالة كاملةً لدالة الطباعة
+      const txJson = JSON.stringify(tx)
+        .replace(/'/g, "\\'")
+        .replace(/"/g, "&quot;");
 
-    return `
+      return `
       <tr>
-        <td><span class="transfer-id">${tx.tracking_code ?? '#' + tx.id}</span></td>
+        <td><span class="transfer-id">${tx.tracking_code ?? "#" + tx.id}</span></td>
         <td>
-          ${tx.sender?.name ?? '—'}
-          <div style="font-size:11px;color:var(--gray);margin-top:1px;">${tx.sender?.country?.name ?? ''}</div>
+          ${tx.sender?.name ?? "—"}
+          <div style="font-size:11px;color:var(--gray);margin-top:1px;">${tx.sender?.country?.name ?? ""}</div>
         </td>
-        <td>${tx.receiver_name ?? '—'}</td>
-        <td style="direction:ltr;text-align:right;font-size:12px;">${tx.receiver_phone ?? '—'}</td>
+        <td>${tx.receiver_name ?? "—"}</td>
+        <td style="direction:ltr;text-align:right;font-size:12px;">${tx.receiver_phone ?? "—"}</td>
         <td>
           <span style="direction:ltr;display:inline-block;">
-            ${sendAmt.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}
+            ${sendAmt.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             <small style="color:var(--gray);font-size:11px;"> ${sendCur}</small>
           </span>
         </td>
-        <td><span class="amount-cell">$${amountUsd.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</span></td>
-        <td><span class="delivery-price">${deliveryAmt.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}</span></td>
+        <td><span class="amount-cell">$${amountUsd.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span></td>
+        <td><span class="delivery-price">${deliveryAmt.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span></td>
         <td>${currCode}</td>
         <td style="font-size:12px;color:var(--gray);direction:ltr;text-align:right;">${txDate}</td>
         <td>
@@ -1221,38 +1378,49 @@ function _renderCompletedRows(rows, empty) {
           </button>
         </td>
       </tr>`;
-  }).join('');
+    })
+    .join("");
 }
 
 /**
  * رسم أزرار Pagination
  */
 function _renderCompletedPagination(totalPages, totalCount) {
-  const el = document.getElementById('completed-pagination');
+  const el = document.getElementById("completed-pagination");
   if (!el) return;
 
-  if (totalPages <= 1) { el.innerHTML = ''; return; }
+  if (totalPages <= 1) {
+    el.innerHTML = "";
+    return;
+  }
 
   const start = (_completedPage - 1) * COMPLETED_PER_PAGE + 1;
-  const end   = Math.min(_completedPage * COMPLETED_PER_PAGE, totalCount);
+  const end = Math.min(_completedPage * COMPLETED_PER_PAGE, totalCount);
 
   let html = `
-    <button class="pg-btn" onclick="_goPage(${_completedPage - 1})" ${_completedPage === 1 ? 'disabled' : ''}>
+    <button class="pg-btn" onclick="_goPage(${_completedPage - 1})" ${_completedPage === 1 ? "disabled" : ""}>
       <i class="fa-solid fa-chevron-right"></i>
     </button>`;
 
   // أزرار الأرقام (max 5 ظاهرة)
   const range = 2;
   for (let p = 1; p <= totalPages; p++) {
-    if (p === 1 || p === totalPages || (p >= _completedPage - range && p <= _completedPage + range)) {
-      html += `<button class="pg-btn ${p === _completedPage ? 'active' : ''}" onclick="_goPage(${p})">${p}</button>`;
-    } else if (p === _completedPage - range - 1 || p === _completedPage + range + 1) {
+    if (
+      p === 1 ||
+      p === totalPages ||
+      (p >= _completedPage - range && p <= _completedPage + range)
+    ) {
+      html += `<button class="pg-btn ${p === _completedPage ? "active" : ""}" onclick="_goPage(${p})">${p}</button>`;
+    } else if (
+      p === _completedPage - range - 1 ||
+      p === _completedPage + range + 1
+    ) {
       html += `<span class="pg-info">…</span>`;
     }
   }
 
   html += `
-    <button class="pg-btn" onclick="_goPage(${_completedPage + 1})" ${_completedPage === totalPages ? 'disabled' : ''}>
+    <button class="pg-btn" onclick="_goPage(${_completedPage + 1})" ${_completedPage === totalPages ? "disabled" : ""}>
       <i class="fa-solid fa-chevron-left"></i>
     </button>
     <span class="pg-info">${start}–${end} من ${totalCount}</span>`;
@@ -1261,25 +1429,37 @@ function _renderCompletedPagination(totalPages, totalCount) {
 }
 
 function _goPage(p) {
-  const totalPages = Math.max(1, Math.ceil(
-    (() => {
-      const search   = (document.getElementById('cf-search')?.value    || '').trim().toLowerCase();
-      const dateFrom = document.getElementById('cf-date-from')?.value  || '';
-      const dateTo   = document.getElementById('cf-date-to')?.value    || '';
-      return _completedAll.filter(tx => {
-        const matchSearch = !search ||
-          (tx.sender?.name || '').toLowerCase().includes(search) ||
-          (tx.receiver_name || '').toLowerCase().includes(search) ||
-          (tx.tracking_code || '').toLowerCase().includes(search);
-        const txDate = (tx.updated_at || tx.created_at || '').slice(0,10);
-        return matchSearch && (!dateFrom || txDate >= dateFrom) && (!dateTo || txDate <= dateTo);
-      }).length;
-    })() / COMPLETED_PER_PAGE
-  ));
+  const totalPages = Math.max(
+    1,
+    Math.ceil(
+      (() => {
+        const search = (document.getElementById("cf-search")?.value || "")
+          .trim()
+          .toLowerCase();
+        const dateFrom = document.getElementById("cf-date-from")?.value || "";
+        const dateTo = document.getElementById("cf-date-to")?.value || "";
+        return _completedAll.filter((tx) => {
+          const matchSearch =
+            !search ||
+            (tx.sender?.name || "").toLowerCase().includes(search) ||
+            (tx.receiver_name || "").toLowerCase().includes(search) ||
+            (tx.tracking_code || "").toLowerCase().includes(search);
+          const txDate = (tx.updated_at || tx.created_at || "").slice(0, 10);
+          return (
+            matchSearch &&
+            (!dateFrom || txDate >= dateFrom) &&
+            (!dateTo || txDate <= dateTo)
+          );
+        }).length;
+      })() / COMPLETED_PER_PAGE,
+    ),
+  );
   if (p < 1 || p > totalPages) return;
   _completedPage = p;
   _renderCompleted();
-  document.getElementById('section-completed')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  document
+    .getElementById("section-completed")
+    ?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 /* ======================================= */
 /*    PRINT INTERNAL TRANSFER RECEIPT     */
@@ -1289,23 +1469,31 @@ function printInternalReceipt(t) {
   if (!t) return;
 
   function toEn(val) {
-    return String(val ?? '—')
-      .replace(/[\u0660-\u0669]/g, d => d.charCodeAt(0) - 0x0660)
-      .replace(/[\u06F0-\u06F9]/g, d => d.charCodeAt(0) - 0x06F0);
+    return String(val ?? "—")
+      .replace(/[\u0660-\u0669]/g, (d) => d.charCodeAt(0) - 0x0660)
+      .replace(/[\u06F0-\u06F9]/g, (d) => d.charCodeAt(0) - 0x06f0);
   }
   function fmtN(val, dec = 2) {
     const n = parseFloat(val ?? 0);
-    return toEn(isNaN(n) ? '0.00' : n.toLocaleString('en-US',{minimumFractionDigits:dec,maximumFractionDigits:dec}));
+    return toEn(
+      isNaN(n)
+        ? "0.00"
+        : n.toLocaleString("en-US", {
+            minimumFractionDigits: dec,
+            maximumFractionDigits: dec,
+          }),
+    );
   }
 
   const now = new Date(t.date || Date.now());
-  const pad = n => String(n).padStart(2,'0');
-  const printDate = `${now.getFullYear()}/${pad(now.getMonth()+1)}/${pad(now.getDate())}  ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  const pad = (n) => String(n).padStart(2, "0");
+  const printDate = `${now.getFullYear()}/${pad(now.getMonth() + 1)}/${pad(now.getDate())}  ${pad(now.getHours())}:${pad(now.getMinutes())}`;
 
-  const feePayerAr = t.feePayer === 'sender' ? 'المرسل' : 'المستلم';
-  const commissionLine = t.commission > 0
-    ? `<div class="r"><span class="lbl">الرسوم (على ${feePayerAr})</span><span class="val">−${fmtN(t.commission)} ${t.currency}</span></div>`
-    : `<div class="r"><span class="lbl">الرسوم</span><span class="val">لا توجد رسوم</span></div>`;
+  const feePayerAr = t.feePayer === "sender" ? "المرسل" : "المستلم";
+  const commissionLine =
+    t.commission > 0
+      ? `<div class="r"><span class="lbl">الرسوم (على ${feePayerAr})</span><span class="val">−${fmtN(t.commission)} ${t.currency}</span></div>`
+      : `<div class="r"><span class="lbl">الرسوم</span><span class="val">لا توجد رسوم</span></div>`;
 
   const receiptHtml = `<!DOCTYPE html>
 <html lang="ar" dir="rtl">
@@ -1409,11 +1597,10 @@ function printInternalReceipt(t) {
   <div class="r"><span class="lbl">الاسم</span><span class="val">${t.sender}</span></div>
 
   <hr class="divider">
-
+// ابحث عن هذا السطر في HTML الخاص بالطباعة:
   <div class="section-title">بيانات المستلم</div>
   <div class="r"><span class="lbl">الاسم</span>      <span class="val">${t.receiver}</span></div>
-  <div class="r"><span class="lbl">رقم الموبايل</span><span class="val">${toEn(t.phone)}</span></div>
-
+  <div class="r"><span class="lbl">الوجهة</span>     <span class="val">${t.province ?? "—"}</span></div> <div class="r"><span class="lbl">رقم الموبايل</span><span class="val">${toEn(t.phone)}</span></div>
   <hr class="divider">
 
   <div class="amt-wrap">
@@ -1431,7 +1618,7 @@ function printInternalReceipt(t) {
 
   ${commissionLine}
 
-  ${t.commission > 0 ? `<div class="fee-strip">الرسوم مدفوعة من: ${feePayerAr}</div>` : ''}
+  ${t.commission > 0 ? `<div class="fee-strip">الرسوم مدفوعة من: ${feePayerAr}</div>` : ""}
 
   <div class="footer">
     <div class="sig">توقيع الموظف<div class="sig-line"></div></div>
@@ -1441,9 +1628,9 @@ function printInternalReceipt(t) {
 </body>
 </html>`;
 
-  const printWin = window.open('', '_blank', 'width=400,height=620');
+  const printWin = window.open("", "_blank", "width=400,height=620");
   if (!printWin) {
-    alert('يرجى السماح بالنوافذ المنبثقة (Popups) ثم أعد المحاولة');
+    alert("يرجى السماح بالنوافذ المنبثقة (Popups) ثم أعد المحاولة");
     return;
   }
   printWin.document.open();
@@ -1453,8 +1640,12 @@ function printInternalReceipt(t) {
     printWin.document.fonts.ready.then(function () {
       printWin.focus();
       printWin.print();
-      printWin.onafterprint = function () { printWin.close(); };
-      setTimeout(function () { if (!printWin.closed) printWin.close(); }, 5000);
+      printWin.onafterprint = function () {
+        printWin.close();
+      };
+      setTimeout(function () {
+        if (!printWin.closed) printWin.close();
+      }, 5000);
     });
   };
 }

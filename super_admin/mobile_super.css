@@ -668,3 +668,30 @@
     .data-table td { font-size: 11px !important; }
     .dash-stat-value { font-size: 1.1rem !important; }
 }
+/* ─── Pending Transfers Section ─── */
+@media (max-width: 768px) {
+    .pt-filters-bar {
+        grid-template-columns: 1fr 1fr !important;
+    }
+
+    .pt-search-wrap {
+        grid-column: 1 / -1;
+    }
+
+    #approve-modal > div {
+        padding: 24px 18px !important;
+        max-width: 95vw !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .pt-filters-bar {
+        grid-template-columns: 1fr !important;
+    }
+
+    #pt-office-filter,
+    .pt-refresh-btn {
+        width: 100% !important;
+        justify-content: center;
+    }
+}   
