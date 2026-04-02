@@ -420,47 +420,60 @@ function setTradeVal(id1, id2, val) {
 }
 
 async function executeTrade(type, officeId, currencyId) {
-  if (!officeId || !currencyId) {
-    alert('بيانات الصندوق غير مكتملة، يرجى تحديث الصفحة');
-    return;
-  }
+  const amountInput = document.getElementById(`${type}_amount_${currencyId}`);
+  const priceInput = document.getElementById(`${type}_price_${currencyId}`);
 
-  const amount = parseFloat(document.getElementById(`${type}_amount_${currencyId}`)?.value);
-  const price = parseFloat(document.getElementById(`${type}_price_${currencyId}`)?.value);
+  const amount = parseFloat(amountInput.value);
+  const price = parseFloat(priceInput.value);
 
   if (!amount || amount <= 0 || !price || price <= 0) {
-    alert('يرجى إدخال قيم صحيحة للكمية والسعر');
+    alert("يرجى إدخال كمية وسعر صحيحين");
     return;
   }
 
-  const payload = { office_id: officeId, currency_id: currencyId, amount: amount };
-  if (type === 'buy') payload.buy_price = parseFloat(price);
-  else payload.sell_price = parseFloat(price);
+  // تجهيز البيانات للإرسال
+  const payload = {
+    office_id: officeId,
+    currency_id: currencyId,
+    amount: amount,
+  };
+
+  if (type === "buy") payload.buy_price = price;
+  if (type === "sell") payload.sell_price = price;
 
   try {
     const res = await fetch(`${API_URL}/trading/${type}`, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-        'Accept': 'application/json'
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+        Accept: "application/json",
       },
-      body: JSON.stringify(payload)
+      body: JSON.stringify(payload),
     });
 
     const data = await res.json();
 
     if (res.ok) {
-      alert(type === 'buy' ? '✅ تمت عملية الشراء بنجاح' : `✅ تمت عملية البيع!\nالربح: ${data.profit}`);
-      loadTradingSafes();
+      if (type === "sell") {
+        alert(
+          `تمت عملية البيع بنجاح!\nالربح المحقق: ${parseFloat(data.profit).toFixed(2)}`,
+        );
+      } else {
+        alert("تمت عملية الشراء بنجاح ودمج متوسط التكلفة!");
+      }
+      // إعادة تفريغ الحقول وتحديث عرض الصناديق
+      amountInput.value = "";
+      priceInput.value = "";
+      showSafesSection();
     } else {
-      alert(data.message || 'فشلت العملية');
+      alert(data.message || "حدث خطأ أثناء العملية");
     }
   } catch (error) {
-    alert('خطأ في الاتصال بالسيرفر');
+    console.error(error);
+    alert("حدث خطأ في الاتصال بالخادم");
   }
 }
-
 /* ============================= */
 /*   تقرير أرباح التداول        */
 /* ============================= */
