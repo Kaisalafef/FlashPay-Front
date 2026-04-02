@@ -56,6 +56,19 @@
         الزبائن
     </a>
 </li>
+                    <li style="position:relative;">
+    <a href="#" onclick="showSection('pending-transfers')">
+        <i class="fa-solid fa-hourglass-half"></i>
+        الحوالات المعلقة
+    </a>
+    <span id="pending-transfers-badge"
+          style="display:none; position:absolute; top:6px; left:10px;
+                 background:#ef4444; color:#fff; border-radius:50%;
+                 width:20px; height:20px; font-size:11px; font-weight:800;
+                 align-items:center; justify-content:center;
+                 box-shadow:0 2px 6px rgba(239,68,68,0.5);
+                 pointer-events:none; z-index:10; line-height:1;"></span>
+</li>
                 </ul>
                 
             </nav>
@@ -338,6 +351,99 @@
                     </div>
 
                 </div>
+
+<div id="pending-transfers-section" class="card hidden">
+
+    <!-- Hero — نفس نمط بقية الأقسام -->
+    <div class="section-hero pending-hero">
+        <div class="section-hero-text">
+            <h2><i class="fa-solid fa-hourglass-half"></i> الحوالات المعلقة</h2>
+            <p>جميع الحوالات بحالة "في الانتظار" من كل المكاتب — يمكنك الموافقة عليها مباشرة</p>
+        </div>
+        <div class="section-hero-stats" id="pending-hero-stats">
+            <div class="hero-stat"><span id="stat-pt-count">—</span><small>إجمالي</small></div>
+            <div class="hero-stat"><span id="stat-pt-usd">—</span><small>بالدولار</small></div>
+            <div class="hero-stat"><span id="stat-pt-offices">—</span><small>مكاتب</small></div>
+        </div>
+    </div>
+
+    <!-- شريط الفلاتر والبحث -->
+    <div class="pt-filters-bar">
+        <div class="pt-search-wrap">
+            <i class="fa-solid fa-magnifying-glass pt-search-icon"></i>
+            <input id="pt-search" type="text"
+                placeholder="بحث بالرمز أو اسم المستلم أو الهاتف..."
+                oninput="filterPendingTransfers()"
+                onfocus="this.style.borderColor='#6366f1'"
+                onblur="this.style.borderColor='var(--border)'">
+        </div>
+        <select id="pt-office-filter" onchange="filterPendingTransfers()">
+            <option value="">كل المكاتب</option>
+        </select>
+        <button class="pt-refresh-btn" onclick="loadPendingTransfers()"
+            onmouseover="this.classList.add('hovered')"
+            onmouseout="this.classList.remove('hovered')">
+            <i class="fa-solid fa-arrows-rotate" id="pt-refresh-icon"></i> تحديث
+        </button>
+    </div>
+
+    <!-- الجدول -->
+    <div class="pt-table-wrap">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>رمز التتبع</th>
+                    <th>المُرسِل</th>
+                    <th>المستلم</th>
+                    <th>هاتف المستلم</th>
+                    <th>المبلغ</th>
+                    <th>العملة</th>
+                    <th>المكتب المستلِم</th>
+                    <th>التاريخ</th>
+                    <th>الإجراء</th>
+                </tr>
+            </thead>
+            <tbody id="pt-tbody">
+                <tr>
+                    <td colspan="9" class="pt-loading-cell">
+                        <i class="fa-solid fa-spinner fa-spin"></i>
+                        جاري التحميل...
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- رسالة فراغ -->
+    <div id="pt-empty" class="pt-empty-state">
+        <i class="fa-solid fa-circle-check"></i>
+        <p>لا توجد حوالات معلقة</p>
+        <small>جميع الحوالات تمت معالجتها ✅</small>
+    </div>
+
+</div>
+
+<!-- ===== مودال تأكيد الموافقة ===== -->
+<div id="approve-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:9999; align-items:center; justify-content:center;">
+    <div style="background:var(--white); border-radius:18px; padding:32px; max-width:440px; width:90%; box-shadow:0 24px 60px rgba(0,0,0,0.25); text-align:center; position:relative;">
+        <div style="width:64px; height:64px; background:#d1fae5; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 16px auto;">
+            <i class="fa-solid fa-circle-check" style="font-size:28px; color:#16a34a;"></i>
+        </div>
+        <h3 style="margin:0 0 8px 0; font-size:18px; font-weight:800; color:var(--dark);">تأكيد الموافقة</h3>
+        <p id="approve-modal-desc" style="margin:0 0 24px 0; font-size:14px; color:var(--gray); line-height:1.6;"></p>
+
+        <div style="display:flex; gap:12px; justify-content:center;">
+            <button onclick="closeApproveModal()"
+                style="padding:11px 24px; border-radius:10px; border:1.5px solid var(--border); background:var(--white); color:var(--dark); font-family:inherit; font-size:14px; font-weight:700; cursor:pointer;">
+                إلغاء
+            </button>
+            <button id="approve-confirm-btn" onclick="confirmApproveTransfer()"
+                style="padding:11px 28px; border-radius:10px; border:none; background:linear-gradient(135deg,#4338ca,#6366f1); color:#fff; font-family:inherit; font-size:14px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:8px; transition:all 0.2s;">
+                <i class="fa-solid fa-circle-check"></i> موافقة وتجهيز
+            </button>
+        </div>
+    </div>
+</div>
 
                 <div id="safes-section" class="card hidden">
 
@@ -1240,5 +1346,9 @@
     </div>
 </div>
 
+<!-- ===== قسم الحوالات المعلقة ===== -->
+<!-- ===== قسم الحوالات المعلقة ===== -->
+<!-- ===== قسم الحوالات المعلقة ===== -->
+ 
 </body>
 </html>

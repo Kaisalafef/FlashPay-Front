@@ -296,14 +296,17 @@ async function showSafesSection() {
   hideAllCards();
   document.getElementById("safes-card").style.display = "block";
 
-  const container = document.getElementById("safes-container");
-
+const container = document.getElementById("safes-container"); 
+   
+    
   // fetch آمن — يرجع null بدون crash
   async function safeGet(url) {
     try {
       const r = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
       if (!r.ok) { console.warn("[safes]", url, "→", r.status); return null; }
       return await r.json();
+
+      
     } catch (e) { console.warn("[safes] network error:", e); return null; }
   }
 
@@ -317,7 +320,7 @@ async function showSafesSection() {
       container.innerHTML = `<p style="color:red;padding:20px;">تعذّر تحميل بيانات المستخدم.</p>`;
       return;
     }
-
+    
     const myOfficeId = meData.user.office_id;
     const allSafes   = json?.data ?? [];
     const mySafes    = allSafes.filter((s) => s.office_id === myOfficeId);
@@ -326,12 +329,12 @@ async function showSafesSection() {
       container.innerHTML = `<p style="color:orange;padding:20px;">تعذّر تحميل الصناديق. راجع الـ console للتفاصيل.</p>`;
       return;
     }
-
     // ─── فصل الأنواع الثلاثة ──────────────────────────────────
     const officeSafe = mySafes.find((s) => s.type === "office_safe");
     const mainSafe   = mySafes.find((s) => s.type === "office_main");
     const tradingSafes = mySafes.filter((s) => s.type === "trading");
-
+    const profitSafe = mySafes.filter((s) => s.type === "profit_safe")[0] || { profit_trade: 0, profit_main: 0 };
+    
     // ─── 1. بطاقة خزنة المكتب (OfficeSafe) ──────────────────
     const officeSafeCard = officeSafe ? `
     <div class="safe-card safe-card-office" id="office-safe-card">
@@ -339,35 +342,71 @@ async function showSafesSection() {
             <div class="safe-card-icon"><i class="fa-solid fa-building-columns"></i></div>
             <div>
                 <div class="safe-card-title">خزنة المكتب</div>
-                <div class="safe-card-subtitle">USD</div>
+                <div class="safe-card-subtitle">USD + SYP</div>
             </div>
         </div>
-        <div class="safe-card-balance" id="office-safe-balance">
-            ${parseFloat(officeSafe.balance).toLocaleString()}
-        </div>
-        <div class="safe-card-currency">USD</div>
 
+        <!-- رصيد الدولار -->
+        <div style="display:flex;align-items:baseline;gap:6px;margin-bottom:4px;">
+            <div class="safe-card-balance" id="office-safe-balance" style="font-size:28px;">
+                ${parseFloat(officeSafe.balance).toLocaleString()}
+            </div>
+            <div class="safe-card-currency">USD</div>
+        </div>
+
+        <!-- رصيد الليرة السورية -->
+        <div style="display:flex;align-items:baseline;gap:6px;margin-bottom:14px;
+                    padding:8px 12px;background:rgba(234,88,12,.07);border-radius:8px;">
+            <i class="fa-solid fa-coins" style="color:#ea580c;font-size:13px;"></i>
+            <span style="font-size:13px;color:var(--gray);">رصيد الليرة السورية:</span>
+            <span id="office-safe-balance-sy" style="font-size:20px;font-weight:800;color:#ea580c;">
+                ${parseFloat(officeSafe.balance_sy || 0).toLocaleString()}
+            </span>
+            <span style="font-size:12px;color:#ea580c;font-weight:600;">SYP</span>
+        </div>
+
+        <!-- إيداع / سحب دولار -->
         <div class="office-safe-panel">
             <div class="office-safe-panel-title">
-                <i class="fa-solid fa-pen-to-square"></i> تعديل يدوي (دولار)
+                <i class="fa-solid fa-pen-to-square"></i> تعديل يدوي — دولار (USD)
             </div>
             <div class="office-safe-row">
                 <input type="number" id="adjust-amount" class="trading-input"
                        placeholder="المبلغ بالدولار..." min="0.01" step="any">
                 <button class="osafe-btn osafe-btn-dep"
-                        onclick="officeSafeAdjust('deposit', ${myOfficeId})">
+                        onclick="officeSafeAdjust('deposit', ${myOfficeId}, 'usd')">
                     <i class="fa-solid fa-plus"></i> إيداع
                 </button>
                 <button class="osafe-btn osafe-btn-wit"
-                        onclick="officeSafeAdjust('withdraw', ${myOfficeId})">
+                        onclick="officeSafeAdjust('withdraw', ${myOfficeId}, 'usd')">
                     <i class="fa-solid fa-minus"></i> سحب
                 </button>
             </div>
         </div>
 
+        <!-- إيداع / سحب ليرة سورية -->
+        <div class="office-safe-panel" style="border-color:rgba(234,88,12,.25);">
+            <div class="office-safe-panel-title" style="color:#ea580c;">
+                <i class="fa-solid fa-coins"></i> تعديل يدوي — ليرة سورية (SYP)
+            </div>
+            <div class="office-safe-row">
+                <input type="number" id="adjust-amount-sy" class="trading-input"
+                       placeholder="المبلغ بالليرة السورية..." min="1" step="any">
+                <button class="osafe-btn osafe-btn-dep"
+                        onclick="officeSafeAdjust('deposit', ${myOfficeId}, 'sy')">
+                    <i class="fa-solid fa-plus"></i> إيداع
+                </button>
+                <button class="osafe-btn osafe-btn-wit"
+                        onclick="officeSafeAdjust('withdraw', ${myOfficeId}, 'sy')">
+                    <i class="fa-solid fa-minus"></i> سحب
+                </button>
+            </div>
+        </div>
+
+        <!-- تحويل إلى صندوق آخر (USD فقط) -->
         <div class="office-safe-panel">
             <div class="office-safe-panel-title">
-                <i class="fa-solid fa-right-left"></i> تحويل إلى صندوق آخر
+                <i class="fa-solid fa-right-left"></i> تحويل (USD) إلى صندوق آخر
             </div>
             <div class="office-safe-row">
                 <input type="number" id="transfer-amount" class="trading-input"
@@ -383,10 +422,46 @@ async function showSafesSection() {
             </div>
         </div>
     </div>` : "";
+    const profitCard = `
+<div class="safe-card" style="border-color: #8b5cf6;">
+    <div class="safe-card-header">
+        <div class="safe-card-icon" style="background: #ede9fe; color: #7c3aed;"><i class="fa-solid fa-sack-dollar"></i></div>
+        <div>
+            <div class="safe-card-title">صندوق الأرباح (Profit Safe)</div>
+            <div class="safe-card-subtitle">USD</div>
+        </div>
+    </div>
+    
+    <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
+        <div>
+            <div style="font-size: 10px; color: var(--gray);">أرباح التداول</div>
+            <div style="font-size: 16px; font-weight: 800; color: #15803d;">${parseFloat(profitSafe.profit_trade || 0)}</div>
+        </div>
+        <div>
+            <div style="font-size: 10px; color: var(--gray);">أرباح رئيسية</div>
+            <div style="font-size: 16px; font-weight: 800; color: #1d4ed8;">x${parseFloat(profitSafe.profit_main || 0)}</div>
+        </div>
+    </div>
 
+    <div class="office-safe-panel">
+        <div class="office-safe-panel-title">
+            <i class="fa-solid fa-arrow-right-to-bracket"></i> سحب الأرباح لخزنة المكتب
+        </div>
+        <div class="office-safe-row">
+            <input type="number" id="profit-transfer-amount" class="trading-input" placeholder="المبلغ..." min="0.01" step="any">
+            <select id="profit-source" class="trading-input" style="flex:1;">
+                <option value="trade">من أرباح التداول</option>
+                <option value="main">من أرباح رئيسية</option>
+            </select>
+            <button class="osafe-btn osafe-btn-tra" onclick="transferProfit(${myOfficeId})">
+                <i class="fa-solid fa-paper-plane"></i> نقل
+            </button>
+        </div>
+    </div>
+</div>`;
     // ─── 2. بطاقة الصندوق الرئيسي (MainSafe) ────────────────
     const mainSafeCard = mainSafe ? `
-    <div class="safe-card safe-card-main">
+    <div class="safe-card safe-card-main" id="safe-card-main">
         <div class="safe-card-header">
             <div class="safe-card-icon"><i class="fa-solid fa-vault"></i></div>
             <div>
@@ -414,7 +489,7 @@ async function showSafesSection() {
 
     // ─── 3. بطاقات صناديق التداول (TradingSafe) ──────────────
     const tradingCards = tradingSafes.map((safe) => `
-    <div class="safe-card safe-card-trading">
+    <div class="safe-card safe-card-trading" id="trading-safe-card">
         <div class="safe-card-header">
             <div class="safe-card-icon"><i class="fa-solid fa-chart-line"></i></div>
             <div>
@@ -422,21 +497,44 @@ async function showSafesSection() {
                 <div class="safe-card-subtitle">${safe.currency || "USD"}</div>
             </div>
         </div>
-        <div class="safe-card-balance" id="trading-safe-balance-${safe.currency_id}">${parseFloat(safe.balance).toLocaleString()}</div>
-        <div class="safe-card-currency">${safe.currency || "USD"}</div>
-        ${safe.cost !== null && safe.cost !== undefined ? `
-        <div style="font-size:12px;color:var(--gray);margin-top:8px;font-weight:600;
-                    padding:8px 12px;background:var(--light);border-radius:8px;">
+
+        <!-- رصيد الدولار -->
+        <div style="display:flex;align-items:baseline;gap:6px;margin-bottom:4px;">
+            <div class="safe-card-balance" id="trading-safe-balance-${safe.currency_id}"
+                 style="font-size:28px;">${parseFloat(safe.balance).toLocaleString()}</div>
+            <div class="safe-card-currency">${safe.currency || "USD"}</div>
+        </div>
+
+        <!-- رصيد الليرة السورية في صندوق التداول 
+        <div style="display:flex;align-items:baseline;gap:6px;margin-bottom:10px;
+                    padding:8px 12px;background:rgba(234,88,12,.07);border-radius:8px;">
+            <i class="fa-solid fa-coins" style="color:#ea580c;font-size:13px;"></i>
+            <span style="font-size:13px;color:var(--gray);">رصيد الليرة (SYP):</span>
+            <span id="trading-safe-balance-sy-${safe.currency_id}" style="font-size:20px;font-weight:800;color:#ea580c;">
+            ${parseFloat(safe.balance_sy || 0).toLocaleString()}
+        </span>
+            <span style="font-size:12px;color:#ea580c;font-weight:600;">SYP</span>
+        </div>
+-->
+       ${safe.cost !== null && safe.cost !== undefined ? `
+    <div style="font-size:12px;color:var(--gray);margin-top:4px;font-weight:600;
+                padding:8px 12px;background:var(--light);border-radius:8px; display: flex; justify-content: space-between; align-items: center;">
+        <div>
             متوسط التكلفة:
-            <span style="color:var(--primary);font-weight:800;">
+            <span id="cost-display-${safe.office_id}" style="color:var(--primary);font-weight:800;">
                 ${parseFloat(safe.cost).toFixed(2)}
             </span>
-        </div>` : ""}
+        </div>
+        <button onclick="editCostManual(${safe.office_id}, ${safe.cost})" 
+                style="background:none; border:none; color:var(--primary); cursor:pointer; font-size:14px;" title="تعديل يدوي">
+            <i class="fa-solid fa-pen-to-square"></i>
+        </button>
+    </div>` : ""}
         ${buildTradingUI(safe.currency_id, safe.office_id)}
 
         <div class="office-safe-panel" style="margin-top:12px;">
             <div class="office-safe-panel-title">
-                <i class="fa-solid fa-arrow-right-to-bracket"></i> تحويل إلى خزنة المكتب
+                <i class="fa-solid fa-arrow-right-to-bracket"></i> تحويل (USD) إلى خزنة المكتب
             </div>
             <div class="office-safe-row">
                 <input type="number" id="trading-to-office-amount" class="trading-input"
@@ -449,22 +547,95 @@ async function showSafesSection() {
         </div>
     </div>`).join("");
 
-    container.innerHTML = officeSafeCard + mainSafeCard + tradingCards;
+    container.innerHTML = officeSafeCard + mainSafeCard + tradingCards + profitCard ;
 
   } catch (e) {
     console.error("Error loading safes:", e);
   }
 }
 
+
+async function editCostManual(officeId, currentCost) {
+    const newCost = prompt("أدخل قيمة التكلفة الجديدة (أدخل 0 للتصفير):", currentCost);
+    
+    // إذا ضغط المستخدم إلغاء أو لم يدخل رقماً
+    if (newCost === null || isNaN(newCost)) return;
+
+    try {
+        const token = localStorage.getItem("auth_token");
+        const res = await fetch(`${API_URL}/trading-safe/update-cost`, {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${token}`,
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+            },
+            body: JSON.stringify({
+                office_id: officeId,
+                cost: parseFloat(newCost)
+            }),
+        });
+
+        const data = await res.json();
+        if (res.ok) {
+            showToast("تم تحديث التكلفة بنجاح");
+            // تحديث الواجهة فوراً
+            const costEl = document.getElementById(`cost-display-${officeId}`);
+            if (costEl) costEl.textContent = parseFloat(newCost).toFixed(2);
+        } else {
+            showToast(data.message || "خطأ في التحديث", "danger");
+        }
+    } catch (error) {
+        console.error(error);
+        showToast("فشل الاتصال بالسيرفر", "danger");
+    }
+}
+async function transferProfit(officeId) {
+    const amountInput = document.getElementById("profit-transfer-amount");
+    const sourceSelect = document.getElementById("profit-source");
+    const amount = parseFloat(amountInput.value);
+    
+    if (!amount || amount <= 0) { 
+        alert("يرجى إدخال مبلغ صحيح"); return; 
+    }
+
+    const btn = event.currentTarget;
+    const orig = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i>`;
+
+    try {
+        const res = await fetch(`${API_URL}/safes/transfer-profit`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ office_id: officeId, source: sourceSelect.value, amount }),
+        });
+        
+        const data = await res.json();
+        
+        if (res.ok) {
+            showAdminToast("✅ تم نقل الأرباح لخزنة المكتب بنجاح");
+            setTimeout(() => showSafesSection(), 500); // تحديث العرض لرؤية الأرقام الجديدة
+        } else {
+            alert(data.message || "حدث خطأ أثناء نقل الأرباح");
+        }
+    } catch (e) { 
+        alert("تعذر الاتصال بالخادم"); 
+    } finally { 
+        btn.disabled = false; btn.innerHTML = orig; 
+    }
+}
 /* ── إيداع / سحب يدوي على خزنة المكتب ──────────────────────────────── */
-async function officeSafeAdjust(type, officeId) {
-  const amountInput = document.getElementById("adjust-amount");
-  const amount = parseFloat(amountInput.value);
+async function officeSafeAdjust(type, officeId, currency = 'usd') {
+  const inputId     = currency === 'sy' ? 'adjust-amount-sy' : 'adjust-amount';
+  const amountInput = document.getElementById(inputId);
+  const amount      = parseFloat(amountInput.value);
   if (!amount || amount <= 0) { alert("يرجى إدخال مبلغ صحيح"); return; }
 
   const isDep = type === "deposit";
-  const btn = document.querySelector(isDep ? ".osafe-btn-dep" : ".osafe-btn-wit");
-  const orig = btn.innerHTML;
+  const panel = amountInput.closest(".office-safe-panel");
+  const btn   = panel.querySelector(isDep ? ".osafe-btn-dep" : ".osafe-btn-wit");
+  const orig  = btn.innerHTML;
   btn.disabled = true;
   btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i>`;
 
@@ -472,17 +643,24 @@ async function officeSafeAdjust(type, officeId) {
     const res = await fetch(`${API_URL}/offices/${officeId}/safe`, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ amount, type }),
+      body: JSON.stringify({ amount, type, currency }),
     });
     const data = await res.json();
     if (res.ok) {
-      document.getElementById("office-safe-balance").textContent =
-        parseFloat(data.new_balance).toLocaleString();
+      if (currency === 'sy') {
+        const elOfficeSy = document.getElementById("office-safe-balance-sy");
+        if (elOfficeSy) elOfficeSy.textContent = parseFloat(data.new_balance_sy).toLocaleString();
+        const elTradingSy = document.querySelector("[id^='trading-safe-balance-sy-']");
+        if (elTradingSy && data.trading_balance_sy !== undefined)
+          elTradingSy.textContent = parseFloat(data.trading_balance_sy).toLocaleString();
+        showAdminToast(isDep ? "✅ تم إيداع الليرات — انعكس على التداول" : "✅ تم سحب الليرات");
+      } else {
+        const elUsd = document.getElementById("office-safe-balance");
+        if (elUsd) elUsd.textContent = parseFloat(data.new_balance).toLocaleString();
+        showAdminToast(isDep ? "✅ تم الإيداع بالدولار" : "✅ تم السحب بالدولار");
+      }
       amountInput.value = "";
-      showAdminToast(isDep ? "✅ تم الإيداع بنجاح" : "✅ تم السحب بنجاح");
-    } else {
-      alert(data.message || "حدث خطأ");
-    }
+    } else { alert(data.message || "حدث خطأ"); }
   } catch (e) { alert("تعذر الاتصال بالخادم"); }
   finally { btn.disabled = false; btn.innerHTML = orig; }
 }
@@ -682,9 +860,11 @@ async function executeTrade(type, officeId, currencyId) {
 
     if (res.ok) {
       if (type === "sell") {
-        alert(
-          `تمت عملية البيع بنجاح!\nالربح المحقق: ${parseFloat(data.profit).toFixed(2)}`,
-        );
+        const profitVal = parseFloat(data.profit).toFixed(2);
+        const balSy     = data.balance_sy !== undefined
+          ? `\nرصيد SYP في التداول: ${parseFloat(data.balance_sy).toLocaleString()}`
+          : "";
+        alert(`تمت عملية البيع بنجاح!\nالربح المحقق (USD): ${profitVal}${balSy}\n✅ تم تسجيل الربح في صندوق الأرباح تلقائياً`);
       } else {
         alert("تمت عملية الشراء بنجاح ودمج متوسط التكلفة!");
       }

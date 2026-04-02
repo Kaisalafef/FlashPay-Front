@@ -37,7 +37,34 @@
         overflow: hidden;
         font-size: 12px !important;
     }
+/* إظهار أزرار التنقل السريع وتنسيقها للموبايل */
+    .mobile-safe-links {
+        display: flex !important;
+        gap: 10px;
+        justify-content: flex-start;
+        width: 100%;
+        margin-top: 8px;
+    }
 
+    .mobile-safe-links a {
+        text-decoration: none;
+    }
+
+    /* تنسيق الأيقونات لتناسب بانر الموبايل (خلفية شفافة بيضاء) */
+    .mobile-safe-links .safe-card-icon {
+        width: 38px !important;
+        height: 38px !important;
+        font-size: 14px !important;
+        background: rgba(255, 255, 255, 0.2) !important;
+        color: white !important;
+        border: 1px solid rgba(255, 255, 255, 0.3) !important;
+        transition: transform 0.2s;
+    }
+
+    .mobile-safe-links .safe-card-icon:active {
+        transform: scale(0.9);
+        background: rgba(255, 255, 255, 0.4) !important;
+    }
     .sidebar-overlay { display: block; }
 
     /* ════════ SIDEBAR DRAWER ════════ */
