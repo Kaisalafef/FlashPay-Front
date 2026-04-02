@@ -296,14 +296,17 @@ async function showSafesSection() {
   hideAllCards();
   document.getElementById("safes-card").style.display = "block";
 
-  const container = document.getElementById("safes-container");
-
+const container = document.getElementById("safes-container"); 
+   
+    
   // fetch آمن — يرجع null بدون crash
   async function safeGet(url) {
     try {
       const r = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
       if (!r.ok) { console.warn("[safes]", url, "→", r.status); return null; }
       return await r.json();
+
+      
     } catch (e) { console.warn("[safes] network error:", e); return null; }
   }
 
@@ -311,13 +314,14 @@ async function showSafesSection() {
     const [json, meData] = await Promise.all([
       safeGet(`${API_URL}/safes`),
       safeGet(`${API_URL}/me`),
+      safeGet(`${API_URL}/profit-safe`),
     ]);
 
     if (!meData?.user) {
       container.innerHTML = `<p style="color:red;padding:20px;">تعذّر تحميل بيانات المستخدم.</p>`;
       return;
     }
-
+    
     const myOfficeId = meData.user.office_id;
     const allSafes   = json?.data ?? [];
     const mySafes    = allSafes.filter((s) => s.office_id === myOfficeId);
@@ -326,12 +330,12 @@ async function showSafesSection() {
       container.innerHTML = `<p style="color:orange;padding:20px;">تعذّر تحميل الصناديق. راجع الـ console للتفاصيل.</p>`;
       return;
     }
-
     // ─── فصل الأنواع الثلاثة ──────────────────────────────────
     const officeSafe = mySafes.find((s) => s.type === "office_safe");
     const mainSafe   = mySafes.find((s) => s.type === "office_main");
     const tradingSafes = mySafes.filter((s) => s.type === "trading");
-
+    const profitSafe = mySafes.filter((s) => s.type === "profit_safe")[0] || { profit_trade: 0, profit_main: 0 };
+    
     // ─── 1. بطاقة خزنة المكتب (OfficeSafe) ──────────────────
     const officeSafeCard = officeSafe ? `
     <div class="safe-card safe-card-office" id="office-safe-card">
@@ -383,7 +387,43 @@ async function showSafesSection() {
             </div>
         </div>
     </div>` : "";
+    const profitCard = `
+<div class="safe-card" style="border-color: #8b5cf6;">
+    <div class="safe-card-header">
+        <div class="safe-card-icon" style="background: #ede9fe; color: #7c3aed;"><i class="fa-solid fa-sack-dollar"></i></div>
+        <div>
+            <div class="safe-card-title">صندوق الأرباح (Profit Safe)</div>
+            <div class="safe-card-subtitle">USD</div>
+        </div>
+    </div>
+    
+    <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
+        <div>
+            <div style="font-size: 10px; color: var(--gray);">أرباح التداول</div>
+            <div style="font-size: 16px; font-weight: 800; color: #15803d;">$${parseFloat(profitSafe.profit_trade || 0)}</div>
+        </div>
+        <div>
+            <div style="font-size: 10px; color: var(--gray);">أرباح رئيسية</div>
+            <div style="font-size: 16px; font-weight: 800; color: #1d4ed8;">$${parseFloat(profitSafe.profit_main || 0)}</div>
+        </div>
+    </div>
 
+    <div class="office-safe-panel">
+        <div class="office-safe-panel-title">
+            <i class="fa-solid fa-arrow-right-to-bracket"></i> سحب الأرباح لخزنة المكتب
+        </div>
+        <div class="office-safe-row">
+            <input type="number" id="profit-transfer-amount" class="trading-input" placeholder="المبلغ..." min="0.01" step="any">
+            <select id="profit-source" class="trading-input" style="flex:1;">
+                <option value="trade">من أرباح التداول</option>
+                <option value="main">من أرباح رئيسية</option>
+            </select>
+            <button class="osafe-btn osafe-btn-tra" onclick="transferProfit(${myOfficeId})">
+                <i class="fa-solid fa-paper-plane"></i> نقل
+            </button>
+        </div>
+    </div>
+</div>`;
     // ─── 2. بطاقة الصندوق الرئيسي (MainSafe) ────────────────
     const mainSafeCard = mainSafe ? `
     <div class="safe-card safe-card-main" id="safe-card-main">
@@ -449,13 +489,47 @@ async function showSafesSection() {
         </div>
     </div>`).join("");
 
-    container.innerHTML = officeSafeCard + mainSafeCard + tradingCards;
+    container.innerHTML = officeSafeCard + mainSafeCard + tradingCards + profitCard ;
 
   } catch (e) {
     console.error("Error loading safes:", e);
   }
 }
+async function transferProfit(officeId) {
+    const amountInput = document.getElementById("profit-transfer-amount");
+    const sourceSelect = document.getElementById("profit-source");
+    const amount = parseFloat(amountInput.value);
+    
+    if (!amount || amount <= 0) { 
+        alert("يرجى إدخال مبلغ صحيح"); return; 
+    }
 
+    const btn = event.currentTarget;
+    const orig = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i>`;
+
+    try {
+        const res = await fetch(`${API_URL}/safes/transfer-profit`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ office_id: officeId, source: sourceSelect.value, amount }),
+        });
+        
+        const data = await res.json();
+        
+        if (res.ok) {
+            showAdminToast("✅ تم نقل الأرباح لخزنة المكتب بنجاح");
+            setTimeout(() => showSafesSection(), 500); // تحديث العرض لرؤية الأرقام الجديدة
+        } else {
+            alert(data.message || "حدث خطأ أثناء نقل الأرباح");
+        }
+    } catch (e) { 
+        alert("تعذر الاتصال بالخادم"); 
+    } finally { 
+        btn.disabled = false; btn.innerHTML = orig; 
+    }
+}
 /* ── إيداع / سحب يدوي على خزنة المكتب ──────────────────────────────── */
 async function officeSafeAdjust(type, officeId) {
   const amountInput = document.getElementById("adjust-amount");
