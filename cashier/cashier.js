@@ -1597,7 +1597,6 @@ function printInternalReceipt(t) {
   <div class="r"><span class="lbl">الاسم</span><span class="val">${t.sender}</span></div>
 
   <hr class="divider">
-// ابحث عن هذا السطر في HTML الخاص بالطباعة:
   <div class="section-title">بيانات المستلم</div>
   <div class="r"><span class="lbl">الاسم</span>      <span class="val">${t.receiver}</span></div>
   <div class="r"><span class="lbl">الوجهة</span>     <span class="val">${t.province ?? "—"}</span></div> <div class="r"><span class="lbl">رقم الموبايل</span><span class="val">${toEn(t.phone)}</span></div>
