@@ -412,30 +412,57 @@ const container = document.getElementById("safes-container");
         <div class="safe-card-icon" style="background: #ede9fe; color: #7c3aed;"><i class="fa-solid fa-sack-dollar"></i></div>
         <div>
             <div class="safe-card-title">صندوق الأرباح (Profit Safe)</div>
-            <div class="safe-card-subtitle">USD</div>
-        </div>
-    </div>
-    
-    <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
-        <div>
-            <div style="font-size: 10px; color: var(--gray);">أرباح التداول</div>
-            <div style="font-size: 16px; font-weight: 800; color: #15803d;">${parseFloat(profitSafe.profit_trade || 0)}</div>
-        </div>
-        <div>
-            <div style="font-size: 10px; color: var(--gray);">أرباح رئيسية</div>
-            <div style="font-size: 16px; font-weight: 800; color: #1d4ed8;">x${parseFloat(profitSafe.profit_main || 0)}</div>
+            <div class="safe-card-subtitle">USD / SYP</div>
         </div>
     </div>
 
+    <div style="display:flex; justify-content:space-between; margin-bottom:15px;">
+        <div>
+            <div style="font-size: 10px; color: var(--gray);">أرباح التداول (ل.س)</div>
+            <div style="font-size: 16px; font-weight: 800; color: #15803d;" id="profit-trade-display">
+                ${parseFloat(profitSafe.profit_trade || 0).toLocaleString('en-US', {maximumFractionDigits:0})} ل.س
+            </div>
+        </div>
+        <div style="text-align:left;">
+            <div style="font-size: 10px; color: var(--gray);">أرباح رئيسية (USD)</div>
+            <div style="font-size: 16px; font-weight: 800; color: #1d4ed8;" id="profit-main-display">
+                $${parseFloat(profitSafe.profit_main || 0).toLocaleString('en-US', {minimumFractionDigits:2})}
+            </div>
+        </div>
+    </div>
+
+    <!-- ── إيداع / سحب يدوي ──────────────────────────────── -->
+    <div class="office-safe-panel" style="margin-bottom:10px;">
+        <div class="office-safe-panel-title">
+            <i class="fa-solid fa-pen-to-square"></i> إيداع / سحب يدوي في صندوق الأرباح
+        </div>
+        <div class="office-safe-row" style="margin-bottom:7px;">
+            <input type="number" id="profit-adjust-amount" class="trading-input" placeholder="المبلغ..." min="0.01" step="any" style="flex:2;">
+            <select id="profit-adjust-currency" class="trading-input" style="flex:1;">
+                <option value="usd">دولار (USD)</option>
+                <option value="sy">ليرة (SYP)</option>
+            </select>
+        </div>
+        <div class="office-safe-row">
+            <button class="osafe-btn osafe-btn-dep" onclick="profitAdjust('deposit', ${myOfficeId})">
+                <i class="fa-solid fa-circle-arrow-down"></i> إيداع
+            </button>
+            <button class="osafe-btn osafe-btn-wit" onclick="profitAdjust('withdraw', ${myOfficeId})">
+                <i class="fa-solid fa-circle-arrow-up"></i> سحب
+            </button>
+        </div>
+    </div>
+
+    <!-- ── تحويل الأرباح لخزنة المكتب ───────────────────── -->
     <div class="office-safe-panel">
         <div class="office-safe-panel-title">
-            <i class="fa-solid fa-arrow-right-to-bracket"></i> سحب الأرباح لخزنة المكتب
+            <i class="fa-solid fa-arrow-right-to-bracket"></i> تحويل الأرباح لخزنة المكتب
         </div>
         <div class="office-safe-row">
             <input type="number" id="profit-transfer-amount" class="trading-input" placeholder="المبلغ..." min="0.01" step="any">
             <select id="profit-source" class="trading-input" style="flex:1;">
-                <option value="trade">من أرباح التداول</option>
-                <option value="main">من أرباح رئيسية</option>
+                <option value="trade">أرباح التداول (ل.س)</option>
+                <option value="main">أرباح رئيسية (USD)</option>
             </select>
             <button class="osafe-btn osafe-btn-tra" onclick="transferProfit(${myOfficeId})">
                 <i class="fa-solid fa-paper-plane"></i> نقل
@@ -575,40 +602,87 @@ async function editCostManual(officeId, currentCost) {
     }
 }
 async function transferProfit(officeId) {
-    const amountInput = document.getElementById("profit-transfer-amount");
+    const amountInput  = document.getElementById("profit-transfer-amount");
     const sourceSelect = document.getElementById("profit-source");
-    const amount = parseFloat(amountInput.value);
-    
-    if (!amount || amount <= 0) { 
-        alert("يرجى إدخال مبلغ صحيح"); return; 
-    }
+    const amount       = parseFloat(amountInput.value);
 
-    const btn = event.currentTarget;
+    if (!amount || amount <= 0) { alert("يرجى إدخال مبلغ صحيح"); return; }
+
+    const btn  = event.currentTarget;
     const orig = btn.innerHTML;
     btn.disabled = true;
     btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i>`;
 
     try {
-        const res = await fetch(`${API_URL}/safes/transfer-profit`, {
-            method: "POST",
+        const res  = await fetch(`${API_URL}/safes/transfer-profit`, {
+            method : "POST",
             headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-            body: JSON.stringify({ office_id: officeId, source: sourceSelect.value, amount }),
+            body   : JSON.stringify({ office_id: officeId, source: sourceSelect.value, amount }),
         });
-        
         const data = await res.json();
-        
+
         if (res.ok) {
+            // تحديث القيم المعروضة مباشرة دون إعادة تحميل كاملة
+            const tradeEl = document.getElementById("profit-trade-display");
+            const mainEl  = document.getElementById("profit-main-display");
+            if (tradeEl) tradeEl.textContent = `${parseFloat(data.profit_trade || 0).toLocaleString("en-US", { maximumFractionDigits: 0 })} ل.س`;
+            if (mainEl)  mainEl.textContent  = `$${parseFloat(data.profit_main  || 0).toLocaleString("en-US", { minimumFractionDigits: 2 })}`;
+            amountInput.value = "";
             showAdminToast("✅ تم نقل الأرباح لخزنة المكتب بنجاح");
-            setTimeout(() => showSafesSection(), 500); // تحديث العرض لرؤية الأرقام الجديدة
+            setTimeout(() => showSafesSection(), 600);
         } else {
             alert(data.message || "حدث خطأ أثناء نقل الأرباح");
         }
-    } catch (e) { 
-        alert("تعذر الاتصال بالخادم"); 
-    } finally { 
-        btn.disabled = false; btn.innerHTML = orig; 
+    } catch (e) {
+        alert("تعذر الاتصال بالخادم");
+    } finally {
+        btn.disabled = false; btn.innerHTML = orig;
     }
 }
+
+/* ── إيداع / سحب يدوي على صندوق الأرباح ─────────────────────────── */
+async function profitAdjust(type, officeId) {
+    const amountInput    = document.getElementById("profit-adjust-amount");
+    const currencySelect = document.getElementById("profit-adjust-currency");
+    const amount         = parseFloat(amountInput.value);
+    const currency       = currencySelect.value; // 'usd' | 'sy'
+
+    if (!amount || amount <= 0) { alert("يرجى إدخال مبلغ صحيح"); return; }
+
+    const isDeposit = type === "deposit";
+    const panel     = amountInput.closest(".office-safe-panel");
+    const btn       = panel.querySelector(isDeposit ? ".osafe-btn-dep" : ".osafe-btn-wit");
+    const orig      = btn.innerHTML;
+    btn.disabled    = true;
+    btn.innerHTML   = `<i class="fa-solid fa-spinner fa-spin"></i>`;
+
+    try {
+        const res  = await fetch(`${API_URL}/safes/profit/adjust`, {
+            method : "POST",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+            body   : JSON.stringify({ office_id: officeId, amount, type, currency }),
+        });
+        const data = await res.json();
+
+        if (res.ok) {
+            // تحديث الأرقام المعروضة مباشرة
+            const tradeEl = document.getElementById("profit-trade-display");
+            const mainEl  = document.getElementById("profit-main-display");
+            if (tradeEl) tradeEl.textContent = `${parseFloat(data.profit_trade || 0).toLocaleString("en-US", { maximumFractionDigits: 0 })} ل.س`;
+            if (mainEl)  mainEl.textContent  = `$${parseFloat(data.profit_main  || 0).toLocaleString("en-US", { minimumFractionDigits: 2 })}`;
+            amountInput.value = "";
+            const currencyLabel = currency === "usd" ? "USD" : "ل.س";
+            showAdminToast(`${isDeposit ? "✅ تم الإيداع" : "✅ تم السحب"} (${currencyLabel}) في صندوق الأرباح`);
+        } else {
+            alert(data.message || "حدث خطأ في العملية");
+        }
+    } catch (e) {
+        alert("تعذر الاتصال بالخادم");
+    } finally {
+        btn.disabled = false; btn.innerHTML = orig;
+    }
+}
+
 /* ── إيداع / سحب يدوي على خزنة المكتب ──────────────────────────────── */
 async function officeSafeAdjust(type, officeId, currency = 'usd') {
   const inputId     = currency === 'sy' ? 'adjust-amount-sy' : 'adjust-amount';
@@ -3194,9 +3268,10 @@ async function loadSafeLogs() {
   emptyEl?.classList.add("hidden");
 
   try {
-    const [safesRes, meRes, tradingRes] = await Promise.all([
-      fetch(`${API_URL}/safes`,                      { headers: { Authorization: `Bearer ${token}` } }),
-      fetch(`${API_URL}/me`,                         { headers: { Authorization: `Bearer ${token}` } }),
+    const [safesRes, meRes, logsRes, tradingRes] = await Promise.all([
+      fetch(`${API_URL}/safes`,       { headers: { Authorization: `Bearer ${token}` } }),
+      fetch(`${API_URL}/me`,          { headers: { Authorization: `Bearer ${token}` } }),
+      fetch(`${API_URL}/safe-logs`,   { headers: { Authorization: `Bearer ${token}` } }).catch(() => null),
       fetch(`${API_URL}/trading/report/details?date=${new Date().toISOString().split('T')[0]}`,
             { headers: { Authorization: `Bearer ${token}` } }).catch(() => null),
     ]);
@@ -3206,42 +3281,78 @@ async function loadSafeLogs() {
     const myOfficeId = meData.user?.office_id;
     const mySafes    = (safesJson.data || []).filter(s => s.office_id === myOfficeId);
 
-    // بناء سجل الحركات الشامل من بيانات الصناديق + عمليات التداول اليومية
     const logs = [];
 
-    // ── 1. لقطة حالية لكل صندوق ─────────────────────────────────
-    const typeLabels = {
-      office_safe : "خزنة المكتب",
-      office_main : "الصندوق الرئيسي",
-      trading     : "صندوق التداول",
-      profit_safe : "صندوق الأرباح",
-    };
+    // ── 1. سجل حقيقي من safe_action_logs (إيداع/سحب/تحويل) ──────
+    let hasRealLogs = false;
+    if (logsRes?.ok) {
+      try {
+        const logsJson = await logsRes.json();
+        const rawLogs  = logsJson.data || [];
 
+        rawLogs.forEach(row => {
+          hasRealLogs = true;
+
+          // ترجمة action_type → opType + opLabel
+          const actionMap = {
+            deposit          : { opType: "deposit",              opLabel: "إيداع" },
+            withdraw         : { opType: "withdraw",             opLabel: "سحب" },
+            transfer_to_office: { opType: "transfer_from_profit", opLabel: "تحويل → خزنة المكتب" },
+            buy              : { opType: "deposit",              opLabel: "شراء (إيداع دولار)" },
+            sell             : { opType: "withdraw",             opLabel: "بيع (سحب دولار)" },
+          };
+          const mapped   = actionMap[row.action_type] || { opType: row.action_type, opLabel: row.action_type };
+          const isSyp    = (row.currency || "").toUpperCase() === "SYP";
+          const amount   = parseFloat(row.amount || 0);
+
+          logs.push({
+            safeType    : row.safe_type || "office_safe",
+            opType      : mapped.opType,
+            opLabel     : `${mapped.opLabel}${row.description ? ` — ${row.description}` : ""}`,
+            balance     : isSyp ? 0 : amount,
+            balance_sy  : isSyp ? amount : 0,
+            cost        : null,
+            profit_trade: null,
+            profit_main : null,
+            balAfterUsd : row.balance_after    != null ? parseFloat(row.balance_after)    : null,
+            balAfterSy  : row.balance_sy_after != null ? parseFloat(row.balance_sy_after) : null,
+            date        : row.created_at
+              ? new Date(row.created_at).toLocaleDateString("ar-SY", { year:"numeric", month:"2-digit", day:"2-digit", hour:"2-digit", minute:"2-digit" })
+              : "—",
+            extra       : row.performed_by_name && row.performed_by_name !== "—"
+              ? `بواسطة: ${row.performed_by_name}`
+              : null,
+          });
+        });
+      } catch(e) { /* تجاهل */ }
+    }
+
+    // ── 2. لقطة حالية لكل صندوق (تُضاف دائماً في الأعلى) ─────────
     mySafes.forEach(safe => {
       logs.push({
         safeType    : safe.type,
         opType      : "snapshot",
-        opLabel     : "حالة الصندوق الحالية",
+        opLabel     : "الرصيد الحالي",
         balance     : parseFloat(safe.balance    || 0),
         balance_sy  : parseFloat(safe.balance_sy || 0),
-        cost        : safe.cost        !== undefined ? parseFloat(safe.cost)        : null,
-        profit_trade: safe.profit_trade !== undefined ? parseFloat(safe.profit_trade): null,
-        profit_main : safe.profit_main  !== undefined ? parseFloat(safe.profit_main) : null,
+        cost        : safe.cost         !== undefined ? parseFloat(safe.cost)         : null,
+        profit_trade: safe.profit_trade !== undefined ? parseFloat(safe.profit_trade) : null,
+        profit_main : safe.profit_main  !== undefined ? parseFloat(safe.profit_main)  : null,
         date        : new Date().toLocaleDateString("ar-SY"),
       });
     });
 
-    // ── 2. عمليات التداول اليومية (شراء/بيع) ────────────────────
+    // ── 3. عمليات التداول اليومية (شراء/بيع) — fallback إذا لا يوجد safe_action_logs ──
     if (tradingRes) {
       try {
         const tradingJson = await tradingRes.json();
-        const txList = tradingJson?.transactions || [];
+        const txList      = tradingJson?.transactions || [];
 
         txList.forEach(tx => {
           const isBuy = tx.type === "buy";
           logs.push({
             safeType    : "trading",
-            opType      : isBuy ? "deposit"  : "withdraw",
+            opType      : isBuy ? "deposit" : "withdraw",
             opLabel     : isBuy ? "شراء (إيداع دولار في التداول)" : "بيع (سحب دولار من التداول → خزنة المكتب)",
             balance     : parseFloat(tx.amount || 0),
             balance_sy  : isBuy
@@ -3256,45 +3367,13 @@ async function loadSafeLogs() {
             extra: `${tx.user?.name || "—"} | سعر: ${parseFloat(tx.price || 0).toFixed(2)}`,
           });
         });
-      } catch(e) { /* تجاهل إذا لم يتوفر سجل التداول */ }
-    }
-
-    // ── 3. تحويلات من الأرباح إلى خزنة المكتب ──────────────────
-    // نُنشئ إدخالات توضيحية من صندوق الأرباح إذا كان يحوي أرباحاً
-    const profitSafe = mySafes.find(s => s.type === "profit_safe");
-    if (profitSafe && (parseFloat(profitSafe.profit_trade || 0) > 0 || parseFloat(profitSafe.profit_main || 0) > 0)) {
-      if (parseFloat(profitSafe.profit_trade || 0) > 0) {
-        logs.push({
-          safeType    : "profit_safe",
-          opType      : "transfer_from_profit",
-          opLabel     : "أرباح تداول متاحة للتحويل → خزنة المكتب",
-          balance     : 0,
-          balance_sy  : parseFloat(profitSafe.profit_trade || 0),
-          cost        : null,
-          profit_trade: parseFloat(profitSafe.profit_trade || 0),
-          profit_main : null,
-          date        : new Date().toLocaleDateString("ar-SY"),
-        });
-      }
-      if (parseFloat(profitSafe.profit_main || 0) > 0) {
-        logs.push({
-          safeType    : "profit_safe",
-          opType      : "transfer_from_main",
-          opLabel     : "أرباح رئيسية متاحة للتحويل → خزنة المكتب",
-          balance     : parseFloat(profitSafe.profit_main || 0),
-          balance_sy  : 0,
-          cost        : null,
-          profit_trade: null,
-          profit_main : parseFloat(profitSafe.profit_main || 0),
-          date        : new Date().toLocaleDateString("ar-SY"),
-        });
-      }
+      } catch(e) { /* تجاهل */ }
     }
 
     // حفظ للفلترة
     _allSafeLogs = logs;
 
-    // رسم ملخص سريع
+    // رسم ملخص الأرصدة الحالية
     _renderSafeLogsSummary(mySafes);
 
     // رسم الجدول
@@ -3377,20 +3456,30 @@ function _renderSafeLogsTable(logs, emptyEl, tbody) {
   };
 
   const opColors = {
-    snapshot              : { bg: "#dbeafe",  fg: "#1e40af", icon: "fa-circle-info"          },
-    deposit               : { bg: "#d1fae5",  fg: "#065f46", icon: "fa-circle-arrow-down"    },
-    withdraw              : { bg: "#fee2e2",  fg: "#991b1b", icon: "fa-circle-arrow-up"       },
-    transfer_from_profit  : { bg: "#ede9fe",  fg: "#5b21b6", icon: "fa-right-left"            },
-    transfer_from_trading : { bg: "#fef3c7",  fg: "#92400e", icon: "fa-chart-line"            },
-    transfer_from_main    : { bg: "#fce7f3",  fg: "#9d174d", icon: "fa-vault"                 },
+    snapshot              : { bg: "#dbeafe", fg: "#1e40af", icon: "fa-circle-info"        },
+    deposit               : { bg: "#d1fae5", fg: "#065f46", icon: "fa-circle-arrow-down"  },
+    withdraw              : { bg: "#fee2e2", fg: "#991b1b", icon: "fa-circle-arrow-up"    },
+    transfer_from_profit  : { bg: "#ede9fe", fg: "#5b21b6", icon: "fa-right-left"         },
+    transfer_from_trading : { bg: "#fef3c7", fg: "#92400e", icon: "fa-chart-line"         },
+    transfer_from_main    : { bg: "#fce7f3", fg: "#9d174d", icon: "fa-vault"              },
+    transfer_to_office    : { bg: "#ede9fe", fg: "#5b21b6", icon: "fa-arrow-right-to-bracket" },
   };
 
   tbody.innerHTML = logs.map((log, i) => {
     const typeLabel = typeLabels[log.safeType] || log.safeType;
-    const oc        = opColors[log.opType] || { bg: "#f3f4f6", fg: "#374151", icon: "fa-circle" };
+    const oc = opColors[log.opType] || { bg: "#f3f4f6", fg: "#374151", icon: "fa-circle" };
+
+    // ── badge نوع الصندوق ───────────────────────────────────────
+    const safeBadgeColors = {
+      office_safe : { bg: "#dbeafe", fg: "#1e40af" },
+      office_main : { bg: "#fef3c7", fg: "#92400e" },
+      trading     : { bg: "#d1fae5", fg: "#065f46" },
+      profit_safe : { bg: "#ede9fe", fg: "#5b21b6" },
+    };
+    const sbc = safeBadgeColors[log.safeType] || { bg: "#f3f4f6", fg: "#374151" };
 
     const typeBadge = `<span style="display:inline-flex;align-items:center;gap:5px;padding:3px 10px;
-        border-radius:20px;font-size:11px;font-weight:700;background:#dbeafe;color:#1e40af;">
+        border-radius:20px;font-size:11px;font-weight:700;background:${sbc.bg};color:${sbc.fg};">
         ${typeLabel}</span>`;
 
     const opBadge = `<span style="display:inline-flex;align-items:center;gap:5px;padding:4px 10px;
@@ -3398,21 +3487,51 @@ function _renderSafeLogsTable(logs, emptyEl, tbody) {
         <i class="fa-solid ${oc.icon}" style="font-size:10px;"></i>
         ${log.opLabel}</span>`;
 
-    const balUsd  = log.balance  > 0 ? `<span style="font-weight:800;color:var(--primary);">$${log.balance.toFixed(2)}</span>`  : "—";
-    const balSyp  = log.balance_sy !== 0
-      ? `<span style="font-weight:700;color:#ea580c;">${Math.abs(log.balance_sy).toLocaleString("en-US", { maximumFractionDigits: 0 })} ل.س${log.balance_sy < 0 ? " (مدفوع)" : ""}</span>`
-      : "—";
-    const costCell    = log.cost         !== null ? `<span style="color:#64748b;">${log.cost.toFixed(4)}</span>` : "—";
-    const ptCell      = log.profit_trade !== null ? `<span style="color:#15803d;font-weight:700;">$${log.profit_trade.toFixed(2)}</span>` : "—";
-    const pmCell      = log.profit_main  !== null ? `<span style="color:#1d4ed8;font-weight:700;">$${log.profit_main.toFixed(2)}</span>`  : "—";
+    // ── مبلغ العملية ────────────────────────────────────────────
+    let amtCell = "—";
+    if (log.balance > 0 && log.balance_sy === 0) {
+      // عملية دولار
+      const sign  = log.opType === "withdraw" ? "−" : "+";
+      const color = log.opType === "withdraw" ? "#dc2626" : "#059669";
+      amtCell = `<span style="font-weight:800;color:${color};">${log.opType === "snapshot" ? "" : sign}$${log.balance.toLocaleString("en-US", {minimumFractionDigits:2})}</span>`;
+    } else if (log.balance_sy !== 0 && log.balance === 0) {
+      // عملية ليرة
+      const sign  = log.balance_sy < 0 || log.opType === "withdraw" ? "−" : "+";
+      const color = log.opType === "withdraw" || log.balance_sy < 0 ? "#dc2626" : "#059669";
+      amtCell = `<span style="font-weight:800;color:${color};">${log.opType === "snapshot" ? "" : sign}${Math.abs(log.balance_sy).toLocaleString("en-US",{maximumFractionDigits:0})} ل.س</span>`;
+    } else if (log.balance > 0 || log.balance_sy > 0) {
+      // لقطة: اعرض كلاهما
+      const parts = [];
+      if (log.balance > 0) parts.push(`<span style="font-weight:800;color:var(--primary);">$${log.balance.toLocaleString("en-US",{minimumFractionDigits:2})}</span>`);
+      if (log.balance_sy > 0) parts.push(`<span style="font-weight:700;color:#ea580c;">${log.balance_sy.toLocaleString("en-US",{maximumFractionDigits:0})} ل.س</span>`);
+      amtCell = parts.join("<br>");
+    }
+
+    // ── الرصيد بعد العملية ──────────────────────────────────────
+    let afterCell = "—";
+    if (log.balAfterUsd != null && log.balAfterSy != null) {
+      afterCell = `<span style="color:var(--primary);font-weight:700;">$${parseFloat(log.balAfterUsd).toLocaleString("en-US",{minimumFractionDigits:2})}</span>`
+               + `<br><span style="color:#ea580c;font-size:11px;">${parseFloat(log.balAfterSy).toLocaleString("en-US",{maximumFractionDigits:0})} ل.س</span>`;
+    } else if (log.balAfterUsd != null) {
+      afterCell = `<span style="color:var(--primary);font-weight:700;">$${parseFloat(log.balAfterUsd).toLocaleString("en-US",{minimumFractionDigits:2})}</span>`;
+    } else if (log.balAfterSy != null) {
+      afterCell = `<span style="color:#ea580c;font-weight:700;">${parseFloat(log.balAfterSy).toLocaleString("en-US",{maximumFractionDigits:0})} ل.س</span>`;
+    }
+
+    // ── خلايا الأرباح والتكلفة ──────────────────────────────────
+    const costCell = log.cost         !== null ? `<span style="color:#64748b;">${log.cost.toFixed(4)}</span>` : "—";
+    const ptCell   = log.profit_trade !== null
+      ? `<span style="color:#15803d;font-weight:700;">${parseFloat(log.profit_trade).toLocaleString("en-US",{maximumFractionDigits:0})} ل.س</span>` : "—";
+    const pmCell   = log.profit_main  !== null
+      ? `<span style="color:#1d4ed8;font-weight:700;">$${parseFloat(log.profit_main).toLocaleString("en-US",{minimumFractionDigits:2})}</span>` : "—";
 
     return `
     <tr>
       <td style="color:var(--gray);font-size:12px;">${i + 1}</td>
       <td>${typeBadge}</td>
       <td>${opBadge}</td>
-      <td>${balUsd}</td>
-      <td>${balSyp}</td>
+      <td>${amtCell}</td>
+      <td>${afterCell}</td>
       <td>${costCell}</td>
       <td>${ptCell}</td>
       <td>${pmCell}</td>
