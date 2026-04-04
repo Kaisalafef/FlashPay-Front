@@ -2180,7 +2180,7 @@ function populatePendingOfficeFilter(transfers) {
   const officeMap = {};
   transfers.forEach((t) => {
     if (t.destination_office_id) {
-      const name = t.sender?.office?.name || `مكتب #${t.destination_office_id}`;
+      const name = t.sender?.office?.name || ` ${t.destination_office?.name}`;
       officeMap[t.destination_office_id] = name;
     }
   });
@@ -2240,8 +2240,8 @@ function renderPendingTable(transfers) {
         : "—";
       const senderName = t.sender?.name || "—";
       const currCode = t.send_currency?.code || t.currency?.code || "—";
-      const destOffice = t.destination_office_id
-        ? `مكتب #${t.destination_office_id}`
+      const destOffice = t.destination_office?.name
+        ? `${t.destination_office?.name}`
         : t.destination_city || "—";
       const amount = parseFloat(t.amount).toLocaleString("ar-SY");
 

@@ -366,7 +366,7 @@ async function loadTradingSafes() {
       <div style="display:flex;justify-content:space-between;margin-bottom:15px;">
         <div>
           <div style="font-size:10px;color:var(--gray);">أرباح التداول</div>
-          <div style="font-size:16px;font-weight:800;color:#15803d;">$${parseFloat(profitSafe.profit_trade || 0).toFixed(2)}</div>
+          <div style="font-size:16px;font-weight:800;color:#15803d;">SYP${parseFloat(profitSafe.profit_trade || 0).toFixed(2)}</div>
         </div>
         <div>
           <div style="font-size:10px;color:var(--gray);">أرباح رئيسية</div>
