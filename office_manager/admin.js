@@ -120,87 +120,70 @@ async function loadAllTransfers() {
     document.getElementById("stat-all-count").textContent = json.data.length;
 
     const statusMap = {
-      pending: { cls: "status-pending", text: "قيد الانتظار" },
-      approved: { cls: "status-approved", text: "موافق عليها" },
-      waiting: { cls: "status-pending", text: "بانتظار المكتب" },
-      ready: { cls: "status-approved", text: "جاهزة للتسليم" },
+      pending:   { cls: "status-pending",  text: "قيد الانتظار" },
+      approved:  { cls: "status-approved", text: "موافق عليها" },
+      waiting:   { cls: "status-pending",  text: "بانتظار المكتب" },
+      ready:     { cls: "status-approved", text: "جاهزة للتسليم" },
       completed: { cls: "status-approved", text: "مكتملة" },
-      rejected: { cls: "status-rejected", text: "مرفوضة" },
+      rejected:  { cls: "status-rejected", text: "مرفوضة" },
       cancelled: { cls: "status-rejected", text: "ملغاة" },
     };
 
     json.data.forEach((transfer) => {
-      const s = statusMap[transfer.status] ?? {
-        cls: "",
-        text: transfer.status,
-      };
-
-      const amountUsd = Number(transfer.amount_in_usd ?? 0);
-      const sendAmount = Number(transfer.amount ?? 0);
-      const sendCurrency =
-        transfer.send_currency?.code ?? transfer.sendCurrency?.code ?? "—";
+      const s = statusMap[transfer.status] ?? { cls: "", text: transfer.status };
+      const amountUsd    = Number(transfer.amount_in_usd ?? 0);
+      const sendAmount   = Number(transfer.amount ?? 0);
+      const sendCurrency = transfer.send_currency?.code ?? transfer.sendCurrency?.code ?? "—";
       const recvCurrency = transfer.currency?.code ?? "—";
-      const recvPrice = Number(transfer.currency?.price ?? 1);
-      const deliveryAmt = recvPrice > 0 ? amountUsd / recvPrice : 0;
-      const fee = Number(transfer.fee ?? 0);
+      const recvPrice    = Number(transfer.currency?.price ?? 1);
+      const deliveryAmt  = recvPrice > 0 ? amountUsd / recvPrice : 0;
+      const fee          = Number(transfer.fee ?? 0);
+      const date         = transfer.created_at ? new Date(transfer.created_at).toLocaleString("ar-SY") : "—";
 
-      // الوجهة
-      const destHtml = transfer.destination_office_id
-        ? `<div style="display:flex;align-items:center;gap:5px;font-size:12px;">
-                     <i class="fa-solid fa-building" style="color:var(--primary);"></i>
-                     <span>مكتب #${transfer.destination_office_id}</span>
-                   </div>`
-        : `<div style="display:flex;align-items:center;gap:5px;font-size:12px;">
-                     <i class="fa-solid fa-globe" style="color:#7c3aed;"></i>
-                     <span>${transfer.destination_city ?? "—"}</span>
-                   </div>`;
-
-      // كود التتبع
+     const destHtml = transfer.destination_office_id
+  ? `<div style="display:flex;align-items:center;gap:5px;font-size:12px;">
+       <i class="fa-solid fa-building" style="color:var(--primary);"></i>
+       <span>${transfer.destination_office?.name ?? `مكتب #${transfer.destination_office_id}`}</span>
+     </div>`
+  : `<div style="display:flex;align-items:center;gap:5px;font-size:12px;">
+       <i class="fa-solid fa-globe" style="color:#7c3aed;"></i>
+       <span>${transfer.destination_city ?? "—"}</span>
+     </div>`;
       const trackHtml = transfer.tracking_code
-        ? `<span class="tracking-code">${transfer.tracking_code}</span>`
-        : "";
+        ? `<span class="tracking-code">${transfer.tracking_code}</span>` : "";
 
       tbody.innerHTML += `
-                <tr data-status="${transfer.status}">
-                    <td>
-                        <span style="font-weight:800;color:var(--primary);">#${transfer.id}</span>
-                        ${trackHtml}
-                    </td>
-                    <td>
-                        <div style="font-weight:800;color:var(--primary);">$${amountUsd.toFixed(2)}</div>
-                        <div style="font-size:11px;color:var(--gray);direction:ltr;margin-top:2px;">
-                            ${sendAmount.toFixed(2)} ${sendCurrency}
-                        </div>
-                        <div style="font-size:11px;color:#7c3aed;margin-top:2px;">
-                            يستلم: <b>${deliveryAmt.toFixed(2)} ${recvCurrency}</b>
-                        </div>
-                    </td>
-                    <td>
-                        <div style="font-weight:700;">${transfer.sender?.name ?? "—"}</div>
-                        <div style="font-size:11px;color:var(--gray);">${transfer.sender?.phone ?? ""}</div>
-                    </td>
-                    <td>
-                        <div style="font-weight:700;">${transfer.receiver_name ?? "—"}</div>
-                        <div style="font-size:11px;color:var(--gray);direction:ltr;">${transfer.receiver_phone ?? ""}</div>
-                    </td>
-                    <td>${destHtml}</td>
-                    <td style="font-weight:700;color:var(--primary);">
-                        ${fee > 0 ? "$" + fee.toFixed(2) : '<span style="color:var(--gray);">—</span>'}
-                    </td>
-                    <td>
-                        <span class="status-badge ${s.cls}" data-status="${transfer.status}">${s.text}</span>
-                    </td>
-                    <td style="font-size:12px;color:var(--gray);">
-                        ${new Date(transfer.created_at).toLocaleString("ar-SY")}
-                    </td>
-                    <td>
-                        <button class="btn-edit-transfer"
-                            onclick='openEditModal(${JSON.stringify(transfer).replace(/'/g, "\'")} )'>
-                            <i class="fa-solid fa-pen-to-square"></i> تعديل
-                        </button>
-                    </td>
-                </tr>
-            `;
+        <tr data-status="${transfer.status}">
+          <td>
+            <span style="font-weight:800;color:var(--primary);">#${transfer.id}</span>
+            ${trackHtml}
+          </td>
+          <td>
+            <div style="font-weight:800;color:var(--primary);">$${amountUsd.toFixed(2)}</div>
+            <div style="font-size:11px;color:var(--gray);direction:ltr;margin-top:2px;">${sendAmount.toFixed(2)} ${sendCurrency}</div>
+            <div style="font-size:11px;color:#7c3aed;margin-top:2px;">يستلم: <b>${deliveryAmt.toFixed(2)} ${recvCurrency}</b></div>
+          </td>
+          <td>
+            <div style="font-weight:700;">${transfer.sender?.name ?? "—"}</div>
+            <div style="font-size:11px;color:var(--gray);">${transfer.sender?.phone ?? ""}</div>
+          </td>
+          <td>
+            <div style="font-weight:700;">${transfer.receiver_name ?? "—"}</div>
+            <div style="font-size:11px;color:var(--gray);direction:ltr;">${transfer.receiver_phone ?? ""}</div>
+          </td>
+          <td>${destHtml}</td>
+          <td style="font-weight:700;color:var(--primary);">
+            ${fee > 0 ? "$" + fee.toFixed(2) : '<span style="color:var(--gray);">—</span>'}
+          </td>
+          <td><span class="status-badge ${s.cls}" data-status="${transfer.status}">${s.text}</span></td>
+          <td style="font-size:12px;color:var(--gray);">${date}</td>
+          <td>
+            <button class="btn-edit-transfer"
+              onclick='openEditModal(${JSON.stringify(transfer).replace(/'/g, "\'")})'>
+              <i class="fa-solid fa-pen-to-square"></i> تعديل
+            </button>
+          </td>
+        </tr>`;
     });
   } catch (error) {
     console.error("loadAllTransfers error:", error);
@@ -219,7 +202,8 @@ function hideAllCards() {
   document.getElementById("profits-card").style.display = "none";
   const histCard = document.getElementById("transfer-history-card");
   if (histCard) histCard.style.display = "none";
-
+  const safeLogsCard = document.getElementById("safe-logs-card");
+  if (safeLogsCard) safeLogsCard.style.display = "none";
   document.getElementById("createtransfer").style.display = "none";
   const intlCard = document.getElementById("createtransfer-intl");
   if (intlCard) intlCard.style.display = "none";
@@ -895,95 +879,77 @@ function showAllTransfers() {
 
 async function loadPendingTransfers() {
   try {
-    // التعديل الأهم: جلب الحوالات التي حالتها waiting بدلاً من pending
     const res = await fetch(`${API_URL}/transfers?status=waiting`, {
       method: "GET",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        Accept: "application/json",
-      },
+      headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
     });
-
-    if (!res.ok) {
-      console.error("Server Error:", res.status);
-      return;
-    }
+    if (!res.ok) { console.error("Server Error:", res.status); return; }
 
     const json = await res.json();
     const tbody = document.getElementById("transfers-list");
     tbody.innerHTML = "";
 
-    if (json.status === "success" && Array.isArray(json.data)) {
-      json.data.forEach((transfer) => {
-        // ── المبالغ ──────────────────────────────────────────────
-        const amountUsd = Number(transfer.amount_in_usd ?? 0);
-        const sendAmount = Number(transfer.amount ?? 0);
-        const sendCurrency =
-          transfer.send_currency?.code ?? transfer.sendCurrency?.code ?? "—";
-        const recvCurrency = transfer.currency?.code ?? "—";
-        const recvPrice = Number(transfer.currency?.price ?? 1);
-        const deliveryAmount = recvPrice > 0 ? amountUsd / recvPrice : 0;
-
-        tbody.innerHTML += `
-        <tr>
-            <td>#${transfer.id}</td>
-            <td>
-                <div style="font-weight:800; color:var(--primary);">
-                    $${amountUsd.toFixed(2)}
-                </div>
-                <div style="font-size:11px; color:var(--gray); margin-top:2px; direction:ltr;">
-                    ${sendAmount.toFixed(2)} ${sendCurrency}
-                </div>
-            </td>
-            <td>${transfer.sender?.name ?? "—"}</td>
-            <td>
-                <div style="font-weight:700;">${transfer.receiver_name}</div>
-                <div style="font-size:11px; color:var(--gray); margin-top:2px;">
-                    يستلم: <b>${deliveryAmount.toFixed(2)} ${recvCurrency}</b>
-                </div>
-            </td>
-            <td><span style="color: orange;">بانتظار الموافقة</span></td>
-            <td>
-                <button class="btn-chat"
-                        onclick="openChat(${transfer.id}, '${transfer.tracking_code ?? transfer.id}', ${transfer.sender?.id ?? 0})"
-                        title="فتح الدردشة مع الزبون">
-                    <i class="fa-solid fa-comments"></i>
-                    دردشة
-                </button>
-            </td>
-            <td>
-                <input type="number"
-                       id="fee_${transfer.id}"
-                       placeholder="الرسوم"
-                       min="0" inputmode="decimal"
-                       style="width:80px; margin-bottom:5px;">
-                <br>
-                <button class="btn-approve"
-                        onclick="approveTransfer(${transfer.id})">
-                        موافقة
-                </button>
-                <button class="btn-reject"
-                        onclick="rejectTransfer(${transfer.id})">
-                        رفض
-                </button>
-            </td>
-        </tr>
-    `;
-      });
+    if (!json.data || !json.data.length) {
+      tbody.innerHTML = `<tr><td colspan="9"><div class="empty-state"><i class="fa-solid fa-inbox"></i><p>لا توجد حوالات معلقة</p></div></td></tr>`;
+      return;
     }
+
+    json.data.forEach((transfer) => {
+      const amountUsd    = Number(transfer.amount_in_usd ?? 0);
+      const sendAmount   = Number(transfer.amount ?? 0);
+      const sendCurrency = transfer.send_currency?.code ?? transfer.sendCurrency?.code ?? "—";
+      const recvCurrency = transfer.currency?.code ?? "—";
+      const recvPrice    = Number(transfer.currency?.price ?? 1);
+      const deliveryAmt  = recvPrice > 0 ? amountUsd / recvPrice : 0;
+      const date         = transfer.created_at ? new Date(transfer.created_at).toLocaleString("ar-SY") : "—";
+      const tracking     = transfer.tracking_code ? `<span class="tracking-code">${transfer.tracking_code}</span>` : "";
+      const destText = transfer.destination_office_id
+  ? `<i class="fa-solid fa-building" style="color:var(--primary);font-size:11px;"></i> ${transfer.destination_office?.name ?? `مكتب #${transfer.destination_office_id}`}`
+  : `<i class="fa-solid fa-globe" style="color:#7c3aed;font-size:11px;"></i> ${transfer.destination_city ?? "—"}`;
+
+      tbody.innerHTML += `
+        <tr>
+          <td>
+            <span style="font-weight:800;color:var(--primary);">#${transfer.id}</span>
+            ${tracking}
+          </td>
+          <td>
+            <div style="font-weight:700;">${transfer.sender?.name ?? "—"}</div>
+            <div style="font-size:11px;color:var(--gray);">${transfer.sender?.phone ?? ""}</div>
+          </td>
+          <td>
+            <div style="font-weight:700;">${transfer.receiver_name ?? "—"}</div>
+            <div style="font-size:11px;color:var(--gray);direction:ltr;">${transfer.receiver_phone ?? ""}</div>
+          </td>
+          <td>
+            <div style="font-weight:800;color:var(--primary);">$${amountUsd.toFixed(2)}</div>
+            <div style="font-size:11px;color:var(--gray);direction:ltr;">${sendAmount.toFixed(2)} ${sendCurrency}</div>
+            <div style="font-size:11px;color:#7c3aed;">يستلم: ${deliveryAmt.toFixed(2)} ${recvCurrency}</div>
+          </td>
+          <td style="font-size:12px;">${destText}</td>
+          <td style="font-size:12px;color:var(--gray);">${date}</td>
+          <td>
+            <button class="btn-chat"
+              onclick="openChat(${transfer.id}, '${transfer.tracking_code ?? transfer.id}', ${transfer.sender?.id ?? 0})"
+              title="فتح الدردشة مع الزبون">
+              <i class="fa-solid fa-comments"></i> دردشة
+            </button>
+          </td>
+          <td>
+            <button class="btn-approve" onclick="approveTransfer(${transfer.id})">
+              <i class="fa-solid fa-check"></i> موافقة
+            </button>
+            <button class="btn-reject" onclick="rejectTransfer(${transfer.id})" style="margin-top:4px;">
+              <i class="fa-solid fa-xmark"></i> رفض
+            </button>
+          </td>
+        </tr>`;
+    });
   } catch (error) {
     console.error("Error loading transfers:", error);
   }
 }
 async function approveTransfer(transferId) {
-  const feeInput = document.getElementById(`fee_${transferId}`);
-  const feeValue = feeInput.value;
-
-  if (feeValue === "" || feeValue < 0) {
-    alert("يرجى إدخال رسوم صحيحة");
-    return;
-  }
-
   try {
     const res = await fetch(
       `${API_URL}/transfers/${transferId}/update-status`,
@@ -994,17 +960,12 @@ async function approveTransfer(transferId) {
           Authorization: `Bearer ${token}`,
           Accept: "application/json",
         },
-        body: JSON.stringify({
-          status: "ready",
-          fee: Number(feeValue),
-        }),
-      },
+        body: JSON.stringify({ status: "ready", fee: 0 }),
+      }
     );
-
     const data = await res.json();
-
     if (res.ok) {
-      alert("تمت الموافقة وتحويلها إلى جاهزة للتسليم");
+      showAdminToast("✅ تمت الموافقة وتحويلها إلى جاهزة للتسليم");
       loadPendingTransfers();
     } else {
       alert(data.message || "حدث خطأ");
@@ -1774,30 +1735,31 @@ async function handleLogout() {
    ===================================================== */
 
 function openEditModal(transfer) {
-  // ملء المعلومات العامة (للقراءة فقط)
   const infoEl = document.getElementById("edit-transfer-info");
   if (infoEl) {
-    const amtUsd = Number(transfer.amount_in_usd ?? 0);
-    const tracking = transfer.tracking_code
-      ? ` | ${transfer.tracking_code}`
-      : "";
+    const amtUsd   = Number(transfer.amount_in_usd ?? 0);
+    const tracking = transfer.tracking_code ? ` | ${transfer.tracking_code}` : "";
     infoEl.innerHTML = `
-            <span style="color:var(--primary);font-weight:800;">#${transfer.id}${tracking}</span>
-            &nbsp;—&nbsp;
-            <span>$${amtUsd.toFixed(2)}</span>
-            &nbsp;|&nbsp;
-            <span style="color:var(--gray);">المرسل: ${transfer.sender?.name ?? "—"}</span>
-        `;
+      <span style="color:var(--primary);font-weight:800;">#${transfer.id}${tracking}</span>
+      &nbsp;—&nbsp;
+      <span>$${amtUsd.toFixed(2)}</span>
+      &nbsp;|&nbsp;
+      <span style="color:var(--gray);">المرسل: ${transfer.sender?.name ?? "—"}</span>`;
   }
 
-  document.getElementById("edit-transfer-id").value = transfer.id;
-  document.getElementById("edit-receiver-name").value =
-    transfer.receiver_name ?? "";
-  document.getElementById("edit-receiver-phone").value =
-    transfer.receiver_phone ?? "";
-  document.getElementById("edit-amount").value = transfer.amount ?? "";
-  document.getElementById("edit-fee").value = transfer.fee ?? "";
-  document.getElementById("edit-notes").value = "";
+  document.getElementById("edit-transfer-id").value    = transfer.id;
+  document.getElementById("edit-receiver-name").value  = transfer.receiver_name ?? "";
+  document.getElementById("edit-receiver-phone").value = transfer.receiver_phone ?? "";
+  document.getElementById("edit-amount").value         = transfer.amount ?? "";
+  document.getElementById("edit-notes").value          = "";
+
+  // إخفاء حقل الرسوم — يُحسب تلقائياً من الباك
+  const feeEl = document.getElementById("edit-fee");
+  if (feeEl) {
+    const feeParent = feeEl.closest(".form-group") || feeEl.closest(".form-row");
+    if (feeParent) feeParent.style.display = "none";
+    feeEl.value = "0";
+  }
 
   const errEl = document.getElementById("edit-modal-error");
   if (errEl) errEl.classList.add("hidden");
@@ -3202,3 +3164,277 @@ clearAllNotifications = function () {
         setTimeout(_tWaitForToken, 300);
     }
 })();
+
+/* =====================================================
+   سجل الصناديق — Safe Logs Section
+   ===================================================== */
+
+// بيانات الصناديق الكاملة للفلترة
+let _allSafeLogs = [];
+
+function showSafeLogsSection() {
+  hideAllCards();
+  const card = document.getElementById("safe-logs-card");
+  if (card) card.style.display = "block";
+  loadSafeLogs();
+}
+
+async function loadSafeLogs() {
+  const tbody   = document.getElementById("safe-logs-list");
+  const emptyEl = document.getElementById("safe-logs-empty");
+  if (!tbody) return;
+
+  tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:32px;color:var(--gray);">
+    <div style="display:flex;flex-direction:column;align-items:center;gap:10px;">
+      <div style="width:32px;height:32px;border:3px solid #e5e7eb;border-top:3px solid var(--primary);
+                  border-radius:50%;animation:spin 0.8s linear infinite;"></div>
+      <span>جاري تحميل سجل الصناديق...</span>
+    </div>
+  </td></tr>`;
+  emptyEl?.classList.add("hidden");
+
+  try {
+    const [safesRes, meRes, tradingRes] = await Promise.all([
+      fetch(`${API_URL}/safes`,                      { headers: { Authorization: `Bearer ${token}` } }),
+      fetch(`${API_URL}/me`,                         { headers: { Authorization: `Bearer ${token}` } }),
+      fetch(`${API_URL}/trading/report/details?date=${new Date().toISOString().split('T')[0]}`,
+            { headers: { Authorization: `Bearer ${token}` } }).catch(() => null),
+    ]);
+
+    const safesJson  = await safesRes.json();
+    const meData     = await meRes.json();
+    const myOfficeId = meData.user?.office_id;
+    const mySafes    = (safesJson.data || []).filter(s => s.office_id === myOfficeId);
+
+    // بناء سجل الحركات الشامل من بيانات الصناديق + عمليات التداول اليومية
+    const logs = [];
+
+    // ── 1. لقطة حالية لكل صندوق ─────────────────────────────────
+    const typeLabels = {
+      office_safe : "خزنة المكتب",
+      office_main : "الصندوق الرئيسي",
+      trading     : "صندوق التداول",
+      profit_safe : "صندوق الأرباح",
+    };
+
+    mySafes.forEach(safe => {
+      logs.push({
+        safeType    : safe.type,
+        opType      : "snapshot",
+        opLabel     : "حالة الصندوق الحالية",
+        balance     : parseFloat(safe.balance    || 0),
+        balance_sy  : parseFloat(safe.balance_sy || 0),
+        cost        : safe.cost        !== undefined ? parseFloat(safe.cost)        : null,
+        profit_trade: safe.profit_trade !== undefined ? parseFloat(safe.profit_trade): null,
+        profit_main : safe.profit_main  !== undefined ? parseFloat(safe.profit_main) : null,
+        date        : new Date().toLocaleDateString("ar-SY"),
+      });
+    });
+
+    // ── 2. عمليات التداول اليومية (شراء/بيع) ────────────────────
+    if (tradingRes) {
+      try {
+        const tradingJson = await tradingRes.json();
+        const txList = tradingJson?.transactions || [];
+
+        txList.forEach(tx => {
+          const isBuy = tx.type === "buy";
+          logs.push({
+            safeType    : "trading",
+            opType      : isBuy ? "deposit"  : "withdraw",
+            opLabel     : isBuy ? "شراء (إيداع دولار في التداول)" : "بيع (سحب دولار من التداول → خزنة المكتب)",
+            balance     : parseFloat(tx.amount || 0),
+            balance_sy  : isBuy
+              ? -parseFloat(tx.amount || 0) * parseFloat(tx.price || 0)
+              :  parseFloat(tx.amount || 0) * parseFloat(tx.price || 0),
+            cost        : parseFloat(tx.cost_at_time || 0),
+            profit_trade: isBuy ? null : parseFloat(tx.profit || 0),
+            profit_main : null,
+            date        : tx.transaction_date
+              ? new Date(tx.transaction_date).toLocaleDateString("ar-SY")
+              : "—",
+            extra: `${tx.user?.name || "—"} | سعر: ${parseFloat(tx.price || 0).toFixed(2)}`,
+          });
+        });
+      } catch(e) { /* تجاهل إذا لم يتوفر سجل التداول */ }
+    }
+
+    // ── 3. تحويلات من الأرباح إلى خزنة المكتب ──────────────────
+    // نُنشئ إدخالات توضيحية من صندوق الأرباح إذا كان يحوي أرباحاً
+    const profitSafe = mySafes.find(s => s.type === "profit_safe");
+    if (profitSafe && (parseFloat(profitSafe.profit_trade || 0) > 0 || parseFloat(profitSafe.profit_main || 0) > 0)) {
+      if (parseFloat(profitSafe.profit_trade || 0) > 0) {
+        logs.push({
+          safeType    : "profit_safe",
+          opType      : "transfer_from_profit",
+          opLabel     : "أرباح تداول متاحة للتحويل → خزنة المكتب",
+          balance     : 0,
+          balance_sy  : parseFloat(profitSafe.profit_trade || 0),
+          cost        : null,
+          profit_trade: parseFloat(profitSafe.profit_trade || 0),
+          profit_main : null,
+          date        : new Date().toLocaleDateString("ar-SY"),
+        });
+      }
+      if (parseFloat(profitSafe.profit_main || 0) > 0) {
+        logs.push({
+          safeType    : "profit_safe",
+          opType      : "transfer_from_main",
+          opLabel     : "أرباح رئيسية متاحة للتحويل → خزنة المكتب",
+          balance     : parseFloat(profitSafe.profit_main || 0),
+          balance_sy  : 0,
+          cost        : null,
+          profit_trade: null,
+          profit_main : parseFloat(profitSafe.profit_main || 0),
+          date        : new Date().toLocaleDateString("ar-SY"),
+        });
+      }
+    }
+
+    // حفظ للفلترة
+    _allSafeLogs = logs;
+
+    // رسم ملخص سريع
+    _renderSafeLogsSummary(mySafes);
+
+    // رسم الجدول
+    _renderSafeLogsTable(logs, emptyEl, tbody);
+
+  } catch (err) {
+    console.error("loadSafeLogs error:", err);
+    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--danger);padding:24px;">
+      <i class="fa-solid fa-circle-exclamation" style="font-size:20px;margin-bottom:8px;display:block;"></i>
+      خطأ في تحميل بيانات الصناديق
+    </td></tr>`;
+  }
+}
+
+function _renderSafeLogsSummary(safes) {
+  const el = document.getElementById("safe-logs-summary");
+  if (!el) return;
+
+  const officeSafe  = safes.find(s => s.type === "office_safe")  || {};
+  const tradingSafe = safes.find(s => s.type === "trading")      || {};
+  const profitSafe  = safes.find(s => s.type === "profit_safe")  || {};
+
+  const cards = [
+    {
+      icon : "fa-building-columns", bg : "#dbeafe", fg : "#1e40af",
+      label: "خزنة المكتب (USD)",
+      value: `$${parseFloat(officeSafe.balance || 0).toLocaleString("en-US", { minimumFractionDigits: 2 })}`,
+    },
+    {
+      icon : "fa-money-bill-wave", bg : "#fef3c7", fg : "#92400e",
+      label: "خزنة المكتب (SYP)",
+      value: parseFloat(officeSafe.balance_sy || 0).toLocaleString("en-US", { maximumFractionDigits: 0 }) + " ل.س",
+    },
+    {
+      icon : "fa-chart-line", bg : "#d1fae5", fg : "#065f46",
+      label: "صندوق التداول",
+      value: `$${parseFloat(tradingSafe.balance || 0).toLocaleString("en-US", { minimumFractionDigits: 2 })}`,
+    },
+    {
+      icon : "fa-sack-dollar", bg : "#ede9fe", fg : "#5b21b6",
+      label: "أرباح التداول",
+      value: `${parseFloat(profitSafe.profit_trade || 0).toLocaleString("en-US", { maximumFractionDigits: 0 })} ل.س`,
+    },
+    {
+      icon : "fa-coins", bg : "#fce7f3", fg : "#9d174d",
+      label: "الأرباح الرئيسية",
+      value: `$${parseFloat(profitSafe.profit_main || 0).toLocaleString("en-US", { minimumFractionDigits: 2 })}`,
+    },
+  ];
+
+  el.innerHTML = cards.map(c => `
+    <div style="background:var(--white);border-radius:12px;padding:14px 16px;
+                border:1.5px solid var(--border);border-right:4px solid ${c.fg};
+                box-shadow:var(--shadow-sm,0 1px 4px rgba(0,0,0,.06));">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+        <div style="width:28px;height:28px;border-radius:8px;background:${c.bg};color:${c.fg};
+                    display:flex;align-items:center;justify-content:center;font-size:12px;">
+          <i class="fa-solid ${c.icon}"></i>
+        </div>
+        <span style="font-size:11px;font-weight:700;color:var(--gray);">${c.label}</span>
+      </div>
+      <div style="font-size:15px;font-weight:800;color:${c.fg};">${c.value}</div>
+    </div>
+  `).join("");
+}
+
+function _renderSafeLogsTable(logs, emptyEl, tbody) {
+  if (!logs.length) {
+    tbody.innerHTML = "";
+    emptyEl?.classList.remove("hidden");
+    return;
+  }
+  emptyEl?.classList.add("hidden");
+
+  const typeLabels = {
+    office_safe : "خزنة المكتب",
+    office_main : "الصندوق الرئيسي",
+    trading     : "صندوق التداول",
+    profit_safe : "صندوق الأرباح",
+  };
+
+  const opColors = {
+    snapshot              : { bg: "#dbeafe",  fg: "#1e40af", icon: "fa-circle-info"          },
+    deposit               : { bg: "#d1fae5",  fg: "#065f46", icon: "fa-circle-arrow-down"    },
+    withdraw              : { bg: "#fee2e2",  fg: "#991b1b", icon: "fa-circle-arrow-up"       },
+    transfer_from_profit  : { bg: "#ede9fe",  fg: "#5b21b6", icon: "fa-right-left"            },
+    transfer_from_trading : { bg: "#fef3c7",  fg: "#92400e", icon: "fa-chart-line"            },
+    transfer_from_main    : { bg: "#fce7f3",  fg: "#9d174d", icon: "fa-vault"                 },
+  };
+
+  tbody.innerHTML = logs.map((log, i) => {
+    const typeLabel = typeLabels[log.safeType] || log.safeType;
+    const oc        = opColors[log.opType] || { bg: "#f3f4f6", fg: "#374151", icon: "fa-circle" };
+
+    const typeBadge = `<span style="display:inline-flex;align-items:center;gap:5px;padding:3px 10px;
+        border-radius:20px;font-size:11px;font-weight:700;background:#dbeafe;color:#1e40af;">
+        ${typeLabel}</span>`;
+
+    const opBadge = `<span style="display:inline-flex;align-items:center;gap:5px;padding:4px 10px;
+        border-radius:20px;font-size:11px;font-weight:700;background:${oc.bg};color:${oc.fg};white-space:nowrap;">
+        <i class="fa-solid ${oc.icon}" style="font-size:10px;"></i>
+        ${log.opLabel}</span>`;
+
+    const balUsd  = log.balance  > 0 ? `<span style="font-weight:800;color:var(--primary);">$${log.balance.toFixed(2)}</span>`  : "—";
+    const balSyp  = log.balance_sy !== 0
+      ? `<span style="font-weight:700;color:#ea580c;">${Math.abs(log.balance_sy).toLocaleString("en-US", { maximumFractionDigits: 0 })} ل.س${log.balance_sy < 0 ? " (مدفوع)" : ""}</span>`
+      : "—";
+    const costCell    = log.cost         !== null ? `<span style="color:#64748b;">${log.cost.toFixed(4)}</span>` : "—";
+    const ptCell      = log.profit_trade !== null ? `<span style="color:#15803d;font-weight:700;">$${log.profit_trade.toFixed(2)}</span>` : "—";
+    const pmCell      = log.profit_main  !== null ? `<span style="color:#1d4ed8;font-weight:700;">$${log.profit_main.toFixed(2)}</span>`  : "—";
+
+    return `
+    <tr>
+      <td style="color:var(--gray);font-size:12px;">${i + 1}</td>
+      <td>${typeBadge}</td>
+      <td>${opBadge}</td>
+      <td>${balUsd}</td>
+      <td>${balSyp}</td>
+      <td>${costCell}</td>
+      <td>${ptCell}</td>
+      <td>${pmCell}</td>
+      <td style="font-size:11px;color:var(--gray);">${log.date || "—"}${log.extra ? `<br><span style="font-size:10px;color:#9ca3af;">${log.extra}</span>` : ""}</td>
+    </tr>`;
+  }).join("");
+}
+
+function filterSafeLogs() {
+  const q    = (document.getElementById("safe-logs-search")?.value  || "").toLowerCase();
+  const type = document.getElementById("safe-logs-type-filter")?.value || "";
+
+  const filtered = _allSafeLogs.filter(log => {
+    if (type && log.safeType !== type) return false;
+    if (q) {
+      const text = `${log.safeType} ${log.opLabel} ${log.opType}`.toLowerCase();
+      if (!text.includes(q)) return false;
+    }
+    return true;
+  });
+
+  const tbody   = document.getElementById("safe-logs-list");
+  const emptyEl = document.getElementById("safe-logs-empty");
+  _renderSafeLogsTable(filtered, emptyEl, tbody);
+}
