@@ -2329,7 +2329,7 @@ select:focus {
     opacity: 0.85;
     transform: translateY(-1px);
 }
-   ===================================================== */
+  
 
 /* زر إدارة الشرائح في الجدول */
 .btn-manage-rates {
@@ -2843,4 +2843,202 @@ select:focus {
 @media (max-width: 600px) {
     .office-safes-grid { grid-template-columns: 1fr; gap: 14px; }
     .osc-balance-value { font-size: 22px; }
+}
+
+#super-safe-container {
+    margin-bottom: 28px;
+}
+ 
+.super-safe-card {
+    background: linear-gradient(135deg, #1e1b4b 0%, #312e81 60%, #4338ca 100%);
+    border-radius: var(--radius);
+    padding: 28px 28px 24px;
+    box-shadow: 0 12px 40px rgba(67, 56, 202, 0.35);
+    color: white;
+    position: relative;
+    overflow: hidden;
+}
+ 
+.super-safe-card::before {
+    content: '';
+    position: absolute;
+    top: -60px;
+    left: -60px;
+    width: 200px;
+    height: 200px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 50%;
+}
+ 
+.ss-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 22px;
+}
+ 
+.ss-avatar {
+    width: 52px;
+    height: 52px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    color: #fbbf24;
+    border: 1.5px solid rgba(255,255,255,0.2);
+    flex-shrink: 0;
+}
+ 
+.ss-title {
+    font-size: 18px;
+    font-weight: 800;
+    color: white;
+}
+ 
+.ss-subtitle {
+    font-size: 12px;
+    color: rgba(255,255,255,0.65);
+    margin-top: 2px;
+}
+ 
+.ss-badge {
+    margin-right: auto;
+    background: #fbbf24;
+    color: #1e1b4b;
+    padding: 4px 14px;
+    border-radius: 30px;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 1px;
+}
+ 
+.ss-balance-wrap {
+    text-align: center;
+    padding: 18px 0;
+    border-top: 1px solid rgba(255,255,255,0.15);
+    border-bottom: 1px solid rgba(255,255,255,0.15);
+    margin-bottom: 22px;
+}
+ 
+.ss-balance-label {
+    font-size: 12px;
+    color: rgba(255,255,255,0.6);
+    margin-bottom: 6px;
+}
+ 
+.ss-balance-value {
+    font-size: 38px;
+    font-weight: 800;
+    color: white;
+    letter-spacing: -1px;
+}
+ 
+.ss-panels-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+}
+ 
+@media (max-width: 900px) {
+    .ss-panels-grid { grid-template-columns: 1fr; }
+}
+ 
+.ss-panel {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 12px;
+    padding: 16px;
+}
+ 
+.ss-panel-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: rgba(255,255,255,0.8);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+ 
+.ss-input {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.892);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 8px;
+    padding: 8px 12px;
+    color: #1f2937;
+    font-family: 'Cairo', sans-serif;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.2s;
+}
+.ss-input::placeholder { color: rgba(255,255,255,0.4); }
+.ss-input:focus { border-color: rgba(255,255,255,0.5); }
+.ss-input option { color: #1f2937; background: white; }
+ 
+.ss-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+ 
+.ss-btn {
+    padding: 8px 14px;
+    border-radius: 8px;
+    border: none;
+    font-family: 'Cairo', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    white-space: nowrap;
+    transition: all 0.2s;
+    flex-shrink: 0;
+}
+.ss-btn:hover { transform: translateY(-1px); filter: brightness(1.1); }
+.ss-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.ss-btn-green  { background: #10b981; color: white; }
+.ss-btn-red    { background: #ef4444; color: white; }
+.ss-btn-blue   { background: #3b82f6; color: white; }
+.ss-btn-orange { background: #f97316; color: white; }
+ 
+/* ── سجل عمليات السوبر ── */
+.ss-logs-section {
+    background: var(--white);
+    border-radius: var(--radius);
+    padding: 20px 24px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+}
+ 
+.ss-logs-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 4px;
+}
+ 
+.safe-log-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+}
+.log-dep  { background: #d1fae5; color: #065f46; }
+.log-wit  { background: #fee2e2; color: #991b1b; }
+.log-to   { background: #dbeafe; color: #1e40af; }
+.log-from { background: #fef3c7; color: #92400e; }
+ 
+/* ── تحديث بطاقات صناديق المكاتب (super) ── */
+.office-safes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 18px;
 }

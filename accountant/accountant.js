@@ -143,7 +143,7 @@ function loadUserInfo() {
 //  NAVIGATION
 // ─────────────────────────────────────────────────────
 function showSection(name) {
-    // إخفاء كل الأقسام — بما فيها القسم الجديد الذي يستخدم display:none بدلاً من class
+    // إخفاء كل الأقسام
     document.querySelectorAll('.section').forEach(s => {
         s.classList.remove('active');
         s.style.display = 'none';
@@ -158,19 +158,23 @@ function showSection(name) {
     document.getElementById('nav-' + name)?.classList.add('active');
 
     const titles = {
-        dashboard    : 'لوحة المحاسب',
-        transfers    : 'سجل الحوالات',
-        summary      : 'ملخص الحسابات',
-        trading      : 'أرباح التداول',
-        reports      : 'التقارير',
-        'edit-history': 'سجل التعديلات'
+        dashboard     : 'لوحة المحاسب',
+        transfers     : 'سجل الحوالات',
+        summary       : 'ملخص الحسابات',
+        trading       : 'أرباح التداول',
+        reports       : 'التقارير',
+        'edit-history': 'سجل التعديلات',
+        'acct-safes'  : 'الصناديق',
+        'acct-internal': 'الحوالات الداخلية',
     };
     setText('page-heading', titles[name] || '');
 
-    if (name === 'transfers')    renderTransfersSection();
-    if (name === 'summary')      renderSummarySection();
-    if (name === 'trading')      initTradingSection();
-    if (name === 'edit-history') initHistorySection();
+    if (name === 'transfers')       renderTransfersSection();
+    if (name === 'summary')         renderSummarySection();
+    if (name === 'trading')         initTradingSection();
+    if (name === 'edit-history')    initHistorySection();
+    if (name === 'acct-safes')      loadAccountantSafes();
+    if (name === 'acct-internal')   loadAccountantInternals();
 
     closeSidebar();
 }
@@ -1540,4 +1544,308 @@ function exportHistoryCSV() {
     a.download   = `edit_history_${range}_${new Date().toISOString().split('T')[0]}.csv`;
     a.click();
     URL.revokeObjectURL(url);
+}
+
+/* =====================================================
+   صناديق المكتب — للمحاسب
+   ===================================================== */
+
+async function loadAccountantSafes() {
+    const container = document.getElementById('acct-safes-container');
+    if (!container) return;
+
+    container.innerHTML = `
+        <div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--gray);">
+            <div style="width:40px;height:40px;border:3px solid #e5e7eb;border-top:3px solid var(--primary);
+                        border-radius:50%;animation:acct-spin 0.8s linear infinite;margin:0 auto 12px;"></div>
+            <p style="margin:0;font-size:13px;">جاري تحميل بيانات الصناديق...</p>
+        </div>`;
+
+    try {
+        const [safesRes, meRes] = await Promise.all([
+            fetch(`${API_URL}/safes`, { headers: getHeaders() }),
+            fetch(`${API_URL}/me`,   { headers: getHeaders() }),
+        ]);
+
+        if (!safesRes.ok || !meRes.ok) throw new Error('API error');
+
+        const safesJson  = await safesRes.json();
+        const meData     = await meRes.json();
+        const myOfficeId = meData.user?.office_id;
+        const mySafes    = (safesJson.data || []).filter(s => s.office_id === myOfficeId);
+
+        if (!mySafes.length) {
+            container.innerHTML = `
+                <div style="grid-column:1/-1;text-align:center;padding:48px;color:var(--gray);">
+                    <i class="fa-solid fa-vault" style="font-size:32px;margin-bottom:12px;display:block;opacity:.4;"></i>
+                    <p style="margin:0;font-size:14px;font-weight:600;">لا توجد صناديق مسجلة لهذا المكتب</p>
+                </div>`;
+            return;
+        }
+
+        const typeConfig = {
+            office_safe : { label: 'خزنة المكتب',     icon: 'fa-building-columns', bg: '#dbeafe', fg: '#1e40af', border: '#3b82f6' },
+            office_main : { label: 'الصندوق الرئيسي', icon: 'fa-vault',            bg: '#d1fae5', fg: '#065f46', border: '#10b981' },
+            trading     : { label: 'صندوق التداول',   icon: 'fa-chart-line',       bg: '#fef3c7', fg: '#92400e', border: '#f59e0b' },
+            profit_safe : { label: 'صندوق الأرباح',   icon: 'fa-sack-dollar',      bg: '#ede9fe', fg: '#5b21b6', border: '#8b5cf6' },
+        };
+
+        const totalUSD = mySafes.reduce((s, safe) => s + parseFloat(safe.balance    || 0), 0);
+        const totalSYP = mySafes.reduce((s, safe) => s + parseFloat(safe.balance_sy || 0), 0);
+
+        const summaryCard = `
+        <div style="grid-column:1/-1;background:linear-gradient(135deg,#1e3a8a,#1d4ed8);border-radius:16px;
+                    padding:20px 24px;color:#fff;display:flex;flex-wrap:wrap;gap:20px;align-items:center;
+                    box-shadow:0 8px 24px rgba(30,64,175,.25);">
+            <div style="flex:1;min-width:140px;">
+                <div style="font-size:11px;font-weight:700;opacity:.7;margin-bottom:4px;">إجمالي الرصيد (USD)</div>
+                <div style="font-size:26px;font-weight:800;">$${totalUSD.toLocaleString('en-US', { minimumFractionDigits: 2 })}</div>
+            </div>
+            <div style="flex:1;min-width:140px;border-right:1px solid rgba(255,255,255,.2);padding-right:20px;">
+                <div style="font-size:11px;font-weight:700;opacity:.7;margin-bottom:4px;">إجمالي رصيد الليرة (SYP)</div>
+                <div style="font-size:20px;font-weight:800;">${totalSYP.toLocaleString('en-US', { maximumFractionDigits: 0 })} ل.س</div>
+            </div>
+            <div style="flex:1;min-width:100px;border-right:1px solid rgba(255,255,255,.2);padding-right:20px;">
+                <div style="font-size:11px;font-weight:700;opacity:.7;margin-bottom:4px;">عدد الصناديق</div>
+                <div style="font-size:26px;font-weight:800;">${mySafes.length}</div>
+            </div>
+        </div>`;
+
+        const cards = mySafes.map(safe => {
+            const cfg   = typeConfig[safe.type] || { label: safe.type, icon: 'fa-coins', bg: '#f3f4f6', fg: '#374151', border: '#9ca3af' };
+            const bal   = parseFloat(safe.balance    || 0);
+            const balSy = parseFloat(safe.balance_sy || 0);
+            const cost  = safe.cost         !== null && safe.cost         !== undefined ? parseFloat(safe.cost)         : null;
+            const pT    = safe.profit_trade !== undefined ? parseFloat(safe.profit_trade) : null;
+            const pM    = safe.profit_main  !== undefined ? parseFloat(safe.profit_main)  : null;
+
+            const row = (label, val, borderColor, icon) => `
+                <div style="display:flex;justify-content:space-between;align-items:center;
+                            padding:9px 0;border-bottom:1px dashed var(--border);font-size:13px;">
+                    <span style="color:var(--gray);display:flex;align-items:center;gap:6px;">
+                        <i class="fa-solid ${icon}" style="font-size:10px;color:${borderColor};"></i>${label}
+                    </span>
+                    <span style="font-weight:700;color:${borderColor};">${val}</span>
+                </div>`;
+
+            const rows = [];
+            rows.push(row('الرصيد (USD)',         `$${bal.toLocaleString('en-US', { minimumFractionDigits: 2 })}`,      cfg.fg,  'fa-dollar-sign'));
+            if (balSy > 0) rows.push(row('رصيد الليرة',  `${balSy.toLocaleString('en-US', { maximumFractionDigits: 0 })} ل.س`, '#ea580c','fa-coins'));
+            if (cost !== null) rows.push(row('متوسط التكلفة', cost.toFixed(4), '#64748b', 'fa-calculator'));
+            if (pT   !== null) rows.push(row('أرباح التداول',  `${pT >= 0 ? '+' : ''}${pT.toLocaleString('en-US', { maximumFractionDigits: 0 })} ل.س`, pT >= 0 ? '#15803d' : '#dc2626', 'fa-arrow-trend-up'));
+            if (pM   !== null) rows.push(row('الأرباح الرئيسية', `$${pM.toFixed(2)}`, '#1d4ed8', 'fa-hand-holding-dollar'));
+
+            // remove last border
+            const rowsHtml = rows.join('').replace(/border-bottom:1px dashed var\(--border\);<\/div>\s*$/, '</div>');
+
+            return `
+            <div style="background:var(--white);border-radius:16px;overflow:hidden;
+                        box-shadow:0 2px 12px rgba(0,0,0,.06);
+                        border:1.5px solid var(--border);border-top:4px solid ${cfg.border};">
+                <div style="display:flex;align-items:center;gap:12px;padding:16px;background:${cfg.bg}22;">
+                    <div style="width:44px;height:44px;border-radius:12px;background:${cfg.bg};
+                                color:${cfg.fg};display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">
+                        <i class="fa-solid ${cfg.icon}"></i>
+                    </div>
+                    <div>
+                        <div style="font-weight:800;font-size:15px;color:var(--dark);">${cfg.label}</div>
+                        <div style="font-size:11px;color:${cfg.fg};font-weight:600;margin-top:2px;">${safe.currency || 'USD'} · ${safe.type}</div>
+                    </div>
+                </div>
+                <div style="padding:4px 16px 16px;">${rowsHtml}</div>
+            </div>`;
+        });
+
+        container.innerHTML = summaryCard + cards.join('');
+
+    } catch (err) {
+        console.error('loadAccountantSafes error:', err);
+        container.innerHTML = `
+            <div style="grid-column:1/-1;text-align:center;padding:36px;color:var(--danger);">
+                <i class="fa-solid fa-circle-exclamation" style="font-size:28px;margin-bottom:10px;display:block;"></i>
+                <p style="margin:0;font-size:14px;font-weight:600;">خطأ في تحميل بيانات الصناديق</p>
+                <button onclick="loadAccountantSafes()"
+                        style="margin-top:14px;padding:8px 20px;background:var(--danger);color:#fff;
+                               border:none;border-radius:8px;font-family:'Cairo',sans-serif;
+                               font-size:13px;font-weight:700;cursor:pointer;">
+                    إعادة المحاولة
+                </button>
+            </div>`;
+    }
+}
+
+/* =====================================================
+   الحوالات الداخلية — للمحاسب
+   ===================================================== */
+
+let _acctInternalAll = [];
+
+async function loadAccountantInternals() {
+    const tbody    = document.getElementById('acct-internal-tbody');
+    const countEl  = document.getElementById('acct-internal-count');
+    const totalEl  = document.getElementById('acct-internal-total');
+    const profitEl = document.getElementById('acct-internal-profit');
+    if (!tbody) return;
+
+    tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;padding:40px;color:var(--gray);">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:10px;">
+            <div style="width:32px;height:32px;border:3px solid #e5e7eb;border-top:3px solid var(--primary);
+                        border-radius:50%;animation:acct-spin 0.8s linear infinite;"></div>
+            <span style="font-size:13px;">جاري تحميل الحوالات الداخلية...</span>
+        </div>
+    </td></tr>`;
+
+    if (countEl)  countEl.textContent  = '—';
+    if (totalEl)  totalEl.textContent  = '—';
+    if (profitEl) profitEl.textContent = '—';
+
+    try {
+        const res  = await fetch(`${API_URL}/internal-transfers`, { headers: getHeaders() });
+        const json = await res.json();
+
+        if (!res.ok || json.status !== 'success' || !Array.isArray(json.data)) {
+            tbody.innerHTML = `<tr><td colspan="10">
+                <div style="text-align:center;padding:48px;color:var(--gray);">
+                    <i class="fa-solid fa-right-left" style="font-size:32px;opacity:.3;display:block;margin-bottom:12px;"></i>
+                    <p style="margin:0;font-size:14px;font-weight:600;">لا توجد حوالات داخلية مسجلة</p>
+                    <p style="margin:4px 0 0;font-size:12px;color:var(--gray);">${json.message || 'تحقق من الاتصال بالسيرفر'}</p>
+                </div>
+            </td></tr>`;
+            if (countEl) countEl.textContent = '0';
+            if (totalEl) totalEl.textContent = '0.00';
+            if (profitEl) profitEl.textContent = '$0.00';
+            return;
+        }
+
+        _acctInternalAll = json.data;
+        _renderAccountantInternals(_acctInternalAll);
+
+    } catch (err) {
+        console.error('loadAccountantInternals error:', err);
+        tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;color:var(--danger);padding:32px;">
+            <i class="fa-solid fa-circle-exclamation" style="font-size:24px;display:block;margin-bottom:8px;"></i>
+            خطأ في الاتصال بالسيرفر
+        </td></tr>`;
+    }
+}
+
+function _renderAccountantInternals(data) {
+    const tbody    = document.getElementById('acct-internal-tbody');
+    const countEl  = document.getElementById('acct-internal-count');
+    const totalEl  = document.getElementById('acct-internal-total');
+    const profitEl = document.getElementById('acct-internal-profit');
+
+    if (countEl) countEl.textContent = data.length;
+
+    const totalFees   = data.reduce((s, t) => s + parseFloat(t.commission || 0), 0);
+    const totalAmount = data.reduce((s, t) => s + parseFloat(t.amount     || 0), 0);
+    if (totalEl)  totalEl.textContent  = totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2 });
+    if (profitEl) profitEl.textContent = '$' + totalFees.toFixed(2);
+
+    if (!data.length) {
+        tbody.innerHTML = `<tr><td colspan="10">
+            <div style="text-align:center;padding:48px;color:var(--gray);">
+                <i class="fa-solid fa-magnifying-glass" style="font-size:28px;opacity:.3;display:block;margin-bottom:12px;"></i>
+                <p style="margin:0;font-size:14px;font-weight:600;">لا توجد نتائج مطابقة</p>
+            </div>
+        </td></tr>`;
+        return;
+    }
+
+    function fmtDate(iso) {
+        if (!iso) return '—';
+        try {
+            return new Date(iso).toLocaleString('ar-SY', { dateStyle: 'short', timeStyle: 'short' });
+        } catch(e) { return iso; }
+    }
+
+    // ألوان صف متناوبة خفيفة
+    tbody.innerHTML = data.map((t, i) => {
+        const currency   = t.currency   ?? '';
+        const feePayer   = t.fee_payer  ?? 'sender';
+        const amount     = parseFloat(t.amount     ?? 0);
+        const commission = parseFloat(t.commission ?? 0);
+        const net        = feePayer === 'receiver' ? amount - commission : amount;
+        const bg         = i % 2 === 0 ? 'var(--white)' : '#fafafa';
+
+        const feePayerBadge = `
+            <span style="display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;
+                         font-size:11px;font-weight:700;
+                         background:${feePayer === 'sender' ? '#fef3c7' : '#dbeafe'};
+                         color:${feePayer === 'sender' ? '#92400e' : '#1e40af'};">
+                <i class="fa-solid fa-${feePayer === 'sender' ? 'user-tie' : 'user-check'}" style="font-size:10px;"></i>
+                ${feePayer === 'sender' ? 'المرسل' : 'المستلم'}
+            </span>`;
+
+        return `
+        <tr style="background:${bg};transition:background .15s;" onmouseover="this.style.background='#eff6ff'" onmouseout="this.style.background='${bg}'">
+            <td style="padding:12px 14px;font-weight:700;color:var(--gray);font-size:12px;">${i + 1}</td>
+            <td style="padding:12px 14px;font-weight:700;color:var(--dark);">${t.sender_name ?? '—'}</td>
+            <td style="padding:12px 14px;">${t.receiver_name ?? '—'}</td>
+            <td style="padding:12px 14px;">
+                <span style="display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;
+                             background:var(--primary-bg,#eff6ff);color:var(--primary,#4f46e5);font-size:12px;font-weight:700;">
+                    <i class="fa-solid fa-location-dot" style="font-size:10px;"></i>
+                    ${t.destination_province ?? '—'}
+                </span>
+            </td>
+            <td style="padding:12px 14px;direction:ltr;font-size:12px;color:var(--gray);">${t.receiver_phone ?? '—'}</td>
+            <td style="padding:12px 14px;font-weight:800;color:var(--dark);">
+                ${amount.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                <small style="font-weight:600;color:var(--gray);"> ${currency}</small>
+            </td>
+            <td style="padding:12px 14px;color:${commission > 0 ? 'var(--danger)' : 'var(--gray)'};">
+                ${commission > 0 ? commission.toFixed(2) + ' ' + currency : '—'}
+            </td>
+            <td style="padding:12px 14px;">${feePayerBadge}</td>
+            <td style="padding:12px 14px;font-weight:800;color:var(--success);">
+                ${net.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                <small style="font-weight:600;color:var(--gray);"> ${currency}</small>
+            </td>
+            <td style="padding:12px 14px;font-size:11px;color:var(--gray);white-space:nowrap;">${fmtDate(t.created_at)}</td>
+        </tr>`;
+    }).join('');
+}
+
+function filterAccountantInternals() {
+    const q = (document.getElementById('acct-internal-search')?.value || '').toLowerCase();
+    const filtered = !q ? _acctInternalAll : _acctInternalAll.filter(t =>
+        `${t.sender_name ?? ''} ${t.receiver_name ?? ''} ${t.destination_province ?? ''} ${t.receiver_phone ?? ''}`.toLowerCase().includes(q));
+    _renderAccountantInternals(filtered);
+}
+
+function exportAccountantInternalsCSV() {
+    const data = _acctInternalAll;
+    if (!data.length) { showToast('لا توجد بيانات للتصدير', 'error'); return; }
+
+    const headers = ['#', 'المرسل', 'المستلم', 'الوجهة', 'الهاتف', 'المبلغ', 'العملة', 'الرسوم', 'يدفع الرسوم', 'الصافي', 'التاريخ'];
+    const rows    = data.map((t, i) => {
+        const feePayer = t.fee_payer ?? 'sender';
+        const amount   = parseFloat(t.amount     ?? 0);
+        const comm     = parseFloat(t.commission ?? 0);
+        const net      = feePayer === 'receiver' ? amount - comm : amount;
+        return [
+            i + 1,
+            t.sender_name        ?? '',
+            t.receiver_name      ?? '',
+            t.destination_province ?? '',
+            t.receiver_phone     ?? '',
+            amount.toFixed(2),
+            t.currency           ?? '',
+            comm.toFixed(2),
+            feePayer === 'sender' ? 'المرسل' : 'المستلم',
+            net.toFixed(2),
+            t.created_at ? new Date(t.created_at).toLocaleString('ar-SY') : '',
+        ];
+    });
+
+    const csv  = [headers, ...rows].map(r => r.map(v => `"${v}"`).join(',')).join('\n');
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = `internal_transfers_${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('تم تصدير الملف بنجاح ✓', 'success');
 }
