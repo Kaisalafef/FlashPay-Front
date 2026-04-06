@@ -323,7 +323,7 @@ async function loadOffices() {
 
     // تحديث الإحصائيات
     const totalBalance = offices.reduce(
-      (sum, o) => sum + parseFloat(o.main_safe?.balance || 0),
+      (sum, o) => sum + parseFloat(o.office_safe?.balance || 0),
       0,
     );
     const countEl = document.getElementById("stat-offices-count");
@@ -338,7 +338,7 @@ async function loadOffices() {
     document.getElementById("offices-empty")?.classList.add("hidden");
 
     offices.forEach((office, index) => {
-      const balance = parseFloat(office.main_safe?.balance || 0).toFixed(2);
+      const balance = parseFloat(office.office_safe?.balance || 0).toFixed(2);
       const cityName = office.city?.name || "غير محدد";
       const initials = (office.name || "?").charAt(0).toUpperCase();
 
@@ -688,6 +688,9 @@ document
         document.getElementById("agent-country-select").value || null;
       data.city_id = document.getElementById("agent-city-select").value || null;
       data.balance = document.getElementById("emp-balance").value || 0;
+       const ratioVal =
+        parseFloat(document.getElementById("emp-profit-ratio")?.value) || 0;
+      data.agent_profit_ratio = Math.min(100, Math.max(0, ratioVal));
     } else {
       // 👈 التحقق من اختيار المكتب للموظفين
       const officeId = document.getElementById("emp-office").value;
@@ -713,6 +716,24 @@ document
 
       if (res.ok) {
         notyf.success("تم إضافة الموظف بنجاح إلى النظام");
+         if (role === "agent" && json?.data?.id) {
+        const ratio =
+          parseFloat(document.getElementById("emp-profit-ratio")?.value) || 0;
+        if (ratio > 0) {
+          try {
+            await fetch(`${API_URL}/agent/profit-ratio`, {
+              method: "PATCH",
+              headers: getHeaders(),
+              body: JSON.stringify({
+                agent_id: json.data.id,
+                agent_profit_ratio: ratio,
+              }),
+            });
+          } catch (_) {
+            // non-blocking
+          }
+        }
+      }
         e.target.reset();
         handleRoleChange();
         await loadEmployees();
@@ -852,6 +873,7 @@ document.getElementById("edit-user-form").onsubmit = async (e) => {
     data.city_id = document.getElementById("edit-user-city").value;
   } else {
     data.office_id = document.getElementById("edit-user-office").value;
+    
   }
 
   const res = await fetch(`${API_URL}/users/${id}`, {
