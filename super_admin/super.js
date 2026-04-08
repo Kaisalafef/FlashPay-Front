@@ -2405,9 +2405,21 @@ function renderSuperSafeCard() {
         </div>
  
         <!-- الرصيد -->
-        <div class="ss-balance-wrap">
-            <div class="ss-balance-label">الرصيد الحالي</div>
-            <div class="ss-balance-value" id="super-safe-balance">$${fmtBal}</div>
+        <div class="ss-balance-wrap" style="display: flex; justify-content: space-evenly; align-items: center;">
+            <div style="flex: 1; text-align: center;">
+                <div class="ss-balance-label">رصيد صندوق المدير العام</div>
+                <div class="ss-balance-value" id="super-safe-balance">$${fmtBal}</div>
+            </div>
+            
+            <div style="width: 1px; height: 60px; background: rgba(255,255,255,0.2);"></div>
+            
+            <div style="flex: 1; text-align: center;" class="company-total-container">
+                <div class="ss-balance-label">الرصيد الإجمالي للشركة <i class="fa-solid fa-circle-info" style="font-size:11px; margin-right:4px; opacity:0.7;"></i></div>
+                <div class="ss-balance-value" id="total-company-balance" style="color: #4ade80;">
+                    <i class="fa-solid fa-spinner fa-spin" style="font-size:24px;"></i>
+                </div>
+                <div id="total-tooltip-container"></div>
+            </div>
         </div>
  
         <!-- ثلاثة أعمدة للعمليات -->
@@ -2697,13 +2709,86 @@ async function loadSafes() {
     "</div>";
   if (emptyEl) emptyEl.classList.add("hidden");
 
-  // تحميل صندوق السوبر
-  loadSuperSafe();
+  // 1. جلب رصيد السوبر أدمن أولاً
+  await loadSuperSafe();
 
   try {
     const res = await fetch(`${API_URL}/safes`, { headers: getHeaders() });
     const json = await res.json();
-    const officeSafes = (json.data || [])
+    const allSafes = json.data || [];
+
+    // ---------------------------------------------------------
+    // 2. حساب الرصيد الإجمالي وتصنيفاته
+    // ---------------------------------------------------------
+    let totalCompany = parseFloat(_superSafeData?.balance || 0);
+    
+    // كائن لتخزين مجاميع كل نوع من الصناديق
+    let totalsByType = {
+        super: parseFloat(_superSafeData?.balance || 0),
+        office: 0,
+        main: 0,
+        trading: 0,
+        profit: 0,
+        
+    };
+    
+    allSafes.forEach(safe => {
+        if (safe.type === 'profit_safe') {
+            let profitTotal =   parseFloat(safe.profit_main || 0);
+          
+            totalCompany += profitTotal;
+            totalsByType.profit += profitTotal;
+        } else {
+            let bal = parseFloat(safe.balance || 0);
+            totalCompany += bal;
+            
+            // توزيع الرصيد حسب نوع الصندوق
+            if (safe.type === 'office_safe') totalsByType.office += bal;
+            if (safe.type === 'main_safe') totalsByType.main += bal;
+            if (safe.type === 'trading_safe') totalsByType.trading += bal;
+        }
+    });
+
+    // دالة مساعدة لتنسيق الأرقام
+    const fmt = (num) => num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+    // تحديث الواجهة بالمجموع الكلي
+    const totalCompanyEl = document.getElementById('total-company-balance');
+    if (totalCompanyEl) {
+        totalCompanyEl.textContent = "$" + fmt(totalCompany);
+    }
+
+    // بناء القائمة المنسدلة (Tooltip)
+    const tooltipContainer = document.getElementById('total-tooltip-container');
+    if (tooltipContainer) {
+        tooltipContainer.innerHTML = `
+            <div class="custom-tooltip">
+                <div class="tt-row">
+                    <span class="tt-label"><i class="fa-solid fa-crown" style="color:var(--warning);"></i>صندوق المدير العام</span> 
+                    <span class="tt-val">$${fmt(totalsByType.super)}</span>
+                </div>
+                <div class="tt-row">
+                    <span class="tt-label"><i class="fa-solid fa-building"></i> صناديق المكاتب :</span> 
+                    <span class="tt-val">$${fmt(totalsByType.office)}</span>
+                </div>
+                <div class="tt-row">
+                    <span class="tt-label"><i class="fa-solid fa-vault"></i> الصناديق الحوالات:</span> 
+                    <span class="tt-val">$${fmt(totalsByType.main)}</span>
+                </div>
+                <div class="tt-row">
+                    <span class="tt-label"><i class="fa-solid fa-chart-line"></i> صناديق التداول :</span> 
+                    <span class="tt-val">$${fmt(totalsByType.trading)}</span>
+                </div>
+                <div class="tt-row">
+                    <span class="tt-label"><i class="fa-solid fa-sack-dollar"></i> صناديق الأرباح :</span> 
+                    <span class="tt-val">$${fmt(totalsByType.profit)}</span>
+                </div>
+            </div>
+        `;
+    }
+    // ---------------------------------------------------------
+
+    const officeSafes = allSafes
       .filter((s) => s.type === "office_safe")
       .sort((a, b) => (a.owner || "").localeCompare(b.owner || ""));
 
@@ -2715,13 +2800,7 @@ async function loadSafes() {
     );
     const totalEl = document.getElementById("safes-total-balance");
     const countEl = document.getElementById("safes-office-count");
-    if (totalEl)
-      totalEl.textContent =
-        "$" +
-        total.toLocaleString("en-US", {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2,
-        });
+    if (totalEl) totalEl.textContent = "$" + fmt(total);
     if (countEl) countEl.textContent = officeSafes.length;
 
     const dashSafes = document.getElementById("dash-safes-count");
@@ -2760,7 +2839,7 @@ async function loadSafes() {
                 <div class="osc-balance">
                     <span class="osc-balance-label">الرصيد (USD)</span>
                     <span class="osc-balance-value ${isPositive ? "bal-positive" : "bal-negative"}">
-                        $${balance.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        $${fmt(balance)}
                     </span>
                 </div>
                 ${
@@ -2788,7 +2867,6 @@ async function loadSafes() {
       '<p style="text-align:center;color:var(--danger);padding:32px;">تعذّر تحميل الصناديق</p>';
   }
 }
-
 function filterSafeCards() {
   const q = (
     document.getElementById("safes-search")?.value || ""
