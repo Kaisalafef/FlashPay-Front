@@ -323,7 +323,7 @@ async function loadOffices() {
 
     // تحديث الإحصائيات
     const totalBalance = offices.reduce(
-      (sum, o) => sum + parseFloat(o.main_safe?.balance || 0),
+      (sum, o) => sum + parseFloat(o.office_safe?.balance || 0),
       0,
     );
     const countEl = document.getElementById("stat-offices-count");
@@ -338,7 +338,7 @@ async function loadOffices() {
     document.getElementById("offices-empty")?.classList.add("hidden");
 
     offices.forEach((office, index) => {
-      const balance = parseFloat(office.main_safe?.balance || 0).toFixed(2);
+      const balance = parseFloat(office.office_safe?.balance || 0).toFixed(2);
       const cityName = office.city?.name || "غير محدد";
       const initials = (office.name || "?").charAt(0).toUpperCase();
 
