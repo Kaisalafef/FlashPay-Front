@@ -1437,6 +1437,90 @@ header {
     cursor: pointer; transition: var(--transition);
     display: flex; align-items: center; justify-content: center; gap: 4px;
 }
+/* ================================================
+   تحسين حقول نموذج إنشاء حوالة (الزبائن)
+   ================================================ */
+
+/* تنسيق شبكة الحقول (Grid) */
+.internal-form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+/* تنسيق المجموعة (الـ Label والحقل) */
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* تنسيق العناوين (Labels) */
+.form-label {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--dark-2);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* تجميل الأيقونات بجانب العناوين */
+.form-label i {
+    color: var(--primary);
+    background: var(--primary-soft);
+    padding: 6px 7px;
+    border-radius: 8px;
+    font-size: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* تنسيق الحقل الأساسي (id=cust-send-currency وباقي الحقول) */
+#cust-send-currency,
+.form-control {
+    width: 100%;
+    padding: 11px 16px;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    font-family: 'Cairo', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--dark);
+    background-color: var(--light);
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    outline: none;
+}
+
+/* تخصيص القوائم المنسدلة (Select) بسهم مخصص يتناسب مع الثيم */
+select#cust-send-currency,
+select.form-control {
+    cursor: pointer;
+    appearance: none;
+    /* سهم بلون Primary (برتقالي) */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23ea580c' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: left 16px center;
+    padding-left: 40px; /* ترك مساحة للسهم في اليسار */
+}
+
+/* تأثير التمرير (Hover) */
+#cust-send-currency:hover,
+.form-control:hover {
+    border-color: var(--primary-light);
+    background-color: #fff;
+}
+
+/* تأثير التركيز (Focus) عند النقر */
+#cust-send-currency:focus,
+.form-control:focus {
+    border-color: var(--primary);
+    background-color: #fff;
+    box-shadow: 0 0 0 4px var(--primary-glow);
+    transform: translateY(-1px);
+}
 .pg-btn:hover { border-color: var(--success); color: var(--success); }
 .pg-btn.active { background: var(--success); border-color: var(--success); color: #fff; }
 .pg-btn:disabled { opacity: 0.4; cursor: not-allowed; }

@@ -619,17 +619,20 @@ function renderSummarySection() {
 // ─────────────────────────────────────────────────────
 //  REPORTS
 // ─────────────────────────────────────────────────────
+
 function generateReport() {
-    const from   = document.getElementById('rep-from').value;
-    const to     = document.getElementById('rep-to').value;
-    const status = document.getElementById('rep-status').value;
-    const cur    = document.getElementById('rep-currency').value;
+    const from     = document.getElementById('rep-from')?.value     || '';
+    const to       = document.getElementById('rep-to')?.value       || '';
+    const status   = document.getElementById('rep-status')?.value   || '';
+    const cur      = document.getElementById('rep-currency')?.value || '';
+    const country  = document.getElementById('rep-country')?.value  || '';
 
     const data = ALL_TRANSFERS.filter(t => {
-        if (from && transferDate(t) < from)            return false;
-        if (to   && transferDate(t) > to)              return false;
-        if (status && t.status !== status)             return false;
-        if (cur    && currencyName(t) !== cur)         return false;
+        if (from    && transferDate(t) < from)             return false;
+        if (to      && transferDate(t) > to)               return false;
+        if (status  && t.status !== status)                return false;
+        if (cur     && currencyName(t) !== cur)            return false;
+        if (country && !_matchesCountry(t, country))       return false;
         return true;
     });
 
@@ -643,27 +646,47 @@ function generateReport() {
     setText('rep-commission-sum', fmtMoney(totalFee) + ' USD');
 
     const meta = [];
-    if (from || to) meta.push(`الفترة: ${from || '—'} → ${to || '—'}`);
-    if (status) meta.push(`الحالة: ${status}`);
-    if (cur)    meta.push(`العملة: ${cur}`);
+    if (from || to)  meta.push(`الفترة: ${from || '—'} → ${to || '—'}`);
+    if (status)      meta.push(`الحالة: ${status}`);
+    if (cur)         meta.push(`العملة: ${cur}`);
+    if (country) {
+        const sel   = document.getElementById('rep-country');
+        const label = sel?.options[sel.selectedIndex]?.text || country;
+        meta.push(`الدولة: ${label}`);
+    }
     setText('report-meta', meta.join(' | '));
 
     const tbody = document.getElementById('report-tbody');
     if (tbody) {
         tbody.innerHTML = data.length
-            ? data.map(t => `
+            ? data.map((t, i) => {
+                // الدولة الوجهة (من العلاقة أو الـ ID)
+                const destCountry = t.destination_country?.name
+                    || (t.destination_country_id ? `#${t.destination_country_id}` : '—');
+                const destCity    = t.destination_city || '—';
+
+                return `
                 <tr>
+                    <td style="font-weight:700;color:var(--gray);font-size:12px;">${i + 1}</td>
                     <td style="font-weight:700;color:var(--primary);">${transferRef(t)}</td>
                     <td>${senderName(t)}</td>
                     <td>${t.receiver_name || '—'}</td>
+                    <td>
+                        <span style="display:inline-flex;align-items:center;gap:4px;padding:3px 8px;
+                                     background:#eff6ff;color:#1e40af;border-radius:16px;font-size:11px;font-weight:700;">
+                            <i class="fa-solid fa-location-dot" style="font-size:9px;"></i>
+                            ${destCountry}
+                        </span>
+                        <br><small style="color:var(--gray);font-size:11px;">${destCity}</small>
+                    </td>
                     <td style="font-weight:700;">${fmtMoney(t.amount_in_usd)} USD</td>
                     <td><span class="badge badge-purple">${currencyName(t)}</span></td>
                     <td style="color:var(--success);font-weight:600;">${fmtMoney(t.fee)}</td>
                     <td>${statusBadge(t.status)}</td>
                     <td>${transferDate(t)}</td>
-                </tr>
-            `).join('')
-            : `<tr><td colspan="8"><div class="empty-state">
+                </tr>`;
+            }).join('')
+            : `<tr><td colspan="10"><div class="empty-state">
                    <i class="fa-solid fa-magnifying-glass"></i>
                    <p>لا توجد نتائج تطابق الفلاتر المحددة</p>
                </div></td></tr>`;
@@ -677,40 +700,37 @@ function generateReport() {
 }
 
 function exportReport() {
-    const from   = document.getElementById('rep-from').value;
-    const to     = document.getElementById('rep-to').value;
-    const status = document.getElementById('rep-status').value;
-    const cur    = document.getElementById('rep-currency').value;
+    const from    = document.getElementById('rep-from')?.value     || '';
+    const to      = document.getElementById('rep-to')?.value       || '';
+    const status  = document.getElementById('rep-status')?.value   || '';
+    const cur     = document.getElementById('rep-currency')?.value || '';
+    const country = document.getElementById('rep-country')?.value  || '';
 
     const data = ALL_TRANSFERS.filter(t => {
-        if (from && transferDate(t) < from)    return false;
-        if (to   && transferDate(t) > to)      return false;
-        if (status && t.status !== status)     return false;
-        if (cur    && currencyName(t) !== cur) return false;
+        if (from    && transferDate(t) < from)        return false;
+        if (to      && transferDate(t) > to)          return false;
+        if (status  && t.status !== status)           return false;
+        if (cur     && currencyName(t) !== cur)       return false;
+        if (country && !_matchesCountry(t, country))  return false;
         return true;
     });
-    downloadCSV(data, 'report');
-}
 
-function exportCSV() { downloadCSV(filteredData, 'transfers'); }
-
-function downloadCSV(data, name) {
     const headers = [
-        'رقم التتبع', 'المرسل', 'المستلم', 'هاتف المستلم',
-        'المبلغ', 'العملة', 'المبلغ_USD', 'عملة_الاستلام', 'العمولة', 'الحالة', 'التاريخ'
+        '#', 'رقم_التتبع', 'المرسل', 'المستلم', 'الدولة_الوجهة', 'المدينة',
+        'المبلغ_USD', 'العملة', 'العمولة', 'الحالة', 'التاريخ'
     ];
-    const rows = data.map(t => [
+    const rows = data.map((t, i) => [
+        i + 1,
         transferRef(t),
         senderName(t),
         t.receiver_name   || '',
-        t.receiver_phone  || '',
-        t.amount          || 0,
-        currencyName(t),
+        t.destination_country?.name || (t.destination_country_id ? `#${t.destination_country_id}` : ''),
+        t.destination_city || '',
         t.amount_in_usd   || 0,
-        sendCurrencyName(t),
+        currencyName(t),
         t.fee             || 0,
         t.status          || '',
-        transferDate(t)
+        transferDate(t),
     ]);
 
     const csv  = [headers, ...rows].map(r => r.map(v => `"${v}"`).join(',')).join('\n');
@@ -718,11 +738,30 @@ function downloadCSV(data, name) {
     const url  = URL.createObjectURL(blob);
     const a    = document.createElement('a');
     a.href     = url;
-    a.download = `${name}_${new Date().toISOString().split('T')[0]}.csv`;
+    a.download = `report_${new Date().toISOString().split('T')[0]}.csv`;
     a.click();
     URL.revokeObjectURL(url);
+    showToast('تم تصدير التقرير بنجاح ✓', 'success');
 }
 
+// ── تحديث showSection لدعم قسم الإقفال الشهري ────────────────────────
+// (patch يُكمّل الدالة الأصلية — يستدعى بعد تحميل الملف الأصلي)
+(function _patchShowSection() {
+    const _orig = window.showSection;
+    window.showSection = function(name) {
+        _orig(name);
+        if (name === 'monthly-closing') initMonthlyClosing();
+        if (name === 'reports')         populateCountryFilter();
+    };
+})();
+
+// إغلاق مودال الـ snapshot بمفتاح Escape
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+        const m = document.getElementById('closing-snapshot-modal');
+        if (m && !m.classList.contains('hidden')) closeSnapshotModal();
+    }
+});
 // ─────────────────────────────────────────────────────
 //  MODAL — تفاصيل حوالة
 // ─────────────────────────────────────────────────────
@@ -1849,3 +1888,378 @@ function exportAccountantInternalsCSV() {
     URL.revokeObjectURL(url);
     showToast('تم تصدير الملف بنجاح ✓', 'success');
 }
+// =====================================================
+//   PATCH لـ accountant.js — ميزتان جديدتان
+//   1. الإقفال الشهري (Monthly Closing)
+//   2. تصفية التقارير حسب الدولة المرسلة للحوالة
+//
+//   الاستخدام:
+//   أضف هذا الملف كـ <script> بعد accountant.js في accountant.html
+//   =====================================================
+
+// ═══════════════════════════════════════════════════════════════════════
+//  ① الإقفال الشهري — Monthly Closing
+// ═══════════════════════════════════════════════════════════════════════
+
+/**
+ * STATE للإقفال الشهري
+ */
+const _CLOSING = {
+    history: [],   // سجل الإقفالات السابقة
+    loaded : false,
+};
+
+/**
+ * showSection يستدعي هذه الدالة عند فتح قسم الإقفال
+ * أضف السطر التالي في دالة showSection الموجودة:
+ *   if (name === 'monthly-closing') initMonthlyClosing();
+ */
+async function initMonthlyClosing() {
+    // ملء قائمة الشهور في select
+    _fillMonthSelect();
+    // تحميل السجل
+    await loadClosingHistory();
+}
+
+/**
+ * ملء قائمة الأشهر تلقائياً (الـ 12 شهر الماضية)
+ */
+function _fillMonthSelect() {
+    const sel = document.getElementById('closing-month-select');
+    if (!sel || sel.options.length > 1) return; // تم الملء مسبقاً
+
+    const now = new Date();
+    for (let i = 0; i < 12; i++) {
+        const d     = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2,'0')}`;
+        const label = d.toLocaleDateString('ar-SY', { year: 'numeric', month: 'long' });
+        const opt   = document.createElement('option');
+        opt.value       = value;
+        opt.textContent = label;
+        sel.appendChild(opt);
+    }
+}
+
+/**
+ * جلب سجل الإقفالات السابقة
+ */
+async function loadClosingHistory() {
+    const tbody = document.getElementById('closing-history-tbody');
+    if (!tbody) return;
+
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--gray);">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:8px;">
+            <div style="width:28px;height:28px;border:3px solid #e5e7eb;border-top:3px solid var(--primary);
+                        border-radius:50%;animation:acct-spin 0.8s linear infinite;"></div>
+            <span>جاري التحميل...</span>
+        </div>
+    </td></tr>`;
+
+    try {
+        const res  = await fetch(`${API_URL}/monthly-closing`, { headers: getHeaders() });
+        const json = await res.json();
+        _CLOSING.history  = json.data || [];
+        _CLOSING.loaded   = true;
+        _renderClosingHistory();
+    } catch (err) {
+        console.error('loadClosingHistory:', err);
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--danger);">
+            خطأ في الاتصال بالسيرفر
+        </td></tr>`;
+    }
+}
+
+/**
+ * رسم جدول سجل الإقفالات
+ */
+function _renderClosingHistory() {
+    const tbody = document.getElementById('closing-history-tbody');
+    if (!tbody) return;
+ 
+    const data = _CLOSING.history;
+ 
+    if (!data.length) {
+        tbody.innerHTML = `<tr><td colspan="6">
+            <div style="text-align:center;padding:40px;color:var(--gray);">
+                <i class="fa-solid fa-box-archive" style="font-size:32px;opacity:.3;display:block;margin-bottom:12px;"></i>
+                <p style="margin:0;font-weight:600;">لا توجد إقفالات شهرية مسجلة بعد</p>
+            </div>
+        </td></tr>`;
+        return;
+    }
+ 
+    tbody.innerHTML = data.map((c, i) => {
+        const monthLabel = (() => {
+            try {
+                const [y, m] = c.month.split('-');
+                return new Date(y, m - 1).toLocaleDateString('ar-SY', { year: 'numeric', month: 'long' });
+            } catch { return c.month; }
+        })();
+ 
+        const date = c.created_at
+            ? new Date(c.created_at).toLocaleString('ar-SY', { dateStyle: 'short', timeStyle: 'short' })
+            : '—';
+ 
+        return `
+        <tr style="background:${i % 2 === 0 ? 'var(--white)' : '#fafafa'}">
+            <td style="padding:12px 14px;font-weight:700;color:var(--primary);">${monthLabel}</td>
+            <td style="padding:12px 14px;color:var(--gray);font-size:12px;">
+                ${c.office_id ? `مكتب #${c.office_id}` : '<span style="color:#7c3aed;font-weight:700;">كل المكاتب</span>'}
+            </td>
+            <td style="padding:12px 14px;font-weight:700;color:var(--dark);">${(c.archived_transfers_count ?? 0).toLocaleString('ar')}</td>
+            <td style="padding:12px 14px;font-size:12px;color:var(--gray);">${c.performed_by_name || '—'}</td>
+            <td style="padding:12px 14px;font-size:11px;color:var(--gray);">${date}</td>
+            <td style="padding:12px 14px;">
+                <button onclick="viewClosingSnapshots(${c.id})"
+                        style="display:inline-flex;align-items:center;gap:5px;padding:6px 12px;
+                               background:var(--primary-bg);color:var(--primary);border:1px solid var(--primary);
+                               border-radius:8px;font-size:12px;font-weight:700;font-family:'Cairo',sans-serif;cursor:pointer;">
+                    <i class="fa-solid fa-eye"></i> الصناديق
+                </button>
+            </td>
+        </tr>`;
+    }).join('');
+}
+/**
+ * تنفيذ الإقفال الشهري (يُستدعى من الزر)
+ */
+async function performMonthlyClosing() {
+    const monthSel  = document.getElementById('closing-month-select');
+    const notesSel  = document.getElementById('closing-notes');
+    const month     = monthSel?.value;
+ 
+    if (!month) {
+        showToast('يرجى اختيار الشهر أولاً', 'error');
+        return;
+    }
+ 
+    // تأكيد العملية — لا رجوع بعدها!
+    const monthLabel = monthSel.options[monthSel.selectedIndex]?.text || month;
+    const confirmed  = confirm(
+        `⚠️ تأكيد الإقفال الشهري\n\n` +
+        `الشهر: ${monthLabel}\n\n` +
+        `سيتم:\n` +
+        `• تحويل جميع الحوالات المكتملة في هذا الشهر إلى "مؤرشفة"\n` +
+        `• تسجيل snapshot لأرصدة الصناديق\n\n` +
+        `⛔ هذه العملية لا يمكن التراجع عنها. هل أنت متأكد؟`
+    );
+    if (!confirmed) return;
+ 
+    const btn = document.getElementById('closing-execute-btn');
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري الإقفال...';
+    }
+ 
+    try {
+        const body = {
+            month : month,
+            notes : notesSel?.value?.trim() || null,
+        };
+ 
+        const res  = await fetch(`${API_URL}/monthly-closing`, {
+            method : 'POST',
+            headers: getHeaders(),
+            body   : JSON.stringify(body),
+        });
+        const json = await res.json();
+ 
+        if (!res.ok) {
+            showToast(json.message || 'فشل الإقفال الشهري', 'error');
+            return;
+        }
+ 
+        showToast(`✅ تم إقفال ${monthLabel} بنجاح — أُرشفت ${json.data.archived_transfers} حوالة`, 'success');
+        if (notesSel) notesSel.value = '';
+ 
+        // إعادة تحميل السجل والحوالات
+        await loadClosingHistory();
+        await fetchAllTransfers(); // تحديث الحوالات في الذاكرة
+ 
+    } catch (err) {
+        console.error('performMonthlyClosing:', err);
+        showToast('خطأ في الاتصال بالسيرفر', 'error');
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-calendar-check"></i> تنفيذ الإقفال';
+        }
+    }
+}
+
+/**
+ * عرض snapshot الصناديق لإقفال معيّن
+ */
+async function viewClosingSnapshots(closingId) {
+    const modal = document.getElementById('closing-snapshot-modal');
+    const tbody = document.getElementById('snapshot-tbody');
+    const title = document.getElementById('snapshot-modal-title');
+    if (!modal || !tbody) return;
+ 
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--gray);">جاري التحميل...</td></tr>`;
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+ 
+    try {
+        const res  = await fetch(`${API_URL}/monthly-closing/${closingId}/safes`, { headers: getHeaders() });
+        const json = await res.json();
+ 
+        const closing     = json.closing;
+        const snapshots   = json.data || [];
+ 
+        if (title && closing) {
+            const monthLabel = (() => {
+                try {
+                    const [y, m] = closing.month.split('-');
+                    return new Date(y, m - 1).toLocaleDateString('ar-SY', { year: 'numeric', month: 'long' });
+                } catch { return closing.month; }
+            })();
+            title.textContent = `لقطة الصناديق — ${monthLabel}`;
+        }
+ 
+        if (!snapshots.length) {
+            tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--gray);">
+                لا توجد بيانات صناديق لهذا الإقفال
+            </td></tr>`;
+            return;
+        }
+ 
+        const fmt = n => parseFloat(n ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2 });
+ 
+        tbody.innerHTML = snapshots.map((s, i) => `
+            <tr style="background:${i % 2 === 0 ? '#fff' : '#fafafa'}">
+                <td style="padding:10px 12px;font-weight:700;color:var(--dark);">${s.office_name || `مكتب #${s.office_id}`}</td>
+                <td style="padding:10px 12px;color:#1e40af;font-weight:700;">$${fmt(s.office_safe_usd)}</td>
+                <td style="padding:10px 12px;color:#ea580c;">${fmt(s.office_safe_sy)} ل.س</td>
+                <td style="padding:10px 12px;color:#92400e;font-weight:700;">$${fmt(s.trading_safe_usd)}</td>
+                <td style="padding:10px 12px;color:#7c2d12;">${fmt(s.trading_safe_sy)} ل.س</td>
+                <td style="padding:10px 12px;color:#64748b;">${parseFloat(s.trading_safe_cost ?? 0).toFixed(4)}</td>
+                <td style="padding:10px 12px;color:#5b21b6;font-weight:700;">$${fmt(s.profit_safe_main)}</td>
+                <td style="padding:10px 12px;color:#6d28d9;">${fmt(s.profit_safe_trade)} ل.س</td>
+            </tr>
+        `).join('');
+ 
+    } catch (err) {
+        console.error('viewClosingSnapshots:', err);
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--danger);">
+            خطأ في الاتصال بالسيرفر
+        </td></tr>`;
+    }
+}
+ 
+/**
+ * إغلاق مودال الـ snapshot
+ */
+function closeSnapshotModal() {
+    const modal = document.getElementById('closing-snapshot-modal');
+    if (modal) modal.classList.add('hidden');
+    document.body.style.overflow = '';
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+//  ② تصفية التقارير حسب الدولة المرسلة للحوالة
+// ═══════════════════════════════════════════════════════════════════════
+
+/**
+ * قائمة الدول المتاحة (تُبنى من بيانات الحوالات الموجودة + API)
+ * تُستدعى عند فتح قسم التقارير
+ */
+async function populateCountryFilter() {
+    const sel = document.getElementById('rep-country');
+    if (!sel) return;
+
+    // احتفظ بالخيار الأول "الكل"
+    while (sel.options.length > 1) sel.remove(1);
+
+    // ① الدول المستخرجة من الحوالات الموجودة في الذاكرة (فورية)
+    const localCountries = _extractCountriesFromTransfers(ALL_TRANSFERS);
+    localCountries.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value       = c.id ?? c.name;
+        opt.textContent = c.name;
+        sel.appendChild(opt);
+    });
+
+    // ② جلب كامل قائمة الدول من API (كمرجع)
+    try {
+        const res  = await fetch(`${API_URL}/countries`, { headers: getHeaders() });
+        const json = await res.json();
+        const list = json.data || json || [];
+
+        // دمج — لا نضيف إذا موجودة
+        const existingValues = new Set([...sel.options].map(o => o.value));
+        list.forEach(country => {
+            const key = String(country.id);
+            if (!existingValues.has(key)) {
+                const opt = document.createElement('option');
+                opt.value       = key;
+                opt.textContent = country.name;
+                sel.appendChild(opt);
+                existingValues.add(key);
+            }
+        });
+    } catch (e) {
+        // API الدول غير متاح — نكتفي بما استُخرج من الحوالات
+    }
+}
+
+/**
+ * استخراج الدول الفريدة من مصفوفة الحوالات
+ * يبحث في: destination_country_id (مع العلاقة)، destination_city، send_currency
+ */
+/**
+ * استخراج الدول الفريدة من مصفوفة الحوالات بناءً على دولة المرسل (الزبون)
+ */
+function _extractCountriesFromTransfers(transfers) {
+    const seen     = new Set();
+    const countries = [];
+
+    transfers.forEach(t => {
+        // الوصول للكائن الخاص بالمرسل (sender) وليس الرقم (sender_id)
+        const sender = t.sender;
+        
+        if (sender && sender.country_id) {
+            const key = String(sender.country_id);
+            if (!seen.has(key)) {
+                seen.add(key);
+                
+                // في حال كانت العلاقة country محملة نأخذ الاسم، وإلا نضع نص مبدئي
+                const countryName = sender.country?.name || `دولة #${sender.country_id}`;
+                countries.push({ id: sender.country_id, name: countryName });
+            }
+        }
+    });
+
+    return countries;
+}
+
+/**
+ * الاستعلام عن حوالة بناءً على دولة المرسل
+ */
+function _matchesCountry(transfer, countryValue) {
+    if (!countryValue) return true;
+
+    const sender = transfer.sender;
+    if (!sender) return false;
+
+    // مطابقة بالـ ID الخاص بدولة المرسل
+    if (String(sender.country_id) === String(countryValue)) {
+        return true;
+    }
+    
+    // مطابقة باسم الدولة (في حال كان الفلتر يعتمد على الاسم بدلاً من الـ ID)
+    if (sender.country?.name === countryValue) {
+        return true;
+    }
+
+    return false;
+}
+
+/**
+ * نسخة معدّلة من generateReport() تدعم فلتر الدولة
+ * تستبدل الدالة الأصلية في accountant.js
+ */
+
+/**
+ * نسخة معدّلة من exportReport() تدعم فلتر الدولة
+ */
