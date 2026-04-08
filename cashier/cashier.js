@@ -228,8 +228,8 @@ function showTransfersSection() {
   document.getElementById("section-safes").style.display = "none";
   document.getElementById("section-profits").style.display = "none";
   document.getElementById("section-internal").style.display = "none";
-  document.getElementById("section-internal").style.display = "none";
   document.getElementById("section-completed").style.display = "none";
+  document.getElementById("section-customers").style.display = "none";
 
   document.getElementById("page-heading").textContent = "الحوالات";
   document.querySelector(".page-sub").textContent = "جاهزة للتسليم";
@@ -245,6 +245,7 @@ function showSafesSection() {
   document.getElementById("section-profits").style.display = "none";
   document.getElementById("section-internal").style.display = "none";
   document.getElementById("section-completed").style.display = "none";
+  document.getElementById("section-customers").style.display = "none";
   document.getElementById("page-heading").textContent = "التداول";
   document.querySelector(".page-sub").textContent = "صناديق التداول";
   document.querySelector(".page-icon").innerHTML =
@@ -259,6 +260,7 @@ function showProfitsSection() {
   document.getElementById("section-profits").style.display = "block";
   document.getElementById("section-internal").style.display = "none";
   document.getElementById("section-completed").style.display = "none";
+  document.getElementById("section-customers").style.display = "none";
 
   document.getElementById("page-heading").textContent = "أرباح التداول";
   document.querySelector(".page-sub").textContent = "تقرير يومي";
@@ -272,6 +274,7 @@ function showInternalSection() {
   document.getElementById("section-profits").style.display = "none";
   document.getElementById("section-internal").style.display = "block";
   document.getElementById("section-completed").style.display = "none";
+  document.getElementById("section-customers").style.display = "none";
 
   document.getElementById("page-heading").textContent = "الحوالات الداخلية";
   document.querySelector(".page-sub").textContent = "حوالات داخل المنطقة";
@@ -667,6 +670,299 @@ function updateClock() {
   el.textContent = `${hh}:${mm}:${ss}`;
 }
 
+/* ======================================= */
+/*         CUSTOMERS & NEW TRANSFER        */
+/* ======================================= */
+
+let _allCustomers   = [];   // كل الزبائن المجلوبين
+let _selectedCustomer = null; // الزبون المختار حالياً
+let _custCurrencies = [];   // العملات
+
+/* ── عرض القسم ── */
+function showCustomersSection() {
+  document.getElementById("section-transfers").style.display  = "none";
+  document.getElementById("section-safes").style.display      = "none";
+  document.getElementById("section-profits").style.display    = "none";
+  document.getElementById("section-internal").style.display   = "none";
+  document.getElementById("section-completed").style.display  = "none";
+  document.getElementById("section-customers").style.display  = "block";
+
+  document.getElementById("page-heading").textContent = "إنشاء حوالة";
+  document.querySelector(".page-sub").textContent     = "اختر الزبون وأنشئ الحوالة";
+  document.querySelector(".page-icon").innerHTML      =
+    '<i class="fa-solid fa-users"></i>';
+
+  loadCustomers();
+}
+
+/* ── جلب الزبائن ── */
+async function loadCustomers() {
+  const tbody = document.getElementById("customers-list");
+  tbody.innerHTML = `<tr><td colspan="6" class="loading-row"><div class="loading-spinner"></div> جاري التحميل...</td></tr>`;
+
+  try {
+    const res  = await fetch(`${API_URL}/users`, {
+      headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
+    });
+    const json = await res.json();
+    const users = Array.isArray(json.data) ? json.data : (json.data ?? []);
+
+    // نصفّي على role=customer فقط
+    _allCustomers = users.filter((u) => u.role === "customer");
+
+    _renderCustomers(_allCustomers);
+  } catch (err) {
+    console.error("loadCustomers error:", err);
+    tbody.innerHTML = `<tr><td colspan="6" class="loading-row" style="color:var(--danger);">خطأ في الاتصال بالسيرفر</td></tr>`;
+  }
+}
+
+/* ── فلترة الزبائن عبر البحث ── */
+function filterCustomers() {
+  const q = (document.getElementById("cust-search")?.value || "").trim().toLowerCase();
+  if (!q) { _renderCustomers(_allCustomers); return; }
+  const filtered = _allCustomers.filter((u) =>
+    (u.name  || "").toLowerCase().includes(q) ||
+    (u.phone || "").toLowerCase().includes(q)
+  );
+  _renderCustomers(filtered);
+}
+
+/* ── رسم صفوف الجدول ── */
+function _renderCustomers(list) {
+  const tbody = document.getElementById("customers-list");
+  if (!list.length) {
+    tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><i class="fa-solid fa-users"></i><p>لا يوجد زبائن</p></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = list.map((u, i) => `
+    <tr>
+      <td style="color:var(--gray);font-size:12px;">${i + 1}</td>
+      <td style="font-weight:700;">${u.name ?? "—"}</td>
+      <td style="direction:ltr;text-align:right;">${u.phone ?? "—"}</td>
+      <td style="font-size:12px;color:var(--gray);">${u.email ?? "—"}</td>
+      <td>${u.city?.name ?? "—"}</td>
+      <td>
+        <button class="btn-confirm" style="padding:7px 18px;font-size:13px;"
+          onclick="selectCustomer(${u.id})">
+          <i class="fa-solid fa-paper-plane"></i> إنشاء حوالة
+        </button>
+      </td>
+    </tr>
+  `).join("");
+}
+
+/* ── اختيار زبون وفتح نموذج الحوالة ── */
+async function selectCustomer(userId) {
+  _selectedCustomer = _allCustomers.find((u) => u.id === userId) || null;
+  if (!_selectedCustomer) return;
+
+  // تحديث الهيدر
+  document.getElementById("cust-selected-name").textContent  = _selectedCustomer.name  ?? "—";
+  document.getElementById("cust-selected-phone").textContent = _selectedCustomer.phone ?? "—";
+
+  // إخفاء قائمة الزبائن وإظهار النموذج
+  document.getElementById("cust-list-card").style.display     = "none";
+  document.getElementById("cust-transfer-card").style.display = "block";
+
+  // تحميل بيانات النموذج
+  await custInitForm();
+}
+
+/* ── العودة إلى قائمة الزبائن ── */
+function backToCustomerList() {
+  _selectedCustomer = null;
+  document.getElementById("cust-list-card").style.display     = "block";
+  document.getElementById("cust-transfer-card").style.display = "none";
+  _custResetForm();
+}
+
+/* ── تحميل العملات والمكاتب ── */
+async function custInitForm() {
+  const overlay = document.getElementById("cust-loading-overlay");
+  const wrapper = document.getElementById("cust-form-wrapper");
+  overlay.style.display = "flex";
+  wrapper.style.opacity = "0.4";
+  wrapper.style.pointerEvents = "none";
+
+  try {
+    const [currRes, officeRes] = await Promise.all([
+      fetch(`${API_URL}/currencies`, {
+        headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
+      }),
+      fetch(`${API_URL}/offices`, {
+        headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
+      }),
+    ]);
+
+    // ── العملات ──
+    const currJson  = await currRes.json();
+    _custCurrencies = Array.isArray(currJson) ? currJson : (currJson.data ?? []);
+    _custFillCurrencySelect("cust-send-currency", "اختر عملة الإرسال...");
+    _custFillCurrencySelect("cust-recv-currency", "اختر عملة الاستلام...");
+
+    // ── المكاتب ──
+    const officeJson = await officeRes.json();
+    const offices    = officeJson.data ?? [];
+    const officeSel  = document.getElementById("cust-office");
+    officeSel.innerHTML = '<option value="">اختر المكتب المستلم...</option>';
+    offices.forEach((o) =>
+      officeSel.appendChild(new Option(`${o.name} — ${o.city?.name ?? ""}`, o.id))
+    );
+  } catch (err) {
+    console.error("custInitForm error:", err);
+    custShowError("فشل تحميل البيانات من الخادم. حاول مرة أخرى.");
+  } finally {
+    overlay.style.display = "none";
+    wrapper.style.opacity = "1";
+    wrapper.style.pointerEvents = "";
+  }
+}
+
+/* ── helper: ملء قائمة عملات ── */
+function _custFillCurrencySelect(selId, placeholder) {
+  const sel = document.getElementById(selId);
+  if (!sel) return;
+  sel.innerHTML = `<option value="">${placeholder}</option>`;
+  _custCurrencies.forEach((c) =>
+    sel.appendChild(new Option(`${c.name} (${c.code})`, c.id))
+  );
+}
+
+/* ── حساب القيمة بالدولار (نفس منطق admin.js) ── */
+function custCalcUsd() {
+  const amount      = parseFloat(document.getElementById("cust-amount").value) || 0;
+  const sendCurrId  = parseInt(document.getElementById("cust-send-currency").value) || 0;
+  const currency    = _custCurrencies.find((c) => c.id === sendCurrId);
+
+  const preview   = document.getElementById("cust-usd-preview");
+  const tierHint  = document.getElementById("cust-tier-hint");
+
+  if (!currency || amount <= 0) {
+    preview.textContent  = "= $0.00";
+    tierHint.textContent = "";
+    return;
+  }
+
+  // نفس getEffectiveRate من admin.js
+  const rates  = currency.rates ?? [];
+  let rate     = parseFloat(currency.price ?? 1);
+  let tierLabel = null;
+
+  if (rates.length > 0 && amount > 0) {
+    const sorted = [...rates].sort((a, b) => parseFloat(a.min_amount) - parseFloat(b.min_amount));
+    for (let i = sorted.length - 1; i >= 0; i--) {
+      if (amount >= parseFloat(sorted[i].min_amount)) {
+        rate      = parseFloat(sorted[i].rate);
+        tierLabel = `≥ ${sorted[i].min_amount}`;
+        break;
+      }
+    }
+  }
+
+  const eq = (amount * rate).toFixed(2);
+  preview.textContent = `= $${eq}`;
+
+  if (tierLabel) {
+    tierHint.textContent = `السعر المطبّق: ${rate} (${tierLabel})`;
+    tierHint.style.color = "var(--primary)";
+  } else {
+    tierHint.textContent = `السعر الأساسي: ${rate}`;
+    tierHint.style.color = "var(--gray)";
+  }
+}
+
+/* ── إرسال الحوالة ── */
+async function custSubmitTransfer() {
+  const amount        = document.getElementById("cust-amount").value.trim();
+  const sendCurrId    = document.getElementById("cust-send-currency").value;
+  const recvCurrId    = document.getElementById("cust-recv-currency").value;
+  const officeId      = document.getElementById("cust-office").value;
+  const receiverName  = document.getElementById("cust-receiver-name").value.trim();
+  const receiverPhone = document.getElementById("cust-receiver-phone").value.trim();
+
+  if (!_selectedCustomer)          return custShowError("لم يتم اختيار زبون");
+  if (!amount || parseFloat(amount) < 1) return custShowError("يرجى إدخال مبلغ صحيح (1 أو أكثر)");
+  if (!sendCurrId)                 return custShowError("يرجى اختيار عملة الإرسال");
+  if (!recvCurrId)                 return custShowError("يرجى اختيار عملة الاستلام");
+  if (!officeId)                   return custShowError("يرجى اختيار المكتب المستلم");
+  if (!receiverName)               return custShowError("يرجى إدخال اسم المستلم");
+  if (!receiverPhone)              return custShowError("يرجى إدخال رقم هاتف المستلم");
+
+  const btn = document.getElementById("cust-submit-btn");
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري الإرسال...';
+
+  try {
+    const fd = new FormData();
+    fd.append("amount",                parseFloat(amount));
+    fd.append("send_currency_id",      parseInt(sendCurrId));
+    fd.append("currency_id",           parseInt(recvCurrId));
+    fd.append("destination_office_id", parseInt(officeId));
+    fd.append("sender_id",             _selectedCustomer.id);
+    fd.append("status", "ready");      // مباشرة ready بدون موافقة
+    fd.append("receiver_name",         receiverName);
+    fd.append("receiver_phone",        receiverPhone);
+    fd.append("fee",                   0);
+
+    const res  = await fetch(`${API_URL}/transfers`, {
+      method: "POST",
+      headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
+      body: fd,
+    });
+    const json = await res.json();
+
+    if (res.status === 201) {
+      const trackingCode = json.data?.tracking_code ?? "";
+      custShowSuccess(`✅ تم إنشاء الحوالة بنجاح — كود التتبع: ${trackingCode}`);
+      _custResetForm();
+    } else {
+      const msg = json.errors
+        ? Object.values(json.errors).flat().join(" — ")
+        : (json.message ?? "حدث خطأ غير متوقع");
+      custShowError(msg);
+    }
+  } catch (err) {
+    console.error("custSubmitTransfer error:", err);
+    custShowError("تعذّر الاتصال بالخادم.");
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> إنشاء وإرسال الحوالة';
+  }
+}
+
+/* ── إعادة تعيين النموذج ── */
+function _custResetForm() {
+  ["cust-amount", "cust-receiver-name", "cust-receiver-phone"].forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) el.value = "";
+  });
+  ["cust-send-currency", "cust-recv-currency", "cust-office"].forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) el.value = "";
+  });
+  document.getElementById("cust-usd-preview").textContent  = "= $0.00";
+  document.getElementById("cust-tier-hint").textContent    = "";
+  document.getElementById("cust-success-toast").classList.add("hidden");
+  document.getElementById("cust-error-toast").classList.add("hidden");
+}
+
+/* ── التوستات ── */
+function custShowSuccess(msg) {
+  const t = document.getElementById("cust-success-toast");
+  document.getElementById("cust-toast-msg").textContent = msg;
+  t.classList.remove("hidden");
+  setTimeout(() => t.classList.add("hidden"), 7000);
+  document.getElementById("cust-error-toast").classList.add("hidden");
+}
+function custShowError(msg) {
+  const t = document.getElementById("cust-error-toast");
+  document.getElementById("cust-error-msg").textContent = msg;
+  t.classList.remove("hidden");
+  setTimeout(() => t.classList.add("hidden"), 7000);
+  document.getElementById("cust-success-toast").classList.add("hidden");
+}
+
 /* ============================= */
 /*             INIT             */
 /* ============================= */
@@ -688,7 +984,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 /* ============================= */
 /*        PRINT RECEIPT         */
-/* ============================= */ function printTransferReceipt(tx) {
+/* ============================= */ 
+function printTransferReceipt(tx) {
   if (!tx) return;
 
   function toEn(val) {
@@ -1197,6 +1494,7 @@ function showCompletedSection() {
   document.getElementById("section-profits").style.display = "none";
   document.getElementById("section-internal").style.display = "none";
   document.getElementById("section-completed").style.display = "block";
+  document.getElementById("section-customers").style.display = "none";
 
   document.getElementById("page-heading").textContent = "سجل المكتملة";
   document.querySelector(".page-sub").textContent = "الحوالات المسلّمة";
