@@ -158,23 +158,26 @@ function showSection(name) {
     document.getElementById('nav-' + name)?.classList.add('active');
 
     const titles = {
-        dashboard     : 'لوحة المحاسب',
-        transfers     : 'سجل الحوالات',
-        summary       : 'ملخص الحسابات',
-        trading       : 'أرباح التداول',
-        reports       : 'التقارير',
-        'edit-history': 'سجل التعديلات',
-        'acct-safes'  : 'الصناديق',
-        'acct-internal': 'الحوالات الداخلية',
+        dashboard       : 'لوحة المحاسب',
+        transfers       : 'سجل الحوالات',
+        summary         : 'ملخص الحسابات',
+        trading         : 'أرباح التداول',
+        reports         : 'التقارير',
+        'edit-history'  : 'سجل التعديلات',
+        'acct-safes'    : 'الصناديق',
+        'acct-internal' : 'الحوالات الداخلية',
+        'monthly-closing': 'الإقفال الشهري',
     };
     setText('page-heading', titles[name] || '');
 
-    if (name === 'transfers')       renderTransfersSection();
-    if (name === 'summary')         renderSummarySection();
-    if (name === 'trading')         initTradingSection();
-    if (name === 'edit-history')    initHistorySection();
-    if (name === 'acct-safes')      loadAccountantSafes();
-    if (name === 'acct-internal')   loadAccountantInternals();
+    if (name === 'transfers')        renderTransfersSection();
+    if (name === 'summary')          renderSummarySection();
+    if (name === 'trading')          initTradingSection();
+    if (name === 'edit-history')     initHistorySection();
+    if (name === 'acct-safes')       loadAccountantSafes();
+    if (name === 'acct-internal')    loadAccountantInternals();
+    if (name === 'monthly-closing')  initMonthlyClosing();
+    if (name === 'reports')          populateCountryFilter();
 
     closeSidebar();
 }
@@ -744,22 +747,15 @@ function exportReport() {
     showToast('تم تصدير التقرير بنجاح ✓', 'success');
 }
 
-// ── تحديث showSection لدعم قسم الإقفال الشهري ────────────────────────
-// (patch يُكمّل الدالة الأصلية — يستدعى بعد تحميل الملف الأصلي)
-(function _patchShowSection() {
-    const _orig = window.showSection;
-    window.showSection = function(name) {
-        _orig(name);
-        if (name === 'monthly-closing') initMonthlyClosing();
-        if (name === 'reports')         populateCountryFilter();
-    };
-})();
+// ── showSection يدعم monthly-closing و reports مباشرة في الدالة الأصلية ──
 
-// إغلاق مودال الـ snapshot بمفتاح Escape
+// إغلاق مودالَي الـ snapshot والمؤرشفة بمفتاح Escape
 document.addEventListener('keydown', e => {
     if (e.key === 'Escape') {
-        const m = document.getElementById('closing-snapshot-modal');
-        if (m && !m.classList.contains('hidden')) closeSnapshotModal();
+        const snap = document.getElementById('closing-snapshot-modal');
+        if (snap && !snap.classList.contains('hidden')) { closeSnapshotModal(); return; }
+        const arch = document.getElementById('archived-transfers-modal');
+        if (arch && !arch.classList.contains('hidden')) closeArchivedModal();
     }
 });
 // ─────────────────────────────────────────────────────
@@ -1711,6 +1707,7 @@ async function loadAccountantSafes() {
                 </button>
             </div>`;
     }
+    initSafesReport();
 }
 
 /* =====================================================
@@ -1910,9 +1907,7 @@ const _CLOSING = {
 };
 
 /**
- * showSection يستدعي هذه الدالة عند فتح قسم الإقفال
- * أضف السطر التالي في دالة showSection الموجودة:
- *   if (name === 'monthly-closing') initMonthlyClosing();
+ * showSection تستدعي هذه الدالة عند فتح قسم الإقفال (مُدمجة في showSection)
  */
 async function initMonthlyClosing() {
     // ملء قائمة الشهور في select
@@ -1926,7 +1921,9 @@ async function initMonthlyClosing() {
  */
 function _fillMonthSelect() {
     const sel = document.getElementById('closing-month-select');
-    if (!sel || sel.options.length > 1) return; // تم الملء مسبقاً
+    if (!sel) return;
+    // أزل الخيارات القديمة مع الإبقاء على الـ placeholder الأول
+    while (sel.options.length > 1) sel.remove(1);
 
     const now = new Date();
     for (let i = 0; i < 12; i++) {
@@ -1947,7 +1944,7 @@ async function loadClosingHistory() {
     const tbody = document.getElementById('closing-history-tbody');
     if (!tbody) return;
 
-    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--gray);">
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--gray);">
         <div style="display:flex;flex-direction:column;align-items:center;gap:8px;">
             <div style="width:28px;height:28px;border:3px solid #e5e7eb;border-top:3px solid var(--primary);
                         border-radius:50%;animation:acct-spin 0.8s linear infinite;"></div>
@@ -1957,14 +1954,25 @@ async function loadClosingHistory() {
 
     try {
         const res  = await fetch(`${API_URL}/monthly-closing`, { headers: getHeaders() });
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err.message || `HTTP ${res.status}`);
+        }
         const json = await res.json();
         _CLOSING.history  = json.data || [];
         _CLOSING.loaded   = true;
         _renderClosingHistory();
     } catch (err) {
         console.error('loadClosingHistory:', err);
-        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--danger);">
-            خطأ في الاتصال بالسيرفر
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--danger);">
+            <i class="fa-solid fa-circle-exclamation" style="margin-left:6px;"></i>
+            خطأ في الاتصال بالسيرفر: ${err.message || ''}
+            <br><button onclick="loadClosingHistory()"
+                style="margin-top:10px;padding:6px 16px;background:var(--danger);color:#fff;
+                       border:none;border-radius:8px;font-family:'Cairo',sans-serif;
+                       font-size:12px;font-weight:700;cursor:pointer;">
+                إعادة المحاولة
+            </button>
         </td></tr>`;
     }
 }
@@ -1979,7 +1987,7 @@ function _renderClosingHistory() {
     const data = _CLOSING.history;
  
     if (!data.length) {
-        tbody.innerHTML = `<tr><td colspan="6">
+        tbody.innerHTML = `<tr><td colspan="8">
             <div style="text-align:center;padding:40px;color:var(--gray);">
                 <i class="fa-solid fa-box-archive" style="font-size:32px;opacity:.3;display:block;margin-bottom:12px;"></i>
                 <p style="margin:0;font-weight:600;">لا توجد إقفالات شهرية مسجلة بعد</p>
@@ -1987,7 +1995,7 @@ function _renderClosingHistory() {
         </td></tr>`;
         return;
     }
- 
+
     tbody.innerHTML = data.map((c, i) => {
         const monthLabel = (() => {
             try {
@@ -1995,25 +2003,51 @@ function _renderClosingHistory() {
                 return new Date(y, m - 1).toLocaleDateString('ar-SY', { year: 'numeric', month: 'long' });
             } catch { return c.month; }
         })();
- 
+
         const date = c.created_at
             ? new Date(c.created_at).toLocaleString('ar-SY', { dateStyle: 'short', timeStyle: 'short' })
             : '—';
- 
+
+        const totalAmountUsd = parseFloat(c.total_amount_usd ?? 0);
+        const totalProfit    = parseFloat(c.total_profit ?? 0);
+
         return `
         <tr style="background:${i % 2 === 0 ? 'var(--white)' : '#fafafa'}">
             <td style="padding:12px 14px;font-weight:700;color:var(--primary);">${monthLabel}</td>
             <td style="padding:12px 14px;color:var(--gray);font-size:12px;">
                 ${c.office_id ? `مكتب #${c.office_id}` : '<span style="color:#7c3aed;font-weight:700;">كل المكاتب</span>'}
             </td>
-            <td style="padding:12px 14px;font-weight:700;color:var(--dark);">${(c.archived_transfers_count ?? 0).toLocaleString('ar')}</td>
+        <td style="padding:12px 14px;font-weight:700;color:var(--dark);">
+                <button onclick="viewArchivedTransfers('${c.month}', ${c.office_id ?? 'null'}, '${monthLabel}')"
+                        title="عرض الحوالات المؤرشفة"
+                        style="display:inline-flex;align-items:center;gap:6px;padding:5px 12px;
+                               background:#eff6ff;color:#1e40af;border:1.5px solid #bfdbfe;
+                               border-radius:8px;font-family:'Cairo',sans-serif;font-size:13px;
+                               font-weight:800;cursor:pointer;transition:all .2s;"
+                        onmouseover="this.style.background='#1e40af';this.style.color='#fff';this.style.borderColor='#1e40af';"
+                        onmouseout="this.style.background='#eff6ff';this.style.color='#1e40af';this.style.borderColor='#bfdbfe';">
+                    <i class="fa-solid fa-box-archive" style="font-size:11px;"></i>
+                    ${(c.archived_transfers_count ?? 0).toLocaleString('ar')}
+                </button>
+            </td>
+            <td style="padding:12px 14px;font-weight:800;color:var(--secondary);">
+                ${fmtMoney(totalAmountUsd)}
+                <small style="font-size:10px;color:var(--gray);font-weight:600;"> USD</small>
+            </td>
+            <td style="padding:12px 14px;font-weight:800;color:var(--success);">
+                ${fmtMoney(totalProfit)}
+                <small style="font-size:10px;color:var(--gray);font-weight:600;"> USD</small>
+            </td>
             <td style="padding:12px 14px;font-size:12px;color:var(--gray);">${c.performed_by_name || '—'}</td>
-            <td style="padding:12px 14px;font-size:11px;color:var(--gray);">${date}</td>
+            <td style="padding:12px 14px;font-size:11px;color:var(--gray);white-space:nowrap;">${date}</td>
             <td style="padding:12px 14px;">
                 <button onclick="viewClosingSnapshots(${c.id})"
                         style="display:inline-flex;align-items:center;gap:5px;padding:6px 12px;
                                background:var(--primary-bg);color:var(--primary);border:1px solid var(--primary);
-                               border-radius:8px;font-size:12px;font-weight:700;font-family:'Cairo',sans-serif;cursor:pointer;">
+                               border-radius:8px;font-size:12px;font-weight:700;font-family:'Cairo',sans-serif;cursor:pointer;
+                               transition:var(--transition);"
+                        onmouseover="this.style.background='var(--primary)';this.style.color='#fff';"
+                        onmouseout="this.style.background='var(--primary-bg)';this.style.color='var(--primary)';">
                     <i class="fa-solid fa-eye"></i> الصناديق
                 </button>
             </td>
@@ -2052,29 +2086,39 @@ async function performMonthlyClosing() {
     }
  
     try {
+        // نجلب office_id من بيانات المستخدم الحالي (إن وُجد)
+        let officeId = null;
+        try {
+            const u = JSON.parse(localStorage.getItem('user_data') || '{}');
+            officeId = u.office_id ?? null;
+        } catch (_) {}
+
         const body = {
-            month : month,
-            notes : notesSel?.value?.trim() || null,
+            month     : month,
+            notes     : notesSel?.value?.trim() || null,
+            office_id : officeId,
         };
- 
+
         const res  = await fetch(`${API_URL}/monthly-closing`, {
             method : 'POST',
             headers: getHeaders(),
             body   : JSON.stringify(body),
         });
         const json = await res.json();
- 
+
         if (!res.ok) {
             showToast(json.message || 'فشل الإقفال الشهري', 'error');
             return;
         }
- 
-        showToast(`✅ تم إقفال ${monthLabel} بنجاح — أُرشفت ${json.data.archived_transfers} حوالة`, 'success');
+
+        const archived = json.data?.archived_transfers ?? 0;
+        const snaps    = json.data?.snapshots_taken    ?? 0;
+        showToast(`✅ تم إقفال ${monthLabel} بنجاح — أُرشفت ${archived} حوالة، ${snaps} صندوق مُسجَّل`, 'success');
         if (notesSel) notesSel.value = '';
- 
+
         // إعادة تحميل السجل والحوالات
         await loadClosingHistory();
-        await fetchAllTransfers(); // تحديث الحوالات في الذاكرة
+        await fetchAllTransfers();
  
     } catch (err) {
         console.error('performMonthlyClosing:', err);
@@ -2096,17 +2140,27 @@ async function viewClosingSnapshots(closingId) {
     const title = document.getElementById('snapshot-modal-title');
     if (!modal || !tbody) return;
  
-    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--gray);">جاري التحميل...</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--gray);">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:8px;">
+            <div style="width:24px;height:24px;border:3px solid #e5e7eb;border-top:3px solid var(--primary);
+                        border-radius:50%;animation:acct-spin 0.8s linear infinite;"></div>
+            <span>جاري تحميل لقطة الصناديق...</span>
+        </div>
+    </td></tr>`;
     modal.classList.remove('hidden');
     document.body.style.overflow = 'hidden';
- 
+
     try {
         const res  = await fetch(`${API_URL}/monthly-closing/${closingId}/safes`, { headers: getHeaders() });
         const json = await res.json();
- 
-        const closing     = json.closing;
-        const snapshots   = json.data || [];
- 
+
+        if (!res.ok) {
+            throw new Error(json.message || `HTTP ${res.status}`);
+        }
+
+        const closing   = json.closing;
+        const snapshots = json.data || [];
+
         if (title && closing) {
             const monthLabel = (() => {
                 try {
@@ -2115,38 +2169,326 @@ async function viewClosingSnapshots(closingId) {
                 } catch { return closing.month; }
             })();
             title.textContent = `لقطة الصناديق — ${monthLabel}`;
+
+            // معلومات الإقفال تحت العنوان
+            const infoEl = document.getElementById('snapshot-modal-info');
+            if (infoEl) {
+                infoEl.innerHTML = `
+                    <span style="background:#eff6ff;color:#1e40af;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;margin-left:6px;">
+                        <i class="fa-solid fa-layer-group" style="margin-left:4px;"></i>${closing.archived_transfers_count ?? 0} حوالة مؤرشفة
+                    </span>
+                    <span style="background:#f0fdf4;color:#166534;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;margin-left:6px;">
+                        <i class="fa-solid fa-dollar-sign" style="margin-left:4px;"></i>${fmtMoney(closing.total_amount_usd ?? 0)} USD
+                    </span>
+                    <span style="background:#fefce8;color:#854d0e;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;">
+                        <i class="fa-solid fa-coins" style="margin-left:4px;"></i>ربح: ${fmtMoney(closing.total_profit ?? 0)} USD
+                    </span>`;
+            }
         }
- 
+
         if (!snapshots.length) {
             tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:32px;color:var(--gray);">
+                <i class="fa-solid fa-vault" style="font-size:28px;opacity:.3;display:block;margin-bottom:10px;"></i>
                 لا توجد بيانات صناديق لهذا الإقفال
             </td></tr>`;
             return;
         }
- 
-        const fmt = n => parseFloat(n ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2 });
- 
+
+        const fmtN = n => parseFloat(n ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2 });
+
         tbody.innerHTML = snapshots.map((s, i) => `
             <tr style="background:${i % 2 === 0 ? '#fff' : '#fafafa'}">
                 <td style="padding:10px 12px;font-weight:700;color:var(--dark);">${s.office_name || `مكتب #${s.office_id}`}</td>
-                <td style="padding:10px 12px;color:#1e40af;font-weight:700;">$${fmt(s.office_safe_usd)}</td>
-                <td style="padding:10px 12px;color:#ea580c;">${fmt(s.office_safe_sy)} ل.س</td>
-                <td style="padding:10px 12px;color:#92400e;font-weight:700;">$${fmt(s.trading_safe_usd)}</td>
-                <td style="padding:10px 12px;color:#7c2d12;">${fmt(s.trading_safe_sy)} ل.س</td>
+                <td style="padding:10px 12px;color:#1e40af;font-weight:700;">$${fmtN(s.office_safe_usd)}</td>
+                <td style="padding:10px 12px;color:#ea580c;">${fmtN(s.office_safe_sy)} ل.س</td>
+                <td style="padding:10px 12px;color:#92400e;font-weight:700;">$${fmtN(s.trading_safe_usd)}</td>
+                <td style="padding:10px 12px;color:#7c2d12;">${fmtN(s.trading_safe_sy)} ل.س</td>
                 <td style="padding:10px 12px;color:#64748b;">${parseFloat(s.trading_safe_cost ?? 0).toFixed(4)}</td>
-                <td style="padding:10px 12px;color:#5b21b6;font-weight:700;">$${fmt(s.profit_safe_main)}</td>
-                <td style="padding:10px 12px;color:#6d28d9;">${fmt(s.profit_safe_trade)} ل.س</td>
+                <td style="padding:10px 12px;color:#5b21b6;font-weight:700;">$${fmtN(s.profit_safe_main)}</td>
+                <td style="padding:10px 12px;color:#6d28d9;">${fmtN(s.profit_safe_trade)} ل.س</td>
             </tr>
         `).join('');
  
     } catch (err) {
         console.error('viewClosingSnapshots:', err);
         tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--danger);">
-            خطأ في الاتصال بالسيرفر
+            <i class="fa-solid fa-circle-exclamation" style="font-size:24px;display:block;margin-bottom:8px;"></i>
+            خطأ في تحميل بيانات الصناديق<br>
+            <small style="color:var(--gray);">${err.message || ''}</small>
         </td></tr>`;
     }
 }
  
+/**
+ * عرض الحوالات المؤرشفة لإقفال معيّن
+ */
+async function viewArchivedTransfers(month, officeId, monthLabel) {
+    const modal  = document.getElementById('archived-transfers-modal');
+    const tbody  = document.getElementById('archived-transfers-tbody');
+    const title  = document.getElementById('archived-modal-title');
+    const sub    = document.getElementById('archived-modal-sub');
+    if (!modal || !tbody) return;
+
+    // عنوان المودال
+    if (title) title.textContent = `الحوالات المؤرشفة — ${monthLabel}`;
+    if (sub)   sub.textContent   = officeId ? `مكتب #${officeId}` : 'كل المكاتب';
+
+    // إعادة ضبط الإحصاء
+    ['arch-stat-count','arch-stat-amount','arch-stat-fee'].forEach(id => setText(id, '...'));
+
+    // عرض المودال مع لودر
+    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:32px;color:var(--gray);">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:10px;">
+            <div style="width:28px;height:28px;border:3px solid #e5e7eb;border-top:3px solid #1e40af;
+                        border-radius:50%;animation:acct-spin 0.8s linear infinite;"></div>
+            <span>جاري تحميل الحوالات المؤرشفة...</span>
+        </div>
+    </td></tr>`;
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+
+    try {
+        // بناء رابط الطلب مع الفلاتر
+        let url = `${API_URL}/monthly-closing/archived-transfers?month=${month}`;
+        if (officeId) url += `&office_id=${officeId}`;
+
+        const res  = await fetch(url, { headers: getHeaders() });
+        const json = await res.json();
+
+        if (!res.ok) throw new Error(json.message || `HTTP ${res.status}`);
+
+        const transfers = json.data || [];
+
+        // حساب الإحصاءات
+        const totalUsd = transfers.reduce((s, t) => s + parseFloat(t.amount_in_usd || 0), 0);
+        const totalFee = transfers.reduce((s, t) => s + parseFloat(t.fee || 0), 0);
+
+        setText('arch-stat-count',  transfers.length.toLocaleString('ar'));
+        setText('arch-stat-amount', fmtMoney(totalUsd) + ' USD');
+        setText('arch-stat-fee',    fmtMoney(totalFee) + ' USD');
+
+        if (!transfers.length) {
+            tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--gray);">
+                <i class="fa-solid fa-inbox" style="font-size:28px;opacity:.3;display:block;margin-bottom:10px;"></i>
+                <p style="margin:0;font-weight:600;">لا توجد حوالات مؤرشفة لهذا الإقفال</p>
+            </td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = transfers.map((t, i) => {
+            const sName    = t.sender?.name || `#${t.sender_id}`;
+            const curName  = t.currency?.name || t.currency?.code || '—';
+            const dateStr  = (t.created_at || '').split('T')[0] || '—';
+            const ref      = t.tracking_code || ('#' + t.id);
+            const bg       = i % 2 === 0 ? '#fff' : '#f8fafc';
+
+            return `<tr style="background:${bg};">
+                <td style="padding:10px 12px;color:var(--gray);font-size:11px;">${i + 1}</td>
+                <td style="padding:10px 12px;font-weight:700;color:#1e40af;">${ref}</td>
+                <td style="padding:10px 12px;">${sName}</td>
+                <td style="padding:10px 12px;">${t.receiver_name || '—'}</td>
+                <td style="padding:10px 12px;direction:ltr;font-size:11px;color:var(--gray);">${t.receiver_phone || '—'}</td>
+                <td style="padding:10px 12px;font-weight:700;">
+                    ${fmtMoney(t.amount)}
+                    <small style="color:var(--gray);font-weight:400;"> ${curName}</small>
+                </td>
+                <td style="padding:10px 12px;font-weight:800;color:#1e40af;">
+                    ${fmtMoney(t.amount_in_usd)}
+                    <small style="color:var(--gray);font-weight:400;"> USD</small>
+                </td>
+                <td style="padding:10px 12px;color:#16a34a;font-weight:700;">${fmtMoney(t.fee)}</td>
+                <td style="padding:10px 12px;font-size:11px;color:var(--gray);">${dateStr}</td>
+            </tr>`;
+        }).join('');
+
+    } catch (err) {
+        console.error('viewArchivedTransfers:', err);
+        tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:28px;color:var(--danger);">
+            <i class="fa-solid fa-circle-exclamation" style="font-size:24px;display:block;margin-bottom:8px;"></i>
+            خطأ في تحميل البيانات<br>
+            <small style="color:var(--gray);">${err.message || ''}</small>
+        </td></tr>`;
+    }
+}
+
+
+
+/* =====================================================
+   تقرير سجل حركات الصناديق المتوافق مع SafeLogController
+   ===================================================== */
+let SAFES_REPORT_DATA = [];
+
+// تهيئة التقرير بالشهر الحالي
+function initSafesReport() {
+    const monthInput = document.getElementById('safes-report-month');
+    if (monthInput && !monthInput.value) {
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        monthInput.value = `${yyyy}-${mm}`; 
+        loadSafesReport();
+    }
+}
+
+// جلب البيانات من SafeLogController باستخدام date_from و date_to
+async function loadSafesReport() {
+    const monthVal = document.getElementById('safes-report-month')?.value;
+    const tbody = document.getElementById('safes-report-tbody');
+    
+    if (!monthVal || !tbody) return;
+
+    // استخراج أول وآخر يوم من الشهر المختار
+    const [year, month] = monthVal.split('-');
+    const dateFrom = `${year}-${month}-01`;
+    const lastDay = new Date(year, month, 0).getDate();
+    const dateTo = `${year}-${month}-${lastDay}`;
+
+    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:30px;color:var(--gray);">
+        <div style="width:28px;height:28px;border:3px solid #e5e7eb;border-top:3px solid var(--primary);
+                    border-radius:50%;animation:acct-spin 0.8s linear infinite;margin:0 auto 10px;"></div>
+        جاري جلب السجلات...
+    </td></tr>`;
+
+    try {
+        // نرسل التواريخ للمسار الموجود في الباك إند
+        const res = await fetch(`${API_URL}/safe-logs?date_from=${dateFrom}&date_to=${dateTo}&per_page=500`, { 
+            headers: getHeaders() 
+        });
+
+        if (!res.ok) throw new Error('فشل في جلب البيانات');
+
+        const json = await res.json();
+        SAFES_REPORT_DATA = json.data || [];
+        _renderSafesReport(SAFES_REPORT_DATA);
+
+    } catch (err) {
+        console.error('loadSafesReport error:', err);
+        tbody.innerHTML = `<tr><td colspan="9" style="text-align:center; color:var(--danger); padding:20px;">
+            <i class="fa-solid fa-circle-exclamation" style="font-size:24px; display:block; margin-bottom:8px;"></i>
+            خطأ في الاتصال بالخادم أو السجل غير متوفر
+        </td></tr>`;
+    }
+}
+
+// رسم الجدول بالبيانات المجلوبة
+function _renderSafesReport(data) {
+    const tbody = document.getElementById('safes-report-tbody');
+    if (!tbody) return;
+
+    if (!data || data.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="9" style="text-align:center; padding:30px; color:var(--gray);">
+            <i class="fa-solid fa-folder-open" style="font-size:24px; margin-bottom:10px; opacity:0.5; display:block;"></i>
+            لا توجد حركات صناديق مسجلة في هذا الشهر
+        </td></tr>`;
+        return;
+    }
+
+    // قواميس لترجمة الحالات والصناديق لتظهر بشكل احترافي
+    const safeNames = {
+        office_safe: { label: 'خزنة المكتب', color: '#1e40af', bg: '#dbeafe' },
+        trading: { label: 'صندوق التداول', color: '#92400e', bg: '#fef3c7' },
+        profit_safe: { label: 'صندوق الأرباح', color: '#5b21b6', bg: '#ede9fe' },
+        office_main: { label: 'الصندوق الرئيسي', color: '#065f46', bg: '#d1fae5' }
+    };
+
+    const actionNames = {
+        deposit: 'إيداع',
+        withdraw: 'سحب',
+        transfer_to_office: 'تحويل للمكتب',
+        buy: 'شراء',
+        sell: 'بيع',
+        snapshot: 'لقطة'
+    };
+
+    tbody.innerHTML = data.map((log, i) => {
+        const fmtN = n => parseFloat(n ?? 0).toLocaleString('en-US', { minimumFractionDigits: 2 });
+        const dateStr = log.created_at ? new Date(log.created_at).toLocaleString('ar-SY', { dateStyle: 'short', timeStyle: 'short'}) : '—';
+        
+        const safeInfo = safeNames[log.safe_type] || { label: log.safe_type, color: 'var(--primary)', bg: 'var(--primary-bg)' };
+        const actionLabel = actionNames[log.action_type] || log.action_type;
+        
+        // تلوين المبلغ بناءً على نوع الحركة
+        const isPositive = ['deposit', 'sell'].includes(log.action_type);
+        const amountColor = isPositive ? 'var(--success)' : 'var(--danger)';
+        const amountSign = isPositive ? '+' : '-';
+
+        // دمج الأرصدة لعرضها بطريقة ذكية
+        let balanceHtml = '';
+        if (log.currency === 'USD' || log.currency === 'usd') {
+            balanceHtml = `<span style="color:#1e40af; font-weight:700;">$${fmtN(log.balance_after)}</span>`;
+        } else {
+            balanceHtml = `<span style="color:#ea580c; font-weight:700;">${fmtN(log.balance_sy_after)} ل.س</span>`;
+        }
+
+        return `
+        <tr style="background:${i % 2 === 0 ? 'var(--white)' : '#fafafa'}">
+            <td>${i + 1}</td>
+            <td>
+                <span class="badge" style="background:${safeInfo.bg}; color:${safeInfo.color}; border:none;">
+                    ${safeInfo.label}
+                </span>
+            </td>
+            <td style="font-weight:600;">${actionLabel}</td>
+            <td style="color:${amountColor}; font-weight:700; direction:ltr;">${amountSign}${fmtN(log.amount)}</td>
+            <td style="font-weight:600;">${log.currency}</td>
+            <td>${balanceHtml}</td>
+            <td style="font-size:11px; color:var(--gray); max-width:180px;">${log.description || '—'}</td>
+            <td style="font-size:12px; font-weight:600;">${log.performed_by_name || '—'}</td>
+            <td style="color:var(--gray); font-size:12px;">${dateStr}</td>
+        </tr>`;
+    }).join('');
+}
+
+// تصدير الجدول إلى ملف CSV
+function exportSafesReportCSV() {
+    if (!SAFES_REPORT_DATA || SAFES_REPORT_DATA.length === 0) {
+        showToast('لا توجد بيانات للتصدير في هذا الشهر', 'error');
+        return;
+    }
+
+    const month = document.getElementById('safes-report-month')?.value || 'all';
+    const headers = ['#', 'نوع الصندوق', 'نوع الحركة', 'العملة', 'المبلغ', 'رصيد دولار بعد', 'رصيد ليرة بعد', 'الوصف', 'المنفذ', 'التاريخ'];
+    
+    const actionNames = { deposit: 'إيداع', withdraw: 'سحب', transfer_to_office: 'تحويل للمكتب', buy: 'شراء', sell: 'بيع', snapshot: 'لقطة' };
+    const safeNames = { office_safe: 'خزنة المكتب', trading: 'صندوق التداول', profit_safe: 'صندوق الأرباح', office_main: 'الرئيسي' };
+
+    const rows = SAFES_REPORT_DATA.map((log, i) => [
+        i + 1,
+        safeNames[log.safe_type] || log.safe_type,
+        actionNames[log.action_type] || log.action_type,
+        log.currency,
+        parseFloat(log.amount || 0).toFixed(2),
+        parseFloat(log.balance_after || 0).toFixed(2),
+        parseFloat(log.balance_sy_after || 0).toFixed(2),
+        log.description || '',
+        log.performed_by_name || '',
+        log.created_at ? new Date(log.created_at).toLocaleString('ar-SY') : ''
+    ]);
+
+    const csv = [headers, ...rows].map(r => r.map(v => `"${v}"`).join(',')).join('\n');
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `safes_logs_${month}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('تم تصدير سجل الصناديق بنجاح ✓', 'success');
+}
+
+// طباعة التقرير
+function printSafesReport() {
+    window.print();
+}
+/**
+ * إغلاق مودال الحوالات المؤرشفة
+ */
+function closeArchivedModal() {
+    const modal = document.getElementById('archived-transfers-modal');
+    if (modal) modal.classList.add('hidden');
+    document.body.style.overflow = '';
+}
+
 /**
  * إغلاق مودال الـ snapshot
  */
