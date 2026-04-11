@@ -1008,7 +1008,8 @@ function printTransferReceipt(tx) {
 
   const trackingCode = toEn(tx.tracking_code ?? "---");
   const senderName = tx.sender?.name ?? "غير معروف";
-  const senderCountry = tx.sender?.country?.name ?? "---";
+  const senderCountry = tx.sender.country?.name ?? "---";
+   const destination = tx.destination_city?? "---";
   const sendAmount = fmtNum(tx.amount);
   const sendCurrencyCode = tx.send_currency?.code ?? "USD";
   const amountUsd = parseFloat(tx.amount_in_usd ?? 0);
@@ -1101,8 +1102,8 @@ function printTransferReceipt(tx) {
   </div>
 
   <div class="r"><span class="lbl">المرسل</span>      <span class="val">${senderName}</span></div>
-  <div class="r"><span class="lbl">دولة المرسل</span> <span class="val">${senderCountry}</span></div>
-  <hr class="divider">
+  <div class="r"><span class="lbl">من</span> <span class="val">${senderCountry}</span></div>
+   <div class="r"><span class="lbl">إلى</span> <span class="val">${destination}</span></div>
   <div class="r"><span class="lbl">المستلم</span>     <span class="val">${receiverName}</span></div>
   <div class="r"><span class="lbl">رقم الهاتف</span>  <span class="val">${receiverPhone}</span></div>
 
@@ -1123,7 +1124,10 @@ function printTransferReceipt(tx) {
     <div class="sig">توقيع الموظف<div class="sig-line"></div></div>
     <div class="sig">توقيع المستلم<div class="sig-line"></div></div>
   </div>
-
+  <div class="print-spacing">----------------</div>
+  <div class="print-spacing">----------------</div>
+  <div class="print-spacing">----------------</div>
+  <div class="print-spacing">----------------</div>
 </body>
 </html>`;
 

@@ -1534,3 +1534,7 @@ select.form-control {
     .cf-group { min-width: 140px; }
     .cf-group-sm { flex: 0 0 130px; }
 }
+.print-spacing {
+    height: 300px; 
+    width: 100%;
+}
