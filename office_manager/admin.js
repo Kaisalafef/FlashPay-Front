@@ -964,7 +964,7 @@ async function loadPendingTransfers() {
     tbody.innerHTML = "";
 
     if (!json.data || !json.data.length) {
-      tbody.innerHTML = `<tr><td colspan="9"><div class="empty-state"><i class="fa-solid fa-inbox"></i><p>لا توجد حوالات معلقة</p></div></td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="10"><div class="empty-state"><i class="fa-solid fa-inbox"></i><p>لا توجد حوالات معلقة</p></div></td></tr>`;
       return;
     }
 
@@ -975,21 +975,32 @@ async function loadPendingTransfers() {
       const recvCurrency = transfer.currency?.code ?? "—";
       const recvPrice    = Number(transfer.currency?.price ?? 1);
       const deliveryAmt  = recvPrice > 0 ? amountUsd / recvPrice : 0;
+      const fee          = Number(transfer.fee ?? 0);
       const date         = transfer.created_at ? new Date(transfer.created_at).toLocaleString("ar-SY") : "—";
-      const tracking     = transfer.tracking_code ? `<span class="tracking-code">${transfer.tracking_code}</span>` : "";
+      const tracking     = transfer.tracking_code ?? `#${transfer.id}`;
+      const isAgent      = transfer.sender?.role === "agent";
+      const senderRole   = isAgent
+        ? `<span style="display:inline-block;margin-top:3px;font-size:10px;padding:1px 7px;border-radius:20px;background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;font-weight:700;">مندوب</span>`
+        : `<span style="display:inline-block;margin-top:3px;font-size:10px;padding:1px 7px;border-radius:20px;background:linear-gradient(135deg,#0ea5e9,#38bdf8);color:#fff;font-weight:700;">زبون</span>`;
+
       const destText = transfer.destination_office_id
-  ? `<i class="fa-solid fa-building" style="color:var(--primary);font-size:11px;"></i> ${transfer.destination_office?.name ?? `مكتب #${transfer.destination_office_id}`}`
-  : `<i class="fa-solid fa-globe" style="color:#7c3aed;font-size:11px;"></i> ${transfer.destination_city ?? "—"}`;
+        ? `<i class="fa-solid fa-building" style="color:var(--primary);font-size:11px;"></i> ${transfer.destination_office?.name ?? `مكتب #${transfer.destination_office_id}`}`
+        : `<i class="fa-solid fa-globe" style="color:#7c3aed;font-size:11px;"></i> ${transfer.destination_city ?? "—"}`;
+
+      const notes = transfer.notes
+        ? `<span style="font-size:11px;color:var(--gray);max-width:130px;display:inline-block;word-break:break-word;">${transfer.notes}</span>`
+        : `<span style="color:var(--gray);font-size:12px;">—</span>`;
 
       tbody.innerHTML += `
         <tr>
           <td>
             <span style="font-weight:800;color:var(--primary);">#${transfer.id}</span>
-            ${tracking}
+            <div style="font-size:10px;color:var(--gray);margin-top:2px;letter-spacing:.5px;">${tracking}</div>
           </td>
+          <td style="text-align:center;">${senderRole}</td>
           <td>
             <div style="font-weight:700;">${transfer.sender?.name ?? "—"}</div>
-            <div style="font-size:11px;color:var(--gray);">${transfer.sender?.phone ?? ""}</div>
+            <div style="font-size:11px;color:var(--gray);direction:ltr;">${transfer.sender?.phone ?? ""}</div>
           </td>
           <td>
             <div style="font-weight:700;">${transfer.receiver_name ?? "—"}</div>
@@ -999,9 +1010,11 @@ async function loadPendingTransfers() {
             <div style="font-weight:800;color:var(--primary);">$${amountUsd.toFixed(2)}</div>
             <div style="font-size:11px;color:var(--gray);direction:ltr;">${sendAmount.toFixed(2)} ${sendCurrency}</div>
             <div style="font-size:11px;color:#7c3aed;">يستلم: ${deliveryAmt.toFixed(2)} ${recvCurrency}</div>
+            ${fee > 0 ? `<div style="font-size:11px;color:var(--success);">رسوم: $${fee.toFixed(2)}</div>` : ""}
           </td>
           <td style="font-size:12px;">${destText}</td>
-          <td style="font-size:12px;color:var(--gray);">${date}</td>
+          <td>${notes}</td>
+          <td style="font-size:11px;color:var(--gray);white-space:nowrap;">${date}</td>
           <td>
             <button class="btn-chat"
               onclick="openChat(${transfer.id}, '${transfer.tracking_code ?? transfer.id}', ${transfer.sender?.id ?? 0})"
