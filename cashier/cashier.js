@@ -45,7 +45,7 @@ async function checkAuth() {
 
 async function loadNewTransfers() {
   const tbody = document.getElementById("new-transfers-list");
-  tbody.innerHTML = `<tr><td colspan="9" class="loading-row"><div class="loading-spinner"></div> جاري التحميل...</td></tr>`;
+  tbody.innerHTML = `<tr><td colspan="12" class="loading-row"><div class="loading-spinner"></div> جاري التحميل...</td></tr>`;
 
   try {
     const res  = await fetch(`${API_URL}/transfers?status=ready`, {
@@ -56,7 +56,7 @@ async function loadNewTransfers() {
 
     if (!json.data?.length) {
       document.getElementById("transfers-count").textContent = "0";
-      tbody.innerHTML = `<tr><td colspan="9"><div class="empty-state"><i class="fa-solid fa-inbox"></i><p>لا توجد حوالات جاهزة للتسليم حالياً</p></div></td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="12"><div class="empty-state"><i class="fa-solid fa-inbox"></i><p>لا توجد حوالات جاهزة للتسليم حالياً</p></div></td></tr>`;
       return;
     }
 
@@ -71,30 +71,50 @@ async function loadNewTransfers() {
       const sendCurrency  = transfer.send_currency?.code ?? transfer.sendCurrency?.code ?? "—";
       const fee           = Number(transfer.fee ?? 0);
       const senderPhone   = transfer.sender?.phone ?? "";
-      const date          = transfer.created_at ? new Date(transfer.created_at).toLocaleDateString("ar-SY") : "—";
+      const date          = transfer.created_at ? new Date(transfer.created_at).toLocaleString("ar-SY") : "—";
       const tracking      = transfer.tracking_code ?? "#" + transfer.id;
+      const isAgent       = transfer.sender?.role === "agent";
+
+      const destText = transfer.destination_office_id
+        ? `<i class="fa-solid fa-building" style="font-size:11px;"></i> ${transfer.destination_office?.name ?? `مكتب #${transfer.destination_office_id}`}`
+        : `<i class="fa-solid fa-globe" style="font-size:11px;"></i> ${transfer.destination_city ?? "—"}`;
+
+      const notes = transfer.notes
+        ? `<span style="font-size:11px;max-width:110px;display:inline-block;word-break:break-word;">${transfer.notes}</span>`
+        : `<span style="opacity:.5;">—</span>`;
+
+      // الصف يأخذ class مختلف حسب نوع المرسل
+      const rowClass = isAgent ? "row-agent" : "row-customer";
+
+      // badge النوع
+      const typeBadge = isAgent
+        ? `<span class="transfer-type-badge badge-agent"><i class="fa-solid fa-user-tie"></i> مندوب</span>`
+        : `<span class="transfer-type-badge badge-customer"><i class="fa-solid fa-user"></i> زبون</span>`;
 
       tbody.innerHTML += `
-        <tr>
+        <tr class="${rowClass}">
           <td>
             <span class="transfer-id">${tracking}</span>
-            <div style="font-size:10px;color:var(--gray);margin-top:2px;">#${transfer.id}</div>
+            <div style="font-size:10px;opacity:.6;margin-top:2px;">#${transfer.id}</div>
           </td>
+          <td style="text-align:center;">${typeBadge}</td>
           <td>
             <div style="font-weight:700;">${transfer.sender?.name ?? "—"}</div>
-            <div style="font-size:11px;color:var(--gray);direction:ltr;">${senderPhone}</div>
+            <div style="font-size:11px;opacity:.7;direction:ltr;">${senderPhone}</div>
           </td>
           <td>
             <div style="font-weight:700;">${transfer.receiver_name ?? "—"}</div>
-            <div style="font-size:11px;color:var(--gray);direction:ltr;">${transfer.receiver_phone ?? ""}</div>
+            <div style="font-size:11px;opacity:.7;direction:ltr;">${transfer.receiver_phone ?? ""}</div>
           </td>
           <td><span class="amount-cell">$${amountUsd.toFixed(2)}</span></td>
-          <td>${sendAmount.toFixed(2)} ${sendCurrency}</td>
+          <td style="font-size:12px;">${sendAmount.toFixed(2)} ${sendCurrency}</td>
           <td><span class="delivery-price">${deliveryPrice.toFixed(2)} ${currencyCode}</span></td>
           <td style="font-weight:700;color:var(--success);">
-            ${fee > 0 ? "$" + fee.toFixed(2) : '<span style="color:var(--gray);">—</span>'}
+            ${fee > 0 ? "$" + fee.toFixed(2) : '<span style="opacity:.4;">—</span>'}
           </td>
-          <td style="font-size:11px;color:var(--gray);">${date}</td>
+          <td style="font-size:12px;">${destText}</td>
+          <td>${notes}</td>
+          <td style="font-size:11px;opacity:.7;white-space:nowrap;">${date}</td>
           <td>
             <div class="upload-wrapper">
               <label class="custom-file-upload">
@@ -118,7 +138,7 @@ async function loadNewTransfers() {
     });
   } catch (error) {
     console.error("Error loading transfers:", error);
-    tbody.innerHTML = `<tr><td colspan="9" class="loading-row" style="color:var(--danger);">خطأ في الاتصال بالسيرفر</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="12" class="loading-row" style="color:var(--danger);">خطأ في الاتصال بالسيرفر</td></tr>`;
   }
 }
 

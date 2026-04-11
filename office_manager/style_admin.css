@@ -3130,3 +3130,27 @@ body.chat-open { overflow: hidden; }
 .safe-card {
     scroll-margin-top: 80px; 
 }
+/* ===================================================== */
+/*   Badge نوع الحوالة في الحوالات المعلقة (أدمن)       */
+/* ===================================================== */
+.transfer-type-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 20px;
+    white-space: nowrap;
+    letter-spacing: .3px;
+}
+.badge-customer {
+    background: linear-gradient(135deg, #0ea5e9, #38bdf8);
+    color: #fff;
+    box-shadow: 0 2px 6px rgba(14,165,233,.30);
+}
+.badge-agent {
+    background: linear-gradient(135deg, #7c3aed, #a855f7);
+    color: #fff;
+    box-shadow: 0 2px 6px rgba(124,58,237,.30);
+}

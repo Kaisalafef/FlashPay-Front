@@ -1534,7 +1534,55 @@ select.form-control {
     .cf-group { min-width: 140px; }
     .cf-group-sm { flex: 0 0 130px; }
 }
+<<<<<<< HEAD
 .print-spacing {
     height: 300px; 
     width: 100%;
+=======
+/* ===================================================== */
+/*   تمييز صفوف الحوالات: زبون vs مندوب                 */
+/* ===================================================== */
+
+/* صف حوالة الزبون — لون أزرق فاتح هادئ */
+tr.row-customer {
+    background-color: rgba(14, 165, 233, 0.04);
+    border-right: 3px solid #0ea5e9;
+}
+tr.row-customer:hover {
+    background-color: rgba(14, 165, 233, 0.10) !important;
+}
+
+/* صف حوالة المندوب — لون بنفسجي مميز */
+tr.row-agent {
+    background-color: rgba(124, 58, 237, 0.05);
+    border-right: 3px solid #7c3aed;
+}
+tr.row-agent:hover {
+    background-color: rgba(124, 58, 237, 0.12) !important;
+}
+
+/* Badge نوع الحوالة */
+.transfer-type-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 20px;
+    white-space: nowrap;
+    letter-spacing: .3px;
+}
+
+.badge-customer {
+    background: linear-gradient(135deg, #0ea5e9, #38bdf8);
+    color: #fff;
+    box-shadow: 0 2px 6px rgba(14,165,233,.30);
+}
+
+.badge-agent {
+    background: linear-gradient(135deg, #7c3aed, #a855f7);
+    color: #fff;
+    box-shadow: 0 2px 6px rgba(124,58,237,.30);
+>>>>>>> 83ea306f255064157dbf01ce14ee7724c1400868
 }
