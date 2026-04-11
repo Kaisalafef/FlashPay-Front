@@ -1534,11 +1534,6 @@ select.form-control {
     .cf-group { min-width: 140px; }
     .cf-group-sm { flex: 0 0 130px; }
 }
-<<<<<<< HEAD
-.print-spacing {
-    height: 300px; 
-    width: 100%;
-=======
 /* ===================================================== */
 /*   تمييز صفوف الحوالات: زبون vs مندوب                 */
 /* ===================================================== */
@@ -1547,7 +1542,7 @@ select.form-control {
 tr.row-customer {
     background-color: rgba(14, 165, 233, 0.04);
     border-right: 3px solid #0ea5e9;
-}
+}S
 tr.row-customer:hover {
     background-color: rgba(14, 165, 233, 0.10) !important;
 }
@@ -1584,5 +1579,4 @@ tr.row-agent:hover {
     background: linear-gradient(135deg, #7c3aed, #a855f7);
     color: #fff;
     box-shadow: 0 2px 6px rgba(124,58,237,.30);
->>>>>>> 83ea306f255064157dbf01ce14ee7724c1400868
 }
