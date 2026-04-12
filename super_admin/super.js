@@ -39,7 +39,7 @@ async function checkAuth() {
             // 2. الانتظار لمدة 3 ثوانٍ ثم التوجيه
             setTimeout(() => {
                 redirectByRole(userRole);
-            }, 10000); 
+            }, 1000); 
             
             return null;
         }

@@ -534,16 +534,60 @@
         font-size: 11.5px !important;
         padding: 4px 10px !important;
     }
+
+    /* ─── Modal Box (edit transfer / safe logs) ─── */
+    .modal-box {
+        width: 95vw !important;
+        max-width: 95vw !important;
+        border-radius: 14px !important;
+        max-height: 92dvh !important;
+        overflow-y: auto !important;
+    }
+
+    .modal-field-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    .modal-footer {
+        flex-direction: column-reverse !important;
+        gap: 8px !important;
+    }
+
+    .modal-cancel-btn,
+    .modal-save-btn {
+        width: 100% !important;
+        justify-content: center !important;
+    }
+
+    /* ─── Notification Dropdown ─── */
+    .notif-dropdown {
+        width: calc(100vw - 20px) !important;
+        left: auto !important;
+        right: 0 !important;
+    }
+
+    /* ─── Toast Notifications ─── */
+    .ct-toast {
+        left: 14px !important;
+        right: 14px !important;
+        max-width: calc(100vw - 28px) !important;
+        bottom: 16px !important;
+    }
+
+    .tnotif-toast-container {
+        top: auto !important;
+        bottom: 16px !important;
+        left: 14px !important;
+        right: 14px !important;
+        gap: 8px !important;
+    }
+
+    .tnotif-toast {
+        max-width: 100% !important;
+        min-width: unset !important;
+    }
 }
 
-/* ─── شاشات 400px وأقل ─── */
-@media (max-width: 400px) {
-    .content-body { padding: 10px 10px 20px !important; }
-    .quick-access-grid { grid-template-columns: repeat(2, 1fr) !important; }
-    .system-info-row   { grid-template-columns: 1fr !important; }
-    .cmodal-info-grid  { grid-template-columns: 1fr !important; }
-    .page-title h2     { font-size: 0.8rem !important; }
-}
 /* =====================================================
    SMALL MOBILE — 480px وأقل (Super Admin)
    قيم أصغر من كتلة 768px أعلاه
@@ -654,6 +698,66 @@
 
     /* ─── Safe Details ─── */
     .safe-details-list div { font-size: 12px !important; padding: 8px 12px !important; }
+
+    /* ─── Modal Box (edit transfer / logs) ─── */
+    .modal-box {
+        width: 96vw !important;
+        max-width: 96vw !important;
+        border-radius: 12px !important;
+        max-height: 92dvh !important;
+        overflow-y: auto !important;
+    }
+
+    .modal-field-grid { grid-template-columns: 1fr !important; }
+
+    .modal-footer {
+        flex-direction: column-reverse !important;
+        gap: 6px !important;
+    }
+
+    .modal-cancel-btn,
+    .modal-save-btn {
+        width: 100% !important;
+        justify-content: center !important;
+    }
+
+    /* ─── Notification Dropdown ─── */
+    .notif-dropdown {
+        width: calc(100vw - 16px) !important;
+        left: auto !important;
+        right: 0 !important;
+    }
+
+    /* ─── Toast Notifications ─── */
+    .ct-toast {
+        left: 10px !important;
+        right: 10px !important;
+        max-width: calc(100vw - 20px) !important;
+        bottom: 12px !important;
+    }
+
+    .tnotif-toast-container {
+        top: auto !important;
+        bottom: 12px !important;
+        left: 10px !important;
+        right: 10px !important;
+        gap: 6px !important;
+    }
+
+    .tnotif-toast {
+        max-width: 100% !important;
+        min-width: unset !important;
+    }
+}
+
+/* ─── شاشات 400px وأقل (بعد 480px لضمان الأولوية الصحيحة) ─── */
+@media (max-width: 400px) {
+    .content-body { padding: 8px 8px 18px !important; }
+    .quick-access-grid { grid-template-columns: repeat(2, 1fr) !important; }
+    .system-info-row   { grid-template-columns: 1fr !important; }
+    .cmodal-info-grid  { grid-template-columns: 1fr !important; }
+    .page-title h2     { font-size: 0.78rem !important; }
+    .notif-dropdown    { width: calc(100vw - 10px) !important; }
 }
 
 /* ─── شاشات 360px وأقل (Super Admin) ─── */
@@ -667,7 +771,24 @@
     .data-table th { font-size: 10px !important; }
     .data-table td { font-size: 11px !important; }
     .dash-stat-value { font-size: 1.1rem !important; }
+
+    .modal-box {
+        width: 98vw !important;
+        max-width: 98vw !important;
+        border-radius: 9px !important;
+    }
+
+    .notif-dropdown {
+        width: calc(100vw - 8px) !important;
+    }
+
+    .ct-toast,
+    .tnotif-toast {
+        left: 6px !important;
+        right: 6px !important;
+    }
 }
+
 /* ─── Pending Transfers Section ─── */
 @media (max-width: 768px) {
     .pt-filters-bar {
@@ -694,4 +815,4 @@
         width: 100% !important;
         justify-content: center;
     }
-}   
+}

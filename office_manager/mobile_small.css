@@ -122,9 +122,9 @@
         display: flex !important;
         align-items: center !important;
         justify-content: space-between !important;
-        padding: 0 10px !important;        /* ← أضيق */
+        padding: 0 12px !important;
         height: auto !important;
-        min-height: 46px !important;       /* ← أقصر */
+        min-height: 52px !important;
         gap: 6px !important;
         flex-wrap: nowrap !important;
         position: sticky !important;
@@ -213,6 +213,13 @@
 
     .profile-box small { display: none !important; }
 
+    .avatar {
+        width: 28px !important;
+        height: 28px !important;
+        font-size: 11px !important;
+        flex-shrink: 0 !important;
+    }
+
     /* ════════ SIDEBAR INTERNALS ════════ */
     .logo {
         display: flex !important;
@@ -280,7 +287,7 @@
 
     /* ════════ CONTENT BODY ════════ */
     .content-body {
-        padding: 8px 8px 20px !important;  /* ← أضيق */
+        padding: 10px 10px 20px !important;
         max-width: 100% !important;
     }
 
@@ -325,7 +332,7 @@
 
     .hero-stat {
         padding: 6px 8px !important;
-        min-width: 58px !important;
+        min-width: 64px !important;
         flex: 1;
         border-radius: 6px !important;
     }
@@ -437,7 +444,7 @@
         border-radius: 8px !important;
     }
 
-    .data-table { min-width: 420px !important; }
+    .data-table { min-width: 480px !important; }
 
     .data-table th {
         padding: 8px 9px !important;
@@ -571,6 +578,99 @@
     .role-badge,
     .role-badge-new    { font-size: 9.5px !important; padding: 2px 7px !important; }
 
+    /* ════════ MODAL BOX (edit transfer / safe logs) ════════ */
+    .modal-box {
+        width: 95vw !important;
+        max-width: 95vw !important;
+        border-radius: 11px !important;
+        max-height: 92dvh !important;
+        overflow-y: auto !important;
+    }
+
+    .modal-field-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    .modal-footer {
+        flex-direction: column-reverse !important;
+        gap: 6px !important;
+    }
+
+    .modal-cancel-btn,
+    .modal-save-btn {
+        width: 100% !important;
+        justify-content: center !important;
+    }
+
+    /* ════════ NOTIFICATION DROPDOWN ════════ */
+    .notif-dropdown {
+        width: calc(100vw - 20px) !important;
+        left: auto !important;
+        right: 0 !important;
+    }
+
+    /* ════════ TOAST NOTIFICATIONS ════════ */
+    .ct-toast {
+        left: 10px !important;
+        right: 10px !important;
+        max-width: calc(100vw - 20px) !important;
+        bottom: 14px !important;
+    }
+
+    .tnotif-toast-container {
+        top: auto !important;
+        bottom: 16px !important;
+        left: 10px !important;
+        right: 10px !important;
+        gap: 6px !important;
+    }
+
+    .tnotif-toast {
+        max-width: 100% !important;
+        min-width: unset !important;
+    }
+
+    /* ════════ OFFICE SAFE PANEL ════════ */
+    .office-safe-panel { padding: 10px !important; }
+
+    .office-safe-row {
+        flex-direction: column !important;
+        gap: 6px !important;
+    }
+
+    .office-safe-row .trading-input {
+        width: 100% !important;
+        min-width: unset !important;
+    }
+
+    .osafe-btn {
+        width: 100% !important;
+        justify-content: center !important;
+        padding: 9px 10px !important;
+        font-size: 11.5px !important;
+    }
+
+    /* ════════ CREATE TRANSFER FORM ════════ */
+    .ct-form-wrapper { padding: 14px 10px 16px !important; }
+    .ct-grid-3,
+    .ct-grid-2 { grid-template-columns: 1fr !important; }
+
+    .ct-usd-card { padding: 12px 14px !important; gap: 10px !important; }
+    .ct-usd-value { font-size: 18px !important; }
+
+    .ct-form-footer {
+        flex-direction: column !important;
+        gap: 10px !important;
+        padding: 14px 12px !important;
+    }
+
+    .ct-submit-btn {
+        width: 100% !important;
+        justify-content: center !important;
+        font-size: 13px !important;
+        padding: 12px 16px !important;
+    }
+
     /* ════════ SCROLLBAR ════════ */
     ::-webkit-scrollbar { width: 3px !important; height: 3px !important; }
 
@@ -584,7 +684,6 @@
     html, body { font-size: 11px !important; }
 
     .content-body { padding: 6px 6px 16px !important; }
-
     .stats-grid,
     .dashboard-stats-grid,
     #profits-summary { grid-template-columns: 1fr !important; }
@@ -611,5 +710,21 @@
     }
 
     .sidebar nav a { font-size: 11px !important; padding: 8px 9px !important; }
+
+    .modal-box {
+        width: 98vw !important;
+        max-width: 98vw !important;
+        border-radius: 9px !important;
+    }
+
+    .notif-dropdown {
+        width: calc(100vw - 12px) !important;
+    }
+
+    .ct-toast,
+    .tnotif-toast {
+        left: 6px !important;
+        right: 6px !important;
+    }
 
 } /* end 360px */
