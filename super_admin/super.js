@@ -4,36 +4,108 @@ const STORAGE_URL = "http://127.0.0.1:8000/storage"; // ✅ يُستخدم مع 
 /* =========================
    Auth Check
 ========================= */
-
 async function checkAuth() {
-  const token = localStorage.getItem("auth_token");
+    const token = localStorage.getItem('auth_token');
 
-  if (!token) {
-    window.location.href = "../login/login.html";
-    return null;
-  }
-
-  try {
-    const res = await fetch(`${API_URL}/me`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        Accept: "application/json",
-      },
-    });
-
-    // التوكن غير صالح (بعد migrate:fresh مثلاً)
-    if (!res.ok) {
-      localStorage.clear();
-      window.location.href = "../login/login.html";
-      return null;
+    if (!token) {
+        window.location.replace('../login/login.html');
+        return null;
     }
 
-    return token;
-  } catch (e) {
-    localStorage.clear();
-    window.location.href = "../login/login.html";
-    return null;
-  }
+    try {
+        const res = await fetch('http://127.0.0.1:8000/api/me', {
+            headers: {
+                'Authorization': 'Bearer ' + token,
+                'Accept': 'application/json',
+            }
+        });
+
+        if (!res.ok) {
+            localStorage.clear();
+            window.location.replace('../login/login.html');
+            return null;
+        }
+
+        const data = await res.json();
+        const userRole = data.user.role;
+
+        const ALLOWED_ROLES = ['super_admin'];
+
+        // 🔴 التحقق من الصلاحية
+        if (!ALLOWED_ROLES.includes(userRole)) {
+            // 1. عرض الـ Lottie
+            showUnauthorizedLottie();
+            
+            // 2. الانتظار لمدة 3 ثوانٍ ثم التوجيه
+            setTimeout(() => {
+                redirectByRole(userRole);
+            }, 1000); 
+            
+            return null;
+        }
+
+        return token;
+
+    } catch (e) {
+        localStorage.clear();
+        showUnauthorizedLottie();
+        return null;
+    }
+}
+
+// 🟢 دالة لعرض الـ Lottie بملء الشاشة
+function showUnauthorizedLottie() {
+    // إنشاء حاوية تغطي الشاشة بالكامل
+    const container = document.createElement('div');
+    container.style.position = 'fixed';
+    container.style.top = '0';
+    container.style.left = '0';
+    container.style.width = '100vw';
+    container.style.height = '100vh';
+    container.style.backgroundColor = '#ffffff'; // لون الخلفية (يمكنك تغييره)
+    container.style.display = 'flex';
+    container.style.flexDirection = 'column';
+    container.style.justifyContent = 'center';
+    container.style.alignItems = 'center';
+    container.style.zIndex = '9999';
+    
+    // إضافة نص توضيحي (اختياري)
+    const text = document.createElement('h2');
+    text.innerText = 'عذراً، ليس لديك صلاحية للوصول إلى هذه الصفحة';
+    text.style.fontFamily = 'Arial, sans-serif';
+    text.style.color = '#333';
+    text.style.marginTop = '20px';
+
+    // حاوية الأنيميشن
+    const lottieContainer = document.createElement('div');
+    lottieContainer.style.width = '300px'; // حجم الأنيميشن
+    lottieContainer.style.height = '300px';
+
+    container.appendChild(lottieContainer);
+    container.appendChild(text);
+    document.body.appendChild(container);
+
+    // تشغيل الأنيميشن
+    lottie.loadAnimation({
+        container: lottieContainer, 
+        renderer: 'svg',
+        loop: true,
+        autoplay: true,
+        // ⚠️ ضع رابط ملف الـ JSON الخاص بالـ Lottie هنا
+        path: 'https://assets3.lottiefiles.com/packages/lf20_0s6tfbuc.json' 
+    });
+}
+
+function redirectByRole(role) {
+    const routes = {
+        'super_admin': '../super_admin/super.html',
+        'admin':       '../admin/admin.html',
+        'cashier':     '../cashier/cashier.html',
+        'accountant':  '../accountant/accountant.html',
+        'agent':       '../agent/agent.html',
+        'customer':    '../customer/customer.html',
+    };
+    window.location.replace(routes[role] || '../login/login.html');
 }
 /* =========================
    Helpers
