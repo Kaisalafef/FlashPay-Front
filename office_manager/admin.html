@@ -1,84 +1,1227 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FlashPay - Office Manager</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style_admin.css">
+    <link rel="stylesheet" href="mobile_small.css">
 </head>
-<body>
-    <aside class="sidebar">
-        <div class="logo">
-            <i class="fa-solid fa-wallet"></i><span>FlashPay</span>
-        </div>
-        <nav>
-    <ul>
-        <li class="active">
-            <a href="#" onclick="setActive(this); showPendingTransfers();">
-                <i class="fa-solid fa-list-check"></i>
-                الحوالات المعلقة (بانتظار الموافقة)
-            </a>
-        </li>
 
-        <li>
-            <a href="#" onclick="setActive(this); showAllTransfers();">
-                <i class="fa-solid fa-clock-rotate-left"></i>
-                سجل جميع الحوالات
-            </a>
-        </li>
-    </ul>
-</nav>
+<body>
+
+    <!-- Sidebar Overlay -->
+    <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+    <!-- ===== الشريط الجانبي ===== -->
+    <aside class="sidebar" id="sidebar">
+        <div class="logo">
+    <img src="/FlashPay-Front/images/pj.webp" alt="FlashPay Logo">
+<span>FlashPay</span>
+</div>
+
+        <nav>
+            <ul>
+                <li class="active">
+                    <a href="#" onclick="setActive(this); showPendingTransfers();">
+                        <i class="fa-solid fa-list-check"></i>
+                        الحوالات المعلقة
+                    </a>
+                </li>
+                <li>
+                    <a href="#" onclick="setActive(this); showAllTransfers();">
+                        <i class="fa-solid fa-clock-rotate-left"></i>
+                        سجل جميع الحوالات
+                    </a>
+                </li>
+                <li>
+                    <a href="#" onclick="setActive(this); showTransferHistorySection();">
+                        <i class="fa-solid fa-timeline"></i>
+                        سجل التعديلات
+                    </a>
+                </li>
+                <li>
+    <a href="#" onclick="showSafeLogsSection(); setActive(this);">
+        <i class="fa-solid fa-vault"></i> سجل الصناديق
+    </a>
+</li>
+ 
+                <li>
+                    <a href="#" onclick="setActive(this); showOfficeSection();">
+                        <i class="fa-solid fa-building"></i>
+                        معلومات المكتب والموظفين
+                    </a>
+                </li>
+                <li>
+                    <a href="#" onclick="setActive(this); showSafesSection();">
+                        <i class="fa-solid fa-vault"></i>
+                        صناديق المكتب المالية
+                    </a>
+                </li>
+                <li>
+                    <a href="#" onclick="setActive(this); showProfitsSection();">
+                        <i class="fa-solid fa-chart-line"></i>
+                        أرباح التداول
+                    </a>
+                </li>
+                <li>
+                    <a href="#" onclick="setActive(this); createTarnsferSection();">
+                        <i class="fa-solid fa-arrows-rotate"></i>
+                        انشاء حوالة جديدة
+                    </a>
+                </li>
+                <li>
+                    <a href="#" onclick="setActive(this); createIntlTransferSection();">
+                        <i class="fa-solid fa-globe"></i>
+                        إنشاء حوالة خارجية
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
         <div class="logout">
-            <a href="#" onclick="handleLogout()"><i class="fa-solid fa-arrow-right-from-bracket"></i> تسجيل الخروج</a>
+            <a href="#" onclick="handleLogout()">
+                <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                تسجيل الخروج
+            </a>
         </div>
     </aside>
 
+    <!-- ===== المحتوى الرئيسي ===== -->
     <main class="main-content">
-        <header>
-            <div class="header-title"><h2>إدارة المكتب (Admin)</h2></div>
+
+        <!-- الرأس -->
+        <header class="app-header">
+            <div class="header-left">
+                <button class="hamburger-btn" id="hamburger-btn" onclick="toggleSidebar()" title="فتح القائمة الجانبية">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+                <div class="page-title">
+                    <i class="fa-solid fa-building-user"></i>
+                    <h2>لوحة إدارة المكتب</h2>
+                </div>
+            </div>
+            <div class="header-actions">
+
+                <!-- ===== زر الإشعارات ===== -->
+                <div class="notif-bell-wrap" id="notif-bell-wrap">
+                    <button class="notif-bell-btn" id="notif-bell-btn"
+                            onclick="toggleNotifDropdown()"
+                            title="إشعارات الرسائل الجديدة">
+                        <i class="fa-solid fa-bell"></i>
+                        <span class="notif-bell-badge hidden" id="notif-bell-badge">0</span>
+                        <span class="tnotif-bell-badge hidden" id="tnotif-bell-badge"></span>
+                    </button>
+
+                    <!-- Dropdown panel -->
+                    <div class="notif-dropdown hidden" id="notif-dropdown">
+                        <div class="notif-dropdown-header">
+                            <span><i class="fa-solid fa-bell"></i> رسائل غير مقروءة</span>
+                            <button class="notif-clear-btn" onclick="clearAllNotifications()">
+                                مسح الكل
+                            </button>
+                        </div>
+                        <div id="notif-dropdown-list">
+                            <div class="notif-empty">
+                                <i class="fa-regular fa-bell-slash"></i>
+                                لا توجد إشعارات جديدة
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="profile-box">
+                    <div class="avatar">
+                        <i class="fa-solid fa-user"></i>
+                    </div>
+                    <div class="profile-info">
+                        <span id="admin-name">جاري التحميل...</span>
+                        <small>Office Admin</small>
+                    </div>
+                </div>
+            </div>
         </header>
 
         <div class="content-body">
-<div class="card" id="all-transfers-card" style="display:none;">
-        <div class="card-header">
-        <h3>سجل جميع الحوالات</h3>
-    </div>
-    <table class="data-table">
-        <thead>
-            <tr>
-                <th>رقم الحوالة</th>
-                <th>المبلغ</th>
-                <th>المرسل</th>
-                <th>المستلم</th>
-                <th>الحالة</th>
-                <th>التاريخ</th>
-            </tr>
-        </thead>
-        <tbody id="all-transfers-list">
-        </tbody>
-    </table>
-</div>
+
+            <!-- ===== قسم الحوالات المعلقة ===== -->
             <div class="card" id="pending-transfers-card">
-                <div class="card-header">
-                  <h3>الحوالات الجديدة (بانتظار الموافقة)</h3>
+
+                <!-- Hero Banner -->
+                <div class="section-hero pending-hero">
+                    <div class="section-hero-text">
+                        <h2><i class="fa-solid fa-list-check"></i> الحوالات المعلقة</h2>
+                        <p>مراجعة والموافقة أو رفض الحوالات الجديدة بانتظار إجراءك</p>
+                    </div>
+                    <div class="section-hero-stats">
+                        <div class="hero-stat">
+                            <span id="stat-pending-count">—</span>
+                            <small>في الانتظار</small>
+                        </div>
+                    </div>
                 </div>
+
+                <!-- شريط أدوات -->
+                <div class="table-toolbar">
+                    <div class="toolbar-search">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="text" id="pending-search" placeholder="بحث برقم الحوالة أو المستلم..."
+                            oninput="filterPendingTable()">
+                    </div>
+                    <div class="toolbar-actions">
+                        <button class="toolbar-btn" onclick="loadPendingTransfers()" title="تحديث">
+                            <i class="fa-solid fa-arrows-rotate"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- الجدول -->
+                <div class="table-wrapper">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>رقم الحوالة</th>
+                                <th>النوع</th>
+                                <th>المرسل</th>
+                                <th>المستلم</th>
+                                <th>المبلغ</th>
+                                <th>الوجهة</th>
+                                <th>الملاحظات</th>
+                                <th>التاريخ</th>
+                                <th>الدردشة</th>
+                                <th>الإجراء</th>
+                            </tr>
+                        </thead>
+                        <tbody id="transfers-list"></tbody>
+                    </table>
+                    <div id="pending-empty" class="table-empty hidden">
+                        <i class="fa-solid fa-circle-check"></i>
+                        <p>لا توجد حوالات معلقة حالياً</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== قسم سجل جميع الحوالات ===== -->
+            <div class="card" id="all-transfers-card" style="display:none;">
+
+                <!-- Hero Banner -->
+                <div class="section-hero all-transfers-hero">
+                    <div class="section-hero-text">
+                        <h2><i class="fa-solid fa-clock-rotate-left"></i> سجل جميع الحوالات</h2>
+                        <p>عرض كامل لجميع الحوالات بمختلف حالاتها</p>
+                    </div>
+                    <div class="section-hero-stats">
+                        <div class="hero-stat">
+                            <span id="stat-all-count">—</span>
+                            <small>إجمالي الحوالات</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- شريط أدوات -->
+                <div class="table-toolbar">
+                    <div class="toolbar-search">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="text" id="all-transfers-search" placeholder="بحث برقم الحوالة أو المرسل..."
+                            oninput="filterAllTransfersTable()">
+                    </div>
+                    <div class="toolbar-filters">
+                        <button class="filter-chip active" data-status="all"
+                            onclick="setTransferFilter('all', this)">الكل</button>
+                        <button class="filter-chip" data-status="pending"
+                            onclick="setTransferFilter('pending', this)">معلقة</button>
+                        <button class="filter-chip" data-status="approved"
+                            onclick="setTransferFilter('approved', this)">موافق</button>
+                        <button class="filter-chip" data-status="rejected"
+                            onclick="setTransferFilter('rejected', this)">مرفوضة</button>
+                    </div>
+                    <div class="toolbar-actions">
+                        <button class="toolbar-btn" onclick="loadAllTransfers()" title="تحديث">
+                            <i class="fa-solid fa-arrows-rotate"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- الجدول -->
+                <div class="table-wrapper">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>رقم الحوالة</th>
+                                <th>المبلغ</th>
+                                <th>المرسل</th>
+                                <th>المستلم</th>
+                                <th>الوجهة</th>
+                                <th>الرسوم</th>
+                                <th>الحالة</th>
+                                <th>التاريخ</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="all-transfers-list"></tbody>
+                    </table>
+                    <div id="all-transfers-empty" class="table-empty hidden">
+                        <i class="fa-solid fa-inbox"></i>
+                        <p>لا توجد حوالات مسجلة بعد</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== قسم معلومات المكتب والموظفين ===== -->
+            <div class="card" id="office-info-card" style="display:none;">
+
+                <!-- Hero Banner -->
+                <div class="section-hero office-hero">
+                    <div class="section-hero-text">
+                        <h2><i class="fa-solid fa-building"></i> معلومات المكتب وطاقم العمل</h2>
+                        <p>بيانات المكتب التفصيلية وجميع الموظفين المرتبطين به</p>
+                    </div>
+                    <div class="section-hero-stats">
+                        <div class="hero-stat">
+                            <span id="stat-staff-count">—</span>
+                            <small>إجمالي الموظفين</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- بطاقات بيانات المكتب -->
+                <div class="office-info-grid" id="office-details"></div>
+
+                <!-- جدول الموظفين -->
+                <div class="table-toolbar" style="margin-top: 8px;">
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <i class="fa-solid fa-users" style="color:var(--primary); font-size:18px;"></i>
+                        <h3 style="font-size:15px; font-weight:800; color:var(--dark);">طاقم العمل</h3>
+                    </div>
+                </div>
+
+                <div class="table-wrapper">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>الموظف</th>
+                                <th>الدور</th>
+                                <th>رقم الهاتف</th>
+                                <th>الحالة</th>
+                            </tr>
+                        </thead>
+                        <tbody id="staff-list"></tbody>
+                    </table>
+                    <div id="staff-empty" class="table-empty hidden">
+                        <i class="fa-solid fa-users-slash"></i>
+                        <p>لا يوجد موظفون مسجلون</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== قسم الصناديق المالية ===== -->
+            <div class="card" id="safes-card" style="display:none;">
+
+                <!-- Hero Banner -->
+                <div class="section-hero safes-hero">
+    <div class="section-hero-text">
+        <h2><i class="fa-solid fa-vault"></i> صناديق المكتب المالية</h2>
+        <p>الرصيد الحالي لصندوق المكتب الرئيسي وصندوق المبيعات</p>
+    </div>
+
+    <div class="mobile-safe-links">
+        <a href="#office-safe-card" title="خزنة المكتب">
+            <div class="safe-card-icon"><i class="fa-solid fa-building-columns"></i></div>
+        </a>
+        <a href="#safe-card-main" title="الصندوق الرئيسي">
+            <div class="safe-card-icon"><i class="fa-solid fa-vault"></i></div>
+        </a>
+        <a href="#trading-safe-card" title="صندوق التداول">
+            <div class="safe-card-icon"><i class="fa-solid fa-chart-line"></i></div>
+        </a>
+    </div>
+
+    <div class="section-hero-stats" id="safes-hero-stats">
+        <div class="hero-stat">
+            <span id="stat-safes-total">—</span>
+            <small>إجمالي الرصيد</small>
+        </div>
+    </div>
+</div>
+                <!-- شبكة الصناديق -->
+                <div class="safes-grid" id="safes-container"></div>
+                <div style="margin-top: 24px; display: flex; justify-content: flex-end;">
+    <button class="btn-primary" onclick="openExtraBoxesModal()" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);">
+        <i class="fa-solid fa-boxes-stacked"></i> الصناديق الإضافية
+    </button>
+</div>
+            </div>
+
+            <!-- ===== قسم أرباح التداول ===== -->
+            <div class="card" id="profits-card" style="display:none;">
+
+                <!-- Hero Banner -->
+                <div class="section-hero profits-hero">
+                    <div class="section-hero-text">
+                        <h2><i class="fa-solid fa-chart-line"></i> تقرير أرباح التداول</h2>
+                        <p>تتبع وتحليل أرباح وخسائر عمليات شراء وبيع العملات</p>
+                    </div>
+                    <div class="section-hero-stats">
+                        <div class="hero-stat" id="profits-hero-stat" style="display:none;">
+                            <span id="profits-net-total">—</span>
+                            <small>صافي الربح</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- فلتر التاريخ -->
+                <div class="collapsible-form" style="margin-bottom:24px;">
+                    <button class="collapse-toggle" style="cursor:default; pointer-events:none;">
+                        <span><i class="fa-solid fa-calendar-days"></i> تحديد التاريخ</span>
+                    </button>
+                    <div class="collapse-body open" style="max-height:120px;">
+                        <div class="styled-form" style="padding:18px 24px;">
+                            <div class="form-row" style="margin-bottom:0; align-items:flex-end;">
+                                <div class="form-group" style="flex: 0 0 auto; min-width:180px;">
+                                    <label><i class="fa-regular fa-calendar"></i> التاريخ</label>
+                                    <input type="date" id="report-date">
+                                </div>
+                                <div class="form-group" style="flex: 0 0 auto; justify-content:flex-end;">
+                                    <button class="btn-primary" onclick="loadTradingReport()"
+                                        style="padding:12px 22px;">
+                                        <i class="fa-solid fa-magnifying-glass"></i> عرض التقرير
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- بطاقات الملخص -->
+                <div id="profits-summary"
+                    style="display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:16px; margin-bottom:24px;">
+                </div>
+
+                <!-- جدول العمليات -->
+                <div class="table-wrapper" id="profits-table-wrapper" style="display:none;">
+                    <table class="data-table" id="profits-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>النوع</th>
+                                <th>العملة</th>
+                                <th>الكمية</th>
+                                <th>السعر</th>
+                                <th>متوسط التكلفة</th>
+                                <th>الربح / الخسارة</th>
+                                <th>التاريخ</th>
+                                <th>المنفذ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="profits-list"></tbody>
+                    </table>
+                </div>
+
+                <!-- حالة فارغة -->
+                <div id="profits-empty" class="table-empty" style="display:none;">
+                    <i class="fa-solid fa-inbox"></i>
+                    <p>لا توجد عمليات تداول في هذا التاريخ</p>
+                </div>
+
+                <!-- حالة: اختر تاريخاً -->
+                <div id="profits-placeholder" class="table-empty">
+                    <i class="fa-solid fa-calendar-days"></i>
+                    <p>حدد تاريخاً ثم اضغط "عرض التقرير"</p>
+                </div>
+
+            </div>
+            <!-- ===== قسم سجل التعديلات ===== -->
+            <div class="card" id="transfer-history-card" style="display:none;">
+
+                <div class="section-hero" style="background:linear-gradient(135deg,#1e3a5f 0%,#2d5986 100%);">
+                    <div class="section-hero-text">
+                        <h2><i class="fa-solid fa-timeline"></i> سجل التعديلات</h2>
+                        <p>جميع التعديلات التي أجراها المديرون على الحوالات مع مقارنة كاملة</p>
+                    </div>
+                    <div class="section-hero-stats">
+                        <div class="hero-stat">
+                            <span id="stat-history-count">—</span>
+                            <small>إجمالي التعديلات</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="table-toolbar">
+                    <div class="toolbar-search">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="text" id="history-search" placeholder="بحث برقم الحوالة أو اسم المدير..."
+                            oninput="filterHistoryTable()">
+                    </div>
+                    <div class="toolbar-actions">
+                        <button class="toolbar-btn" onclick="loadTransferHistory()" title="تحديث">
+                            <i class="fa-solid fa-arrows-rotate"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="table-wrapper">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>رقم الحوالة</th>
+                                <th>المدير المنفذ</th>
+                                <th>الإجراء / السبب</th>
+                                <th>التغييرات</th>
+                                <th>وقت التعديل</th>
+                            </tr>
+                        </thead>
+                        <tbody id="history-list"></tbody>
+                    </table>
+                    <div id="history-empty" class="table-empty hidden">
+                        <i class="fa-solid fa-clock-rotate-left"></i>
+                        <p>لا توجد تعديلات مسجلة بعد</p>
+                    </div>
+                </div>
+            </div>
+
+<!-- ===== بطاقة سجل الصناديق ===== -->
+<div id="safe-logs-card" style="display:none;" class="card">
+
+    <!-- رأس القسم -->
+    <div style="display:flex; align-items:center; gap:12px; margin-bottom:20px; padding-bottom:16px; border-bottom:1.5px solid var(--border);">
+        <div style="width:44px;height:44px;background:linear-gradient(135deg,#dbeafe,#bfdbfe);border-radius:12px;display:flex;align-items:center;justify-content:center;">
+            <i class="fa-solid fa-clock-rotate-left" style="color:#1d4ed8;font-size:18px;"></i>
+        </div>
+        <div>
+            <h3 style="margin:0;font-size:16px;font-weight:800;color:var(--dark);">سجل حركات الصناديق</h3>
+            <p style="margin:0;font-size:12px;color:var(--gray);">جميع العمليات: إيداع، سحب، تحويل من صندوق الأرباح / التداول / الرئيسي إلى خزنة المكتب</p>
+        </div>
+        <button class="toolbar-btn" onclick="loadSafeLogs()" title="تحديث" style="margin-right:auto;">
+            <i class="fa-solid fa-arrows-rotate"></i>
+        </button>
+    </div>
+
+    <!-- بطاقات الملخص السريع -->
+    <div id="safe-logs-summary" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:20px;"></div>
+
+    <!-- فلاتر -->
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;align-items:center;">
+        <div style="position:relative;flex:1;min-width:200px;">
+            <i class="fa-solid fa-magnifying-glass" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);color:var(--gray);font-size:13px;"></i>
+            <input type="text" id="safe-logs-search" placeholder="بحث بنوع الصندوق أو العملية..."
+                   oninput="filterSafeLogs()"
+                   style="width:100%;padding:9px 34px 9px 12px;border:1.5px solid var(--border);border-radius:10px;
+                          font-family:'Cairo',sans-serif;font-size:13px;outline:none;box-sizing:border-box;">
+        </div>
+        <select id="safe-logs-type-filter" onchange="filterSafeLogs()"
+                style="padding:9px 14px;border:1.5px solid var(--border);border-radius:10px;
+                       font-family:'Cairo',sans-serif;font-size:13px;outline:none;background:var(--white);">
+            <option value="">كل الأنواع</option>
+            <option value="office_safe">خزنة المكتب</option>
+            <option value="office_main">الصندوق الرئيسي</option>
+            <option value="trading">صندوق التداول</option>
+            <option value="profit_safe">صندوق الأرباح</option>
+        </select>
+    </div>
+
+    <!-- جدول السجل -->
+    <div class="table-wrapper">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>نوع الصندوق</th>
+                    <th>نوع العملية</th>
+                    <th>مبلغ العملية</th>
+                    <th>الرصيد بعد العملية</th>
+                    <th>متوسط التكلفة</th>
+                    <th>أرباح التداول</th>
+                    <th>الأرباح الرئيسية</th>
+                    <th>التاريخ / المنفذ</th>
+                </tr>
+            </thead>
+            <tbody id="safe-logs-list"></tbody>
+        </table>
+        <div id="safe-logs-empty" class="table-empty hidden">
+            <i class="fa-solid fa-vault"></i>
+            <p>لا توجد سجلات لهذا المكتب</p>
+        </div>
+    </div>
+</div>
+            <!-- ===== قسم إنشاء حوالة داخلية ===== -->
+            <div class="card" id="createtransfer" style="display:none;">
+
+                <!-- Hero Banner -->
+                <div class="section-hero create-transfer-hero">
+                    <div class="section-hero-text">
+                        <h2><i class="fa-solid fa-paper-plane"></i> إنشاء حوالة داخلية جديدة</h2>
+                        <p>أدخل بيانات الحوالة نيابةً عن الزبون الحاضر في المكتب</p>
+                    </div>
+                    <div class="section-hero-stats">
+                        <div class="hero-stat">
+                            <span id="ct-usd-preview">$0.00</span>
+                            <small>المبلغ بالدولار</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Loading Overlay -->
+                <div id="ct-loading-overlay" class="ct-loading-overlay hidden">
+                    <div class="ct-spinner"></div>
+                    <p>جاري تحميل البيانات...</p>
+                </div>
+
+                <div class="ct-form-wrapper" id="ct-form-wrapper">
+                    <form id="ct-transfer-form" novalidate>
+
+                        <!-- ── القسم 1: تفاصيل المبلغ ── -->
+                        <div class="ct-section">
+                            <div class="ct-section-header">
+                                <div class="ct-section-icon" style="background:#dbeafe;color:#1d4ed8;">
+                                    <i class="fa-solid fa-money-bill-wave"></i>
+                                </div>
+                                <div>
+                                    <h4 class="ct-section-title">تفاصيل المبلغ</h4>
+                                    <p class="ct-section-subtitle">حدد المبلغ وعملتي الإرسال والاستلام</p>
+                                </div>
+                            </div>
+
+                            <div class="ct-fields-grid ct-grid-3">
+                                <div class="ct-field-group">
+                                    <label class="ct-label">
+                                        <i class="fa-solid fa-coins"></i> المبلغ المرسل
+                                        <span class="ct-required">*</span>
+                                    </label>
+                                    <input
+                                        type="number"
+                                        id="ct-amount"
+                                        class="ct-input"
+                                        placeholder="0.00"
+                                        min="1"
+                                        step="any"
+                                        oninput="ctCalculateUsd()"
+                                    >
+                                </div>
+
+                                <div class="ct-field-group">
+                                    <label class="ct-label">
+                                        <i class="fa-solid fa-arrow-up-from-bracket"></i> عملة الإرسال (الدفع)
+                                        <span class="ct-required">*</span>
+                                    </label>
+                                    <select id="ct-send-currency" class="ct-select" onchange="ctCalculateUsd()">
+                                        <option value="">جاري التحميل...</option>
+                                    </select>
+                                </div>
+
+                                <div class="ct-field-group">
+                                    <label class="ct-label">
+                                        <i class="fa-solid fa-arrow-down-to-bracket"></i> عملة الاستلام
+                                        <span class="ct-required">*</span>
+                                    </label>
+                                    <select id="ct-recv-currency" class="ct-select">
+                                        <option value="">جاري التحميل...</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- بطاقة معاينة الدولار -->
+                            <div class="ct-usd-card" id="ct-usd-card">
+                                <div class="ct-usd-icon"><i class="fa-solid fa-dollar-sign"></i></div>
+                                <div>
+                                    <div class="ct-usd-label">القيمة المعادلة بالدولار الأمريكي</div>
+                                    <div class="ct-usd-value" id="ct-usd-value">$0.00</div>
+                                    <span id="ct-tier-hint" class="rate-tier-hint" style="display:none;"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="ct-divider"></div>
+
+                        <!-- ── القسم 2: وجهة الحوالة ── -->
+                        <div class="ct-section">
+                            <div class="ct-section-header">
+                                <div class="ct-section-icon" style="background:#dcfce7;color:#16a34a;">
+                                    <i class="fa-solid fa-location-dot"></i>
+                                </div>
+                                <div>
+                                    <h4 class="ct-section-title">وجهة الحوالة</h4>
+                                    <p class="ct-section-subtitle">اختر المكتب المستلم للحوالة</p>
+                                </div>
+                            </div>
+
+                            <div class="ct-fields-grid ct-grid-1">
+                                <div class="ct-field-group">
+                                    <label class="ct-label">
+                                        <i class="fa-solid fa-building"></i> المكتب المستلم
+                                        <span class="ct-required">*</span>
+                                    </label>
+                                    <select id="ct-office" class="ct-select">
+                                        <option value="">جاري التحميل...</option>
+                                    </select>
+                                    <span class="ct-hint">المكتب الداخلي المستلم للحوالة</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="ct-divider"></div>
+
+                        <!-- ── القسم 3: بيانات المرسل ── -->
+                        <div class="ct-section">
+                            <div class="ct-section-header">
+                                <div class="ct-section-icon" style="background:#ede9fe;color:#7c3aed;">
+                                    <i class="fa-solid fa-id-card"></i>
+                                </div>
+                                <div>
+                                    <h4 class="ct-section-title">بيانات المرسل</h4>
+                                    <p class="ct-section-subtitle">هوية الزبون الحاضر في المكتب</p>
+                                </div>
+                            </div>
+
+                            <div class="ct-fields-grid ct-grid-2">
+                                <div class="ct-field-group">
+                                    <label class="ct-label">
+                                        <i class="fa-solid fa-user-check"></i> اسم المرسل الكامل
+                                        <span class="ct-required">*</span>
+                                    </label>
+                                    <input type="text" id="ct-sender-name" class="ct-input" placeholder="الاسم كما في الهوية">
+                                </div>
+                                <div class="ct-field-group">
+                                    <label class="ct-label">
+                                        <i class="fa-solid fa-camera"></i> صورة هوية المرسل
+                                        <span class="ct-required">*</span>
+                                    </label>
+                                    <label class="ct-file-label" id="ct-sender-id-label" for="ct-sender-id-image">
+                                        <i class="fa-solid fa-cloud-arrow-up"></i>
+                                        <span id="ct-sender-id-filename">اضغط لرفع صورة الهوية</span>
+                                    </label>
+                                    <input type="file" id="ct-sender-id-image" class="ct-file-input" accept="image/jpeg,image/png,image/jpg" onchange="ctOnSenderIdChange(this)">
+                                    <span class="ct-hint">صورة واضحة للهوية الوطنية أو الجواز (JPG/PNG)</span>
+                                </div>
+                            </div>
+
+                            <!-- معاينة الهوية -->
+                            <div id="ct-sender-id-preview-wrap" class="ct-img-preview-wrap hidden">
+                                <img id="ct-sender-id-preview" class="ct-img-preview" src="" alt="معاينة الهوية">
+                                <button type="button" class="ct-img-remove" onclick="ctRemoveSenderId()">
+                                    <i class="fa-solid fa-xmark"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="ct-divider"></div>
+
+                        <!-- ── القسم 4: بيانات المستلم ── -->
+                        <div class="ct-section">
+                            <div class="ct-section-header">
+                                <div class="ct-section-icon" style="background:#fef3c7;color:#d97706;">
+                                    <i class="fa-solid fa-user"></i>
+                                </div>
+                                <div>
+                                    <h4 class="ct-section-title">بيانات المستلم</h4>
+                                    <p class="ct-section-subtitle">معلومات الشخص المستلم للمبلغ</p>
+                                </div>
+                            </div>
+
+                            <div class="ct-fields-grid ct-grid-2">
+                                <div class="ct-field-group">
+                                    <label class="ct-label">
+                                        <i class="fa-solid fa-id-card"></i> اسم المستلم الرباعي
+                                        <span class="ct-required">*</span>
+                                    </label>
+                                    <input type="text" id="ct-receiver-name" class="ct-input" placeholder="أدخل الاسم الكامل للمستلم">
+                                </div>
+
+                                <div class="ct-field-group">
+                                    <label class="ct-label">
+                                        <i class="fa-brands fa-whatsapp"></i> رقم هاتف المستلم (واتساب)
+                                        <span class="ct-required">*</span>
+                                    </label>
+                                    <input type="tel" id="ct-receiver-phone" class="ct-input" placeholder="964xxxxxxxxxx" dir="ltr">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ── Footer الإرسال ── -->
+                        <div class="ct-form-footer">
+                            <div class="ct-footer-note">
+                                <i class="fa-solid fa-shield-halved"></i>
+                                <span>سيتم توليد كود تتبع فريد تلقائياً وحفظ الحوالة بحالة <strong>قيد المراجعة</strong></span>
+                            </div>
+                            <button type="submit" class="ct-submit-btn" id="ct-submit-btn">
+                                <i class="fa-solid fa-paper-plane"></i>
+                                تأكيد وإرسال الحوالة
+                            </button>
+                        </div>
+
+                    </form>
+                </div>
+
+                <!-- Success Toast -->
+                <div id="ct-success-toast" class="ct-toast ct-toast-success hidden">
+                    <i class="fa-solid fa-circle-check"></i>
+                    <div>
+                        <div class="ct-toast-title">تم إرسال الحوالة بنجاح!</div>
+                        <div class="ct-toast-msg" id="ct-toast-msg"></div>
+                    </div>
+                </div>
+
+                <!-- Error Toast -->
+                <div id="ct-error-toast" class="ct-toast ct-toast-error hidden">
+                    <i class="fa-solid fa-circle-exclamation"></i>
+                    <div>
+                        <div class="ct-toast-title">تنبيه</div>
+                        <div class="ct-toast-msg" id="ct-error-msg"></div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- ===== قسم إنشاء حوالة خارجية ===== -->
+            <div class="card" id="createtransfer-intl" style="display:none;">
+
+                <!-- Hero Banner -->
+                <div class="section-hero intl-transfer-hero">
+                    <div class="section-hero-text">
+                        <h2><i class="fa-solid fa-globe"></i> إنشاء حوالة خارجية (دولية)</h2>
+                        <p>إرسال حوالة عبر وكيل سوريا إلى وكيل خارجي في الخارج</p>
+                    </div>
+                    <div class="section-hero-stats">
+                        <div class="hero-stat">
+                            <span id="intl-usd-preview">$0.00</span>
+                            <small>المبلغ بالدولار</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Loading Overlay -->
+                <div id="intl-loading-overlay" class="ct-loading-overlay hidden">
+                    <div class="ct-spinner"></div>
+                    <p>جاري تحميل البيانات...</p>
+                </div>
+
+                <div class="ct-form-wrapper" id="intl-form-wrapper">
+                    <form id="intl-transfer-form" novalidate>
+
+                        <!-- ── القسم 1: تفاصيل المبلغ ── -->
+                        <div class="ct-section">
+                            <div class="ct-section-header">
+                                <div class="ct-section-icon" style="background:#dbeafe;color:#1d4ed8;">
+                                    <i class="fa-solid fa-money-bill-wave"></i>
+                                </div>
+                                <div>
+                                    <h4 class="ct-section-title">تفاصيل المبلغ</h4>
+                                    <p class="ct-section-subtitle">حدد المبلغ وعملتي الإرسال والاستلام</p>
+                                </div>
+                            </div>
+
+                            <div class="ct-fields-grid ct-grid-3">
+                                <div class="ct-field-group">
+                                    <label class="ct-label"><i class="fa-solid fa-coins"></i> المبلغ المرسل <span class="ct-required">*</span></label>
+                                    <input type="number" id="intl-amount" class="ct-input" placeholder="0.00" min="1" step="any" oninput="intlCalculateUsd()">
+                                </div>
+                                <div class="ct-field-group">
+                                    <label class="ct-label"><i class="fa-solid fa-arrow-up-from-bracket"></i> عملة الإرسال <span class="ct-required">*</span></label>
+                                    <select id="intl-send-currency" class="ct-select" onchange="intlCalculateUsd()">
+                                        <option value="">جاري التحميل...</option>
+                                    </select>
+                                </div>
+                                <div class="ct-field-group">
+                                    <label class="ct-label"><i class="fa-solid fa-arrow-down-to-bracket"></i> عملة الاستلام <span class="ct-required">*</span></label>
+                                    <select id="intl-recv-currency" class="ct-select">
+                                        <option value="">جاري التحميل...</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="ct-usd-card">
+                                <div class="ct-usd-icon"><i class="fa-solid fa-dollar-sign"></i></div>
+                                <div>
+                                    <div class="ct-usd-label">القيمة المعادلة بالدولار الأمريكي</div>
+                                    <div class="ct-usd-value" id="intl-usd-value">$0.00</div>
+                                    <span id="intl-tier-hint" class="rate-tier-hint" style="display:none;"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="ct-divider"></div>
+
+                        <!-- ── القسم 2: المكتب المحلي ── -->
+                        <div class="ct-section">
+                            <div class="ct-section-header">
+                                <div class="ct-section-icon" style="background:#dcfce7;color:#16a34a;">
+                                    <i class="fa-solid fa-flag"></i>
+                                </div>
+                                <div>
+                                    <h4 class="ct-section-title">المكتب المحلي</h4>
+                                    <p class="ct-section-subtitle">المكتب المحلي الذي سيرسل الحوالة</p>
+                                </div>
+                            </div>
+                            <div class="ct-fields-grid ct-grid-1">
+                                <div class="ct-field-group">
+                                    <label class="ct-label"><i class="fa-solid fa-building"></i> المكتب المحلي <span class="ct-required">*</span></label>
+                                    <select id="intl-office" class="ct-select">
+                                        <option value="">جاري التحميل...</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="ct-divider"></div>
+
+                        <!-- ── القسم 3: الوجهة الخارجية ── -->
+                        <div class="ct-section">
+                            <div class="ct-section-header">
+                                <div class="ct-section-icon" style="background:#fce7f3;color:#be185d;">
+                                    <i class="fa-solid fa-earth-americas"></i>
+                                </div>
+                                <div>
+                                    <h4 class="ct-section-title">الوجهة الخارجية</h4>
+                                    <p class="ct-section-subtitle">اختر الدولة ثم المدينة، وحدد الوكيل الخارجي المستلِم</p>
+                                </div>
+                            </div>
+
+                            <div class="ct-fields-grid ct-grid-2">
+                                <div class="ct-field-group">
+                                    <label class="ct-label"><i class="fa-solid fa-globe"></i> الدولة المستلِمة <span class="ct-required">*</span></label>
+                                    <select id="intl-country" class="ct-select" onchange="intlOnCountryChange()">
+                                        <option value="">جاري التحميل...</option>
+                                    </select>
+                                </div>
+                                <div class="ct-field-group">
+                                    <label class="ct-label"><i class="fa-solid fa-city"></i> المدينة <span class="ct-required">*</span></label>
+                                    <select id="intl-city" class="ct-select" disabled>
+                                        <option value="">اختر الدولة أولاً...</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="ct-divider"></div>
+
+                        <!-- ── القسم 4: بيانات المرسل ── -->
+                        <div class="ct-section">
+                            <div class="ct-section-header">
+                                <div class="ct-section-icon" style="background:#ede9fe;color:#7c3aed;">
+                                    <i class="fa-solid fa-id-card"></i>
+                                </div>
+                                <div>
+                                    <h4 class="ct-section-title">بيانات المرسل</h4>
+                                    <p class="ct-section-subtitle">هوية الزبون الحاضر في المكتب</p>
+                                </div>
+                            </div>
+                            <div class="ct-fields-grid ct-grid-2">
+                                <div class="ct-field-group">
+                                    <label class="ct-label"><i class="fa-solid fa-user-check"></i> اسم المرسل الكامل <span class="ct-required">*</span></label>
+                                    <input type="text" id="intl-sender-name" class="ct-input" placeholder="الاسم كما في الهوية">
+                                </div>
+                                <div class="ct-field-group">
+                                    <label class="ct-label"><i class="fa-solid fa-camera"></i> صورة هوية المرسل <span class="ct-required">*</span></label>
+                                    <label class="ct-file-label" for="intl-sender-id-image">
+                                        <i class="fa-solid fa-cloud-arrow-up"></i>
+                                        <span id="intl-sender-id-filename">اضغط لرفع صورة الهوية</span>
+                                    </label>
+                                    <input type="file" id="intl-sender-id-image" class="ct-file-input" accept="image/jpeg,image/png,image/jpg" onchange="intlOnSenderIdChange(this)">
+                                    <span class="ct-hint">صورة واضحة للهوية أو الجواز (JPG/PNG)</span>
+                                </div>
+                            </div>
+                            <div id="intl-sender-id-preview-wrap" class="ct-img-preview-wrap hidden">
+                                <img id="intl-sender-id-preview" class="ct-img-preview" src="" alt="معاينة الهوية">
+                                <button type="button" class="ct-img-remove" onclick="intlRemoveSenderId()">
+                                    <i class="fa-solid fa-xmark"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="ct-divider"></div>
+
+                        <!-- ── القسم 5: بيانات المستلم ── -->
+                        <div class="ct-section">
+                            <div class="ct-section-header">
+                                <div class="ct-section-icon" style="background:#fef3c7;color:#d97706;">
+                                    <i class="fa-solid fa-user"></i>
+                                </div>
+                                <div>
+                                    <h4 class="ct-section-title">بيانات المستلم</h4>
+                                    <p class="ct-section-subtitle">معلومات الشخص المستلم في الخارج</p>
+                                </div>
+                            </div>
+                            <div class="ct-fields-grid ct-grid-2">
+                                <div class="ct-field-group">
+                                    <label class="ct-label"><i class="fa-solid fa-id-card"></i> اسم المستلم الرباعي <span class="ct-required">*</span></label>
+                                    <input type="text" id="intl-receiver-name" class="ct-input" placeholder="أدخل الاسم الكامل للمستلم">
+                                </div>
+                                <div class="ct-field-group">
+                                    <label class="ct-label"><i class="fa-brands fa-whatsapp"></i> رقم هاتف المستلم <span class="ct-required">*</span></label>
+                                    <input type="tel" id="intl-receiver-phone" class="ct-input" placeholder="+1xxxxxxxxxx" dir="ltr">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ── Footer ── -->
+                        <div class="ct-form-footer">
+                            <div class="ct-footer-note">
+                                <i class="fa-solid fa-shield-halved"></i>
+                                <span>حوالة دولية — سيتم توليد كود تتبع فريد تلقائياً</span>
+                            </div>
+                            <button type="submit" class="ct-submit-btn" id="intl-submit-btn" style="background:linear-gradient(135deg,#7c3aed,#4f46e5);box-shadow:0 4px 14px rgba(124,58,237,0.35);">
+                                <i class="fa-solid fa-globe"></i>
+                                إرسال الحوالة الدولية
+                            </button>
+                        </div>
+
+                    </form>
+                </div>
+
+                <!-- Toasts مشتركة مع الحوالة الداخلية -->
+                <div id="intl-success-toast" class="ct-toast ct-toast-success hidden">
+                    <i class="fa-solid fa-circle-check"></i>
+                    <div>
+                        <div class="ct-toast-title">تم إرسال الحوالة الدولية بنجاح!</div>
+                        <div class="ct-toast-msg" id="intl-toast-msg"></div>
+                    </div>
+                </div>
+                <div id="intl-error-toast" class="ct-toast ct-toast-error hidden">
+                    <i class="fa-solid fa-circle-exclamation"></i>
+                    <div>
+                        <div class="ct-toast-title">تنبيه</div>
+                        <div class="ct-toast-msg" id="intl-error-msg"></div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div><!-- /.content-body -->
+    </main>
+
+
+    <!-- ===== مودال تعديل الحوالة ===== -->
+    <div id="edit-transfer-modal" class="modal-overlay hidden">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-pen-to-square"></i> تعديل بيانات الحوالة</h3>
+                <button class="modal-close-btn" onclick="closeEditModal()">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="edit-transfer-id">
+
+                <!-- معلومات الحوالة (للقراءة فقط) -->
+                <div id="edit-transfer-info" style="background:var(--light);border-radius:10px;padding:12px 16px;margin-bottom:18px;font-size:13px;color:var(--gray);font-weight:600;"></div>
+
+                <div class="modal-field-grid">
+                    <div class="modal-field-group">
+                        <label><i class="fa-solid fa-user"></i> اسم المستلم</label>
+                        <input type="text" id="edit-receiver-name" class="modal-input" placeholder="اسم المستلم الكامل">
+                    </div>
+                    <div class="modal-field-group">
+                        <label><i class="fa-solid fa-phone"></i> رقم هاتف المستلم</label>
+                        <input type="tel" id="edit-receiver-phone" class="modal-input" placeholder="+963xxxxxxxxx" dir="ltr">
+                    </div>
+                    <div class="modal-field-group">
+                        <label><i class="fa-solid fa-coins"></i> المبلغ</label>
+                        <input type="number" id="edit-amount" class="modal-input" placeholder="المبلغ" min="1" step="any">
+                    </div>
+                    <div class="modal-field-group">
+                        <label><i class="fa-solid fa-percent"></i> الرسوم ($)</label>
+                        <input type="number" id="edit-fee" class="modal-input" placeholder="0.00" min="0" step="any">
+                    </div>
+                </div>
+
+                <div class="modal-field-group" style="margin-top:14px;">
+                    <label><i class="fa-solid fa-note-sticky"></i> سبب التعديل / ملاحظات</label>
+                    <textarea id="edit-notes" class="modal-input" rows="2"
+                        placeholder="مثال: تصحيح رقم الهاتف بناءً على طلب المرسل..."></textarea>
+                </div>
+
+                <div id="edit-modal-error" class="modal-error hidden">
+                    <i class="fa-solid fa-circle-exclamation"></i>
+                    <span id="edit-modal-error-text"></span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-cancel-btn" onclick="closeEditModal()">
+                    <i class="fa-solid fa-xmark"></i> إلغاء
+                </button>
+                <button class="modal-save-btn" id="edit-save-btn" onclick="saveTransferEdit()">
+                    <i class="fa-solid fa-floppy-disk"></i> حفظ التعديلات
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== Chat Panel (لوحة الدردشة) ===== -->
+    <div id="chat-panel-overlay" class="chat-overlay hidden" onclick="closeChatPanel()"></div>
+
+    <div id="chat-panel" class="chat-panel hidden">
+        <!-- Header -->
+        <div class="chat-panel-header">
+            <div class="chat-panel-title">
+                <div class="chat-panel-avatar">
+                    <i class="fa-solid fa-comments"></i>
+                </div>
+                <div>
+                    <div class="chat-panel-name" id="chat-panel-name">دردشة الحوالة</div>
+                    <div class="chat-panel-sub" id="chat-panel-tracking">—</div>
+                </div>
+            </div>
+            <div class="chat-panel-actions">
+                <button class="chat-reload-btn" onclick="loadChatMessages()" title="تحديث">
+                    <i class="fa-solid fa-arrows-rotate"></i>
+                </button>
+                <button class="chat-close-btn" onclick="closeChatPanel()" title="إغلاق">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Messages Area -->
+        <div class="chat-messages-area" id="chat-messages-area">
+            <div class="chat-loading" id="chat-loading">
+                <div class="chat-spinner"></div>
+                <span>جارٍ تحميل الرسائل...</span>
+            </div>
+            <div class="chat-empty hidden" id="chat-empty">
+                <i class="fa-regular fa-comment-dots"></i>
+                <p>لا توجد رسائل بعد</p>
+                <small>ابدأ المحادثة مع الزبون</small>
+            </div>
+            <div id="chat-messages-list"></div>
+        </div>
+
+        <!-- Input Area -->
+        <div class="chat-input-area">
+
+            <!-- معاينة الصورة قبل الإرسال -->
+            <div id="chat-img-preview-bar" class="chat-img-preview-bar hidden">
+                <div class="chat-img-preview-inner">
+                    <img id="chat-img-preview-thumb" src="" alt="معاينة" class="chat-img-preview-thumb">
+                    <div class="chat-img-preview-info">
+                        <span id="chat-img-preview-name" class="chat-img-preview-name"></span>
+                        <span id="chat-img-preview-size" class="chat-img-preview-size"></span>
+                    </div>
+                </div>
+                <button class="chat-img-remove-btn" onclick="clearImageSelection()" title="إلغاء">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- حقل الكتابة + أزرار -->
+            <div class="chat-input-wrapper">
+
+                <!-- زر إرفاق صورة -->
+                <label class="chat-attach-btn" for="chat-image-input" title="إرفاق صورة">
+                    <i class="fa-solid fa-image"></i>
+                </label>
+                <input
+                    type="file"
+                    id="chat-image-input"
+                    accept="image/*"
+                    style="display:none;"
+                    onchange="onImageSelected(event)">
+
+                <textarea
+                    id="chat-message-input"
+                    class="chat-textarea"
+                    placeholder="اكتب رسالتك هنا..."
+                    rows="1"
+                    onkeydown="handleChatKeydown(event)"
+                    oninput="autoResizeTextarea(this)">
+                </textarea>
+
+                <button class="chat-send-btn" id="chat-send-btn" onclick="sendChatMessageOrImage()" title="إرسال">
+                    <i class="fa-solid fa-paper-plane"></i>
+                </button>
+            </div>
+            <div class="chat-input-hint">Enter للإرسال • Shift+Enter لسطر جديد</div>
+        </div>
+    </div>
+       <div id="extra-boxes-modal" class="modal-overlay hidden">
+    <div class="modal-box" style="width: 600px; max-width: 95vw;">
+        <div class="modal-header">
+            <h3><i class="fa-solid fa-boxes-stacked"></i> إدارة الصناديق الإضافية</h3>
+            <button class="modal-close-btn" onclick="closeExtraBoxesModal()">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div style="background: var(--light); padding: 18px; border-radius: 12px; margin-bottom: 24px; border: 1px solid var(--border);">
+                <h4 style="margin-bottom: 12px; color: var(--dark); font-size: 14px;"><i class="fa-solid fa-plus"></i> إضافة صندوق جديد</h4>
+                <div class="form-row" style="margin-bottom: 0; align-items: flex-end;">
+                    <div class="form-group" style="flex: 2; min-width: 150px;">
+                        <label>اسم الصندوق</label>
+                        <input type="text" id="eb-name" class="modal-input" placeholder="مثال: صندوق المصاريف">
+                    </div>
+                    <div class="form-group" style="flex: 1; min-width: 100px;">
+                        <label>المبلغ الأولي</label>
+                        <input type="number" id="eb-amount" class="modal-input" placeholder="0.00" min="0" step="any">
+                    </div>
+                    <div class="form-group" style="flex: 0 0 auto;">
+                        <button class="btn-primary" onclick="createExtraBox()" style="padding: 12px 24px; margin-bottom: 2px;">
+                            <i class="fa-solid fa-check"></i> إضافة
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <h4 style="margin-bottom: 12px; color: var(--dark); font-size: 14px;"><i class="fa-solid fa-list"></i> الصناديق الحالية</h4>
+            <div class="table-wrapper" style="max-height: 250px; overflow-y: auto;">
                 <table class="data-table">
                     <thead>
                         <tr>
-                            <th>رقم الحوالة</th>
-                            <th>المبلغ</th>
-                            <th>المستلم</th>
-                            <th>الحالة الحالية</th>
-                            <th>الإجراء</th>
+                            <th>اسم الصندوق</th>
+                            <th>الرصيد</th>
+                            <th style="text-align: left;">الإجراءات</th>
                         </tr>
                     </thead>
-                    <tbody id="transfers-list">
-                        </tbody>
+                    <tbody id="extra-boxes-list">
+                        <tr><td colspan="3" style="text-align:center;">جاري التحميل...</td></tr>
+                    </tbody>
                 </table>
             </div>
         </div>
-    </main>
-    <script src="admin.js"></script>
+    </div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.12.2/lottie.min.js"></script>
+
+        <script src="admin.js"></script>
+        
+
+    <script>
+        // ===== وظائف مساعدة للواجهة =====
+
+        function filterPendingTable() {
+            const q = (document.getElementById('pending-search')?.value || '').toLowerCase();
+            document.querySelectorAll('#transfers-list tr').forEach(row => {
+                row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+            });
+        }
+
+        function filterAllTransfersTable() {
+            const q = (document.getElementById('all-transfers-search')?.value || '').toLowerCase();
+            document.querySelectorAll('#all-transfers-list tr').forEach(row => {
+                row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+            });
+        }
+
+        let _currentTransferFilter = 'all';
+        function setTransferFilter(status, btn) {
+            _currentTransferFilter = status;
+            document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+            btn.classList.add('active');
+            document.querySelectorAll('#all-transfers-list tr').forEach(row => {
+                if (status === 'all') { row.style.display = ''; return; }
+                const badge = row.querySelector('.status-badge');
+                const rowStatus = badge ? badge.dataset.status : '';
+                row.style.display = rowStatus === status ? '' : 'none';
+            });
+        }
+
+        // إعادة تهيئة profits table عند التنقل
+        const _origShowProfits = typeof showProfitsSection === 'function' ? showProfitsSection : null;
+    </script>
+    <script src="sidebar-mobile.js"></script>
+    <div id="tnotif-toast-container" class="tnotif-toast-container" aria-live="polite"></div>
+
 </body>
+
 </html>

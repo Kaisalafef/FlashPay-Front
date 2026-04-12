@@ -1,282 +1,3156 @@
-/* ================= ROOT ================= */
-:root{
-    --primary: hsl(28,95%,45%);
-    --primary-dark:hsl(28,95%,35%);
-    --primary-bg:hsla(28,95%,50%,0.08);
+/* ===============================================================
+   FlashPay – Admin Dashboard CSS
+   مطابق تماماً لأسلوب style_super.css
+   =============================================================== */
 
-    --success:#10b981;
-    --danger:#ef4444;
+/* ================= ROOT & VARIABLES ================= */
+:root {
+    /* اللون الأساسي للـ Admin = برتقالي مالي */
+    --primary: #ea580c;
+    --primary-dark: #c2410c;
+    --primary-light: #fb923c;
+    --primary-bg: rgba(234, 88, 12, 0.08);
 
-    --dark:#111827;
-    --gray:#6b7280;
-    --light:#f3f4f6;
-    --white:#ffffff;
-    --border:#e5e7eb;
+    /* ألوان ثانوية */
+    --secondary: #3b82f6;
+    --secondary-bg: #eff6ff;
 
-    --radius:16px;
-    --radius-sm:10px;
+    /* ألوان الحالات */
+    --success: #10b981;
+    --success-bg: #dcfce7;
+    --danger: #ef4444;
+    --danger-bg: #fef2f2;
+    --warning: #f59e0b;
+    --warning-bg: #fef3c7;
 
-    --transition:.3s cubic-bezier(.4,0,.2,1);
+    /* درجات الرمادي والخلفيات */
+    --dark: #111827;
+    --text-muted: #4b5563;
+    --gray: #6b7280;
+    --light: #f3f4f6;
+    --white: #ffffff;
+    --border: #e5e7eb;
 
-    --shadow:0 4px 6px rgba(0,0,0,.06);
-    --shadow-lg:0 15px 25px rgba(0,0,0,.08);
+    /* الأبعاد */
+    --radius: 16px;
+    --radius-sm: 10px;
+    --radius-full: 9999px;
+
+    /* التأثيرات */
+    --transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+    --shadow: 0 4px 6px -1px rgba(0,0,0,0.08), 0 2px 4px -1px rgba(0,0,0,0.04);
+    --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+    --shadow-hover: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
 }
 
-/* ================= RESET ================= */
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-    font-family:'Cairo',sans-serif;
+/* ================= RESET & TYPOGRAPHY ================= */
+html { font-size: 16px; 
+scroll-behavior: smooth;}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Cairo', sans-serif;
 }
 
-body{
-    background:var(--light);
-    display:flex;
-    height:100vh;
-    overflow:hidden;
-    direction:rtl;
-    color:var(--dark);
+body {
+    background: var(--light);
+    color: var(--dark);
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+    direction: rtl;
+    -webkit-font-smoothing: antialiased;
+    font-size: 0.875rem;
+    line-height: 1.6;
 }
 
-/* ================= SCROLLBAR ================= */
-::-webkit-scrollbar{
-    width:8px;
-}
-::-webkit-scrollbar-thumb{
-    background:#cbd5e1;
-    border-radius:50px;
-}
+/* Scrollbar */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: var(--radius-full); }
+::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
 /* ================= SIDEBAR ================= */
-.sidebar{
-    width:280px;
-    background:var(--white);
-    border-left:1px solid var(--border);
-    display:flex;
-    flex-direction:column;
-    padding:28px 20px;
-    box-shadow:2px 0 10px rgba(0,0,0,.03);
+.sidebar {
+    width: 280px;
+    background: var(--white);
+    border-left: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    padding: 28px 20px;
+    position: relative;
+    z-index: 100;
+    box-shadow: 2px 0 10px rgba(0,0,0,0.02);
 }
 
-.logo{
-    font-size:26px;
-    font-weight:800;
-    margin-bottom:50px;
-    display:flex;
-    align-items:center;
-    gap:12px;
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin: 20px;
 }
 
-.logo i{
-    color:var(--primary);
-    font-size:26px;
+/* الصورة */
+.logo img {
+    width: 70px;
+    height: 70px;
+    object-fit: contain;
+    border-radius: 50%;
+    opacity: 80%;
+   mix-blend-mode: multiply;
+    transition: all 0.3s ease;
 }
 
-.logo span{
-    background:linear-gradient(135deg,var(--primary),#f59e0b);
-    -webkit-background-clip:text;
-    -webkit-text-fill-color:transparent;
+/* تأثير hover */
+.logo img:hover {
+    transform: scale(1.1) rotate(5deg);
+    
 }
 
-.sidebar nav ul{
-    list-style:none;
-    display:flex;
-    flex-direction:column;
-    gap:8px;
+/* النص */
+.logo span {
+    font-size: 20px;
+    font-weight: 800;
+    background: linear-gradient(45deg, var(--primary-light), var(--primary-light), #fff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
 }
 
-.sidebar nav a{
-    text-decoration:none;
-    color:var(--gray);
-    padding:14px 18px;
-    border-radius:var(--radius-sm);
-    display:flex;
-    align-items:center;
-    gap:14px;
-    font-weight:600;
-    transition:var(--transition);
+.sidebar nav {
+    position: relative;
+    flex: 1;
 }
 
-.sidebar nav a:hover{
-    background:var(--primary-bg);
-    color:var(--primary);
-    transform:translateX(-5px);
+.sidebar nav ul {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 }
 
-.sidebar nav li.active a{
-    background:linear-gradient(135deg,var(--primary-bg),transparent);
-    color:var(--primary);
-    border-right:4px solid var(--primary);
+.sidebar nav a {
+    text-decoration: none;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 18px;
+    border-radius: var(--radius-sm);
+    transition: var(--transition);
+    font-weight: 600;
+    font-size: 0.875rem;
 }
 
-.logout{
-    margin-top:auto;
-    border-top:1px solid var(--border);
-    padding-top:20px;
+.sidebar nav a i {
+    font-size: 1rem;
+    width: 24px;
+    text-align: center;
+    transition: var(--transition);
 }
 
-.logout a{
-    text-decoration:none;
-    color:var(--danger);
-    display:flex;
-    gap:12px;
-    padding:14px;
-    border-radius:var(--radius-sm);
-    font-weight:600;
-    transition:var(--transition);
+.sidebar nav a:hover {
+    background: var(--primary-bg);
+    color: var(--primary);
+    transform: translateX(-5px);
 }
 
-.logout a:hover{
-    background:#fef2f2;
-    transform:translateX(-5px);
+.sidebar nav a:hover i {
+    transform: scale(1.15) rotate(-5deg);
 }
 
-/* ================= MAIN ================= */
-.main-content{
-    flex:1;
-    display:flex;
-    flex-direction:column;
-    overflow-y:auto;
+.sidebar nav li.active a {
+    background: linear-gradient(135deg, var(--primary-bg), transparent);
+    color: var(--primary);
+    border-right: 4px solid var(--primary);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+
+.logout {
+    margin-top: auto;
+    border-top: 1px solid var(--border);
+    padding-top: 24px;
+}
+
+.logout a {
+    color: var(--danger);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    text-decoration: none;
+    transition: var(--transition);
+    padding: 14px 18px;
+    border-radius: var(--radius-sm);
+    font-weight: 600;
+}
+
+.logout a:hover {
+    background: var(--danger-bg);
+    transform: translateX(-5px);
+}
+
+/* ================= MAIN LAYOUT ================= */
+.main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    background: var(--light);
+}
+
+.content-body {
+    padding: 32px 40px;
+    max-width: 1400px;
+    margin: 0 auto;
+    width: 100%;
 }
 
 /* ================= HEADER ================= */
-header{
-    background:rgba(255,255,255,.85);
-    -webkit-backdrop-filter:blur(12px);
-    backdrop-filter:blur(12px);
-    padding:18px 40px;
-    border-bottom:1px solid var(--border);
-    position:sticky;
-    top:0;
-    z-index:50;
-    box-shadow:0 4px 20px rgba(0,0,0,.02);
+.app-header {
+    background: rgba(255,255,255,0.85);
+    padding: 18px 40px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.02);
 }
 
-.header-title h2{
-    font-size:20px;
-    font-weight:700;
+.page-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
 }
 
-/* ================= CONTENT ================= */
-.content-body{
-    padding:32px 40px;
-    max-width:1400px;
-    width:100%;
-    margin:auto;
+.page-title i {
+    font-size: 1.125rem;
+    color: var(--primary);
+    background: var(--primary-bg);
+    padding: 10px;
+    border-radius: 12px;
 }
 
-/* ================= CARD ================= */
-.card{
-    background:var(--white);
-    border-radius:var(--radius);
-    padding:30px;
-    box-shadow:var(--shadow);
-    border:1px solid rgba(0,0,0,.03);
-    transition:var(--transition);
-    animation:fadeUp .4s ease;
+.page-title h2 {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: var(--dark);
 }
 
-.card:hover{
-    box-shadow:var(--shadow-lg);
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 14px;
 }
 
-.card-header{
-    margin-bottom:20px;
-    border-bottom:1px solid var(--border);
-    padding-bottom:14px;
+.profile-box {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 6px 16px 6px 8px;
+    border-radius: var(--radius-full);
+    border: 1px solid var(--border);
+    background: var(--white);
+    transition: var(--transition);
+    cursor: pointer;
 }
 
-.card-header h3{
-    font-size:18px;
-    font-weight:700;
+.profile-box:hover {
+    border-color: var(--primary-light);
+    box-shadow: var(--shadow-sm);
 }
 
-/* ================= TABLE ================= */
-.data-table{
-    width:100%;
-    border-collapse:separate;
-    border-spacing:0;
+.avatar {
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, var(--primary), var(--primary-light));
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    font-size: 0.875rem;
+}
+
+.profile-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.profile-info span {
+    font-size: 0.8125rem;
+    font-weight: 700;
+    color: var(--dark);
+}
+
+.profile-info small {
+    font-size: 0.625rem;
+    color: var(--gray);
+}
+
+/* ================= CARDS ================= */
+.card {
+    background: var(--white);
+    border-radius: var(--radius);
+    padding: 32px;
+    box-shadow: var(--shadow);
+    border: 1px solid rgba(0,0,0,0.03);
+    margin-bottom: 28px;
+    transition: var(--transition);
+}
+
+.card:hover { box-shadow: var(--shadow-lg); }
+
+.card-header {
+    margin-bottom: 24px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 16px;
+}
+
+.card h3 {
+    font-size: 1rem;
+    color: var(--dark);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 700;
+}
+
+.card h3 i {
+    color: var(--primary);
+    font-size: 1.125rem;
+    transition: var(--transition);
+}
+
+.card:hover h3 i { transform: scale(1.15) rotate(-10deg); }
+
+.card:not([style*="display:none"]):not([style*="display: none"]) {
+    animation: fadeUp 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.section-divider {
+    border: none;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border), transparent);
+    margin: 35px 0;
+}
+
+.hidden { display: none !important; }
+
+/* ================= SECTION HERO BANNERS ================= */
+.section-hero {
+    border-radius: 16px;
+    padding: 28px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-bottom: 28px;
+    position: relative;
+    overflow: hidden;
+}
+
+.section-hero::before {
+    content: '';
+    position: absolute;
+    top: -50px;
+    left: -50px;
+    width: 200px;
+    height: 200px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+.section-hero-text h2 {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: white;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 6px;
+}
+
+.section-hero-text p {
+    font-size: 12px;
+    color: rgba(255,255,255,0.75);
+    font-weight: 600;
+}
+
+.section-hero-stats {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.hero-stat {
+    text-align: center;
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.25);
+    border-radius: 12px;
+    padding: 12px 20px;
+    min-width: 80px;
+}
+
+.hero-stat span {
+    display: block;
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: white;
+    line-height: 1.2;
+}
+
+.hero-stat small {
+    font-size: 10px;
+    color: rgba(255,255,255,0.7);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* لون كل قسم */
+.pending-hero {
+    background: linear-gradient(135deg, #92400e 0%, #d97706 60%, #fbbf24 100%);
+}
+
+.all-transfers-hero {
+    background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 60%, #60a5fa 100%);
+}
+
+.office-hero {
+    background: linear-gradient(135deg, #14532d 0%, #16a34a 60%, #22c55e 100%);
+}
+
+.safes-hero {
+    background: linear-gradient(135deg, #312e81 0%, #4f46e5 60%, #818cf8 100%);
+}
+
+.profits-hero {
+    background: linear-gradient(135deg, #0c4a6e 0%, #0284c7 60%, #38bdf8 100%);
+}
+
+/* ================= TABLE TOOLBAR ================= */
+.table-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+}
+
+.toolbar-search {
+    flex: 1;
+    min-width: 200px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--light);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 14px;
+    transition: var(--transition);
+}
+
+.toolbar-search:focus-within {
+    border-color: var(--primary);
+    background: white;
+    box-shadow: 0 0 0 3px var(--primary-bg);
+}
+
+.toolbar-search i { color: var(--gray); font-size: 13px; }
+
+.toolbar-search input {
+    border: none;
+    background: transparent;
+    padding: 0;
+    font-size: 13px;
+    flex: 1;
+    outline: none;
+    color: var(--dark);
+}
+
+.toolbar-search input::placeholder { color: var(--gray); }
+
+.toolbar-filters { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.filter-chip {
+    padding: 8px 16px;
+    border-radius: 30px;
+    border: 1px solid var(--border);
+    background: var(--white);
+    font-family: 'Cairo', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--gray);
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.filter-chip:hover { border-color: var(--primary); color: var(--primary); }
+.filter-chip.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+.toolbar-actions { display: flex; gap: 8px; }
+
+.toolbar-btn {
+    width: 38px;
+    height: 38px;
+    border: 1px solid var(--border);
+    background: white;
+    border-radius: 10px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--gray);
+    font-size: 14px;
+    transition: var(--transition);
+}
+
+.toolbar-btn:hover {
+    background: var(--primary-bg);
+    color: var(--primary);
+    border-color: var(--primary);
+    transform: rotate(20deg);
+}
+
+/* ================= TABLE WRAPPER ================= */
+.table-wrapper {
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+}
+
+.table-empty {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--gray);
+}
+
+.table-empty i {
+    font-size: 48px;
+    display: block;
+    margin-bottom: 12px;
+    opacity: 0.2;
+}
+
+.table-empty p { font-size: 14px; font-weight: 600; }
+
+/* ================= DATA TABLE ================= */
+.data-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin-top: 0;
 }
 
 .data-table th,
-.data-table td{
-    padding:16px;
-    text-align:right;
-    border-bottom:1px solid var(--border);
+.data-table td {
+    padding: 16px 20px;
+    text-align: right;
+    border-bottom: 1px solid var(--border);
 }
 
-.data-table th{
-    background:#f8fafc;
-    color:var(--gray);
-    font-size:13px;
-    font-weight:700;
-    text-transform:uppercase;
+.data-table th {
+    background: #f8fafc;
+    color: var(--text-muted);
+    font-weight: 700;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
-.data-table tbody tr{
-    background:var(--white);
-    transition:var(--transition);
+.data-table th:first-child { border-radius: 0 10px 0 0; }
+.data-table th:last-child  { border-radius: 10px 0 0 0; }
+
+.data-table tbody tr {
+    transition: var(--transition);
+    background: var(--white);
 }
 
-.data-table tbody tr:hover{
-    background:var(--light);
-    transform:scale(1.005);
+.data-table tbody tr:hover {
+    background: var(--light);
+    transform: scale(1.005);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.02);
 }
 
-.data-table td{
-    font-weight:600;
+.data-table td {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--dark);
+    vertical-align: middle;
+}
+
+/* ================= FORMS & INPUTS ================= */
+.form-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px;
+    margin-bottom: 20px;
+}
+
+.form-group {
+    flex: 1 1 250px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+label {
+    font-size: 0.8125rem;
+    font-weight: 700;
+    color: var(--dark);
+}
+
+input,
+select {
+    padding: 14px 16px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background-color: #f8fafc;
+    color: var(--dark);
+    font-size: 0.8125rem;
+    outline: none;
+    transition: var(--transition);
+    font-family: 'Cairo', sans-serif;
+}
+
+input:hover, select:hover {
+    border-color: #cbd5e1;
+    background-color: var(--white);
+}
+
+input:focus, select:focus {
+    background-color: var(--white);
+    border-color: var(--primary);
+    box-shadow: 0 0 0 4px var(--primary-bg);
+}
+
+input[type="date"] {
+    padding: 10px 14px;
 }
 
 /* ================= BUTTONS ================= */
-button{
-    border:none;
-    cursor:pointer;
+button { border: none; cursor: pointer; }
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    color: var(--white);
+    padding: 14px 28px;
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-size: 0.875rem;
+    font-weight: 700;
+    transition: var(--transition);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    box-shadow: 0 4px 12px rgba(234, 88, 12, 0.25);
+    font-family: 'Cairo', sans-serif;
 }
 
-.btn-approve{
-    background:var(--success);
-    color:white;
-    padding:8px 14px;
-    border-radius:8px;
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(234,88,12,0.3);
 }
 
-.btn-reject{
-    background:var(--danger);
-    color:white;
-    padding:8px 14px;
-    border-radius:8px;
-}
-.status-badge{
-    padding:6px 12px;
-    border-radius:50px;
-    font-size:12px;
-    font-weight:700;
-    display:inline-block;
+.btn-primary:active { transform: translateY(0); }
+
+.btn-approve {
+    background: linear-gradient(135deg, var(--success), #059669);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    transition: var(--transition);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'Cairo', sans-serif;
+    box-shadow: 0 2px 8px rgba(16,185,129,0.2);
 }
 
-.status-pending{
-    background:#fef3c7;
-    color:#b45309;
+.btn-approve:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 14px rgba(16,185,129,0.35);
 }
 
-.status-approved{
-    background:#dcfce7;
-    color:#166534;
+.btn-reject {
+    background: linear-gradient(135deg, var(--danger), #dc2626);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    transition: var(--transition);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'Cairo', sans-serif;
+    box-shadow: 0 2px 8px rgba(239,68,68,0.2);
 }
 
-.status-rejected{
-    background:#fee2e2;
-    color:#991b1b;
-}   
-/* ================= ANIMATION ================= */
-@keyframes fadeUp{
-    from{
-        opacity:0;
-        transform:translateY(15px);
+.btn-reject:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 14px rgba(239,68,68,0.35);
+}
+
+.btn-cancel {
+    background: var(--light);
+    color: var(--text-muted);
+    padding: 12px 24px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-weight: 700;
+    transition: var(--transition);
+    font-family: 'Cairo', sans-serif;
+}
+
+.btn-cancel:hover { background: #e5e7eb; color: var(--dark); }
+
+.row-actions { display: flex; gap: 6px; align-items: center; }
+
+.action-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    transition: var(--transition);
+}
+
+.action-btn.approve-btn { background: var(--success-bg); color: var(--success); }
+.action-btn.approve-btn:hover { background: var(--success); color: white; transform: translateY(-2px); }
+
+.action-btn.reject-btn { background: var(--danger-bg); color: var(--danger); }
+.action-btn.reject-btn:hover { background: var(--danger); color: white; transform: translateY(-2px); }
+
+/* ================= BADGES & STATUS ================= */
+.status-badge {
+    padding: 5px 12px;
+    border-radius: var(--radius-full);
+    font-size: 0.6875rem;
+    font-weight: 700;
+    display: inline-block;
+}
+
+.status-pending, .status-waiting {
+    background: var(--warning-bg);
+    color: #92400e;
+}
+
+.status-approved {
+    background: var(--success-bg);
+    color: #166534;
+}
+
+.status-rejected {
+    background: var(--danger-bg);
+    color: #991b1b;
+}
+
+.role-badge {
+    background: var(--secondary-bg);
+    color: var(--secondary);
+    padding: 5px 12px;
+    border-radius: var(--radius-full);
+    font-size: 0.6875rem;
+    font-weight: 700;
+    display: inline-block;
+}
+
+/* ================= COLLAPSIBLE FORM ================= */
+.collapsible-form {
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+    margin-bottom: 24px;
+}
+
+.collapse-toggle {
+    width: 100%;
+    background: var(--light);
+    border: none;
+    padding: 16px 22px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    font-family: 'Cairo', sans-serif;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--dark);
+    transition: var(--transition);
+    text-align: right;
+}
+
+.collapse-toggle:hover { background: var(--primary-bg); color: var(--primary); }
+
+.collapse-toggle span { display: flex; align-items: center; gap: 10px; }
+.collapse-toggle span i { color: var(--primary); font-size: 16px; }
+
+.toggle-icon { transition: transform 0.3s ease; color: var(--gray); }
+
+.collapse-body {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease;
+    background: white;
+}
+
+.collapse-body.open { border-top: 1px solid var(--border); }
+.collapse-body .styled-form { padding: 24px; }
+
+/* ================= SAFES GRID ================= */
+.safes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+    margin-top: 8px;
+}
+
+.safe-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    transition: var(--transition);
+    position: relative;
+    overflow: hidden;
+}
+
+.safe-card::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    left: 0;
+    height: 3px;
+    border-radius: 0 0 16px 16px;
+}
+
+.safe-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-hover);
+}
+
+.safe-card-main {
+    border-color: #3b82f6;
+}
+
+.safe-card-main::after {
+    background: linear-gradient(90deg, #3b82f6, #60a5fa);
+}
+
+.safe-card-trading {
+    border-color: #f59e0b;
+}
+
+.safe-card-trading::after {
+    background: linear-gradient(90deg, #f59e0b, #fbbf24);
+}
+
+/* ═══════════════════════════════════════
+   خزنة المكتب  (OfficeSafe)
+   ═══════════════════════════════════════ */
+.safe-card-office {
+    border-color: #10b981;
+}
+.safe-card-office::after {
+    background: linear-gradient(90deg, #10b981, #34d399);
+}
+.safe-card-office .safe-card-icon {
+    background: #d1fae5;
+    color: #059669;
+}
+.office-safe-panel {
+    margin-top: 14px;
+    padding: 13px 14px;
+    background: var(--light);
+    border-radius: 10px;
+    border: 1px solid var(--border);
+}
+.office-safe-panel-title {
+    font-size: 12px;
+    font-weight: 800;
+    color: var(--dark);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.office-safe-row {
+    display: flex;
+    gap: 7px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+.office-safe-row .trading-input {
+    flex: 1;
+    min-width: 90px;
+}
+.osafe-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 9px 13px;
+    border: none;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: var(--transition);
+    white-space: nowrap;
+    font-family: 'Cairo', sans-serif;
+}
+.osafe-btn:disabled { opacity: .6; cursor: not-allowed; }
+.osafe-btn-dep       { background: #d1fae5; color: #065f46; }
+.osafe-btn-dep:hover  { background: #a7f3d0; }
+.osafe-btn-wit       { background: #fee2e2; color: #991b1b; }
+.osafe-btn-wit:hover  { background: #fecaca; }
+.osafe-btn-tra       { background: #ede9fe; color: #5b21b6; }
+.osafe-btn-tra:hover  { background: #ddd6fe; }
+
+.safe-card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--border);
+}
+
+.safe-card-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+.safe-card-main .safe-card-icon { background: #dbeafe; color: #2563eb; }
+.safe-card-trading .safe-card-icon { background: var(--warning-bg); color: #d97706; }
+
+.safe-card-title {
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--dark);
+}
+
+.safe-card-subtitle {
+    font-size: 11px;
+    color: var(--gray);
+    font-weight: 600;
+}
+
+.safe-card-balance {
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: var(--dark);
+    margin-bottom: 4px;
+    line-height: 1.1;
+}
+
+.safe-card-currency {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--gray);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* ================= OFFICE INFO ================= */
+.office-info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 14px;
+    margin-bottom: 24px;
+}
+
+.office-info-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--light);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 16px;
+    transition: var(--transition);
+}
+
+.office-info-item:hover {
+    border-color: var(--primary-light);
+    background: var(--primary-bg);
+}
+
+.office-info-item > i {
+    color: var(--primary);
+    font-size: 16px;
+    width: 20px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.office-info-item > div {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.info-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--gray);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.info-value {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--dark);
+}
+
+/* ================= TRADING PROFITS ================= */
+.trading-input {
+    width: 35%;
+    padding: 10px 14px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    outline: none;
+    font-size: 13px;
+    transition: var(--transition);
+    background: var(--white);
+    font-family: 'Cairo', sans-serif;
+}
+
+.trading-input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-bg);
+}
+
+/* ================= MODALS ================= */
+.modal-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(17, 24, 39, 0.7);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    opacity: 1;
+    visibility: visible;
+    transition: var(--transition);
+}
+
+.modal-overlay.hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.modal-content {
+    background: var(--white);
+    border-radius: var(--radius);
+    padding: 32px;
+    width: 90%;
+    max-width: 480px;
+    box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+    transform: scale(1) translateY(0);
+    transition: 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.modal-overlay.hidden .modal-content {
+    transform: scale(0.9) translateY(30px);
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 16px;
+}
+
+.modal-header h3 {
+    font-size: 1.0625rem;
+    color: var(--dark);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-weight: 700;
+}
+
+.modal-header h3 i {
+    color: var(--primary);
+    background: var(--primary-bg);
+    padding: 8px;
+    border-radius: 8px;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    font-size: 1.25rem;
+    color: var(--gray);
+    cursor: pointer;
+    transition: var(--transition);
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+}
+
+.close-btn:hover {
+    color: var(--danger);
+    background: var(--danger-bg);
+    transform: rotate(90deg);
+}
+
+.modal-body {
+    margin-bottom: 28px;
+    color: var(--text-muted);
+    line-height: 1.7;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 16px;
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, var(--danger), #dc2626);
+    color: white;
+    padding: 12px 24px;
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-weight: 700;
+    transition: var(--transition);
+    font-family: 'Cairo', sans-serif;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+}
+
+.btn-danger:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(239,68,68,0.35);
+}
+
+/* ================= EMPLOYEE CELL ================= */
+.emp-cell {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.emp-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 15px;
+    flex-shrink: 0;
+}
+
+/* ================= TRANSFER AMOUNT DISPLAY ================= */
+.transfer-amount {
+    font-weight: 800;
+    color: var(--dark);
+    font-size: 14px;
+}
+
+.transfer-code {
+    font-family: monospace;
+    background: var(--light);
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 12px;
+    color: var(--secondary);
+    font-weight: 700;
+}
+
+/* ================= LOADING SKELETON ================= */
+.skeleton {
+    position: relative;
+    overflow: hidden;
+    background: #e2e8f0;
+    border-radius: 8px;
+}
+
+.skeleton::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent);
+    animation: skeleton-loading 1.5s infinite;
+}
+
+@keyframes skeleton-loading {
+    from { transform: translateX(100%); }
+    to   { transform: translateX(-100%); }
+}
+
+/* ================= TRANSFER FEE INPUT ================= */
+.fee-input {
+    width: 100px;
+    padding: 7px 10px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    outline: none;
+    text-align: center;
+    font-size: 13px;
+    transition: var(--transition);
+    background: var(--white);
+    font-family: 'Cairo', sans-serif;
+}
+
+.fee-input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-bg);
+}
+
+/* ================= INPUT ERROR ================= */
+.input-error {
+    border-color: var(--danger) !important;
+    background-color: var(--danger-bg) !important;
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.15) !important;
+}
+
+/* ================= UPLOAD ================= */
+.upload-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.custom-file-upload {
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: white;
+    padding: 10px 16px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-size: 13px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: var(--transition);
+    box-shadow: var(--shadow-sm);
+    font-family: 'Cairo', sans-serif;
+    font-weight: 700;
+}
+
+.custom-file-upload input[type="file"] { display: none; }
+
+.custom-file-upload:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow);
+}
+
+.file-name { font-size: 12px; color: var(--gray); }
+
+.preview-img {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 12px;
+    border: 2px solid var(--primary);
+    box-shadow: var(--shadow);
+    transition: var(--transition);
+}
+
+.preview-img:hover { transform: scale(1.05); }
+.form-section-title {
+    font-size: 0.95rem;
+    color: var(--primary);
+    margin-bottom: 16px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.form-section-title i {
+    background: var(--primary-bg);
+    color: var(--primary);
+    padding: 8px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+}
+
+/* النص المساعد أسفل حقول الإدخال (مثل: اتركه فارغاً إذا كانت الحوالة دولية) */
+.help-text {
+    color: var(--gray);
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-top: 6px;
+    display: block;
+}
+
+/* حاوية الأزرار والملاحظات في أسفل الفورم */
+.form-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-top: 24px;
+    background: #f8fafc; /* خلفية خفيفة لتمييز القسم السفلي */
+    padding: 16px 24px;
+    border-radius: var(--radius-sm);
+    border: 1px dashed var(--border);
+}
+
+/* ملاحظة أسفل الفورم (مثل: سيتم توليد كود تتبع) */
+.form-footer-note {
+    color: var(--text-muted);
+    font-size: 0.8125rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.form-footer-note i {
+    color: var(--primary);
+    font-size: 1.2rem;
+}
+/* =============================================
+   CREATE TRANSFER SECTION – CT Styles
+   ============================================= */
+
+/* Hero لقسم إنشاء الحوالة */
+.create-transfer-hero {
+    background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%);
+}
+
+/* Loading Overlay */
+.ct-loading-overlay {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    padding: 48px;
+    color: var(--gray);
+    font-weight: 600;
+    font-size: 14px;
+}
+.ct-loading-overlay.hidden { display: none; }
+
+.ct-spinner {
+    width: 42px;
+    height: 42px;
+    border: 4px solid var(--border);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: ct-spin 0.8s linear infinite;
+}
+@keyframes ct-spin { to { transform: rotate(360deg); } }
+
+/* Wrapper النموذج */
+.ct-form-wrapper {
+    padding: 28px 32px 32px;
+    transition: opacity 0.3s;
+}
+
+/* قسم داخل النموذج */
+.ct-section {
+    margin-bottom: 8px;
+}
+
+.ct-section-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 22px;
+}
+
+.ct-section-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+.ct-section-title {
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--dark);
+    margin: 0;
+}
+
+.ct-section-subtitle {
+    font-size: 12px;
+    color: var(--gray);
+    margin: 2px 0 0;
+}
+
+/* الشبكة */
+.ct-fields-grid {
+    display: grid;
+    gap: 20px;
+}
+.ct-grid-3 { grid-template-columns: repeat(3, 1fr); }
+.ct-grid-2 { grid-template-columns: repeat(2, 1fr); }
+
+@media (max-width: 900px) {
+    .ct-grid-3 { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 600px) {
+    .ct-grid-3, .ct-grid-2 { grid-template-columns: 1fr; }
+    .ct-form-wrapper { padding: 20px 16px 24px; }
+}
+
+/* حقول الإدخال */
+.ct-field-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.ct-label {
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--dark);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.ct-label i {
+    color: var(--primary);
+    font-size: 12px;
+}
+
+.ct-required {
+    color: var(--danger);
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.ct-input,
+.ct-select {
+    width: 100%;
+    padding: 11px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-family: 'Cairo', sans-serif;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--dark);
+    background: var(--white);
+    transition: border-color var(--transition), box-shadow var(--transition);
+    outline: none;
+    appearance: none;
+    -webkit-appearance: none;
+}
+
+.ct-select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%236b7280' d='M6 8L0 0h12z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: left 12px center;
+    padding-left: 36px;
+}
+
+.ct-input:focus,
+.ct-select:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.12);
+}
+
+.ct-input.ct-error,
+.ct-select.ct-error {
+    border-color: var(--danger);
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+.ct-hint {
+    font-size: 11px;
+    color: var(--gray);
+    font-weight: 500;
+}
+
+/* بطاقة الدولار */
+.ct-usd-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-top: 20px;
+    padding: 16px 20px;
+    background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+    border: 1.5px solid #86efac;
+    border-radius: var(--radius-sm);
+}
+
+.ct-usd-icon {
+    width: 44px;
+    height: 44px;
+    background: #16a34a;
+    color: white;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+.ct-usd-label {
+    font-size: 11.5px;
+    color: #166534;
+    font-weight: 600;
+    margin-bottom: 3px;
+}
+
+.ct-usd-value {
+    font-size: 22px;
+    font-weight: 800;
+    color: #15803d;
+    direction: ltr;
+    text-align: right;
+}
+
+/* مؤشر الشريحة المطبّقة على سعر الصرف */
+.rate-tier-hint {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 6px;
+    padding: 3px 10px;
+    background: rgba(21, 128, 61, 0.1);
+    border: 1px solid rgba(21, 128, 61, 0.25);
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #166534;
+    direction: rtl;
+    animation: tierFadeIn 0.3s ease;
+}
+.rate-tier-hint::before {
+    content: '\f3d1';
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    font-size: 10px;
+}
+@keyframes tierFadeIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* الفاصل */
+.ct-divider {
+    height: 1px;
+    background: linear-gradient(to right, transparent, var(--border), transparent);
+    margin: 24px 0;
+}
+
+/* Footer النموذج */
+.ct-form-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 20px 24px;
+    background: var(--light);
+    border-radius: var(--radius-sm);
+    margin-top: 24px;
+    flex-wrap: wrap;
+}
+
+.ct-footer-note {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12.5px;
+    color: var(--gray);
+    font-weight: 600;
+}
+
+.ct-footer-note i {
+    color: var(--primary);
+    font-size: 14px;
+}
+
+.ct-submit-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 13px 28px;
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: white;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-family: 'Cairo', sans-serif;
+    font-size: 14px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all var(--transition);
+    box-shadow: 0 4px 14px rgba(234, 88, 12, 0.35);
+}
+
+.ct-submit-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(234, 88, 12, 0.45);
+}
+
+.ct-submit-btn:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Toast Messages */
+.ct-toast {
+    position: fixed;
+    bottom: 28px;
+    left: 28px;
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 16px 20px;
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-lg);
+    max-width: 420px;
+    z-index: 9999;
+    animation: ct-slide-in 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    font-size: 13px;
+}
+
+@keyframes ct-slide-in {
+    from { transform: translateY(20px); opacity: 0; }
+    to   { transform: translateY(0);   opacity: 1; }
+}
+
+.ct-toast.hidden { display: none; }
+
+.ct-toast i {
+    font-size: 22px;
+    margin-top: 2px;
+    flex-shrink: 0;
+}
+
+.ct-toast-success {
+    background: #f0fdf4;
+    border: 1.5px solid #86efac;
+    color: #166534;
+}
+.ct-toast-success i { color: #16a34a; }
+
+.ct-toast-error {
+    background: #fef2f2;
+    border: 1.5px solid #fca5a5;
+    color: #991b1b;
+}
+.ct-toast-error i { color: #ef4444; }
+
+.ct-toast-title {
+    font-weight: 800;
+    font-size: 13.5px;
+    margin-bottom: 3px;
+}
+
+.ct-toast-msg {
+    font-weight: 600;
+    font-size: 12.5px;
+    line-height: 1.5;
+    direction: rtl;
+}
+/* ─────────────────────────────────────────────
+   رفع الهوية – File Upload
+───────────────────────────────────────────── */
+.ct-file-input {
+    display: none;
+}
+
+.ct-file-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 11px 14px;
+    border: 1.5px dashed var(--border);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--gray);
+    background: var(--light);
+    transition: border-color var(--transition), background var(--transition);
+}
+.ct-file-label:hover {
+    border-color: var(--primary);
+    background: var(--primary-bg);
+    color: var(--primary);
+}
+.ct-file-label i {
+    font-size: 16px;
+    color: var(--primary);
+}
+
+/* معاينة صورة الهوية */
+.ct-img-preview-wrap {
+    position: relative;
+    display: inline-block;
+    margin-top: 10px;
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    max-width: 200px;
+}
+.ct-img-preview-wrap.hidden { display: none; }
+
+.ct-img-preview {
+    width: 200px;
+    height: 120px;
+    object-fit: cover;
+    display: block;
+}
+
+.ct-img-remove {
+    position: absolute;
+    top: 6px;
+    left: 6px;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: rgba(239,68,68,0.9);
+    color: white;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    transition: background var(--transition);
+}
+.ct-img-remove:hover { background: #dc2626; }
+
+/* ─────────────────────────────────────────────
+   الحوالة الخارجية – Hero
+───────────────────────────────────────────── */
+.intl-transfer-hero {
+    background: linear-gradient(135deg, #4f46e5 0%, #be185d 100%);
+}
+/* =============================================
+   واجهة التداول المحسّنة – Trade Panel
+   ============================================= */
+
+.trade-panel {
+    margin-top: 20px;
+    padding-top: 18px;
+    border-top: 2px dashed var(--border);
+}
+
+.trade-panel-title {
+    font-size: 12.5px;
+    font-weight: 800;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+}
+.trade-panel-title i { color: var(--primary); }
+
+/* حقل الكمية المشتركة */
+.trade-field-group {
+    background: var(--light);
+    border-radius: var(--radius-sm);
+    padding: 12px 14px;
+    margin-bottom: 14px;
+}
+
+.trade-field-label {
+    font-size: 11.5px;
+    font-weight: 700;
+    color: var(--gray);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+.trade-field-label i { font-size: 10px; }
+
+/* صف الأزرار السريعة */
+.trade-chips-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 8px;
+}
+
+.trade-chip {
+    padding: 5px 11px;
+    border-radius: 20px;
+    border: 1.5px solid var(--border);
+    background: var(--white);
+    color: var(--dark);
+    font-family: 'Cairo', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    line-height: 1;
+}
+.trade-chip:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+    background: var(--primary-bg);
+    transform: translateY(-1px);
+}
+.trade-chip-buy {
+    border-color: #bbf7d0;
+    color: #15803d;
+    background: #f0fdf4;
+}
+.trade-chip-buy:hover {
+    border-color: #16a34a;
+    background: #dcfce7;
+    color: #14532d;
+}
+.trade-chip-sell {
+    border-color: #fecaca;
+    color: #b91c1c;
+    background: #fff1f2;
+}
+.trade-chip-sell:hover {
+    border-color: #dc2626;
+    background: #fee2e2;
+    color: #7f1d1d;
+}
+.trade-chip-active {
+    transform: scale(0.93) !important;
+    opacity: 0.7;
+}
+
+/* حقل الإدخال اليدوي */
+.trade-input-row {
+    margin-top: 4px;
+}
+.trade-input-row .trading-input {
+    width: 100%;
+    padding: 9px 12px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    font-family: 'Cairo', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--dark);
+    background: var(--white);
+    outline: none;
+    transition: border-color 0.2s;
+    direction: ltr;
+    text-align: right;
+}
+.trade-input-row .trading-input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-bg);
+}
+
+/* شبكة عمليتي الشراء/البيع */
+.trade-ops-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.trade-op {
+    border-radius: var(--radius-sm);
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.trade-op-buy  { background: #f0fdf4; border: 1.5px solid #bbf7d0; }
+.trade-op-sell { background: #fff1f2; border: 1.5px solid #fecaca; }
+
+.trade-op-header {
+    font-size: 12px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 2px;
+}
+.trade-op-buy  .trade-op-header { color: #15803d; }
+.trade-op-sell .trade-op-header { color: #b91c1c; }
+
+.trade-op-buy  .trading-input:focus { border-color: #16a34a; box-shadow: 0 0 0 3px #dcfce7; }
+.trade-op-sell .trading-input:focus { border-color: #dc2626; box-shadow: 0 0 0 3px #fee2e2; }
+
+/* أزرار التنفيذ */
+.trade-exec-btn {
+    width: 100%;
+    padding: 10px;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-family: 'Cairo', sans-serif;
+    font-size: 13px;
+    font-weight: 800;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    margin-top: 4px;
+    transition: all 0.2s ease;
+}
+.trade-exec-buy {
+    background: linear-gradient(135deg, #16a34a, #15803d);
+    color: white;
+    box-shadow: 0 3px 10px rgba(22,163,74,0.3);
+}
+.trade-exec-buy:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 5px 16px rgba(22,163,74,0.4);
+}
+.trade-exec-sell {
+    background: linear-gradient(135deg, #dc2626, #b91c1c);
+    color: white;
+    box-shadow: 0 3px 10px rgba(220,38,38,0.3);
+}
+.trade-exec-sell:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 5px 16px rgba(220,38,38,0.4);
+}
+
+@media (max-width: 600px) {
+    .trade-ops-grid { grid-template-columns: 1fr; }
+    .trade-chips-row { gap: 5px; }
+    .trade-chip { font-size: 11px; padding: 5px 9px; }
+}
+
+/* ===============================================================
+   مودال تعديل الحوالة + سجل التعديلات
+   =============================================================== */
+
+/* ===== Modal Overlay ===== */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+    animation: fadeInOverlay .25s ease;
+}
+.modal-overlay.hidden { display: none; }
+
+@keyframes fadeInOverlay {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+/* ===== Modal Box ===== */
+.modal-box {
+    background: var(--white);
+    border-radius: 20px;
+    width: 580px;
+    max-width: 95vw;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.3);
+    animation: slideUpModal .3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes slideUpModal {
+    from { opacity: 0; transform: translateY(40px) scale(0.96); }
+    to   { opacity: 1; transform: translateY(0)    scale(1);    }
+}
+
+/* ===== Modal Header ===== */
+.modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px;
+    background: linear-gradient(135deg, #ea580c 0%, #f97316 100%);
+    color: #fff;
+}
+.modal-header h3 {
+    font-size: 16px;
+    font-weight: 800;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.modal-close-btn {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    border-radius: 50%;
+    width: 34px;
+    height: 34px;
+    color: #fff;
+    cursor: pointer;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background var(--transition);
+    flex-shrink: 0;
+}
+.modal-close-btn:hover { background: rgba(255, 255, 255, 0.35); }
+
+/* ===== Modal Body ===== */
+.modal-body {
+    padding: 24px;
+}
+.modal-field-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+.modal-field-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.modal-field-group label {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--dark);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.modal-field-group label i {
+    color: var(--primary);
+    font-size: 12px;
+}
+.modal-input {
+    width: 100%;
+    padding: 10px 14px;
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    font-family: 'Cairo', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--dark);
+    background: var(--light);
+    transition: border-color var(--transition), background var(--transition), box-shadow var(--transition);
+    box-sizing: border-box;
+}
+.modal-input:focus {
+    outline: none;
+    border-color: var(--primary);
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.12);
+}
+textarea.modal-input {
+    resize: vertical;
+    min-height: 72px;
+}
+
+/* ===== Modal Error ===== */
+.modal-error {
+    background: var(--danger-bg);
+    color: var(--danger);
+    border: 1px solid #fca5a5;
+    border-radius: 10px;
+    padding: 10px 14px;
+    font-size: 13px;
+    font-weight: 600;
+    margin-top: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.modal-error.hidden { display: none; }
+
+/* ===== Modal Footer ===== */
+.modal-footer {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    padding: 16px 24px;
+    border-top: 1px solid var(--border);
+    background: var(--light);
+}
+.modal-cancel-btn {
+    padding: 10px 22px;
+    border-radius: 10px;
+    border: 2px solid var(--border);
+    background: #fff;
+    font-family: 'Cairo', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    color: var(--dark);
+    transition: border-color var(--transition), background var(--transition);
+}
+.modal-cancel-btn:hover {
+    border-color: #9ca3af;
+    background: var(--light);
+}
+.modal-save-btn {
+    padding: 10px 24px;
+    border-radius: 10px;
+    border: none;
+    background: linear-gradient(135deg, #ea580c 0%, #f97316 100%);
+    color: #fff;
+    font-family: 'Cairo', sans-serif;
+    font-size: 13px;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(234, 88, 12, 0.35);
+    transition: opacity var(--transition), transform var(--transition);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.modal-save-btn:hover   { opacity: 0.88; transform: translateY(-1px); }
+.modal-save-btn:active  { transform: translateY(0); }
+.modal-save-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+/* ===== زر التعديل في جدول الحوالات ===== */
+.btn-edit-transfer {
+    padding: 6px 14px;
+    border-radius: 8px;
+    border: none;
+    background: linear-gradient(135deg, #ea580c, #f97316);
+    color: #fff;
+    font-family: 'Cairo', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity .2s, transform .2s;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    box-shadow: 0 2px 6px rgba(234, 88, 12, 0.25);
+}
+.btn-edit-transfer:hover {
+    opacity: 0.85;
+    transform: translateY(-1px);
+}
+
+/* ===== سجل التعديلات: diff badges ===== */
+.diff-old {
+    color: #dc2626;
+    text-decoration: line-through;
+    font-size: 11px;
+    font-weight: 600;
+}
+.diff-new {
+    color: #16a34a;
+    font-size: 11px;
+    font-weight: 700;
+}
+.diff-row {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-bottom: 5px;
+    padding-bottom: 5px;
+    border-bottom: 1px dashed var(--border);
+}
+.diff-row:last-child { border-bottom: none; margin-bottom: 0; }
+.diff-label {
+    font-size: 10px;
+    color: var(--gray);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* ===== تحسين الجدول: رقم التتبع ===== */
+.tracking-code {
+    font-size: 10px;
+    color: var(--gray);
+    direction: ltr;
+    display: inline-block;
+    background: var(--light);
+    border-radius: 4px;
+    padding: 1px 5px;
+    margin-top: 3px;
+    letter-spacing: 0.5px;
+}
+
+/* ===== Responsive للمودال ===== */
+@media (max-width: 600px) {
+    .modal-field-grid {
+        grid-template-columns: 1fr;
     }
-    to{
-        opacity:1;
-        transform:translateY(0);
+    .modal-footer {
+        flex-direction: column-reverse;
     }
+    .modal-cancel-btn,
+    .modal-save-btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+/* =============================================================
+   CHAT BUTTON — زر الدردشة في جدول الحوالات
+   ============================================================= */
+.btn-chat {
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: var(--transition);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'Cairo', sans-serif;
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.25);
+    white-space: nowrap;
+}
+
+.btn-chat:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(59, 130, 246, 0.40);
+}
+
+.btn-chat:active {
+    transform: translateY(0);
+}
+
+/* =============================================================
+   CHAT PANEL — لوحة الدردشة الجانبية
+   ============================================================= */
+
+/* Overlay خلف اللوحة */
+.chat-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.40);
+    backdrop-filter: blur(2px);
+    z-index: 1000;
+    transition: opacity 0.3s ease;
+}
+
+/* اللوحة نفسها */
+.chat-panel {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 400px;
+    max-width: 92vw;
+    height: 100vh;
+    background: var(--white);
+    z-index: 1001;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 4px 0 30px rgba(0, 0, 0, 0.15);
+    border-right: 1px solid var(--border);
+    transform: translateX(0);
+    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.chat-panel.hidden {
+    display: none;
+}
+
+/* منع تمرير الصفحة الخلفية عند فتح اللوحة */
+body.chat-open { overflow: hidden; }
+
+/* ── Header ── */
+.chat-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 20px;
+    background: linear-gradient(135deg, #1d4ed8, #3b82f6);
+    color: white;
+    flex-shrink: 0;
+}
+
+.chat-panel-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.chat-panel-avatar {
+    width: 42px;
+    height: 42px;
+    background: rgba(255, 255, 255, 0.20);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+    border: 2px solid rgba(255,255,255,0.30);
+}
+
+.chat-panel-name {
+    font-size: 15px;
+    font-weight: 800;
+    line-height: 1.2;
+}
+
+.chat-panel-sub {
+    font-size: 11px;
+    opacity: 0.80;
+    margin-top: 2px;
+    font-weight: 600;
+}
+
+.chat-panel-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.chat-reload-btn,
+.chat-close-btn {
+    background: rgba(255, 255, 255, 0.18);
+    border: 1px solid rgba(255,255,255,0.25);
+    color: white;
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition);
+}
+
+.chat-reload-btn:hover { background: rgba(255,255,255,0.30); }
+.chat-close-btn:hover  { background: rgba(239,68,68,0.60); }
+
+/* ── Messages Area ── */
+.chat-messages-area {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px 14px;
+    background: #f0f4f8;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    scroll-behavior: smooth;
+}
+
+.chat-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 40px;
+    color: var(--gray);
+    font-size: 13px;
+}
+
+.chat-spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid var(--border);
+    border-top-color: #3b82f6;
+    border-radius: 50%;
+    animation: chat-spin 0.8s linear infinite;
+}
+
+@keyframes chat-spin { to { transform: rotate(360deg); } }
+
+.chat-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 48px 20px;
+    color: var(--gray);
+    text-align: center;
+}
+
+.chat-empty i      { font-size: 48px; opacity: 0.35; }
+.chat-empty p      { font-size: 15px; font-weight: 700; margin: 0; }
+.chat-empty small  { font-size: 12px; opacity: 0.70; }
+
+/* ── Bubbles ── */
+.chat-bubble {
+    display: flex;
+    flex-direction: column;
+    max-width: 82%;
+    animation: bubble-in 0.25s ease-out;
+}
+
+@keyframes bubble-in {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* رسائل الأدمن — يمين */
+.bubble-me {
+    align-self: flex-end;
+    align-items: flex-end;
+}
+
+/* رسائل الزبون — يسار */
+.bubble-other {
+    align-self: flex-start;
+    align-items: flex-start;
+}
+
+.bubble-name {
+    font-size: 10px;
+    font-weight: 700;
+    color: #3b82f6;
+    margin-bottom: 3px;
+    padding: 0 4px;
+}
+
+.bubble-body {
+    display: inline-flex;
+    flex-direction: column;
+    padding: 10px 14px 8px;
+    border-radius: 18px;
+    position: relative;
+    word-break: break-word;
+    max-width: 100%;
+}
+
+.bubble-me .bubble-body {
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    color: white;
+    border-bottom-right-radius: 4px;
+    box-shadow: 0 2px 10px rgba(59,130,246,0.25);
+}
+
+.bubble-other .bubble-body {
+    background: var(--white);
+    color: var(--dark);
+    border-bottom-left-radius: 4px;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.07);
+    border: 1px solid var(--border);
+}
+
+.bubble-text {
+    font-size: 13.5px;
+    line-height: 1.55;
+    white-space: pre-wrap;
+}
+
+.bubble-time {
+    font-size: 9.5px;
+    opacity: 0.60;
+    margin-top: 4px;
+    align-self: flex-end;
+    font-weight: 600;
+    letter-spacing: 0.2px;
+}
+
+/* ── Input Area ── */
+.chat-input-area {
+    padding: 12px 14px 14px;
+    background: var(--white);
+    border-top: 1px solid var(--border);
+    flex-shrink: 0;
+}
+
+.chat-input-wrapper {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    background: var(--light);
+    border: 1.5px solid var(--border);
+    border-radius: 14px;
+    padding: 8px 8px 8px 12px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.chat-input-wrapper:focus-within {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+}
+
+.chat-textarea {
+    flex: 1;
+    border: none;
+    background: transparent;
+    resize: none;
+    font-family: 'Cairo', sans-serif;
+    font-size: 13.5px;
+    line-height: 1.5;
+    color: var(--dark);
+    outline: none;
+    max-height: 120px;
+    overflow-y: auto;
+    direction: rtl;
+}
+
+.chat-textarea::placeholder { color: var(--gray); }
+
+.chat-send-btn {
+    width: 38px;
+    height: 38px;
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: var(--transition);
+    box-shadow: 0 2px 8px rgba(59,130,246,0.30);
+}
+
+.chat-send-btn:hover    { transform: scale(1.08); box-shadow: 0 4px 14px rgba(59,130,246,0.40); }
+.chat-send-btn:active   { transform: scale(0.95); }
+.chat-send-btn:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
+
+.chat-input-hint {
+    font-size: 10px;
+    color: var(--gray);
+    margin-top: 6px;
+    text-align: center;
+    opacity: 0.70;
+}
+
+/* ── Responsive ── */
+@media (max-width: 480px) {
+    .chat-panel { width: 100vw; max-width: 100vw; }
+}
+
+/* =============================================================
+   CHAT — IMAGE SUPPORT STYLES
+   ============================================================= */
+
+/* ── زر إرفاق صورة ── */
+.chat-attach-btn {
+    width: 36px;
+    height: 36px;
+    background: transparent;
+    border: none;
+    color: var(--gray);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 17px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: color 0.2s ease, background 0.2s ease;
+}
+
+.chat-attach-btn:hover {
+    color: #3b82f6;
+    background: rgba(59, 130, 246, 0.10);
+}
+
+/* ── شريط معاينة الصورة قبل الإرسال ── */
+.chat-img-preview-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #f0f4ff;
+    border: 1.5px solid #bfdbfe;
+    border-radius: 12px;
+    padding: 8px 12px;
+    margin-bottom: 10px;
+    gap: 10px;
+    animation: bubble-in 0.2s ease-out;
+}
+
+.chat-img-preview-inner {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+    min-width: 0;
+}
+
+.chat-img-preview-thumb {
+    width: 52px;
+    height: 52px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 1px solid #bfdbfe;
+    flex-shrink: 0;
+}
+
+.chat-img-preview-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.chat-img-preview-name {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--dark);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 200px;
+}
+
+.chat-img-preview-size {
+    font-size: 11px;
+    color: var(--gray);
+}
+
+.chat-img-remove-btn {
+    background: rgba(239, 68, 68, 0.10);
+    border: none;
+    color: #ef4444;
+    width: 28px;
+    height: 28px;
+    border-radius: 7px;
+    cursor: pointer;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: background 0.2s ease;
+}
+
+.chat-img-remove-btn:hover {
+    background: rgba(239, 68, 68, 0.22);
+}
+
+/* ── الصورة داخل فقاعة الرسالة ── */
+.bubble-img-wrap {
+    margin-bottom: 4px;
+    line-height: 0;   /* يزيل المسافة تحت الصورة */
+}
+
+.bubble-img {
+    max-width: 220px;
+    max-height: 260px;
+    width: 100%;
+    border-radius: 12px;
+    display: block;
+    cursor: zoom-in;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    object-fit: cover;
+}
+
+.bubble-img:hover {
+    opacity: 0.90;
+    transform: scale(1.02);
+}
+
+/* صورة من الزبون (يسار) — حواف مختلفة قليلاً */
+.bubble-other .bubble-img {
+    border-radius: 10px 10px 10px 3px;
+}
+
+/* صورة من الأدمن (يمين) */
+.bubble-me .bubble-img {
+    border-radius: 10px 10px 3px 10px;
+}
+
+/* رسالة خطأ في حالة فشل تحميل الصورة */
+.bubble-img-error {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--danger);
+    background: var(--danger-bg);
+    padding: 6px 10px;
+    border-radius: 8px;
+    font-weight: 600;
+}
+
+/* ── Lightbox fadeIn animation ── */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+/* =============================================================
+   NOTIFICATION SYSTEM — نظام الإشعارات
+   (إضافات فقط — لا تعديل على أي CSS موجود)
+   ============================================================= */
+
+/* ── حاوية الجرس (wrapper للـ positioning) ── */
+.notif-bell-wrap {
+    position: relative;
+}
+
+/* ── زر الجرس ── */
+.notif-bell-btn {
+    position: relative;
+    width: 40px;
+    height: 40px;
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 16px;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition);
+    flex-shrink: 0;
+}
+
+.notif-bell-btn:hover {
+    border-color: var(--primary-light);
+    color: var(--primary);
+    box-shadow: var(--shadow-sm);
+}
+
+/* ── شارة العدد على الجرس ── */
+.notif-bell-badge {
+    position: absolute;
+    top: -5px;
+    left: -5px;
+    min-width: 18px;
+    height: 18px;
+    background: #ef4444;
+    color: #fff;
+    border-radius: var(--radius-full);
+    font-size: 10px;
+    font-weight: 800;
+    line-height: 18px;
+    text-align: center;
+    padding: 0 4px;
+    border: 2px solid var(--white);
+    animation: notif-pop 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    pointer-events: none;
+}
+
+@keyframes notif-pop {
+    from { transform: scale(0); opacity: 0; }
+    to   { transform: scale(1); opacity: 1; }
+}
+
+/* ── Dropdown panel ── */
+.notif-dropdown {
+    position: absolute;
+    top: calc(100% + 10px);
+    left: 0;
+    width: 320px;
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-lg);
+    z-index: 500;
+    overflow: hidden;
+    animation: notif-slide-in 0.22s ease-out;
+}
+
+@keyframes notif-slide-in {
+    from { opacity: 0; transform: translateY(-8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Header الـ dropdown ── */
+.notif-dropdown-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px 12px;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--dark);
+    background: var(--light);
+}
+
+.notif-dropdown-header i {
+    color: var(--primary);
+    margin-left: 6px;
+}
+
+/* ── زر "مسح الكل" ── */
+.notif-clear-btn {
+    background: none;
+    border: none;
+    font-family: 'Cairo', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--gray);
+    cursor: pointer;
+    padding: 3px 8px;
+    border-radius: 6px;
+    transition: color 0.2s, background 0.2s;
+}
+
+.notif-clear-btn:hover {
+    color: var(--danger);
+    background: var(--danger-bg);
+}
+
+/* ── عنصر الإشعار الواحد ── */
+.notif-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    cursor: pointer;
+    transition: background 0.18s ease;
+    border-bottom: 1px solid var(--border);
+}
+
+.notif-item:last-child { border-bottom: none; }
+
+.notif-item:hover { background: var(--primary-bg); }
+
+/* أيقونة الإشعار */
+.notif-item-icon {
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    color: #fff;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+}
+
+/* نص الإشعار */
+.notif-item-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.notif-item-title {
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--dark);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.notif-item-sub {
+    font-size: 11px;
+    color: var(--gray);
+    margin-top: 2px;
+}
+
+/* عداد الرسائل (يمين العنصر) */
+.notif-item-count {
+    background: #ef4444;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 800;
+    min-width: 20px;
+    height: 20px;
+    line-height: 20px;
+    text-align: center;
+    padding: 0 5px;
+    border-radius: var(--radius-full);
+    flex-shrink: 0;
+}
+
+/* ── حالة "لا توجد إشعارات" ── */
+.notif-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 32px 20px;
+    color: var(--gray);
+    font-size: 13px;
+    font-weight: 600;
+    text-align: center;
+}
+
+.notif-empty i {
+    font-size: 28px;
+    opacity: 0.35;
+}
+
+/* =============================================================
+   CHAT BUTTON — شارة الرسائل غير المقروءة على زر الدردشة
+   ============================================================= */
+
+/* الشارة (badge) على زر الدردشة */
+.chat-unread-badge {
+    position: absolute;
+    top: -7px;
+    left: -7px;
+    min-width: 18px;
+    height: 18px;
+    background: #ef4444;
+    color: #fff;
+    border-radius: var(--radius-full);
+    font-size: 10px;
+    font-weight: 800;
+    line-height: 18px;
+    text-align: center;
+    padding: 0 4px;
+    border: 2px solid var(--white);
+    pointer-events: none;
+    animation: notif-pop 0.3s cubic-bezier(0.34,1.56,0.64,1);
+}
+
+/* حالة "يوجد رسائل جديدة" — نبضة على الزر */
+.btn-chat-has-unread {
+    animation: btn-chat-pulse 1.8s ease-in-out infinite;
+    box-shadow: 0 0 0 0 rgba(59,130,246,0.5);
+}
+
+@keyframes btn-chat-pulse {
+    0%   { box-shadow: 0 0 0 0   rgba(59,130,246,0.50); }
+    60%  { box-shadow: 0 0 0 7px rgba(59,130,246,0.00); }
+    100% { box-shadow: 0 0 0 0   rgba(59,130,246,0.00); }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ★  NEW TRANSFER ARRIVAL NOTIFICATIONS — tnotif styles
+   أضف هذا الكود في نهاية style_admin.css
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Orange badge on bell (bottom-right, distinct from the red chat badge) ── */
+.tnotif-bell-badge {
+    position    : absolute;
+    bottom      : -4px;
+    right       : -4px;
+    min-width   : 16px;
+    height      : 16px;
+    background  : var(--primary);
+    color       : #fff;
+    border-radius: var(--radius-full);
+    font-size   : 9px;
+    font-weight : 800;
+    line-height : 16px;
+    text-align  : center;
+    padding     : 0 3px;
+    border      : 2px solid var(--white);
+    pointer-events: none;
+    animation   : notif-pop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    z-index     : 1;
+}
+
+/* ── Section divider header inside the dropdown ─────────────────────────── */
+.tnotif-section-header {
+    display         : flex;
+    align-items     : center;
+    justify-content : space-between;
+    padding         : 8px 14px;
+    font-size       : 11px;
+    font-weight     : 700;
+    color           : var(--primary);
+    background      : var(--primary-bg);
+    border-bottom   : 1px solid rgba(234, 88, 12, 0.18);
+    letter-spacing  : 0.02em;
+}
+
+.tnotif-section-header i {
+    margin-left : 5px;
+    font-size   : 10px;
+}
+
+/* pill showing count of new transfers */
+.tnotif-section-count {
+    background    : var(--primary);
+    color         : #fff;
+    font-size     : 10px;
+    font-weight   : 800;
+    min-width     : 18px;
+    height        : 18px;
+    line-height   : 18px;
+    text-align    : center;
+    padding       : 0 5px;
+    border-radius : var(--radius-full);
+}
+
+/* ── Transfer item icon (orange gradient, overrides blue) ────────────────── */
+.tnotif-icon {
+    background: linear-gradient(135deg, var(--primary-light), var(--primary-dark)) !important;
+}
+
+/* ── "جديد" pill badge ───────────────────────────────────────────────────── */
+.tnotif-badge-new {
+    background  : var(--primary) !important;
+    font-size   : 9px !important;
+    padding     : 0 7px !important;
+    letter-spacing: 0.02em;
+}
+
+/* ── Toast container (fixed, top-left to match RTL layout) ──────────────── */
+.tnotif-toast-container {
+    position      : fixed;
+    top           : 76px;
+    left          : 24px;
+    z-index       : 9999;
+    display       : flex;
+    flex-direction: column;
+    gap           : 10px;
+    pointer-events: none;
+}
+
+/* ── Single toast card ───────────────────────────────────────────────────── */
+.tnotif-toast {
+    display       : flex;
+    align-items   : center;
+    gap           : 12px;
+    background    : var(--white);
+    border        : 1px solid var(--border);
+    border-right  : 4px solid var(--primary);   /* RTL accent stripe */
+    border-radius : var(--radius-sm);
+    box-shadow    : var(--shadow-lg);
+    padding       : 12px 14px;
+    min-width     : 280px;
+    max-width     : 340px;
+    pointer-events: all;
+    cursor        : pointer;
+    animation     : tnotif-toast-in 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    transition    : opacity 0.45s ease, transform 0.45s ease;
+}
+
+.tnotif-toast:hover {
+    box-shadow: var(--shadow-hover);
+}
+
+.tnotif-toast.tnotif-toast-exit {
+    opacity  : 0;
+    transform: translateX(-20px);
+}
+
+@keyframes tnotif-toast-in {
+    from { opacity: 0; transform: translateX(-30px); }
+    to   { opacity: 1; transform: translateX(0);     }
+}
+
+/* toast icon circle */
+.tnotif-toast-icon {
+    width           : 38px;
+    height          : 38px;
+    background      : linear-gradient(135deg, var(--primary-light), var(--primary-dark));
+    color           : #fff;
+    border-radius   : 10px;
+    display         : flex;
+    align-items     : center;
+    justify-content : center;
+    font-size       : 15px;
+    flex-shrink     : 0;
+}
+
+.tnotif-toast-body {
+    flex     : 1;
+    min-width: 0;
+}
+
+.tnotif-toast-title {
+    font-size  : 13px;
+    font-weight: 800;
+    color      : var(--dark);
+}
+
+.tnotif-toast-sub {
+    font-size : 11px;
+    color     : var(--gray);
+    margin-top: 2px;
+}
+
+/* close button */
+.tnotif-toast-close {
+    background   : none;
+    border       : none;
+    color        : var(--gray);
+    cursor       : pointer;
+    font-size    : 14px;
+    padding      : 4px 6px;
+    border-radius: 6px;
+    flex-shrink  : 0;
+    transition   : color 0.2s, background 0.2s;
+    line-height  : 1;
+}
+
+.tnotif-toast-close:hover {
+    color     : var(--danger);
+    background: var(--danger-bg);
+}
+
+/* ── Row highlight on the pending-transfers table ────────────────────────── */
+.tnotif-row-highlight {
+    animation: tnotif-row-flash 3.2s ease-in-out forwards;
+}
+
+@keyframes tnotif-row-flash {
+    0%   { background-color: var(--warning-bg); }
+    70%  { background-color: var(--warning-bg); }
+    100% { background-color: transparent;       }
+}
+/* إخفاء أزرار التنقل السريع للصناديق في الشاشات الكبيرة */
+.mobile-safe-links {
+    display: none;
+}
+
+/* حل مشكلة تغطية الهيدر الثابت (Sticky Header) للبطاقة عند الضغط على الرابط */
+.safe-card {
+    scroll-margin-top: 80px; 
+}
+/* ===================================================== */
+/*   Badge نوع الحوالة في الحوالات المعلقة (أدمن)       */
+/* ===================================================== */
+.transfer-type-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 20px;
+    white-space: nowrap;
+    letter-spacing: .3px;
+}
+.badge-customer {
+    background: linear-gradient(135deg, #0ea5e9, #38bdf8);
+    color: #fff;
+    box-shadow: 0 2px 6px rgba(14,165,233,.30);
+}
+.badge-agent {
+    background: linear-gradient(135deg, #7c3aed, #a855f7);
+    color: #fff;
+    box-shadow: 0 2px 6px rgba(124,58,237,.30);
 }
