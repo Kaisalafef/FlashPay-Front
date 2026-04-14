@@ -557,17 +557,23 @@ body {
     .sidebar {
         position: fixed !important; top: 0 !important; right: -280px !important;
         left: auto !important; width: 240px !important; height: 100% !important;
-        z-index: 200 !important; transition: right 0.32s cubic-bezier(0.4,0,0.2,1) !important;
+        height: 100dvh !important;
+        z-index: 200 !important;
+        padding: 20px 14px !important;
+        transition: right 0.32s cubic-bezier(0.4,0,0.2,1) !important;
         box-shadow: -6px 0 24px rgba(0,0,0,0.15) !important;
+        overflow-y: auto !important;
     }
     .sidebar.open { right: 0 !important; }
-    .main-content { width: 100% !important; }
+    .main-content { width: 100% !important; overflow-y: auto !important; overflow-x: hidden !important; height: 100dvh !important; }
     .hamburger-btn {
         display: flex !important; align-items: center; justify-content: center;
         width: 38px; height: 38px; background: var(--white);
         border: 1.5px solid var(--border); border-radius: 10px;
         color: var(--dark); cursor: pointer; font-size: 0.9rem;
+        transition: var(--transition); flex-shrink: 0;
     }
+    .hamburger-btn:active { background: var(--primary-bg); border-color: var(--primary); color: var(--primary); }
     .stats-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 10px; }
     .charts-grid { grid-template-columns: 1fr !important; }
     .summary-bar { flex-wrap: wrap; gap: 12px; }
@@ -579,10 +585,83 @@ body {
     .modal-content { padding: 16px; }
     .detail-grid { grid-template-columns: 1fr !important; }
     .form-row { flex-direction: column; }
+    .app-header { padding: 10px 14px !important; min-height: 54px !important; }
+    .header-left { gap: 8px; }
+    .page-title h2 { font-size: 0.875rem !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .section-hero { flex-direction: column !important; align-items: flex-start !important; gap: 10px !important; }
+    .section-hero-date { width: 100%; justify-content: center; }
 }
 
 @media (max-width: 480px) {
+    .stats-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 8px !important; }
+
+    .sidebar {
+        width: 220px !important;
+        padding: 16px 12px !important;
+    }
+    .sidebar nav a { padding: 9px 10px !important; font-size: 13px !important; }
+    .sidebar nav ul { gap: 3px !important; }
+    .logo { font-size: 1rem !important; margin-bottom: 24px !important; }
+
+    .app-header { padding: 8px 12px !important; min-height: 50px !important; }
+    .page-title h2 { font-size: 0.8rem !important; }
+    .hamburger-btn { width: 32px !important; height: 32px !important; border-radius: 8px !important; font-size: 0.82rem !important; }
+
+    .content-body { padding: 10px 10px 20px !important; }
+
+    .section-hero { padding: 14px 12px !important; border-radius: 12px !important; margin-bottom: 12px !important; }
+    .section-hero h1 { font-size: 0.9rem !important; }
+    .section-hero p  { font-size: 11px !important; }
+    .section-hero-icon { width: 38px !important; height: 38px !important; font-size: 1.1rem !important; }
+
+    .card { padding: 12px !important; margin-bottom: 12px !important; border-radius: 12px !important; }
+    .card-header { margin-bottom: 12px !important; }
+
+    .toolbar { gap: 8px !important; }
+    .search-box { padding: 8px 12px !important; }
+    .search-box input { font-size: 13px !important; }
+    .filter-select { padding: 8px 12px !important; font-size: 13px !important; }
+    .date-range input { padding: 7px 10px !important; font-size: 12px !important; }
+    .btn-primary  { font-size: 13px !important; padding: 8px 14px !important; }
+    .btn-outline  { font-size: 13px !important; padding: 8px 12px !important; }
+    .btn-success  { font-size: 13px !important; padding: 8px 14px !important; }
+
+    .data-table { min-width: 480px !important; }
+    .data-table th { padding: 10px 11px !important; font-size: 11px !important; }
+    .data-table td { padding: 11px 11px !important; font-size: 12px !important; }
+
+    .summary-bar { padding: 12px 14px !important; gap: 10px !important; border-radius: 12px !important; }
+    .summary-item .s-value { font-size: 1rem !important; }
+    .summary-item .s-label { font-size: 0.68rem !important; }
+
+    .charts-grid { gap: 10px !important; margin-bottom: 12px !important; }
+    .chart-box { padding: 12px !important; border-radius: 12px !important; }
+
+    .modal-content {
+        padding: 14px 12px !important;
+        border-radius: 12px !important;
+        max-height: 92dvh !important;
+    }
+    .modal-actions { flex-direction: column-reverse !important; gap: 6px !important; }
+    .modal-actions .btn-primary,
+    .modal-actions .btn-cancel { width: 100% !important; justify-content: center !important; }
+
+    .logout a { padding: 9px 10px !important; font-size: 13px !important; }
+
+    .eh-quick-btn { padding: 6px 11px !important; font-size: 11px !important; }
+    #eh-summary-grid { grid-template-columns: repeat(2, 1fr) !important; }
+
+    ::-webkit-scrollbar { width: 3px !important; height: 3px !important; }
+}
+
+@media (max-width: 360px) {
     .stats-grid { grid-template-columns: 1fr !important; }
+    .content-body { padding: 6px 6px 16px !important; }
+    .page-title h2 { font-size: 0.72rem !important; }
+    .data-table th { font-size: 10px !important; padding: 8px 9px !important; }
+    .data-table td { font-size: 11px !important; padding: 9px 9px !important; }
+    .sidebar { width: 200px !important; }
+    #eh-summary-grid { grid-template-columns: 1fr !important; }
 }
 /* ===================================================
    سجل التعديلات — Edit History Styles
