@@ -849,7 +849,7 @@ async function transferToOfficeSafe(fromType, officeId, currencyId = null) {
    ============================================= */
 function buildTradingUI(currencyId, officeId) {
   const amountChips = [50, 100, 200, 500, 1000];
-  const priceChips = [11500, 11700, 11750, 11800, 20000];
+  const priceChips = [11500, 11700, 11800, 12000, 12100,12200];
 
   const amountChipsHtml = amountChips
     .map(
