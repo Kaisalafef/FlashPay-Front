@@ -3,7 +3,7 @@ async function checkAuth() {
     const token = localStorage.getItem('auth_token'); // ✅ مفتاح موحّد مع getHeaders
 
     if (!token) {
-        window.location.replace('../login/login.html');
+        window.location.replace('../index.html');
         return null;
     }
 
@@ -17,7 +17,7 @@ async function checkAuth() {
 
         if (!res.ok) {
             localStorage.clear();
-            window.location.replace('../login/login.html');
+            window.location.replace('../index.html');
             return null;
         }
 
@@ -43,7 +43,7 @@ async function checkAuth() {
 
     } catch (e) {
         localStorage.clear();
-        window.location.replace('../login/login.html');
+        window.location.replace('../index.html');
         return null;
     }
 }
@@ -93,13 +93,13 @@ function showUnauthorizedLottie() {
 function redirectByRole(role) {
     const routes = {
         'super_admin': '../super_admin/super.html',
-        'admin':       '../admin/admin.html',
+        'admin':       '../office_manager/admin.html',
         'cashier':     '../cashier/cashier.html',
         'accountant':  '../accountant/accountant.html',
         'agent':       '../agent/agent.html',
         'customer':    '../customer/customer.html',
     };
-    window.location.replace(routes[role] || '../login/login.html');
+    window.location.replace(routes[role] || '../index.html');
 }
 
 async function rejectTransfer(transferId) {
@@ -1872,7 +1872,7 @@ async function handleLogout() {
     headers: { Authorization: `Bearer ${token}` },
   });
   localStorage.removeItem("auth_token");
-  window.location.href = "../login/login.html";
+  window.location.href = "../index.html";
 }
 
 /* =====================================================

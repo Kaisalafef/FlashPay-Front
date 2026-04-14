@@ -8,7 +8,7 @@ async function checkAuth() {
     const token = localStorage.getItem('auth_token');
 
     if (!token) {
-        window.location.replace('../login/login.html');
+        window.location.replace('../index.html');
         return null;
     }
 
@@ -22,7 +22,7 @@ async function checkAuth() {
 
         if (!res.ok) {
             localStorage.clear();
-            window.location.replace('../login/login.html');
+            window.location.replace('../index.html');
             return null;
         }
 
@@ -99,13 +99,13 @@ function showUnauthorizedLottie() {
 function redirectByRole(role) {
     const routes = {
         'super_admin': '../super_admin/super.html',
-        'admin':       '../admin/admin.html',
+        'admin':       '../office_manager/admin.html',
         'cashier':     '../cashier/cashier.html',
         'accountant':  '../accountant/accountant.html',
         'agent':       '../agent/agent.html',
         'customer':    '../customer/customer.html',
     };
-    window.location.replace(routes[role] || '../login/login.html');
+    window.location.replace(routes[role] || '../index.html');
 }
 /* =========================
    Helpers
@@ -128,7 +128,7 @@ async function fetchCurrencies() {
 
     if (res.status === 401) {
       localStorage.clear();
-      window.location.href = "/FlashPay-Front/login/login.html";
+      window.location.href = "/FlashPay-Front/index.html";
       return [];
     }
 
@@ -2212,7 +2212,7 @@ async function handleLogout() {
   });
 
   localStorage.removeItem("auth_token");
-  window.location.href = "../login/login.html";
+  window.location.href = "../index.html";
 }
 /* =========================
    قسم الحوالات المعلقة

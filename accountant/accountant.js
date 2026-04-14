@@ -43,7 +43,7 @@ async function checkAuth() {
     const token = localStorage.getItem('auth_token'); // ✅ مفتاح موحّد مع getHeaders
 
     if (!token) {
-        window.location.replace('../login/login.html');
+        window.location.replace('../index.html');
         return null;
     }
 
@@ -57,7 +57,7 @@ async function checkAuth() {
 
         if (!res.ok) {
             localStorage.clear();
-            window.location.replace('../login/login.html');
+            window.location.replace('../index.html');
             return null;
         }
 
@@ -82,7 +82,7 @@ async function checkAuth() {
 
     } catch (e) {
         localStorage.clear();
-        window.location.replace('../login/login.html');
+        window.location.replace('../login.html');
         return null;
     }
 }
@@ -132,13 +132,13 @@ function showUnauthorizedLottie() {
 function redirectByRole(role) {
     const routes = {
         'super_admin': '../super_admin/super.html',
-        'admin':       '../admin/admin.html',
+        'admin':       '../office_manager/admin.html',
         'cashier':     '../cashier/cashier.html',
         'accountant':  '../accountant/accountant.html',
         'agent':       '../agent/agent.html',
         'customer':    '../customer/customer.html',
     };
-    window.location.replace(routes[role] || '../login/login.html');
+    window.location.replace(routes[role] || '../index.html');
 }
 function getHeaders() {
     return {
@@ -158,7 +158,7 @@ async function fetchAllTransfers() {
 
         if (res.status === 401) {
             localStorage.clear();
-            window.location.href = '../login/login.html';
+            window.location.href = '../index.html';
             return;
         }
 
@@ -1248,7 +1248,7 @@ async function handleLogout() {
         await fetch(`${API_URL}/logout`, { method: 'POST', headers: getHeaders() });
     } catch (e) {}
     localStorage.clear();
-    window.location.href = '../login/login.html';
+    window.location.href = '../index.html';
 }
 
 // ─────────────────────────────────────────────────────
