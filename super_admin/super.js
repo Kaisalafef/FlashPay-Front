@@ -99,7 +99,7 @@ function showUnauthorizedLottie() {
 function redirectByRole(role) {
     const routes = {
         'super_admin': '../super_admin/super.html',
-        'admin':       '../admin/admin.html',
+        'admin':       '../office_manager/admin.html',
         'cashier':     '../cashier/cashier.html',
         'accountant':  '../accountant/accountant.html',
         'agent':       '../agent/agent.html',
