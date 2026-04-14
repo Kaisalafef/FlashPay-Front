@@ -68,10 +68,10 @@ document.getElementById('login-form').addEventListener('submit', async function(
 
             const role = data.user.role;
             switch (role) {
-                case 'super_admin': window.location.href = '/FlashPay-Front/super_admin/super.html'; break;
-                case 'admin': window.location.href = '/FlashPay-Front/office_manager/admin.html'; break;
-                case 'cashier': window.location.href = '/FlashPay-Front/cashier/cashier.html'; break;
-                case 'accountant': window.location.href = '/FlashPay-Front/accountant/accountant.html'; break;
+                case 'super_admin': window.location.href = 'super_admin/super.html'; break;
+                case 'admin': window.location.href = 'office_manager/admin.html'; break;
+                case 'cashier': window.location.href = 'cashier/cashier.html'; break;
+                case 'accountant': window.location.href = 'accountant/accountant.html'; break;
                 
                 default:
                     errorText.textContent = 'عفواً، لا تملك صلاحية الوصول لهذا النظام.';
@@ -112,13 +112,13 @@ window.onload = async function() {
         const user = data.user;
 
         if(user.role === 'super_admin')
-            window.location.href = '/FlashPay-Front/super_admin/super.html';
+            window.location.href = 'super_admin/super.html';
         else if(user.role === 'admin')
-            window.location.href = '/FlashPay-Front/office_manager/admin.html';
+            window.location.href = 'office_manager/admin.html';
         else if(user.role === 'cashier')
-            window.location.href = '/FlashPay-Front/cashier/cashier.html';
+            window.location.href = 'cashier/cashier.html';
         else if(user.role === 'accountant')
-            window.location.href = '/FlashPay-Front/accountant/accountant.html';
+            window.location.href = 'accountant/accountant.html';
 
     } catch {
         localStorage.clear();
