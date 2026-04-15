@@ -482,7 +482,164 @@ function renderTradingSafes(safes) {
 /* ============================= */
 /*        EXECUTE TRADE         */
 /* ============================= */
+function showBankTransfersSection() {
+    document.querySelectorAll('.section').forEach(s => s.style.display = 'none');
+    document.getElementById("section-bank-transfers").style.display = "block";
 
+    document.getElementById("page-heading").textContent = "حوالات بنكية";
+    document.querySelector(".page-sub").textContent = "موافق عليها بانتظار التسليم";
+    document.querySelector(".page-icon").innerHTML = '<i class="fa-solid fa-landmark"></i>';
+
+    loadCashierBankTransfers();
+}
+
+async function loadCashierBankTransfers() {
+    const tbody = document.getElementById("cashier-bt-list");
+    const emptyEl = document.getElementById("cashier-bt-empty");
+    
+    tbody.innerHTML = `<tr><td colspan="7" class="loading-row"><div class="loading-spinner"></div> جاري التحميل...</td></tr>`;
+    emptyEl.style.display = "none";
+
+    try {
+        const res = await fetch(`${API_URL}/bank-transfer?status=admin_approved`, {
+            headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' }
+        });
+        const json = await res.json();
+        
+        if (!json.data || json.data.length === 0) {
+            tbody.innerHTML = '';
+            emptyEl.style.display = 'block';
+            return;
+        }
+
+        tbody.innerHTML = json.data.map((t, i) => {
+            const date = new Date(t.created_at).toLocaleString('ar-SY');
+            const printObj = JSON.stringify(t).replace(/'/g, "\\'").replace(/"/g, "&quot;");
+
+            return `
+            <tr>
+                <td style="color:var(--gray);font-size:12px;">${i + 1}</td>
+                <td style="font-weight:800;color:var(--primary);font-size:15px;">${t.recipient_name || '—'}</td>
+                <td>${t.full_name}</td>
+                <td>${t.bank_name}</td>
+                <td style="font-weight:900;color:var(--success);">$${parseFloat(t.amount).toLocaleString()}</td>
+                <td style="font-size:12px;color:var(--gray);">${date}</td>
+                <td>
+                    <button class="btn-confirm" onclick="completeBankTransfer(${t.id}, '${printObj}')" style="padding:8px 16px;">
+                        <i class="fa-solid fa-hand-holding-dollar"></i> تسليم وطباعة
+                    </button>
+                </td>
+            </tr>`;
+        }).join('');
+    } catch (e) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:red;">خطأ في الاتصال بالخادم</td></tr>`;
+    }
+}
+
+async function completeBankTransfer(id, txDataStr) {
+    if (!confirm('هل قمت بتسليم المبلغ للمستلم الفعلي؟ ستتم طباعة الإيصال الآن.')) return;
+
+    try {
+        const res = await fetch(`${API_URL}/bank-transfer/${id}/complete`, {
+            method: 'PATCH',
+            headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' }
+        });
+        const json = await res.json();
+
+        if (res.ok) {
+            alert('✅ تم تسليم الحوالة بنجاح');
+            loadCashierBankTransfers();
+            
+            // تحويل النص إلى كائن كمعامل للطباعة
+            const tx = JSON.parse(txDataStr);
+            printBankTransferReceipt(tx);
+        } else {
+            alert(json.message || 'حدث خطأ أثناء التسليم');
+        }
+    } catch (e) {
+        alert('فشل الاتصال بالخادم');
+    }
+}
+
+function printBankTransferReceipt(tx) {
+    const now = new Date();
+    const pad = n => String(n).padStart(2, "0");
+    const printDate = `${now.getFullYear()}/${pad(now.getMonth() + 1)}/${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+
+    const amountFmt = parseFloat(tx.amount).toLocaleString('en-US', {minimumFractionDigits: 2});
+
+    const receiptHtml = `<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap');
+  @page { size: 80mm auto; margin: 0 !important; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Cairo', sans-serif;
+    width: 72mm; max-width: 72mm; margin: 0 auto !important; padding: 2mm;
+    color: #000; font-size: 13px; line-height: 1.45;
+  }
+  .hdr { text-align:center; padding-bottom:5px; border-bottom:2px solid #000; margin-bottom:6px; }
+  .hdr .logo { font-size:18px; font-weight:800; }
+  .hdr .sub { font-size:12px; font-weight:700; margin-top:2px; }
+  .hdr .dt { font-size:10px; font-weight:700; direction:ltr; }
+
+  .track { text-align:center; margin:6px 0; padding:5px; border:2px dashed #000; font-size:14px; font-weight:800; direction:ltr; }
+  .track span { display:block; font-size:10px; direction:rtl; margin-bottom:2px; }
+
+  .r { display:flex; justify-content:space-between; padding:3px 0; border-bottom:1px dotted #000; font-size:12px; }
+  .r .lbl { font-weight:800; }
+  .r .val { font-weight:800; direction:ltr; }
+  
+  .amt { text-align:center; margin:8px 0; padding:8px; border:2px solid #000; font-size:18px; font-weight:900; }
+  
+  .footer { display:flex; justify-content:space-between; margin-top:12px; padding-top:10px; border-top:2px solid #000; }
+  .sig { text-align:center; width:45%; font-size:11px; font-weight:800; }
+  .sig-line { border-top:1.5px solid #000; margin-top:20px; }
+</style>
+</head>
+<body>
+  <div class="hdr">
+    <div class="logo">FlashPay</div>
+    <div class="sub">إيصال تسليم حوالة بنكية</div>
+    <div class="dt">${printDate}</div>
+  </div>
+
+  <div class="track"><span>رقم العملية</span> BT-${tx.id}</div>
+
+  <div class="r"><span class="lbl">اسم المستلم:</span> <span class="val">${tx.recipient_name}</span></div>
+  <div class="r"><span class="lbl">صاحب الحساب:</span> <span class="val">${tx.full_name}</span></div>
+  <div class="r"><span class="lbl">البنك:</span> <span class="val">${tx.bank_name}</span></div>
+  
+  <div class="amt">USD $${amountFmt}</div>
+
+  <div class="footer">
+    <div class="sig">توقيع الكاشير<div class="sig-line"></div></div>
+    <div class="sig">توقيع المستلم<div class="sig-line"></div></div>
+  </div>
+  <div style="text-align:center;font-size:10px;margin-top:8px;">نسخة العميل</div>
+</body>
+</html>`;
+
+    const printWin = window.open("", "_blank", "width=400,height=500");
+    if (!printWin) {
+        alert("يرجى السماح بالنوافذ المنبثقة (Popups) ثم أعد المحاولة");
+        return;
+    }
+    printWin.document.open();
+    printWin.document.write(receiptHtml);
+    printWin.document.close();
+    printWin.onload = function () {
+        printWin.document.fonts.ready.then(function () {
+            printWin.focus();
+            printWin.print();
+            setTimeout(() => { if (!printWin.closed) printWin.close(); }, 5000);
+        });
+    };
+}
 function buildTradingUI(currencyId, officeId) {
   const amountChips = [50, 100, 200, 500, 1000];
   const priceChips = [11500, 11700, 11800, 12000, 12100,12200];

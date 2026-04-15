@@ -887,7 +887,202 @@ async function handleEditCountryChange() {
     fillSelect(citySelect, cities, "اختر المدينة");
   }
 }
+/* =========================================================
+   قسم الحوالات البنكية (Super Admin & Admin)
+========================================================= */
+let _allBankTransfers = [];
+let currentBtApproveId = null;
 
+
+
+async function loadBankTransfers() {
+    const tbody = document.getElementById("bt-tbody");
+    if (!tbody) return;
+    
+    document.getElementById("bt-refresh-icon").classList.add("fa-spin");
+    tbody.innerHTML = `<tr><td colspan="11" class="pt-loading-cell"><i class="fa-solid fa-spinner fa-spin"></i> جاري التحميل...</td></tr>`;
+
+    try {
+        const res = await fetch(`${API_URL}/bank-transfer`, {
+            headers: getHeaders ? getHeaders() : { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' }
+        });
+        const json = await res.json();
+        _allBankTransfers = json.data || [];
+        updateBtStats();
+        filterBankTransfers();
+    } catch (e) {
+      
+        console.error(e);
+        tbody.innerHTML = `<tr><td colspan="11" style="text-align:center;color:red;">فشل التحميل</td></tr>`;
+    } finally {
+        document.getElementById("bt-refresh-icon").classList.remove("fa-spin");
+    }
+}
+
+function updateBtStats() {
+    document.getElementById("bt-stat-pending").textContent = _allBankTransfers.filter(t => t.status === 'pending').length;
+    document.getElementById("bt-stat-approved").textContent = _allBankTransfers.filter(t => t.status === 'admin_approved').length;
+    document.getElementById("bt-stat-completed").textContent = _allBankTransfers.filter(t => t.status === 'completed').length;
+}
+
+function filterBankTransfers() {
+    const q = document.getElementById("bt-search").value.toLowerCase().trim();
+    const status = document.getElementById("bt-status-filter").value;
+    const tbody = document.getElementById("bt-tbody");
+    const emptyEl = document.getElementById("bt-empty");
+
+    const filtered = _allBankTransfers.filter(t => {
+        const matchQ = !q || (t.full_name||'').toLowerCase().includes(q) 
+                          || (t.recipient_name||'').toLowerCase().includes(q) 
+                          || (t.bank_name||'').toLowerCase().includes(q);
+        const matchStatus = !status || t.status === status;
+        return matchQ && matchStatus;
+    });
+
+    if (filtered.length === 0) {
+        tbody.innerHTML = '';
+        emptyEl.style.display = 'block';
+        return;
+    }
+    
+    emptyEl.style.display = 'none';
+    
+    const statusMap = {
+        'pending':        { text: 'بانتظار الإدارة', color: '#b45309', bg: '#fef3c7' },
+        'admin_approved': { text: 'بانتظار الكاشير', color: '#1d4ed8', bg: '#dbeafe' },
+        'completed':      { text: 'مكتملة', color: '#15803d', bg: '#dcfce7' },
+        'rejected':       { text: 'مرفوضة', color: '#b91c1c', bg: '#fee2e2' }
+    };
+
+    tbody.innerHTML = filtered.map((t, index) => {
+        const s = statusMap[t.status] || { text: t.status, color: 'gray', bg: '#eee' };
+        const date = new Date(t.created_at).toLocaleDateString('ar-SY');
+        
+        let actions = '';
+        if (t.status === 'pending') {
+            actions = `
+                <button onclick="openBtApproveModal(${t.id}, '${t.recipient_name}')" style="background:#dcfce7;color:#15803d;border:none;padding:5px 10px;border-radius:5px;cursor:pointer;font-weight:bold;margin-bottom:4px;">
+                    <i class="fa-solid fa-check"></i> موافقة
+                </button>
+                <button onclick="rejectBankTransfer(${t.id})" style="background:#fee2e2;color:#b91c1c;border:none;padding:5px 10px;border-radius:5px;cursor:pointer;font-weight:bold;">
+                    <i class="fa-solid fa-xmark"></i> رفض
+                </button>
+            `;
+        } else {
+            actions = `<span style="color:var(--gray);font-size:12px;">مُعالج</span>`;
+        }
+
+        return `
+        <tr>
+            <td>${index + 1}</td>
+            <td><span style="font-weight:bold;">${t.agent?.name || '—'}</span></td>
+            <td><span style="font-weight:bold;color:var(--primary);">${t.recipient_name || '—'}</span></td>
+            <td>${t.full_name}</td>
+            <td>${t.bank_name}</td>
+            <td style="direction:ltr;text-align:right;font-family:monospace;">${t.account_number}</td>
+            <td style="direction:ltr;text-align:right;">${t.phone}</td>
+            <td style="font-weight:900;color:var(--success);">$${parseFloat(t.amount).toLocaleString()}</td>
+            <td><span style="background:${s.bg};color:${s.color};padding:4px 10px;border-radius:20px;font-size:11px;font-weight:bold;white-space:nowrap;">${s.text}</span></td>
+            <td style="font-size:11px;color:var(--gray);">${date}</td>
+            <td style="display:flex;flex-direction:column;gap:4px;">${actions}</td>
+        </tr>`;
+    }).join('');
+}
+
+function openBtApproveModal(id, recipientName) {
+    currentBtApproveId = id;
+    document.getElementById("bt-approve-desc").innerHTML = `هل أنت متأكد من الموافقة على الحوالة للمستلم <strong>${recipientName}</strong>؟<br>سيتم إرسالها للكاشير لتسليمها.`;
+    document.getElementById("bt-approve-modal").style.display = 'flex';
+    loadCashiers();
+}
+
+function closeBtApproveModal() {
+    currentBtApproveId = null;
+    document.getElementById("bt-approve-modal").style.display = 'none';
+}
+
+async function confirmBtApprove() {
+    const cashierId = document.getElementById("bt-cashier-select").value;
+
+    if (!cashierId) {
+        alert("⚠️ يجب اختيار الكاشير");
+        return;
+    }
+
+    try {
+        // ✅ تم تصحيح اسم المتغير هنا إلى currentBtApproveId
+        const res = await fetch(`${API_URL}/bank-transfer/${currentBtApproveId}/approve`, {
+            method: "PATCH", // تأكد أن نوع الطلب يتطابق مع الراوت في لارافيل (POST أو PATCH)
+            headers: getHeaders(),
+            body: JSON.stringify({
+                cashier_id: cashierId
+            })
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+            alert("✅ تم إرسال الحوالة للكاشير بنجاح");
+            closeBtApproveModal();
+            loadBankTransfers();
+        } else {
+            alert(data.message || "خطأ");
+        }
+
+    } catch (e) {
+        console.error(e);
+        alert("خطأ في الاتصال");
+    }
+}
+
+async function rejectBankTransfer(id) {
+    if (!confirm('هل أنت متأكد من رفض هذه الحوالة البنكية؟')) return;
+    
+    try {
+        const res = await fetch(`${API_URL}/bank-transfer/${id}/reject`, {
+            method: 'PATCH',
+            headers: getHeaders ? getHeaders() : { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' }
+        });
+        if (res.ok) {
+            loadBankTransfers();
+            if (typeof showToast !== 'undefined') showToast("تم رفض الحوالة", "error");
+        } else {
+            alert("حدث خطأ");
+        }
+    } catch (e) {
+        alert("فشل الاتصال");
+    }
+}
+async function loadCashiers() {
+    const select = document.getElementById("bt-cashier-select");
+
+    try {
+        const res = await fetch(`${API_URL}/users`, {
+            headers: getHeaders()
+        });
+
+        const json = await res.json();
+
+        const cashiers = (json.data || []).filter(u => u.role === "cashier");
+
+        select.innerHTML = `<option value="">اختر الكاشير</option>`;
+
+        cashiers.forEach(c => {
+            const option = document.createElement("option");
+            option.value = c.id;
+            
+            // ✅ إضافة: إظهار اسم المكتب بجانب اسم الكاشير للسوبر أدمن
+            const officeName = c.office ? c.office.name : 'بدون مكتب';
+            option.textContent = `${c.name} - (مكتب: ${officeName})`;
+            
+            select.appendChild(option);
+        });
+
+    } catch (e) {
+        console.error(e);
+        select.innerHTML = `<option>خطأ في التحميل</option>`;
+    }
+}
 // دالة فتح نافذة التعديل مع تعبئة البيانات
 async function openEditModal(user) {
   document.getElementById("edit-user-id").value = user.id;
@@ -1269,6 +1464,7 @@ function showSection(sectionId) {
   if (sectionId === "employees") renderEmployeesStats();
   if (sectionId === "offices") renderOfficesStats();
   if (sectionId === "pending-transfers") loadPendingTransfers();
+  if (sectionId === "bank-transfers") loadBankTransfers();
 }
 
 function updateDashboardStats() {
@@ -2995,7 +3191,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   await renderCurrenciesTable();
   await initPricePreview();
   await loadSafes();
-
+await loadBankTransfers();
+await loadCashiers();
   // تحميل عدد الحوالات المعلقة لعرض الـ badge
   loadPendingTransfers();
 

@@ -74,6 +74,12 @@
                         </a>
                     </li>
                     <li>
+    <a href="#" onclick="setActive(this); showBankTransfersSection();">
+        <span class="nav-icon"><i class="fa-solid fa-landmark"></i></span>
+        <span>حوالات بنكية بانتظار التسليم</span>
+    </a>
+</li>
+                    <li>
                         <a href="#"
                             onclick="setActive(this); showCustomersSection();">
                             <span class="nav-icon"><i
@@ -242,7 +248,41 @@
                         </div>
                     </div>
                 </div>
-
+               <div id="section-bank-transfers" class="section" style="display:none;">
+    <div class="card fade-in">
+        <div class="card-header">
+            <div class="card-title">
+                <i class="fa-solid fa-landmark"></i>
+                <h3>حوالات بنكية جاهزة للتسليم</h3>
+            </div>
+            <button class="btn-refresh" onclick="loadCashierBankTransfers()">
+                <i class="fa-solid fa-rotate"></i> تحديث
+            </button>
+        </div>
+        <div class="table-wrapper">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>اسم المستلم (المستفيد)</th>
+                        <th>اسم المودع (الحساب)</th>
+                        <th>البنك</th>
+                        <th>المبلغ (USD)</th>
+                        <th>التاريخ</th>
+                        <th>الإجراءات</th>
+                    </tr>
+                </thead>
+                <tbody id="cashier-bt-list">
+                    <tr><td colspan="7" class="loading-row"><div class="loading-spinner"></div> جاري التحميل...</td></tr>
+                </tbody>
+            </table>
+            <div id="cashier-bt-empty" class="empty-state" style="display:none;">
+                <i class="fa-solid fa-check-double"></i>
+                <p>لا توجد حوالات بنكية بانتظار التسليم</p>
+            </div>
+        </div>
+    </div>
+</div>
                 <!-- ===== قسم الحوالات الداخلية ===== -->
                 <div id="section-internal" class="section"
                     style="display:none;">
