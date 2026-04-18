@@ -5,106 +5,104 @@ let token = null;
 /*            AUTH              */
 /* ============================= */
 async function checkAuth() {
-    const token = localStorage.getItem('auth_token'); // ✅ مفتاح موحّد
+  const token = localStorage.getItem("auth_token"); // ✅ مفتاح موحّد
 
-    if (!token) {
-        window.location.replace('../index.html');
-        return null;
+  if (!token) {
+    window.location.replace("../index.html");
+    return null;
+  }
+
+  try {
+    const res = await fetch("http://127.0.0.1:8000/api/me", {
+      headers: {
+        Authorization: "Bearer " + token,
+        Accept: "application/json",
+      },
+    });
+
+    if (!res.ok) {
+      localStorage.clear();
+      window.location.replace("../index.html");
+      return null;
     }
 
-    try {
-        const res = await fetch('http://127.0.0.1:8000/api/me', {
-            headers: {
-                'Authorization': 'Bearer ' + token,
-                'Accept': 'application/json',
-            }
-        });
+    const data = await res.json();
+    const userRole = data.user.role;
 
-        if (!res.ok) {
-            localStorage.clear();
-            window.location.replace('../index.html');
-            return null;
-        }
+    const ALLOWED_ROLES = ["cashier"]; // ✅ صلاحية هذا الـ dashboard
 
-        const data = await res.json();
-        const userRole = data.user.role;
+    if (!ALLOWED_ROLES.includes(userRole)) {
+      // 1. عرض الـ Lottie
+      showUnauthorizedLottie();
 
-        const ALLOWED_ROLES = ['cashier']; // ✅ صلاحية هذا الـ dashboard
+      // 2. الانتظار لمدة 3 ثوانٍ ثم التوجيه
+      setTimeout(() => {
+        redirectByRole(userRole);
+      }, 10000);
 
-        if (!ALLOWED_ROLES.includes(userRole)) {
-            // 1. عرض الـ Lottie
-            showUnauthorizedLottie();
-            
-            // 2. الانتظار لمدة 3 ثوانٍ ثم التوجيه
-            setTimeout(() => {
-                redirectByRole(userRole);
-            }, 10000); 
-            
-            return null;
-        }
-
-
-        return token; // ✅ إرجاع التوكن لاستخدامه في باقي الكود
-
-    } catch (e) {
-        localStorage.clear();
-        window.location.replace('../index.html');
-        return null;
+      return null;
     }
+
+    return token; // ✅ إرجاع التوكن لاستخدامه في باقي الكود
+  } catch (e) {
+    localStorage.clear();
+    window.location.replace("../index.html");
+    return null;
+  }
 }
 
 // 🟢 دالة لعرض الـ Lottie بملء الشاشة
 function showUnauthorizedLottie() {
-    // إنشاء حاوية تغطي الشاشة بالكامل
-    const container = document.createElement('div');
-    container.style.position = 'fixed';
-    container.style.top = '0';
-    container.style.left = '0';
-    container.style.width = '100vw';
-    container.style.height = '100vh';
-    container.style.backgroundColor = '#ffffff'; // لون الخلفية (يمكنك تغييره)
-    container.style.display = 'flex';
-    container.style.flexDirection = 'column';
-    container.style.justifyContent = 'center';
-    container.style.alignItems = 'center';
-    container.style.zIndex = '9999';
-    
-    // إضافة نص توضيحي (اختياري)
-    const text = document.createElement('h2');
-    text.innerText = 'عذراً، ليس لديك صلاحية للوصول إلى هذه الصفحة';
-    text.style.fontFamily = 'Arial, sans-serif';
-    text.style.color = '#333';
-    text.style.marginTop = '20px';
+  // إنشاء حاوية تغطي الشاشة بالكامل
+  const container = document.createElement("div");
+  container.style.position = "fixed";
+  container.style.top = "0";
+  container.style.left = "0";
+  container.style.width = "100vw";
+  container.style.height = "100vh";
+  container.style.backgroundColor = "#ffffff"; // لون الخلفية (يمكنك تغييره)
+  container.style.display = "flex";
+  container.style.flexDirection = "column";
+  container.style.justifyContent = "center";
+  container.style.alignItems = "center";
+  container.style.zIndex = "9999";
 
-    // حاوية الأنيميشن
-    const lottieContainer = document.createElement('div');
-    lottieContainer.style.width = '300px'; // حجم الأنيميشن
-    lottieContainer.style.height = '300px';
+  // إضافة نص توضيحي (اختياري)
+  const text = document.createElement("h2");
+  text.innerText = "عذراً، ليس لديك صلاحية للوصول إلى هذه الصفحة";
+  text.style.fontFamily = "Arial, sans-serif";
+  text.style.color = "#333";
+  text.style.marginTop = "20px";
 
-    container.appendChild(lottieContainer);
-    container.appendChild(text);
-    document.body.appendChild(container);
+  // حاوية الأنيميشن
+  const lottieContainer = document.createElement("div");
+  lottieContainer.style.width = "300px"; // حجم الأنيميشن
+  lottieContainer.style.height = "300px";
 
-    // تشغيل الأنيميشن
-    lottie.loadAnimation({
-        container: lottieContainer, 
-        renderer: 'svg',
-        loop: true,
-        autoplay: true,
-        // ⚠️ ضع رابط ملف الـ JSON الخاص بالـ Lottie هنا
-        path: 'https://assets3.lottiefiles.com/packages/lf20_0s6tfbuc.json' 
-    });
+  container.appendChild(lottieContainer);
+  container.appendChild(text);
+  document.body.appendChild(container);
+
+  // تشغيل الأنيميشن
+  lottie.loadAnimation({
+    container: lottieContainer,
+    renderer: "svg",
+    loop: true,
+    autoplay: true,
+    // ⚠️ ضع رابط ملف الـ JSON الخاص بالـ Lottie هنا
+    path: "https://assets3.lottiefiles.com/packages/lf20_0s6tfbuc.json",
+  });
 }
 function redirectByRole(role) {
-    const routes = {
-        'super_admin': '../super_admin/super.html',
-        'admin':       '../office_manager/admin.html',
-        'cashier':     '../cashier/cashier.html',
-        'accountant':  '../accountant/accountant.html',
-        'agent':       '../agent/agent.html',
-        'customer':    '../customer/customer.html',
-    };
-    window.location.replace(routes[role] || '../index.html');
+  const routes = {
+    super_admin: "../super_admin/super.html",
+    admin: "../office_manager/admin.html",
+    cashier: "../cashier/cashier.html",
+    accountant: "../accountant/accountant.html",
+    agent: "../agent/agent.html",
+    customer: "../customer/customer.html",
+  };
+  window.location.replace(routes[role] || "../index.html");
 }
 
 /* ============================= */
@@ -116,7 +114,7 @@ async function loadNewTransfers() {
   tbody.innerHTML = `<tr><td colspan="12" class="loading-row"><div class="loading-spinner"></div> جاري التحميل...</td></tr>`;
 
   try {
-    const res  = await fetch(`${API_URL}/transfers?status=ready`, {
+    const res = await fetch(`${API_URL}/transfers?status=ready`, {
       headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
     });
     const json = await res.json();
@@ -131,17 +129,20 @@ async function loadNewTransfers() {
     document.getElementById("transfers-count").textContent = json.data.length;
 
     json.data.forEach((transfer) => {
-      const amountUsd     = Number(transfer.amount_in_usd ?? 0);
+      const amountUsd = Number(transfer.amount_in_usd ?? 0);
       const currencyPrice = Number(transfer.currency?.price ?? 1);
-      const currencyCode  = transfer.currency?.code ?? "USD";
+      const currencyCode = transfer.currency?.code ?? "USD";
       const deliveryPrice = currencyPrice > 0 ? amountUsd / currencyPrice : 0;
-      const sendAmount    = Number(transfer.amount ?? 0);
-      const sendCurrency  = transfer.send_currency?.code ?? transfer.sendCurrency?.code ?? "—";
-      const fee           = Number(transfer.fee ?? 0);
-      const senderPhone   = transfer.sender?.phone ?? "";
-      const date          = transfer.created_at ? new Date(transfer.created_at).toLocaleString("ar-SY") : "—";
-      const tracking      = transfer.tracking_code ?? "#" + transfer.id;
-      const isAgent       = transfer.sender?.role === "agent";
+      const sendAmount = Number(transfer.amount ?? 0);
+      const sendCurrency =
+        transfer.send_currency?.code ?? transfer.sendCurrency?.code ?? "—";
+      const fee = Number(transfer.fee ?? 0);
+      const senderPhone = transfer.sender?.phone ?? "";
+      const date = transfer.created_at
+        ? new Date(transfer.created_at).toLocaleString("ar-SY")
+        : "—";
+      const tracking = transfer.tracking_code ?? "#" + transfer.id;
+      const isAgent = transfer.sender?.role === "agent";
 
       const destText = transfer.destination_office_id
         ? `<i class="fa-solid fa-building" style="font-size:11px;"></i> ${transfer.destination_office?.name ?? `مكتب #${transfer.destination_office_id}`}`
@@ -384,23 +385,38 @@ async function loadTradingSafes() {
 
   try {
     const [safesRes, meRes] = await Promise.all([
-      fetch(`${API_URL}/safes`, { headers: { Authorization: `Bearer ${token}`, Accept: "application/json" } }),
-      fetch(`${API_URL}/me`,    { headers: { Authorization: `Bearer ${token}`, Accept: "application/json" } }),
+      fetch(`${API_URL}/safes`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/json",
+        },
+      }),
+      fetch(`${API_URL}/me`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/json",
+        },
+      }),
     ]);
-    const safesJson  = await safesRes.json();
-    const meData     = await meRes.json();
+    const safesJson = await safesRes.json();
+    const meData = await meRes.json();
     const myOfficeId = meData.user?.office_id;
-    const mySafes    = (safesJson.data || []).filter(s => s.office_id === myOfficeId);
+    const mySafes = (safesJson.data || []).filter(
+      (s) => s.office_id === myOfficeId,
+    );
 
     if (!mySafes.length) {
       container.innerHTML = `<div class="empty-state" style="grid-column:1/-1;"><i class="fa-solid fa-vault"></i><p>لا توجد صناديق متاحة حالياً</p></div>`;
       return;
     }
 
-    const officeSafe  = mySafes.find(s => s.type === "office_safe");
-    const mainSafe    = mySafes.find(s => s.type === "office_main");
-    const tradingSafe = mySafes.find(s => s.type === "trading");
-    const profitSafe  = mySafes.find(s => s.type === "profit_safe") || { profit_trade: 0, profit_main: 0 };
+    const officeSafe = mySafes.find((s) => s.type === "office_safe");
+    const mainSafe = mySafes.find((s) => s.type === "office_main");
+    const tradingSafe = mySafes.find((s) => s.type === "trading");
+    const profitSafe = mySafes.find((s) => s.type === "profit_safe") || {
+      profit_trade: 0,
+      profit_main: 0,
+    };
 
     let html = "";
 
@@ -413,12 +429,16 @@ async function loadTradingSafes() {
         </div>
         <div class="safe-card-balance">${parseFloat(officeSafe.balance).toLocaleString()}</div>
         <div class="safe-card-currency">USD</div>
-        ${parseFloat(officeSafe.balance_sy || 0) > 0 ? `
+        ${
+          parseFloat(officeSafe.balance_sy || 0) > 0
+            ? `
         <div style="padding:8px 12px;background:rgba(234,88,12,.07);border-radius:8px;margin-top:8px;display:flex;align-items:center;gap:6px;">
           <i class="fa-solid fa-coins" style="color:#ea580c;font-size:13px;"></i>
           <span style="font-size:13px;color:var(--gray);">رصيد الليرة السورية:</span>
           <span style="font-size:18px;font-weight:800;color:#ea580c;">${parseFloat(officeSafe.balance_sy || 0).toLocaleString("en-US", { maximumFractionDigits: 0 })} SYP</span>
-        </div>` : ""}
+        </div>`
+            : ""
+        }
       </div>`;
     }
 
@@ -467,7 +487,6 @@ async function loadTradingSafes() {
     </div>`;
 
     container.innerHTML = html;
-
   } catch (error) {
     console.error("Error loading safes:", error);
     container.innerHTML = `<p style="grid-column:1/-1;text-align:center;padding:40px;color:var(--danger);">خطأ في الاتصال بالسيرفر</p>`;
@@ -482,10 +501,180 @@ function renderTradingSafes(safes) {
 /* ============================= */
 /*        EXECUTE TRADE         */
 /* ============================= */
+function showBankTransfersSection() {
+  document
+    .querySelectorAll(".section")
+    .forEach((s) => (s.style.display = "none"));
+  document.getElementById("section-bank-transfers").style.display = "block";
 
+  document.getElementById("page-heading").textContent = "حوالات بنكية";
+  document.querySelector(".page-sub").textContent =
+    "موافق عليها بانتظار التسليم";
+  document.querySelector(".page-icon").innerHTML =
+    '<i class="fa-solid fa-landmark"></i>';
+
+  loadCashierBankTransfers();
+}
+
+async function loadCashierBankTransfers() {
+  const tbody = document.getElementById("cashier-bt-list");
+  const emptyEl = document.getElementById("cashier-bt-empty");
+
+  tbody.innerHTML = `<tr><td colspan="7" class="loading-row"><div class="loading-spinner"></div> جاري التحميل...</td></tr>`;
+  emptyEl.style.display = "none";
+
+  try {
+    const res = await fetch(`${API_URL}/bank-transfer?status=admin_approved`, {
+      headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
+    });
+    const json = await res.json();
+
+    if (!json.data || json.data.length === 0) {
+      tbody.innerHTML = "";
+      emptyEl.style.display = "block";
+      return;
+    }
+
+    tbody.innerHTML = json.data
+      .map((t, i) => {
+        const date = new Date(t.created_at).toLocaleString("ar-SY");
+        const printObj = JSON.stringify(t)
+          .replace(/'/g, "\\'")
+          .replace(/"/g, "&quot;");
+
+        return `
+            <tr>
+                <td style="color:var(--gray);font-size:12px;">${i + 1}</td>
+                <td style="font-weight:800;color:var(--primary);font-size:15px;">${t.recipient_name || "—"}</td>
+                <td>${t.full_name}</td>
+                <td>${t.bank_name}</td>
+                <td style="font-weight:900;color:var(--success);">$${parseFloat(t.amount).toLocaleString()}</td>
+                <td style="font-size:12px;color:var(--gray);">${date}</td>
+                <td>
+                    <button class="btn-confirm" onclick="completeBankTransfer(${t.id}, '${printObj}')" style="padding:8px 16px;">
+                        <i class="fa-solid fa-hand-holding-dollar"></i> تسليم وطباعة
+                    </button>
+                </td>
+            </tr>`;
+      })
+      .join("");
+  } catch (e) {
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:red;">خطأ في الاتصال بالخادم</td></tr>`;
+  }
+}
+
+async function completeBankTransfer(id, txDataStr) {
+  if (!confirm("هل قمت بتسليم المبلغ للمستلم الفعلي؟ ستتم طباعة الإيصال الآن."))
+    return;
+
+  try {
+    const res = await fetch(`${API_URL}/bank-transfer/${id}/complete`, {
+      method: "PATCH",
+      headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
+    });
+    const json = await res.json();
+
+    if (res.ok) {
+      alert("✅ تم تسليم الحوالة بنجاح");
+      loadCashierBankTransfers();
+
+      // تحويل النص إلى كائن كمعامل للطباعة
+      const tx = JSON.parse(txDataStr);
+      printBankTransferReceipt(tx);
+    } else {
+      alert(json.message || "حدث خطأ أثناء التسليم");
+    }
+  } catch (e) {
+    alert("فشل الاتصال بالخادم");
+  }
+}
+
+function printBankTransferReceipt(tx) {
+  const now = new Date();
+  const pad = (n) => String(n).padStart(2, "0");
+  const printDate = `${now.getFullYear()}/${pad(now.getMonth() + 1)}/${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+
+  const amountFmt = parseFloat(tx.amount).toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+  });
+
+  const receiptHtml = `<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap');
+  @page { size: 80mm auto; margin: 0 !important; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Cairo', sans-serif;
+    width: 72mm; max-width: 72mm; margin: 0 auto !important; padding: 2mm;
+    color: #000; font-size: 13px; line-height: 1.45;
+  }
+  .hdr { text-align:center; padding-bottom:5px; border-bottom:2px solid #000; margin-bottom:6px; }
+  .hdr .logo { font-size:18px; font-weight:800; }
+  .hdr .sub { font-size:12px; font-weight:700; margin-top:2px; }
+  .hdr .dt { font-size:10px; font-weight:700; direction:ltr; }
+
+  .track { text-align:center; margin:6px 0; padding:5px; border:2px dashed #000; font-size:14px; font-weight:800; direction:ltr; }
+  .track span { display:block; font-size:10px; direction:rtl; margin-bottom:2px; }
+
+  .r { display:flex; justify-content:space-between; padding:3px 0; border-bottom:1px dotted #000; font-size:12px; }
+  .r .lbl { font-weight:800; }
+  .r .val { font-weight:800; direction:ltr; }
+  
+  .amt { text-align:center; margin:8px 0; padding:8px; border:2px solid #000; font-size:18px; font-weight:900; }
+  
+  .footer { display:flex; justify-content:space-between; margin-top:12px; padding-top:10px; border-top:2px solid #000; }
+  .sig { text-align:center; width:45%; font-size:11px; font-weight:800; }
+  .sig-line { border-top:1.5px solid #000; margin-top:20px; }
+</style>
+</head>
+<body>
+  <div class="hdr">
+    <div class="logo">FlashPay</div>
+    <div class="sub">إيصال تسليم حوالة بنكية</div>
+    <div class="dt">${printDate}</div>
+  </div>
+
+  <div class="track"><span>رقم العملية</span> BT-${tx.id}</div>
+
+  <div class="r"><span class="lbl">اسم المستلم:</span> <span class="val">${tx.recipient_name}</span></div>
+  <div class="r"><span class="lbl">صاحب الحساب:</span> <span class="val">${tx.full_name}</span></div>
+  <div class="r"><span class="lbl">البنك:</span> <span class="val">${tx.bank_name}</span></div>
+  
+  <div class="amt">USD $${amountFmt}</div>
+
+  <div class="footer">
+    <div class="sig">توقيع الكاشير<div class="sig-line"></div></div>
+    <div class="sig">توقيع المستلم<div class="sig-line"></div></div>
+  </div>
+  <div style="text-align:center;font-size:10px;margin-top:8px;">نسخة العميل</div>
+</body>
+</html>`;
+
+  const printWin = window.open("", "_blank", "width=400,height=500");
+  if (!printWin) {
+    alert("يرجى السماح بالنوافذ المنبثقة (Popups) ثم أعد المحاولة");
+    return;
+  }
+  printWin.document.open();
+  printWin.document.write(receiptHtml);
+  printWin.document.close();
+  printWin.onload = function () {
+    printWin.document.fonts.ready.then(function () {
+      printWin.focus();
+      printWin.print();
+      setTimeout(() => {
+        if (!printWin.closed) printWin.close();
+      }, 5000);
+    });
+  };
+}
 function buildTradingUI(currencyId, officeId) {
   const amountChips = [50, 100, 200, 500, 1000];
-  const priceChips = [11500, 11700, 11800, 12000, 12100,12200];
+  const priceChips = [11500, 11700, 11800, 12000, 12100, 12200];
 
   const amountChipsHtml = amountChips
     .map(
@@ -762,22 +951,22 @@ function updateClock() {
 /*         CUSTOMERS & NEW TRANSFER        */
 /* ======================================= */
 
-let _allCustomers   = [];   // كل الزبائن المجلوبين
+let _allCustomers = []; // كل الزبائن المجلوبين
 let _selectedCustomer = null; // الزبون المختار حالياً
-let _custCurrencies = [];   // العملات
+let _custCurrencies = []; // العملات
 
 /* ── عرض القسم ── */
 function showCustomersSection() {
-  document.getElementById("section-transfers").style.display  = "none";
-  document.getElementById("section-safes").style.display      = "none";
-  document.getElementById("section-profits").style.display    = "none";
-  document.getElementById("section-internal").style.display   = "none";
-  document.getElementById("section-completed").style.display  = "none";
-  document.getElementById("section-customers").style.display  = "block";
+  document.getElementById("section-transfers").style.display = "none";
+  document.getElementById("section-safes").style.display = "none";
+  document.getElementById("section-profits").style.display = "none";
+  document.getElementById("section-internal").style.display = "none";
+  document.getElementById("section-completed").style.display = "none";
+  document.getElementById("section-customers").style.display = "block";
 
   document.getElementById("page-heading").textContent = "إنشاء حوالة";
-  document.querySelector(".page-sub").textContent     = "اختر الزبون وأنشئ الحوالة";
-  document.querySelector(".page-icon").innerHTML      =
+  document.querySelector(".page-sub").textContent = "اختر الزبون وأنشئ الحوالة";
+  document.querySelector(".page-icon").innerHTML =
     '<i class="fa-solid fa-users"></i>';
 
   loadCustomers();
@@ -789,7 +978,7 @@ async function loadCustomers() {
   tbody.innerHTML = `<tr><td colspan="6" class="loading-row"><div class="loading-spinner"></div> جاري التحميل...</td></tr>`;
 
   try {
-    const res  = await fetch(`${API_URL}/users`, {
+    const res = await fetch(`${API_URL}/users`, {
       headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
     });
     const json = await res.json();
@@ -807,11 +996,17 @@ async function loadCustomers() {
 
 /* ── فلترة الزبائن عبر البحث ── */
 function filterCustomers() {
-  const q = (document.getElementById("cust-search")?.value || "").trim().toLowerCase();
-  if (!q) { _renderCustomers(_allCustomers); return; }
-  const filtered = _allCustomers.filter((u) =>
-    (u.name  || "").toLowerCase().includes(q) ||
-    (u.phone || "").toLowerCase().includes(q)
+  const q = (document.getElementById("cust-search")?.value || "")
+    .trim()
+    .toLowerCase();
+  if (!q) {
+    _renderCustomers(_allCustomers);
+    return;
+  }
+  const filtered = _allCustomers.filter(
+    (u) =>
+      (u.name || "").toLowerCase().includes(q) ||
+      (u.phone || "").toLowerCase().includes(q),
   );
   _renderCustomers(filtered);
 }
@@ -823,7 +1018,9 @@ function _renderCustomers(list) {
     tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><i class="fa-solid fa-users"></i><p>لا يوجد زبائن</p></div></td></tr>`;
     return;
   }
-  tbody.innerHTML = list.map((u, i) => `
+  tbody.innerHTML = list
+    .map(
+      (u, i) => `
     <tr>
       <td style="color:var(--gray);font-size:12px;">${i + 1}</td>
       <td style="font-weight:700;">${u.name ?? "—"}</td>
@@ -837,7 +1034,9 @@ function _renderCustomers(list) {
         </button>
       </td>
     </tr>
-  `).join("");
+  `,
+    )
+    .join("");
 }
 
 /* ── اختيار زبون وفتح نموذج الحوالة ── */
@@ -846,11 +1045,13 @@ async function selectCustomer(userId) {
   if (!_selectedCustomer) return;
 
   // تحديث الهيدر
-  document.getElementById("cust-selected-name").textContent  = _selectedCustomer.name  ?? "—";
-  document.getElementById("cust-selected-phone").textContent = _selectedCustomer.phone ?? "—";
+  document.getElementById("cust-selected-name").textContent =
+    _selectedCustomer.name ?? "—";
+  document.getElementById("cust-selected-phone").textContent =
+    _selectedCustomer.phone ?? "—";
 
   // إخفاء قائمة الزبائن وإظهار النموذج
-  document.getElementById("cust-list-card").style.display     = "none";
+  document.getElementById("cust-list-card").style.display = "none";
   document.getElementById("cust-transfer-card").style.display = "block";
 
   // تحميل بيانات النموذج
@@ -860,7 +1061,7 @@ async function selectCustomer(userId) {
 /* ── العودة إلى قائمة الزبائن ── */
 function backToCustomerList() {
   _selectedCustomer = null;
-  document.getElementById("cust-list-card").style.display     = "block";
+  document.getElementById("cust-list-card").style.display = "block";
   document.getElementById("cust-transfer-card").style.display = "none";
   _custResetForm();
 }
@@ -876,26 +1077,36 @@ async function custInitForm() {
   try {
     const [currRes, officeRes] = await Promise.all([
       fetch(`${API_URL}/currencies`, {
-        headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/json",
+        },
       }),
       fetch(`${API_URL}/offices`, {
-        headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/json",
+        },
       }),
     ]);
 
     // ── العملات ──
-    const currJson  = await currRes.json();
-    _custCurrencies = Array.isArray(currJson) ? currJson : (currJson.data ?? []);
+    const currJson = await currRes.json();
+    _custCurrencies = Array.isArray(currJson)
+      ? currJson
+      : (currJson.data ?? []);
     _custFillCurrencySelect("cust-send-currency", "اختر عملة الإرسال...");
     _custFillCurrencySelect("cust-recv-currency", "اختر عملة الاستلام...");
 
     // ── المكاتب ──
     const officeJson = await officeRes.json();
-    const offices    = officeJson.data ?? [];
-    const officeSel  = document.getElementById("cust-office");
+    const offices = officeJson.data ?? [];
+    const officeSel = document.getElementById("cust-office");
     officeSel.innerHTML = '<option value="">اختر المكتب المستلم...</option>';
     offices.forEach((o) =>
-      officeSel.appendChild(new Option(`${o.name} — ${o.city?.name ?? ""}`, o.id))
+      officeSel.appendChild(
+        new Option(`${o.name} — ${o.city?.name ?? ""}`, o.id),
+      ),
     );
   } catch (err) {
     console.error("custInitForm error:", err);
@@ -913,35 +1124,38 @@ function _custFillCurrencySelect(selId, placeholder) {
   if (!sel) return;
   sel.innerHTML = `<option value="">${placeholder}</option>`;
   _custCurrencies.forEach((c) =>
-    sel.appendChild(new Option(`${c.name} (${c.code})`, c.id))
+    sel.appendChild(new Option(`${c.name} (${c.code})`, c.id)),
   );
 }
 
 /* ── حساب القيمة بالدولار (نفس منطق admin.js) ── */
 function custCalcUsd() {
-  const amount      = parseFloat(document.getElementById("cust-amount").value) || 0;
-  const sendCurrId  = parseInt(document.getElementById("cust-send-currency").value) || 0;
-  const currency    = _custCurrencies.find((c) => c.id === sendCurrId);
+  const amount = parseFloat(document.getElementById("cust-amount").value) || 0;
+  const sendCurrId =
+    parseInt(document.getElementById("cust-send-currency").value) || 0;
+  const currency = _custCurrencies.find((c) => c.id === sendCurrId);
 
-  const preview   = document.getElementById("cust-usd-preview");
-  const tierHint  = document.getElementById("cust-tier-hint");
+  const preview = document.getElementById("cust-usd-preview");
+  const tierHint = document.getElementById("cust-tier-hint");
 
   if (!currency || amount <= 0) {
-    preview.textContent  = "= $0.00";
+    preview.textContent = "= $0.00";
     tierHint.textContent = "";
     return;
   }
 
   // نفس getEffectiveRate من admin.js
-  const rates  = currency.rates ?? [];
-  let rate     = parseFloat(currency.price ?? 1);
+  const rates = currency.rates ?? [];
+  let rate = parseFloat(currency.price ?? 1);
   let tierLabel = null;
 
   if (rates.length > 0 && amount > 0) {
-    const sorted = [...rates].sort((a, b) => parseFloat(a.min_amount) - parseFloat(b.min_amount));
+    const sorted = [...rates].sort(
+      (a, b) => parseFloat(a.min_amount) - parseFloat(b.min_amount),
+    );
     for (let i = sorted.length - 1; i >= 0; i--) {
       if (amount >= parseFloat(sorted[i].min_amount)) {
-        rate      = parseFloat(sorted[i].rate);
+        rate = parseFloat(sorted[i].rate);
         tierLabel = `≥ ${sorted[i].min_amount}`;
         break;
       }
@@ -962,20 +1176,25 @@ function custCalcUsd() {
 
 /* ── إرسال الحوالة ── */
 async function custSubmitTransfer() {
-  const amount        = document.getElementById("cust-amount").value.trim();
-  const sendCurrId    = document.getElementById("cust-send-currency").value;
-  const recvCurrId    = document.getElementById("cust-recv-currency").value;
-  const officeId      = document.getElementById("cust-office").value;
-  const receiverName  = document.getElementById("cust-receiver-name").value.trim();
-  const receiverPhone = document.getElementById("cust-receiver-phone").value.trim();
+  const amount = document.getElementById("cust-amount").value.trim();
+  const sendCurrId = document.getElementById("cust-send-currency").value;
+  const recvCurrId = document.getElementById("cust-recv-currency").value;
+  const officeId = document.getElementById("cust-office").value;
+  const receiverName = document
+    .getElementById("cust-receiver-name")
+    .value.trim();
+  const receiverPhone = document
+    .getElementById("cust-receiver-phone")
+    .value.trim();
 
-  if (!_selectedCustomer)          return custShowError("لم يتم اختيار زبون");
-  if (!amount || parseFloat(amount) < 1) return custShowError("يرجى إدخال مبلغ صحيح (1 أو أكثر)");
-  if (!sendCurrId)                 return custShowError("يرجى اختيار عملة الإرسال");
-  if (!recvCurrId)                 return custShowError("يرجى اختيار عملة الاستلام");
-  if (!officeId)                   return custShowError("يرجى اختيار المكتب المستلم");
-  if (!receiverName)               return custShowError("يرجى إدخال اسم المستلم");
-  if (!receiverPhone)              return custShowError("يرجى إدخال رقم هاتف المستلم");
+  if (!_selectedCustomer) return custShowError("لم يتم اختيار زبون");
+  if (!amount || parseFloat(amount) < 1)
+    return custShowError("يرجى إدخال مبلغ صحيح (1 أو أكثر)");
+  if (!sendCurrId) return custShowError("يرجى اختيار عملة الإرسال");
+  if (!recvCurrId) return custShowError("يرجى اختيار عملة الاستلام");
+  if (!officeId) return custShowError("يرجى اختيار المكتب المستلم");
+  if (!receiverName) return custShowError("يرجى إدخال اسم المستلم");
+  if (!receiverPhone) return custShowError("يرجى إدخال رقم هاتف المستلم");
 
   const btn = document.getElementById("cust-submit-btn");
   btn.disabled = true;
@@ -983,17 +1202,17 @@ async function custSubmitTransfer() {
 
   try {
     const fd = new FormData();
-    fd.append("amount",                parseFloat(amount));
-    fd.append("send_currency_id",      parseInt(sendCurrId));
-    fd.append("currency_id",           parseInt(recvCurrId));
+    fd.append("amount", parseFloat(amount));
+    fd.append("send_currency_id", parseInt(sendCurrId));
+    fd.append("currency_id", parseInt(recvCurrId));
     fd.append("destination_office_id", parseInt(officeId));
-    fd.append("sender_id",             _selectedCustomer.id);
-    fd.append("status", "ready");      // مباشرة ready بدون موافقة
-    fd.append("receiver_name",         receiverName);
-    fd.append("receiver_phone",        receiverPhone);
-    fd.append("fee",                   0);
+    fd.append("sender_id", _selectedCustomer.id);
+    fd.append("status", "ready"); // مباشرة ready بدون موافقة
+    fd.append("receiver_name", receiverName);
+    fd.append("receiver_phone", receiverPhone);
+    fd.append("fee", 0);
 
-    const res  = await fetch(`${API_URL}/transfers`, {
+    const res = await fetch(`${API_URL}/transfers`, {
       method: "POST",
       headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
       body: fd,
@@ -1002,7 +1221,9 @@ async function custSubmitTransfer() {
 
     if (res.status === 201) {
       const trackingCode = json.data?.tracking_code ?? "";
-      custShowSuccess(`✅ تم إنشاء الحوالة بنجاح — كود التتبع: ${trackingCode}`);
+      custShowSuccess(
+        `✅ تم إنشاء الحوالة بنجاح — كود التتبع: ${trackingCode}`,
+      );
       _custResetForm();
     } else {
       const msg = json.errors
@@ -1015,7 +1236,8 @@ async function custSubmitTransfer() {
     custShowError("تعذّر الاتصال بالخادم.");
   } finally {
     btn.disabled = false;
-    btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> إنشاء وإرسال الحوالة';
+    btn.innerHTML =
+      '<i class="fa-solid fa-paper-plane"></i> إنشاء وإرسال الحوالة';
   }
 }
 
@@ -1029,8 +1251,8 @@ function _custResetForm() {
     const el = document.getElementById(id);
     if (el) el.value = "";
   });
-  document.getElementById("cust-usd-preview").textContent  = "= $0.00";
-  document.getElementById("cust-tier-hint").textContent    = "";
+  document.getElementById("cust-usd-preview").textContent = "= $0.00";
+  document.getElementById("cust-tier-hint").textContent = "";
   document.getElementById("cust-success-toast").classList.add("hidden");
   document.getElementById("cust-error-toast").classList.add("hidden");
 }
@@ -1072,7 +1294,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 /* ============================= */
 /*        PRINT RECEIPT         */
-/* ============================= */ 
+/* ============================= */
 function printTransferReceipt(tx) {
   if (!tx) return;
 
@@ -1411,7 +1633,12 @@ async function saveInternalTransfer() {
       resetInternalForm();
       loadInternalTransfers();
       // ربح الداخلية → profit_main (يُعالج في الباك)
-      console.log("[Cashier] Internal transfer commission:", saved.commission, "fee_payer:", saved.fee_payer);
+      console.log(
+        "[Cashier] Internal transfer commission:",
+        saved.commission,
+        "fee_payer:",
+        saved.fee_payer,
+      );
       showInternalToast("✅ تم حفظ الحوالة الداخلية وطباعة الإيصال");
     } else {
       alert(data.message || "فشل الحفظ، يرجى المحاولة مجدداً");
@@ -1717,23 +1944,26 @@ function _renderCompletedRows(rows, empty) {
 
   function fmtDate(str) {
     if (!str) return "—";
-    const d   = new Date(str);
+    const d = new Date(str);
     const pad = (n) => String(n).padStart(2, "0");
-    return `${d.getFullYear()}/${pad(d.getMonth()+1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    return `${d.getFullYear()}/${pad(d.getMonth() + 1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
   }
 
-  tbody.innerHTML = rows.map((tx) => {
-    const amountUsd   = parseFloat(tx.amount_in_usd ?? 0);
-    const currPrice   = parseFloat(tx.currency?.price ?? 1);
-    const currCode    = tx.currency?.code ?? "—";
-    const sendAmt     = parseFloat(tx.amount ?? 0);
-    const sendCur     = tx.send_currency?.code ?? tx.sendCurrency?.code ?? "—";
-    const deliveryAmt = currPrice > 0 ? amountUsd / currPrice : 0;
-    const fee         = parseFloat(tx.fee ?? 0);
-    const txDate      = fmtDate(tx.updated_at || tx.created_at);
-    const txJson      = JSON.stringify(tx).replace(/'/g, "\'").replace(/"/g, "&quot;");
+  tbody.innerHTML = rows
+    .map((tx) => {
+      const amountUsd = parseFloat(tx.amount_in_usd ?? 0);
+      const currPrice = parseFloat(tx.currency?.price ?? 1);
+      const currCode = tx.currency?.code ?? "—";
+      const sendAmt = parseFloat(tx.amount ?? 0);
+      const sendCur = tx.send_currency?.code ?? tx.sendCurrency?.code ?? "—";
+      const deliveryAmt = currPrice > 0 ? amountUsd / currPrice : 0;
+      const fee = parseFloat(tx.fee ?? 0);
+      const txDate = fmtDate(tx.updated_at || tx.created_at);
+      const txJson = JSON.stringify(tx)
+        .replace(/'/g, "\'")
+        .replace(/"/g, "&quot;");
 
-    return `
+      return `
     <tr>
       <td><span class="transfer-id">${tx.tracking_code ?? "#" + tx.id}</span></td>
       <td>
@@ -1761,7 +1991,8 @@ function _renderCompletedRows(rows, empty) {
         </button>
       </td>
     </tr>`;
-  }).join("");
+    })
+    .join("");
 }
 
 /**

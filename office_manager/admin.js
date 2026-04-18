@@ -1,105 +1,103 @@
 const API_URL = "http://127.0.0.1:8000/api";
 async function checkAuth() {
-    const token = localStorage.getItem('auth_token'); // ✅ مفتاح موحّد مع getHeaders
+  const token = localStorage.getItem("auth_token"); // ✅ مفتاح موحّد مع getHeaders
 
-    if (!token) {
-        window.location.replace('../index.html');
-        return null;
+  if (!token) {
+    window.location.replace("../index.html");
+    return null;
+  }
+
+  try {
+    const res = await fetch("http://127.0.0.1:8000/api/me", {
+      headers: {
+        Authorization: "Bearer " + token,
+        Accept: "application/json",
+      },
+    });
+
+    if (!res.ok) {
+      localStorage.clear();
+      window.location.replace("../index.html");
+      return null;
     }
 
-    try {
-        const res = await fetch('http://127.0.0.1:8000/api/me', {
-            headers: {
-                'Authorization': 'Bearer ' + token,
-                'Accept': 'application/json',
-            }
-        });
+    const data = await res.json();
+    const userRole = data.user.role;
 
-        if (!res.ok) {
-            localStorage.clear();
-            window.location.replace('../index.html');
-            return null;
-        }
+    const ALLOWED_ROLES = ["admin"]; // ✅ صلاحية هذا الـ dashboard
 
-        const data = await res.json();
-        const userRole = data.user.role;
+    if (!ALLOWED_ROLES.includes(userRole)) {
+      // 1. عرض الـ Lottie
+      showUnauthorizedLottie();
 
-        const ALLOWED_ROLES = ['admin']; // ✅ صلاحية هذا الـ dashboard
+      // 2. الانتظار لمدة 3 ثوانٍ ثم التوجيه
+      setTimeout(() => {
+        redirectByRole(userRole);
+      }, 10000);
 
-        if (!ALLOWED_ROLES.includes(userRole)) {
-            // 1. عرض الـ Lottie
-            showUnauthorizedLottie();
-            
-            // 2. الانتظار لمدة 3 ثوانٍ ثم التوجيه
-            setTimeout(() => {
-                redirectByRole(userRole);
-            }, 10000); 
-            
-            return null;
-        }
-
-
-        return token; // ✅ إرجاع التوكن لاستخدامه في باقي الكود
-
-    } catch (e) {
-        localStorage.clear();
-        window.location.replace('../index.html');
-        return null;
+      return null;
     }
+
+    return token; // ✅ إرجاع التوكن لاستخدامه في باقي الكود
+  } catch (e) {
+    localStorage.clear();
+    window.location.replace("../index.html");
+    return null;
+  }
 }
 
 // 🟢 دالة لعرض الـ Lottie بملء الشاشة
 function showUnauthorizedLottie() {
-    // إنشاء حاوية تغطي الشاشة بالكامل
-    const container = document.createElement('div');
-    container.style.position = 'fixed';
-    container.style.top = '0';
-    container.style.left = '0';
-    container.style.width = '100vw';
-    container.style.height = '100vh';
-    container.style.backgroundColor = '#ffffff'; // لون الخلفية (يمكنك تغييره)
-    container.style.display = 'flex';
-    container.style.flexDirection = 'column';
-    container.style.justifyContent = 'center';
-    container.style.alignItems = 'center';
-    container.style.zIndex = '9999';
-    
-    // إضافة نص توضيحي (اختياري)
-    const text = document.createElement('h2');
-    text.innerText = 'عذراً، ليس لديك صلاحية للوصول إلى هذه الصفحة';
-    text.style.fontFamily = 'Arial, sans-serif';
-    text.style.color = '#333';
-    text.style.marginTop = '20px';
+  // إنشاء حاوية تغطي الشاشة بالكامل
+  const container = document.createElement("div");
+  container.style.position = "fixed";
+  container.style.top = "0";
+  container.style.left = "0";
+  container.style.width = "100vw";
+  container.style.height = "100vh";
+  container.style.backgroundColor = "#ffffff"; // لون الخلفية (يمكنك تغييره)
+  container.style.display = "flex";
+  container.style.flexDirection = "column";
+  container.style.justifyContent = "center";
+  container.style.alignItems = "center";
+  container.style.zIndex = "9999";
 
-    // حاوية الأنيميشن
-    const lottieContainer = document.createElement('div');
-    lottieContainer.style.width = '300px'; // حجم الأنيميشن
-    lottieContainer.style.height = '300px';
+  // إضافة نص توضيحي (اختياري)
+  const text = document.createElement("h2");
+  text.innerText = "عذراً، ليس لديك صلاحية للوصول إلى هذه الصفحة";
+  text.style.fontFamily = "Arial, sans-serif";
+  text.style.color = "#333";
+  text.style.marginTop = "20px";
 
-    container.appendChild(lottieContainer);
-    container.appendChild(text);
-    document.body.appendChild(container);
+  // حاوية الأنيميشن
+  const lottieContainer = document.createElement("div");
+  lottieContainer.style.width = "300px"; // حجم الأنيميشن
+  lottieContainer.style.height = "300px";
 
-    // تشغيل الأنيميشن
-    lottie.loadAnimation({
-        container: lottieContainer, 
-        renderer: 'svg',
-        loop: true,
-        autoplay: true,
-        // ⚠️ ضع رابط ملف الـ JSON الخاص بالـ Lottie هنا
-        path: 'https://assets3.lottiefiles.com/packages/lf20_0s6tfbuc.json' 
-    });
+  container.appendChild(lottieContainer);
+  container.appendChild(text);
+  document.body.appendChild(container);
+
+  // تشغيل الأنيميشن
+  lottie.loadAnimation({
+    container: lottieContainer,
+    renderer: "svg",
+    loop: true,
+    autoplay: true,
+    // ⚠️ ضع رابط ملف الـ JSON الخاص بالـ Lottie هنا
+    path: "https://assets3.lottiefiles.com/packages/lf20_0s6tfbuc.json",
+  });
 }
 function redirectByRole(role) {
-    const routes = {
-        'super_admin': '../super_admin/super.html',
-        'admin':       '../office_manager/admin.html',
-        'cashier':     '../cashier/cashier.html',
-        'accountant':  '../accountant/accountant.html',
-        'agent':       '../agent/agent.html',
-        'customer':    '../customer/customer.html',
-    };
-    window.location.replace(routes[role] || '../index.html');
+  const routes = {
+    super_admin: "../super_admin/super.html",
+    admin: "../office_manager/admin.html",
+    cashier: "../cashier/cashier.html",
+    accountant: "../accountant/accountant.html",
+    agent: "../agent/agent.html",
+    customer: "../customer/customer.html",
+  };
+  window.location.replace(routes[role] || "../index.html");
 }
 
 async function rejectTransfer(transferId) {
@@ -178,37 +176,44 @@ async function loadAllTransfers() {
     document.getElementById("stat-all-count").textContent = json.data.length;
 
     const statusMap = {
-      pending:   { cls: "status-pending",  text: "قيد الانتظار" },
-      approved:  { cls: "status-approved", text: "موافق عليها" },
-      waiting:   { cls: "status-pending",  text: "بانتظار المكتب" },
-      ready:     { cls: "status-approved", text: "جاهزة للتسليم" },
+      pending: { cls: "status-pending", text: "قيد الانتظار" },
+      approved: { cls: "status-approved", text: "موافق عليها" },
+      waiting: { cls: "status-pending", text: "بانتظار المكتب" },
+      ready: { cls: "status-approved", text: "جاهزة للتسليم" },
       completed: { cls: "status-approved", text: "مكتملة" },
-      rejected:  { cls: "status-rejected", text: "مرفوضة" },
+      rejected: { cls: "status-rejected", text: "مرفوضة" },
       cancelled: { cls: "status-rejected", text: "ملغاة" },
     };
 
     json.data.forEach((transfer) => {
-      const s = statusMap[transfer.status] ?? { cls: "", text: transfer.status };
-      const amountUsd    = Number(transfer.amount_in_usd ?? 0);
-      const sendAmount   = Number(transfer.amount ?? 0);
-      const sendCurrency = transfer.send_currency?.code ?? transfer.sendCurrency?.code ?? "—";
+      const s = statusMap[transfer.status] ?? {
+        cls: "",
+        text: transfer.status,
+      };
+      const amountUsd = Number(transfer.amount_in_usd ?? 0);
+      const sendAmount = Number(transfer.amount ?? 0);
+      const sendCurrency =
+        transfer.send_currency?.code ?? transfer.sendCurrency?.code ?? "—";
       const recvCurrency = transfer.currency?.code ?? "—";
-      const recvPrice    = Number(transfer.currency?.price ?? 1);
-      const deliveryAmt  = recvPrice > 0 ? amountUsd / recvPrice : 0;
-      const fee          = Number(transfer.fee ?? 0);
-      const date         = transfer.created_at ? new Date(transfer.created_at).toLocaleString("ar-SY") : "—";
+      const recvPrice = Number(transfer.currency?.price ?? 1);
+      const deliveryAmt = recvPrice > 0 ? amountUsd / recvPrice : 0;
+      const fee = Number(transfer.fee ?? 0);
+      const date = transfer.created_at
+        ? new Date(transfer.created_at).toLocaleString("ar-SY")
+        : "—";
 
-     const destHtml = transfer.destination_office_id
-  ? `<div style="display:flex;align-items:center;gap:5px;font-size:12px;">
+      const destHtml = transfer.destination_office_id
+        ? `<div style="display:flex;align-items:center;gap:5px;font-size:12px;">
        <i class="fa-solid fa-building" style="color:var(--primary);"></i>
        <span>${transfer.destination_office?.name ?? `مكتب #${transfer.destination_office_id}`}</span>
      </div>`
-  : `<div style="display:flex;align-items:center;gap:5px;font-size:12px;">
+        : `<div style="display:flex;align-items:center;gap:5px;font-size:12px;">
        <i class="fa-solid fa-globe" style="color:#7c3aed;"></i>
        <span>${transfer.destination_city ?? "—"}</span>
      </div>`;
       const trackHtml = transfer.tracking_code
-        ? `<span class="tracking-code">${transfer.tracking_code}</span>` : "";
+        ? `<span class="tracking-code">${transfer.tracking_code}</span>`
+        : "";
 
       tbody.innerHTML += `
         <tr data-status="${transfer.status}">
@@ -338,18 +343,23 @@ async function showSafesSection() {
   hideAllCards();
   document.getElementById("safes-card").style.display = "block";
 
-const container = document.getElementById("safes-container"); 
-   
-    
+  const container = document.getElementById("safes-container");
+
   // fetch آمن — يرجع null بدون crash
   async function safeGet(url) {
     try {
-      const r = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
-      if (!r.ok) { console.warn("[safes]", url, "→", r.status); return null; }
+      const r = await fetch(url, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!r.ok) {
+        console.warn("[safes]", url, "→", r.status);
+        return null;
+      }
       return await r.json();
-
-      
-    } catch (e) { console.warn("[safes] network error:", e); return null; }
+    } catch (e) {
+      console.warn("[safes] network error:", e);
+      return null;
+    }
   }
 
   try {
@@ -362,10 +372,10 @@ const container = document.getElementById("safes-container");
       container.innerHTML = `<p style="color:red;padding:20px;">تعذّر تحميل بيانات المستخدم.</p>`;
       return;
     }
-    
+
     const myOfficeId = meData.user.office_id;
-    const allSafes   = json?.data ?? [];
-    const mySafes    = allSafes.filter((s) => s.office_id === myOfficeId);
+    const allSafes = json?.data ?? [];
+    const mySafes = allSafes.filter((s) => s.office_id === myOfficeId);
 
     if (!json?.data) {
       container.innerHTML = `<p style="color:orange;padding:20px;">تعذّر تحميل الصناديق. راجع الـ console للتفاصيل.</p>`;
@@ -373,12 +383,16 @@ const container = document.getElementById("safes-container");
     }
     // ─── فصل الأنواع الثلاثة ──────────────────────────────────
     const officeSafe = mySafes.find((s) => s.type === "office_safe");
-    const mainSafe   = mySafes.find((s) => s.type === "office_main");
+    const mainSafe = mySafes.find((s) => s.type === "office_main");
     const tradingSafes = mySafes.filter((s) => s.type === "trading");
-    const profitSafe = mySafes.filter((s) => s.type === "profit_safe")[0] || { profit_trade: 0, profit_main: 0 };
-    
+    const profitSafe = mySafes.filter((s) => s.type === "profit_safe")[0] || {
+      profit_trade: 0,
+      profit_main: 0,
+    };
+
     // ─── 1. بطاقة خزنة المكتب (OfficeSafe) ──────────────────
-    const officeSafeCard = officeSafe ? `
+    const officeSafeCard = officeSafe
+      ? `
     <div class="safe-card safe-card-office" id="office-safe-card">
         <div class="safe-card-header">
             <div class="safe-card-icon"><i class="fa-solid fa-building-columns"></i></div>
@@ -463,7 +477,8 @@ const container = document.getElementById("safes-container");
                 </button>
             </div>
         </div>
-    </div>` : "";
+    </div>`
+      : "";
     const profitCard = `
 <div class="safe-card" style="border-color: #8b5cf6;">
     <div class="safe-card-header">
@@ -478,13 +493,13 @@ const container = document.getElementById("safes-container");
         <div>
             <div style="font-size: 10px; color: var(--gray);">أرباح التداول (ل.س)</div>
             <div style="font-size: 16px; font-weight: 800; color: #15803d;" id="profit-trade-display">
-                ${parseFloat(profitSafe.profit_trade || 0).toLocaleString('en-US', {maximumFractionDigits:0})} ل.س
+                ${parseFloat(profitSafe.profit_trade || 0).toLocaleString("en-US", { maximumFractionDigits: 0 })} ل.س
             </div>
         </div>
         <div style="text-align:left;">
             <div style="font-size: 10px; color: var(--gray);">أرباح رئيسية (USD)</div>
             <div style="font-size: 16px; font-weight: 800; color: #1d4ed8;" id="profit-main-display">
-                $${parseFloat(profitSafe.profit_main || 0).toLocaleString('en-US', {minimumFractionDigits:2})}
+                $${parseFloat(profitSafe.profit_main || 0).toLocaleString("en-US", { minimumFractionDigits: 2 })}
             </div>
         </div>
     </div>
@@ -529,7 +544,8 @@ const container = document.getElementById("safes-container");
     </div>
 </div>`;
     // ─── 2. بطاقة الصندوق الرئيسي (MainSafe) ────────────────
-    const mainSafeCard = mainSafe ? `
+    const mainSafeCard = mainSafe
+      ? `
     <div class="safe-card safe-card-main" id="safe-card-main">
         <div class="safe-card-header">
             <div class="safe-card-icon"><i class="fa-solid fa-vault"></i></div>
@@ -554,10 +570,13 @@ const container = document.getElementById("safes-container");
                 </button>
             </div>
         </div>
-    </div>` : "";
+    </div>`
+      : "";
 
     // ─── 3. بطاقات صناديق التداول (TradingSafe) ──────────────
-    const tradingCards = tradingSafes.map((safe) => `
+    const tradingCards = tradingSafes
+      .map(
+        (safe) => `
     <div class="safe-card safe-card-trading" id="trading-safe-card">
         <div class="safe-card-header">
             <div class="safe-card-icon"><i class="fa-solid fa-chart-line"></i></div>
@@ -585,7 +604,9 @@ const container = document.getElementById("safes-container");
             <span style="font-size:12px;color:#ea580c;font-weight:600;">SYP</span>
         </div>
 -->
-       ${safe.cost !== null && safe.cost !== undefined ? `
+       ${
+         safe.cost !== null && safe.cost !== undefined
+           ? `
     <div style="font-size:12px;color:var(--gray);margin-top:4px;font-weight:600;
                 padding:8px 12px;background:var(--light);border-radius:8px; display: flex; justify-content: space-between; align-items: center;">
         <div>
@@ -598,7 +619,9 @@ const container = document.getElementById("safes-container");
                 style="background:none; border:none; color:var(--primary); cursor:pointer; font-size:14px;" title="تعديل يدوي">
             <i class="fa-solid fa-pen-to-square"></i>
         </button>
-    </div>` : ""}
+    </div>`
+           : ""
+       }
         ${buildTradingUI(safe.currency_id, safe.office_id)}
 
         <div class="office-safe-panel" style="margin-top:12px;">
@@ -614,179 +637,238 @@ const container = document.getElementById("safes-container");
                 </button>
             </div>
         </div>
-    </div>`).join("");
+    </div>`,
+      )
+      .join("");
 
-    container.innerHTML = officeSafeCard + mainSafeCard + tradingCards + profitCard ;
-
+    container.innerHTML =
+      officeSafeCard + mainSafeCard + tradingCards + profitCard;
   } catch (e) {
     console.error("Error loading safes:", e);
   }
 }
 
-
 async function editCostManual(officeId, currentCost) {
-    const newCost = prompt("أدخل قيمة التكلفة الجديدة (أدخل 0 للتصفير):", currentCost);
-    
-    // إذا ضغط المستخدم إلغاء أو لم يدخل رقماً
-    if (newCost === null || isNaN(newCost)) return;
+  const newCost = prompt(
+    "أدخل قيمة التكلفة الجديدة (أدخل 0 للتصفير):",
+    currentCost,
+  );
 
-    try {
-        const token = localStorage.getItem("auth_token");
-        const res = await fetch(`${API_URL}/trading-safe/update-cost`, {
-            method: "POST",
-            headers: {
-                "Authorization": `Bearer ${token}`,
-                "Content-Type": "application/json",
-                "Accept": "application/json",
-            },
-            body: JSON.stringify({
-                office_id: officeId,
-                cost: parseFloat(newCost)
-            }),
-        });
+  // إذا ضغط المستخدم إلغاء أو لم يدخل رقماً
+  if (newCost === null || isNaN(newCost)) return;
 
-        const data = await res.json();
-        if (res.ok) {
-            showToast("تم تحديث التكلفة بنجاح");
-            // تحديث الواجهة فوراً
-            const costEl = document.getElementById(`cost-display-${officeId}`);
-            if (costEl) costEl.textContent = parseFloat(newCost).toFixed(2);
-        } else {
-            showToast(data.message || "خطأ في التحديث", "danger");
-        }
-    } catch (error) {
-        console.error(error);
-        showToast("فشل الاتصال بالسيرفر", "danger");
+  try {
+    const token = localStorage.getItem("auth_token");
+    const res = await fetch(`${API_URL}/trading-safe/update-cost`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify({
+        office_id: officeId,
+        cost: parseFloat(newCost),
+      }),
+    });
+
+    const data = await res.json();
+    if (res.ok) {
+      showToast("تم تحديث التكلفة بنجاح");
+      // تحديث الواجهة فوراً
+      const costEl = document.getElementById(`cost-display-${officeId}`);
+      if (costEl) costEl.textContent = parseFloat(newCost).toFixed(2);
+    } else {
+      showToast(data.message || "خطأ في التحديث", "danger");
     }
+  } catch (error) {
+    console.error(error);
+    showToast("فشل الاتصال بالسيرفر", "danger");
+  }
 }
 async function transferProfit(officeId) {
-    const amountInput  = document.getElementById("profit-transfer-amount");
-    const sourceSelect = document.getElementById("profit-source");
-    const amount       = parseFloat(amountInput.value);
+  const amountInput = document.getElementById("profit-transfer-amount");
+  const sourceSelect = document.getElementById("profit-source");
+  const amount = parseFloat(amountInput.value);
 
-    if (!amount || amount <= 0) { alert("يرجى إدخال مبلغ صحيح"); return; }
+  if (!amount || amount <= 0) {
+    alert("يرجى إدخال مبلغ صحيح");
+    return;
+  }
 
-    const btn  = event.currentTarget;
-    const orig = btn.innerHTML;
-    btn.disabled = true;
-    btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i>`;
+  const btn = event.currentTarget;
+  const orig = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i>`;
 
-    try {
-        const res  = await fetch(`${API_URL}/safes/transfer-profit`, {
-            method : "POST",
-            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-            body   : JSON.stringify({ office_id: officeId, source: sourceSelect.value, amount }),
-        });
-        const data = await res.json();
+  try {
+    const res = await fetch(`${API_URL}/safes/transfer-profit`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        office_id: officeId,
+        source: sourceSelect.value,
+        amount,
+      }),
+    });
+    const data = await res.json();
 
-        if (res.ok) {
-            // تحديث القيم المعروضة مباشرة دون إعادة تحميل كاملة
-            const tradeEl = document.getElementById("profit-trade-display");
-            const mainEl  = document.getElementById("profit-main-display");
-            if (tradeEl) tradeEl.textContent = `${parseFloat(data.profit_trade || 0).toLocaleString("en-US", { maximumFractionDigits: 0 })} ل.س`;
-            if (mainEl)  mainEl.textContent  = `$${parseFloat(data.profit_main  || 0).toLocaleString("en-US", { minimumFractionDigits: 2 })}`;
-            amountInput.value = "";
-            showAdminToast("✅ تم نقل الأرباح لخزنة المكتب بنجاح");
-            setTimeout(() => showSafesSection(), 600);
-        } else {
-            alert(data.message || "حدث خطأ أثناء نقل الأرباح");
-        }
-    } catch (e) {
-        alert("تعذر الاتصال بالخادم");
-    } finally {
-        btn.disabled = false; btn.innerHTML = orig;
+    if (res.ok) {
+      // تحديث القيم المعروضة مباشرة دون إعادة تحميل كاملة
+      const tradeEl = document.getElementById("profit-trade-display");
+      const mainEl = document.getElementById("profit-main-display");
+      if (tradeEl)
+        tradeEl.textContent = `${parseFloat(data.profit_trade || 0).toLocaleString("en-US", { maximumFractionDigits: 0 })} ل.س`;
+      if (mainEl)
+        mainEl.textContent = `$${parseFloat(data.profit_main || 0).toLocaleString("en-US", { minimumFractionDigits: 2 })}`;
+      amountInput.value = "";
+      showAdminToast("✅ تم نقل الأرباح لخزنة المكتب بنجاح");
+      setTimeout(() => showSafesSection(), 600);
+    } else {
+      alert(data.message || "حدث خطأ أثناء نقل الأرباح");
     }
+  } catch (e) {
+    alert("تعذر الاتصال بالخادم");
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = orig;
+  }
 }
 
 /* ── إيداع / سحب يدوي على صندوق الأرباح ─────────────────────────── */
 async function profitAdjust(type, officeId) {
-    const amountInput    = document.getElementById("profit-adjust-amount");
-    const currencySelect = document.getElementById("profit-adjust-currency");
-    const amount         = parseFloat(amountInput.value);
-    const currency       = currencySelect.value; // 'usd' | 'sy'
+  const amountInput = document.getElementById("profit-adjust-amount");
+  const currencySelect = document.getElementById("profit-adjust-currency");
+  const amount = parseFloat(amountInput.value);
+  const currency = currencySelect.value; // 'usd' | 'sy'
 
-    if (!amount || amount <= 0) { alert("يرجى إدخال مبلغ صحيح"); return; }
+  if (!amount || amount <= 0) {
+    alert("يرجى إدخال مبلغ صحيح");
+    return;
+  }
 
-    const isDeposit = type === "deposit";
-    const panel     = amountInput.closest(".office-safe-panel");
-    const btn       = panel.querySelector(isDeposit ? ".osafe-btn-dep" : ".osafe-btn-wit");
-    const orig      = btn.innerHTML;
-    btn.disabled    = true;
-    btn.innerHTML   = `<i class="fa-solid fa-spinner fa-spin"></i>`;
+  const isDeposit = type === "deposit";
+  const panel = amountInput.closest(".office-safe-panel");
+  const btn = panel.querySelector(
+    isDeposit ? ".osafe-btn-dep" : ".osafe-btn-wit",
+  );
+  const orig = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i>`;
 
-    try {
-        const res  = await fetch(`${API_URL}/safes/profit/adjust`, {
-            method : "POST",
-            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-            body   : JSON.stringify({ office_id: officeId, amount, type, currency }),
-        });
-        const data = await res.json();
+  try {
+    const res = await fetch(`${API_URL}/safes/profit/adjust`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ office_id: officeId, amount, type, currency }),
+    });
+    const data = await res.json();
 
-        if (res.ok) {
-            // تحديث الأرقام المعروضة مباشرة
-            const tradeEl = document.getElementById("profit-trade-display");
-            const mainEl  = document.getElementById("profit-main-display");
-            if (tradeEl) tradeEl.textContent = `${parseFloat(data.profit_trade || 0).toLocaleString("en-US", { maximumFractionDigits: 0 })} ل.س`;
-            if (mainEl)  mainEl.textContent  = `$${parseFloat(data.profit_main  || 0).toLocaleString("en-US", { minimumFractionDigits: 2 })}`;
-            amountInput.value = "";
-            const currencyLabel = currency === "usd" ? "USD" : "ل.س";
-            showAdminToast(`${isDeposit ? "✅ تم الإيداع" : "✅ تم السحب"} (${currencyLabel}) في صندوق الأرباح`);
-        } else {
-            alert(data.message || "حدث خطأ في العملية");
-        }
-    } catch (e) {
-        alert("تعذر الاتصال بالخادم");
-    } finally {
-        btn.disabled = false; btn.innerHTML = orig;
+    if (res.ok) {
+      // تحديث الأرقام المعروضة مباشرة
+      const tradeEl = document.getElementById("profit-trade-display");
+      const mainEl = document.getElementById("profit-main-display");
+      if (tradeEl)
+        tradeEl.textContent = `${parseFloat(data.profit_trade || 0).toLocaleString("en-US", { maximumFractionDigits: 0 })} ل.س`;
+      if (mainEl)
+        mainEl.textContent = `$${parseFloat(data.profit_main || 0).toLocaleString("en-US", { minimumFractionDigits: 2 })}`;
+      amountInput.value = "";
+      const currencyLabel = currency === "usd" ? "USD" : "ل.س";
+      showAdminToast(
+        `${isDeposit ? "✅ تم الإيداع" : "✅ تم السحب"} (${currencyLabel}) في صندوق الأرباح`,
+      );
+    } else {
+      alert(data.message || "حدث خطأ في العملية");
     }
+  } catch (e) {
+    alert("تعذر الاتصال بالخادم");
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = orig;
+  }
 }
 
 /* ── إيداع / سحب يدوي على خزنة المكتب ──────────────────────────────── */
-async function officeSafeAdjust(type, officeId, currency = 'usd') {
-  const inputId     = currency === 'sy' ? 'adjust-amount-sy' : 'adjust-amount';
+async function officeSafeAdjust(type, officeId, currency = "usd") {
+  const inputId = currency === "sy" ? "adjust-amount-sy" : "adjust-amount";
   const amountInput = document.getElementById(inputId);
-  const amount      = parseFloat(amountInput.value);
-  if (!amount || amount <= 0) { alert("يرجى إدخال مبلغ صحيح"); return; }
+  const amount = parseFloat(amountInput.value);
+  if (!amount || amount <= 0) {
+    alert("يرجى إدخال مبلغ صحيح");
+    return;
+  }
 
   const isDep = type === "deposit";
   const panel = amountInput.closest(".office-safe-panel");
-  const btn   = panel.querySelector(isDep ? ".osafe-btn-dep" : ".osafe-btn-wit");
-  const orig  = btn.innerHTML;
+  const btn = panel.querySelector(isDep ? ".osafe-btn-dep" : ".osafe-btn-wit");
+  const orig = btn.innerHTML;
   btn.disabled = true;
   btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i>`;
 
   try {
     const res = await fetch(`${API_URL}/offices/${officeId}/safe`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
       body: JSON.stringify({ amount, type, currency }),
     });
     const data = await res.json();
     if (res.ok) {
-      if (currency === 'sy') {
+      if (currency === "sy") {
         const elOfficeSy = document.getElementById("office-safe-balance-sy");
-        if (elOfficeSy) elOfficeSy.textContent = parseFloat(data.new_balance_sy).toLocaleString();
-        const elTradingSy = document.querySelector("[id^='trading-safe-balance-sy-']");
+        if (elOfficeSy)
+          elOfficeSy.textContent = parseFloat(
+            data.new_balance_sy,
+          ).toLocaleString();
+        const elTradingSy = document.querySelector(
+          "[id^='trading-safe-balance-sy-']",
+        );
         if (elTradingSy && data.trading_balance_sy !== undefined)
-          elTradingSy.textContent = parseFloat(data.trading_balance_sy).toLocaleString();
-        showAdminToast(isDep ? "✅ تم إيداع الليرات — انعكس على التداول" : "✅ تم سحب الليرات");
+          elTradingSy.textContent = parseFloat(
+            data.trading_balance_sy,
+          ).toLocaleString();
+        showAdminToast(
+          isDep
+            ? "✅ تم إيداع الليرات — انعكس على التداول"
+            : "✅ تم سحب الليرات",
+        );
       } else {
         const elUsd = document.getElementById("office-safe-balance");
-        if (elUsd) elUsd.textContent = parseFloat(data.new_balance).toLocaleString();
-        showAdminToast(isDep ? "✅ تم الإيداع بالدولار" : "✅ تم السحب بالدولار");
+        if (elUsd)
+          elUsd.textContent = parseFloat(data.new_balance).toLocaleString();
+        showAdminToast(
+          isDep ? "✅ تم الإيداع بالدولار" : "✅ تم السحب بالدولار",
+        );
       }
       amountInput.value = "";
-    } else { alert(data.message || "حدث خطأ"); }
-  } catch (e) { alert("تعذر الاتصال بالخادم"); }
-  finally { btn.disabled = false; btn.innerHTML = orig; }
+    } else {
+      alert(data.message || "حدث خطأ");
+    }
+  } catch (e) {
+    alert("تعذر الاتصال بالخادم");
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = orig;
+  }
 }
 
 /* ── تحويل من خزنة المكتب إلى صندوق آخر ────────────────────────────── */
 async function officeSafeTransfer(officeId) {
   const amountInput = document.getElementById("transfer-amount");
-  const toType      = document.getElementById("transfer-to").value;
-  const amount      = parseFloat(amountInput.value);
-  if (!amount || amount <= 0) { alert("يرجى إدخال مبلغ صحيح"); return; }
+  const toType = document.getElementById("transfer-to").value;
+  const amount = parseFloat(amountInput.value);
+  if (!amount || amount <= 0) {
+    alert("يرجى إدخال مبلغ صحيح");
+    return;
+  }
 
   const btn = document.querySelector(".osafe-btn-tra");
   const orig = btn.innerHTML;
@@ -796,7 +878,10 @@ async function officeSafeTransfer(officeId) {
   try {
     const res = await fetch(`${API_URL}/safes/transfer`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
       body: JSON.stringify({ office_id: officeId, to_type: toType, amount }),
     });
     const data = await res.json();
@@ -807,21 +892,31 @@ async function officeSafeTransfer(officeId) {
     } else {
       alert(data.message || "حدث خطأ أثناء التحويل");
     }
-  } catch (e) { alert("تعذر الاتصال بالخادم"); }
-  finally { btn.disabled = false; btn.innerHTML = orig; }
+  } catch (e) {
+    alert("تعذر الاتصال بالخادم");
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = orig;
+  }
 }
 
 /* ── تحويل من صندوق رئيسي أو تداول → خزنة المكتب ──────────────────── */
 async function transferToOfficeSafe(fromType, officeId, currencyId = null) {
-  const inputId = fromType === "trading"
-    ? `trading-to-office-amount`
-    : "main-to-office-amount";
+  const inputId =
+    fromType === "trading"
+      ? `trading-to-office-amount`
+      : "main-to-office-amount";
   const amountInput = document.getElementById(inputId);
   const amount = parseFloat(amountInput.value);
-  if (!amount || amount <= 0) { alert("يرجى إدخال مبلغ صحيح"); return; }
+  if (!amount || amount <= 0) {
+    alert("يرجى إدخال مبلغ صحيح");
+    return;
+  }
 
   // نجد الزر الصح داخل نفس الـ panel
-  const btn = amountInput.closest(".office-safe-panel").querySelector(".osafe-btn-tra");
+  const btn = amountInput
+    .closest(".office-safe-panel")
+    .querySelector(".osafe-btn-tra");
   const orig = btn.innerHTML;
   btn.disabled = true;
   btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i>`;
@@ -829,8 +924,15 @@ async function transferToOfficeSafe(fromType, officeId, currencyId = null) {
   try {
     const res = await fetch(`${API_URL}/safes/transfer-to-office`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ office_id: officeId, from_type: fromType, amount }),
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        office_id: officeId,
+        from_type: fromType,
+        amount,
+      }),
     });
     const data = await res.json();
     if (res.ok) {
@@ -840,16 +942,353 @@ async function transferToOfficeSafe(fromType, officeId, currencyId = null) {
     } else {
       alert(data.message || "حدث خطأ أثناء التحويل");
     }
-  } catch (e) { alert("تعذر الاتصال بالخادم"); }
-  finally { btn.disabled = false; btn.innerHTML = orig; }
+  } catch (e) {
+    alert("تعذر الاتصال بالخادم");
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = orig;
+  }
+} /* =========================================================
+   قسم الحوالات البنكية (Super Admin & Admin)
+========================================================= */
+let _allBankTransfers = [];
+let currentBtApproveId = null;
+
+function showBankTransfersSection() {
+  // استخدم دالة الإخفاء المعتمدة لديك (showSection في super أو hideAllCards في admin)
+  if (typeof hideAllCards === "function") hideAllCards();
+  else if (typeof showSection === "function") {
+    document
+      .querySelectorAll(".card")
+      .forEach((c) => c.classList.add("hidden"));
+    document.getElementById("dashboard-section").style.display = "none";
+  }
+
+  document.getElementById("bank-transfers-section").classList.remove("hidden");
+  document.getElementById("bank-transfers-section").style.display = "block";
+
+  loadBankTransfersForAdmin();
 }
 
+async function loadBankTransfers() {
+  const tbody = document.getElementById("bt-tbody");
+  if (!tbody) return;
+
+  document.getElementById("bt-refresh-icon").classList.add("fa-spin");
+  tbody.innerHTML = `<tr><td colspan="11" class="pt-loading-cell"><i class="fa-solid fa-spinner fa-spin"></i> جاري التحميل...</td></tr>`;
+
+  try {
+    const res = await fetch(`${API_URL}/bank-transfer`, {
+      headers: getHeaders
+        ? getHeaders()
+        : { Authorization: `Bearer ${token}`, Accept: "application/json" },
+    });
+    const json = await res.json();
+    _allBankTransfers = json.data || [];
+    updateBtStats();
+    filterBankTransfers();
+  } catch (e) {
+    console.error(e);
+    tbody.innerHTML = `<tr><td colspan="11" style="text-align:center;color:red;">فشل التحميل</td></tr>`;
+  } finally {
+    document.getElementById("bt-refresh-icon").classList.remove("fa-spin");
+  }
+}
+
+function updateBtStats() {
+  document.getElementById("bt-stat-pending").textContent =
+    _allBankTransfers.filter((t) => t.status === "pending").length;
+  document.getElementById("bt-stat-approved").textContent =
+    _allBankTransfers.filter((t) => t.status === "admin_approved").length;
+  document.getElementById("bt-stat-completed").textContent =
+    _allBankTransfers.filter((t) => t.status === "completed").length;
+}
+
+function filterBankTransfers() {
+  const q = document.getElementById("bt-search").value.toLowerCase().trim();
+  const status = document.getElementById("bt-status-filter").value;
+  const tbody = document.getElementById("bt-tbody");
+  const emptyEl = document.getElementById("bt-empty");
+
+  const filtered = _allBankTransfers.filter((t) => {
+    const matchQ =
+      !q ||
+      (t.full_name || "").toLowerCase().includes(q) ||
+      (t.recipient_name || "").toLowerCase().includes(q) ||
+      (t.bank_name || "").toLowerCase().includes(q);
+    const matchStatus = !status || t.status === status;
+    return matchQ && matchStatus;
+  });
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = "";
+    emptyEl.style.display = "block";
+    return;
+  }
+
+  emptyEl.style.display = "none";
+
+  const statusMap = {
+    pending: { text: "بانتظار الإدارة", color: "#b45309", bg: "#fef3c7" },
+    admin_approved: {
+      text: "بانتظار الكاشير",
+      color: "#1d4ed8",
+      bg: "#dbeafe",
+    },
+    completed: { text: "مكتملة", color: "#15803d", bg: "#dcfce7" },
+    rejected: { text: "مرفوضة", color: "#b91c1c", bg: "#fee2e2" },
+  };
+
+  tbody.innerHTML = filtered
+    .map((t, index) => {
+      const s = statusMap[t.status] || {
+        text: t.status,
+        color: "gray",
+        bg: "#eee",
+      };
+      const date = new Date(t.created_at).toLocaleDateString("ar-SY");
+      const dest =
+        [t.destination_country, t.destination_city]
+          .filter(Boolean)
+          .join(" - ") || "—";
+
+      let actions = "";
+      if (t.status === "pending") {
+        actions = `
+                <button onclick="openBtApproveModal(${t.id}, '${t.recipient_name}')" style="background:#dcfce7;color:#15803d;border:none;padding:5px 10px;border-radius:5px;cursor:pointer;font-weight:bold;margin-bottom:4px;">
+                    <i class="fa-solid fa-check"></i> موافقة
+                </button>
+                <button onclick="rejectBankTransfer(${t.id})" style="background:#fee2e2;color:#b91c1c;border:none;padding:5px 10px;border-radius:5px;cursor:pointer;font-weight:bold;">
+                    <i class="fa-solid fa-xmark"></i> رفض
+                </button>
+            `;
+      } else {
+        actions = `<span style="color:var(--gray);font-size:12px;">مُعالج</span>`;
+      }
+
+      return `
+        <tr>
+            <td>${index + 1}</td>
+            <td><span style="font-weight:bold;">${t.agent?.name || "—"}</span></td>
+            <td><span style="font-weight:bold;color:var(--primary);">${t.recipient_name || "—"}</span></td>
+            <td>${t.full_name}</td>
+            <td>${t.bank_name}</td>
+            <td style="direction:ltr;text-align:right;font-family:monospace;">${t.account_number}</td>
+            <td style="direction:ltr;text-align:right;">${t.phone}</td>
+           <td style="font-size:12px;color:var(--gray);">${dest}</td>
+            <td style="font-weight:900;color:var(--success);">$${parseFloat(t.amount).toLocaleString()}</td>
+            <td><span style="background:${s.bg};color:${s.color};padding:4px 10px;border-radius:20px;font-size:11px;font-weight:bold;white-space:nowrap;">${s.text}</span></td>
+            <td style="font-size:11px;color:var(--gray);">${date}</td>
+            <td style="display:flex;flex-direction:column;gap:4px;">${actions}</td>
+        </tr>`;
+    })
+    .join("");
+}
+
+function openBtApproveModal(id, recipientName) {
+  currentBtApproveId = id;
+  loadCashiers();
+  document.getElementById("bt-approve-desc").innerHTML =
+    `هل أنت متأكد من الموافقة على الحوالة للمستلم <strong>${recipientName}</strong>؟<br>سيتم إرسالها للكاشير لتسليمها.`;
+  document.getElementById("bt-approve-modal").style.display = "flex";
+}
+
+function closeBtApproveModal() {
+  currentBtApproveId = null;
+  document.getElementById("bt-approve-modal").style.display = "none";
+}
+async function confirmBtApprove() {
+  const cashierId = document.getElementById("bt-cashier-select").value;
+
+  if (!cashierId) {
+    alert("⚠️ يجب اختيار الكاشير");
+    return;
+  }
+
+  try {
+    // ✅ تم تصحيح اسم المتغير هنا إلى currentBtApproveId
+    const res = await fetch(
+      `${API_URL}/bank-transfer/${currentBtApproveId}/approve`,
+      {
+        method: "PATCH", // تأكد أن نوع الطلب يتطابق مع الراوت في لارافيل (POST أو PATCH)
+        headers: getHeaders(),
+        body: JSON.stringify({
+          cashier_id: cashierId,
+        }),
+      },
+    );
+
+    const data = await res.json();
+
+    if (res.ok) {
+      alert("✅ تم إرسال الحوالة للكاشير بنجاح");
+      closeBtApproveModal();
+      loadBankTransfers();
+    } else {
+      alert(data.message || "خطأ");
+    }
+  } catch (e) {
+    console.error(e);
+    alert("خطأ في الاتصال");
+  }
+}
+async function rejectBankTransfer(id) {
+  if (!confirm("هل أنت متأكد من رفض هذه الحوالة البنكية؟")) return;
+
+  try {
+    const res = await fetch(`${API_URL}/bank-transfer/${id}/reject`, {
+      method: "PATCH",
+      headers: getHeaders
+        ? getHeaders()
+        : { Authorization: `Bearer ${token}`, Accept: "application/json" },
+    });
+    if (res.ok) {
+      loadBankTransfersForAdmin();
+      if (typeof showToast !== "undefined")
+        showToast("تم رفض الحوالة", "error");
+    } else {
+      alert("حدث خطأ");
+    }
+  } catch (e) {
+    alert("فشل الاتصال");
+  }
+} // 1. أضف هذه الدالة في أعلى ملف admin.js إذا لم تكن موجودة
+function getHeaders() {
+  return {
+    Authorization: "Bearer " + localStorage.getItem("auth_token"),
+    Accept: "application/json",
+    "Content-Type": "application/json",
+  };
+}
+
+// 2. تحديث دالة جلب الحوالات مع تنسيق "جميل"
+async function loadBankTransfersForAdmin() {
+  const list = document.getElementById("bank-transfers-list");
+  if (!list) return;
+
+  list.innerHTML = `<tr><td colspan="7" class="text-center"><i class="fa-solid fa-spinner fa-spin"></i> جاري التحميل...</td></tr>`;
+
+  try {
+    const res = await fetch(`${API_URL}/bank-transfer`, {
+      headers: getHeaders(),
+    });
+    const data = await res.json();
+
+    if (data.status === "success" && data.data.length > 0) {
+      list.innerHTML = data.data
+        .map((item) => {
+          // تنسيق الحالة بلون مناسب
+          let statusClass = "";
+          let statusText = "";
+          switch (item.status) {
+            case "pending":
+              statusClass = "warning";
+              statusText = "قيد الانتظار";
+              break;
+            case "approved":
+              statusClass = "success";
+              statusText = "مقبولة";
+              break;
+            case "rejected":
+              statusClass = "danger";
+              statusText = "مرفوضة";
+              break;
+            case "completed":
+              statusClass = "primary";
+              statusText = "مكتملة";
+              break;
+            default:
+              statusClass = "gray";
+              statusText = item.status;
+          }
+
+          return `
+                <tr class="align-middle">
+                    <td><span class="text-muted">#${item.id}</span></td>
+                    <td>
+                        <div class="d-flex flex-column">
+                            <span class="fw-bold">${item.agent ? item.agent.name : "—"}</span>
+                            <small class="text-muted" style="font-size:10px">${item.agent ? item.agent.phone : ""}</small>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <i class="fa-solid fa-building-columns me-2 text-primary"></i>
+                            <div>
+                                <div class="fw-bold">${item.bank_name}</div>
+                                <div class="text-muted small">${item.account_number}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td><span class="fw-bold text-dark">${parseFloat(item.amount).toLocaleString()} $</span></td>
+                    <td><span class="badge-status ${statusClass}">${statusText}</span></td>
+                    <td><small class="text-muted">${new Date(item.created_at).toLocaleString("ar-EG")}</small></td>
+                    <td>
+                        ${
+                          item.status === "pending"
+                            ? `
+                            <div class="d-flex gap-1">
+                                <button onclick="approveBankTransfer(${item.id})" class="btn-action approve" title="موافقة"><i class="fa-solid fa-check"></i></button>
+                                <button onclick="rejectBankTransfer(${item.id})" class="btn-action reject" title="رفض"><i class="fa-solid fa-xmark"></i></button>
+                            </div>
+                        `
+                            : `<span class="text-muted small">لا توجد إجراءات</span>`
+                        }
+                    </td>
+                </tr>
+                `;
+        })
+        .join("");
+    } else {
+      list.innerHTML = `<tr><td colspan="7" class="text-center p-5 text-muted">لا توجد حوالات بنكية حالياً</td></tr>`;
+    }
+  } catch (err) {
+    console.error("خطأ في جلب حوالات البنك:", err);
+    list.innerHTML = `<tr><td colspan="7" class="text-center text-danger">فشل الاتصال بالسيرفر</td></tr>`;
+  }
+}
+async function loadCashiers() {
+  const select = document.getElementById("bt-cashier-select");
+  if (!select) return;
+
+  try {
+    // 1. جلب بياناتي الشخصية لمعرفة رقم مكتبي (لضمان الدقة)
+    const meRes = await fetch(`${API_URL}/me`, { headers: getHeaders() });
+    const meData = await meRes.json();
+    const adminOfficeId = meData.user.office_id;
+
+    // 2. جلب قائمة المستخدمين
+    const res = await fetch(`${API_URL}/users`, { headers: getHeaders() });
+    const json = await res.json();
+
+    // 3. الفلترة: يجب أن يكون دور المستخدم 'cashier' وفي نفس مكتب الأدمن
+    const cashiers = (json.data || []).filter(
+      (u) => u.role === "cashier" && u.office_id === adminOfficeId,
+    );
+
+    select.innerHTML = `<option value="">اختر الكاشير للتسليم</option>`;
+
+    if (cashiers.length === 0) {
+      select.innerHTML = `<option value="">لا يوجد كاشيرية في مكتبك</option>`;
+    }
+
+    cashiers.forEach((c) => {
+      const option = document.createElement("option");
+      option.value = c.id;
+      option.textContent = c.name;
+      select.appendChild(option);
+    });
+  } catch (e) {
+    console.error("Error loading cashiers:", e);
+    select.innerHTML = `<option>خطأ في تحميل البيانات</option>`;
+  }
+}
 /* =============================================
    واجهة التداول المحسّنة – زر الاختيار السريع
    ============================================= */
 function buildTradingUI(currencyId, officeId) {
   const amountChips = [50, 100, 200, 500, 1000];
-  const priceChips = [11500, 11700, 11800, 12000, 12100,12200];
+  const priceChips = [11500, 11700, 11800, 12000, 12100, 12200];
 
   const amountChipsHtml = amountChips
     .map(
@@ -977,10 +1416,13 @@ async function executeTrade(type, officeId, currencyId) {
     if (res.ok) {
       if (type === "sell") {
         const profitVal = parseFloat(data.profit).toFixed(2);
-        const balSy     = data.balance_sy !== undefined
-          ? `\nرصيد SYP في التداول: ${parseFloat(data.balance_sy).toLocaleString()}`
-          : "";
-        alert(`تمت عملية البيع بنجاح!\nالربح المحقق (USD): ${profitVal}${balSy}\n✅ تم تسجيل الربح في صندوق الأرباح تلقائياً`);
+        const balSy =
+          data.balance_sy !== undefined
+            ? `\nرصيد SYP في التداول: ${parseFloat(data.balance_sy).toLocaleString()}`
+            : "";
+        alert(
+          `تمت عملية البيع بنجاح!\nالربح المحقق (USD): ${profitVal}${balSy}\n✅ تم تسجيل الربح في صندوق الأرباح تلقائياً`,
+        );
       } else {
         alert("تمت عملية الشراء بنجاح ودمج متوسط التكلفة!");
       }
@@ -1015,7 +1457,10 @@ async function loadPendingTransfers() {
       method: "GET",
       headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
     });
-    if (!res.ok) { console.error("Server Error:", res.status); return; }
+    if (!res.ok) {
+      console.error("Server Error:", res.status);
+      return;
+    }
 
     const json = await res.json();
     const tbody = document.getElementById("transfers-list");
@@ -1027,17 +1472,20 @@ async function loadPendingTransfers() {
     }
 
     json.data.forEach((transfer) => {
-      const amountUsd    = Number(transfer.amount_in_usd ?? 0);
-      const sendAmount   = Number(transfer.amount ?? 0);
-      const sendCurrency = transfer.send_currency?.code ?? transfer.sendCurrency?.code ?? "—";
+      const amountUsd = Number(transfer.amount_in_usd ?? 0);
+      const sendAmount = Number(transfer.amount ?? 0);
+      const sendCurrency =
+        transfer.send_currency?.code ?? transfer.sendCurrency?.code ?? "—";
       const recvCurrency = transfer.currency?.code ?? "—";
-      const recvPrice    = Number(transfer.currency?.price ?? 1);
-      const deliveryAmt  = recvPrice > 0 ? amountUsd / recvPrice : 0;
-      const fee          = Number(transfer.fee ?? 0);
-      const date         = transfer.created_at ? new Date(transfer.created_at).toLocaleString("ar-SY") : "—";
-      const tracking     = transfer.tracking_code ?? `#${transfer.id}`;
-      const isAgent      = transfer.sender?.role === "agent";
-      const senderRole   = isAgent
+      const recvPrice = Number(transfer.currency?.price ?? 1);
+      const deliveryAmt = recvPrice > 0 ? amountUsd / recvPrice : 0;
+      const fee = Number(transfer.fee ?? 0);
+      const date = transfer.created_at
+        ? new Date(transfer.created_at).toLocaleString("ar-SY")
+        : "—";
+      const tracking = transfer.tracking_code ?? `#${transfer.id}`;
+      const isAgent = transfer.sender?.role === "agent";
+      const senderRole = isAgent
         ? `<span style="display:inline-block;margin-top:3px;font-size:10px;padding:1px 7px;border-radius:20px;background:linear-gradient(135deg,#7c3aed,#a855f7);color:#fff;font-weight:700;">مندوب</span>`
         : `<span style="display:inline-block;margin-top:3px;font-size:10px;padding:1px 7px;border-radius:20px;background:linear-gradient(135deg,#0ea5e9,#38bdf8);color:#fff;font-weight:700;">زبون</span>`;
 
@@ -1106,7 +1554,7 @@ async function approveTransfer(transferId) {
           Accept: "application/json",
         },
         body: JSON.stringify({ status: "ready", fee: 0 }),
-      }
+      },
     );
     const data = await res.json();
     if (res.ok) {
@@ -1246,14 +1694,18 @@ function getEffectiveRate(currency, amount) {
   const rates = currency.rates ?? [];
   if (rates.length > 0 && amount > 0) {
     // ترتيب تصاعدي حسب min_amount (الباك يُرجعها مرتبة لكن نضمن)
-    const sorted = [...rates].sort((a, b) => parseFloat(a.min_amount) - parseFloat(b.min_amount));
+    const sorted = [...rates].sort(
+      (a, b) => parseFloat(a.min_amount) - parseFloat(b.min_amount),
+    );
     for (const tier of sorted) {
       const min = parseFloat(tier.min_amount);
-      const max = tier.max_amount != null ? parseFloat(tier.max_amount) : Infinity;
+      const max =
+        tier.max_amount != null ? parseFloat(tier.max_amount) : Infinity;
       if (amount >= min && amount <= max) {
-        const label = tier.max_amount != null
-          ? `شريحة ${min.toLocaleString()} – ${parseFloat(tier.max_amount).toLocaleString()}`
-          : `شريحة ${min.toLocaleString()}+`;
+        const label =
+          tier.max_amount != null
+            ? `شريحة ${min.toLocaleString()} – ${parseFloat(tier.max_amount).toLocaleString()}`
+            : `شريحة ${min.toLocaleString()}+`;
         return { rate: parseFloat(tier.rate), tierLabel: label };
       }
     }
@@ -1882,8 +2334,10 @@ async function handleLogout() {
 function openEditModal(transfer) {
   const infoEl = document.getElementById("edit-transfer-info");
   if (infoEl) {
-    const amtUsd   = Number(transfer.amount_in_usd ?? 0);
-    const tracking = transfer.tracking_code ? ` | ${transfer.tracking_code}` : "";
+    const amtUsd = Number(transfer.amount_in_usd ?? 0);
+    const tracking = transfer.tracking_code
+      ? ` | ${transfer.tracking_code}`
+      : "";
     infoEl.innerHTML = `
       <span style="color:var(--primary);font-weight:800;">#${transfer.id}${tracking}</span>
       &nbsp;—&nbsp;
@@ -1892,16 +2346,19 @@ function openEditModal(transfer) {
       <span style="color:var(--gray);">المرسل: ${transfer.sender?.name ?? "—"}</span>`;
   }
 
-  document.getElementById("edit-transfer-id").value    = transfer.id;
-  document.getElementById("edit-receiver-name").value  = transfer.receiver_name ?? "";
-  document.getElementById("edit-receiver-phone").value = transfer.receiver_phone ?? "";
-  document.getElementById("edit-amount").value         = transfer.amount ?? "";
-  document.getElementById("edit-notes").value          = "";
+  document.getElementById("edit-transfer-id").value = transfer.id;
+  document.getElementById("edit-receiver-name").value =
+    transfer.receiver_name ?? "";
+  document.getElementById("edit-receiver-phone").value =
+    transfer.receiver_phone ?? "";
+  document.getElementById("edit-amount").value = transfer.amount ?? "";
+  document.getElementById("edit-notes").value = "";
 
   // إخفاء حقل الرسوم — يُحسب تلقائياً من الباك
   const feeEl = document.getElementById("edit-fee");
   if (feeEl) {
-    const feeParent = feeEl.closest(".form-group") || feeEl.closest(".form-row");
+    const feeParent =
+      feeEl.closest(".form-group") || feeEl.closest(".form-row");
     if (feeParent) feeParent.style.display = "none";
     feeEl.value = "0";
   }
@@ -2158,7 +2615,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   token = await checkAuth();
   if (!token) return;
 
+  await loadBankTransfers();
   loadPendingTransfers();
+  await loadCashiers();
 });
 
 // =============================================================================
@@ -2544,12 +3003,12 @@ function scrollChatToBottom() {
 
 /** تهرب HTML لمنع XSS */
 function escapeHtml(str) {
-    return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 }
 
 // =============================================================================
@@ -2567,144 +3026,158 @@ function escapeHtml(str) {
 
 /* ─── حالة النظام ──────────────────────────────────────────────────────────── */
 const _notif = {
-    adminId:       null,
-    seenCounts:    JSON.parse(localStorage.getItem('fp_chat_seen') || '{}'),
-    currentCounts: {},             // { transferId: customerMsgCount }
-    transferMeta:  {},             // { transferId: { tracking, sender } }
-    pollInterval:  null,
-    POLL_MS:       15000,          // فترة الاستعلام: 15 ثانية
+  adminId: null,
+  seenCounts: JSON.parse(localStorage.getItem("fp_chat_seen") || "{}"),
+  currentCounts: {}, // { transferId: customerMsgCount }
+  transferMeta: {}, // { transferId: { tracking, sender } }
+  pollInterval: null,
+  POLL_MS: 15000, // فترة الاستعلام: 15 ثانية
 };
 
 /* ─── تهيئة النظام (بعد أن يصبح token متاحاً) ───────────────────────────── */
 async function _notifInit() {
-    // جلب معرّف الأدمن لتصفية رسائله من الإشعارات
-    try {
-        const r = await fetch(`${API_URL}/me`, {
-            headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' }
-        });
-        const d = await r.json();
-        _notif.adminId = d.user?.id ?? null;
-    } catch (_) {}
+  // جلب معرّف الأدمن لتصفية رسائله من الإشعارات
+  try {
+    const r = await fetch(`${API_URL}/me`, {
+      headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
+    });
+    const d = await r.json();
+    _notif.adminId = d.user?.id ?? null;
+  } catch (_) {}
 
-    // ── تغليف openChat بالطريقة الصحيحة (وقت التشغيل، لا hoisting هنا) ──────
-    // السبب: إعادة تعريف openChat بـ function declaration يتسبب في hoisting
-    // وبالتالي _origOpenChat يلتقط النسخة الجديدة نفسها ← حلقة لا نهائية.
-    // الحل: نلتقط window.openChat هنا أثناء التشغيل بعد اكتمال الـ hoisting،
-    // ثم نستبدلها بنسخة مغلفة تستدعي الأصلية وتسجّل القراءة.
-    const __origOpenChat = window.openChat;
-    window.openChat = async function(transferId, trackingCode, senderId) {
-        await __origOpenChat(transferId, trackingCode, senderId);
-        _notifMarkSeen(transferId);
-    };
+  // ── تغليف openChat بالطريقة الصحيحة (وقت التشغيل، لا hoisting هنا) ──────
+  // السبب: إعادة تعريف openChat بـ function declaration يتسبب في hoisting
+  // وبالتالي _origOpenChat يلتقط النسخة الجديدة نفسها ← حلقة لا نهائية.
+  // الحل: نلتقط window.openChat هنا أثناء التشغيل بعد اكتمال الـ hoisting،
+  // ثم نستبدلها بنسخة مغلفة تستدعي الأصلية وتسجّل القراءة.
+  const __origOpenChat = window.openChat;
+  window.openChat = async function (transferId, trackingCode, senderId) {
+    await __origOpenChat(transferId, trackingCode, senderId);
+    _notifMarkSeen(transferId);
+  };
 
-    // مراقبة الجدول لإضافة badge تلقائياً عند رسم الصفوف
-    const tbody = document.getElementById('transfers-list');
-    if (tbody) {
-        new MutationObserver(_notifInjectBadges)
-            .observe(tbody, { childList: true, subtree: true });
-    }
+  // مراقبة الجدول لإضافة badge تلقائياً عند رسم الصفوف
+  const tbody = document.getElementById("transfers-list");
+  if (tbody) {
+    new MutationObserver(_notifInjectBadges).observe(tbody, {
+      childList: true,
+      subtree: true,
+    });
+  }
 
-    // تشغيل أول poll بعد ثانيتين (وقت كافٍ لرسم الجدول)
-    setTimeout(_notifPoll, 2000);
+  // تشغيل أول poll بعد ثانيتين (وقت كافٍ لرسم الجدول)
+  setTimeout(_notifPoll, 2000);
 
-    // ثم poll دوري
-    _notif.pollInterval = setInterval(_notifPoll, _notif.POLL_MS);
+  // ثم poll دوري
+  _notif.pollInterval = setInterval(_notifPoll, _notif.POLL_MS);
 }
 
 /* ─── إضافة badge span لكل زر دردشة في الجدول ──────────────────────────── */
 function _notifInjectBadges() {
-    document.querySelectorAll('#transfers-list .btn-chat').forEach(btn => {
-        if (btn.dataset.notifWired) return;  // تجنّب التكرار
+  document.querySelectorAll("#transfers-list .btn-chat").forEach((btn) => {
+    if (btn.dataset.notifWired) return; // تجنّب التكرار
 
-        const match = btn.getAttribute('onclick')?.match(/openChat\((\d+)/);
-        if (!match) return;
+    const match = btn.getAttribute("onclick")?.match(/openChat\((\d+)/);
+    if (!match) return;
 
-        const tid = parseInt(match[1]);
-        btn.dataset.notifWired  = '1';
-        btn.dataset.transferId  = tid;
-        btn.style.position      = 'relative'; // لتحديد موضع الـ badge
+    const tid = parseInt(match[1]);
+    btn.dataset.notifWired = "1";
+    btn.dataset.transferId = tid;
+    btn.style.position = "relative"; // لتحديد موضع الـ badge
 
-        const badge = document.createElement('span');
-        badge.className = 'chat-unread-badge hidden';
-        badge.id        = `chat-badge-${tid}`;
-        btn.appendChild(badge);
-    });
+    const badge = document.createElement("span");
+    badge.className = "chat-unread-badge hidden";
+    badge.id = `chat-badge-${tid}`;
+    btn.appendChild(badge);
+  });
 }
 
 /* ─── Poll: جلب الرسائل وحساب غير المقروءة لكل حوالة مرئية ─────────────── */
 async function _notifPoll() {
-    const buttons = [...document.querySelectorAll('#transfers-list .btn-chat[data-transfer-id]')];
-    if (!buttons.length) return;
+  const buttons = [
+    ...document.querySelectorAll("#transfers-list .btn-chat[data-transfer-id]"),
+  ];
+  if (!buttons.length) return;
 
-    let totalUnread   = 0;
-    const notifItems  = [];
+  let totalUnread = 0;
+  const notifItems = [];
 
-    for (const btn of buttons) {
-        const tid = parseInt(btn.dataset.transferId);
-        try {
-            const res  = await fetch(`${API_URL}/transfers/${tid}/messages`, {
-                headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' }
-            });
-            if (!res.ok) continue;
+  for (const btn of buttons) {
+    const tid = parseInt(btn.dataset.transferId);
+    try {
+      const res = await fetch(`${API_URL}/transfers/${tid}/messages`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/json",
+        },
+      });
+      if (!res.ok) continue;
 
-            const json = await res.json();
-            const msgs = json.data ?? json.messages ?? (Array.isArray(json) ? json : []);
-            if (!Array.isArray(msgs)) continue;
+      const json = await res.json();
+      const msgs =
+        json.data ?? json.messages ?? (Array.isArray(json) ? json : []);
+      if (!Array.isArray(msgs)) continue;
 
-            // نحسب فقط رسائل الزبون (ليست من الأدمن)
-            const customerMsgs  = _notif.adminId
-                ? msgs.filter(m => m.sender_id !== _notif.adminId)
-                : msgs;
-            const currentCount  = customerMsgs.length;
-            const seenCount     = _notif.seenCounts[tid] ?? 0;
-            const unread        = Math.max(0, currentCount - seenCount);
+      // نحسب فقط رسائل الزبون (ليست من الأدمن)
+      const customerMsgs = _notif.adminId
+        ? msgs.filter((m) => m.sender_id !== _notif.adminId)
+        : msgs;
+      const currentCount = customerMsgs.length;
+      const seenCount = _notif.seenCounts[tid] ?? 0;
+      const unread = Math.max(0, currentCount - seenCount);
 
-            _notif.currentCounts[tid] = currentCount;
+      _notif.currentCounts[tid] = currentCount;
 
-            // حفظ بيانات الحوالة (رقم التتبع، اسم المرسل) لعرضها في الـ dropdown
-            const row = btn.closest('tr');
-            if (row) {
-                _notif.transferMeta[tid] = {
-                    tracking: row.querySelector('td:first-child')?.textContent?.trim() ?? `#${tid}`,
-                    sender:   row.querySelector('td:nth-child(3)')?.textContent?.trim() ?? '—',
-                };
-            }
+      // حفظ بيانات الحوالة (رقم التتبع، اسم المرسل) لعرضها في الـ dropdown
+      const row = btn.closest("tr");
+      if (row) {
+        _notif.transferMeta[tid] = {
+          tracking:
+            row.querySelector("td:first-child")?.textContent?.trim() ??
+            `#${tid}`,
+          sender:
+            row.querySelector("td:nth-child(3)")?.textContent?.trim() ?? "—",
+        };
+      }
 
-            // ── تحديث badge الزر ──
-            const badge = document.getElementById(`chat-badge-${tid}`);
-            if (badge) {
-                if (unread > 0) {
-                    badge.textContent = unread > 9 ? '9+' : String(unread);
-                    badge.classList.remove('hidden');
-                    btn.classList.add('btn-chat-has-unread');
-                } else {
-                    badge.classList.add('hidden');
-                    btn.classList.remove('btn-chat-has-unread');
-                }
-            }
+      // ── تحديث badge الزر ──
+      const badge = document.getElementById(`chat-badge-${tid}`);
+      if (badge) {
+        if (unread > 0) {
+          badge.textContent = unread > 9 ? "9+" : String(unread);
+          badge.classList.remove("hidden");
+          btn.classList.add("btn-chat-has-unread");
+        } else {
+          badge.classList.add("hidden");
+          btn.classList.remove("btn-chat-has-unread");
+        }
+      }
 
-            if (unread > 0) {
-                totalUnread += unread;
-                notifItems.push({ tid, unread, ..._notif.transferMeta[tid] });
-            }
-
-        } catch (_) { /* فشل صامت لكل حوالة على حدة */ }
+      if (unread > 0) {
+        totalUnread += unread;
+        notifItems.push({ tid, unread, ..._notif.transferMeta[tid] });
+      }
+    } catch (_) {
+      /* فشل صامت لكل حوالة على حدة */
     }
+  }
 
-    _notifUpdateBell(totalUnread, notifItems);
+  _notifUpdateBell(totalUnread, notifItems);
 }
 
 /* ─── تحديث شارة الجرس وقائمة الإشعارات ────────────────────────────────── */
 function _notifUpdateBell(total, items) {
-    const bellBadge = document.getElementById('notif-bell-badge');
-    const list      = document.getElementById('notif-dropdown-list');
-    if (!bellBadge || !list) return;
+  const bellBadge = document.getElementById("notif-bell-badge");
+  const list = document.getElementById("notif-dropdown-list");
+  if (!bellBadge || !list) return;
 
-    if (total > 0) {
-        bellBadge.textContent = total > 99 ? '99+' : String(total);
-        bellBadge.classList.remove('hidden');
+  if (total > 0) {
+    bellBadge.textContent = total > 99 ? "99+" : String(total);
+    bellBadge.classList.remove("hidden");
 
-        list.innerHTML = items.map(item => `
+    list.innerHTML = items
+      .map(
+        (item) => `
             <div class="notif-item" onclick="_notifClickItem(${item.tid})">
                 <div class="notif-item-icon">
                     <i class="fa-solid fa-message"></i>
@@ -2717,88 +3190,95 @@ function _notifUpdateBell(total, items) {
                 </div>
                 <span class="notif-item-count">${item.unread}</span>
             </div>
-        `).join('');
-    } else {
-        bellBadge.classList.add('hidden');
-        list.innerHTML = `<div class="notif-empty">
+        `,
+      )
+      .join("");
+  } else {
+    bellBadge.classList.add("hidden");
+    list.innerHTML = `<div class="notif-empty">
             <i class="fa-regular fa-bell-slash"></i>
             لا توجد إشعارات جديدة
         </div>`;
-    }
+  }
 }
 
 /* ─── النقر على عنصر في الـ dropdown → فتح الدردشة مباشرة ──────────────── */
 function _notifClickItem(transferId) {
-    toggleNotifDropdown(false);
-    const btn = document.querySelector(
-        `#transfers-list .btn-chat[data-transfer-id="${transferId}"]`
-    );
-    if (btn) btn.click();
+  toggleNotifDropdown(false);
+  const btn = document.querySelector(
+    `#transfers-list .btn-chat[data-transfer-id="${transferId}"]`,
+  );
+  if (btn) btn.click();
 }
 
 /* ─── تسجيل "تمت القراءة" لحوالة معينة ─────────────────────────────────── */
 function _notifMarkSeen(transferId) {
-    const current = _notif.currentCounts[transferId] ?? 0;
-    _notif.seenCounts[transferId] = current;
-    localStorage.setItem('fp_chat_seen', JSON.stringify(_notif.seenCounts));
+  const current = _notif.currentCounts[transferId] ?? 0;
+  _notif.seenCounts[transferId] = current;
+  localStorage.setItem("fp_chat_seen", JSON.stringify(_notif.seenCounts));
 
-    // إخفاء badge الزر فوراً
-    const badge = document.getElementById(`chat-badge-${transferId}`);
-    if (badge) {
-        badge.classList.add('hidden');
-        badge.textContent = '';
-    }
-    const btn = document.querySelector(
-        `#transfers-list .btn-chat[data-transfer-id="${transferId}"]`
-    );
-    if (btn) btn.classList.remove('btn-chat-has-unread');
+  // إخفاء badge الزر فوراً
+  const badge = document.getElementById(`chat-badge-${transferId}`);
+  if (badge) {
+    badge.classList.add("hidden");
+    badge.textContent = "";
+  }
+  const btn = document.querySelector(
+    `#transfers-list .btn-chat[data-transfer-id="${transferId}"]`,
+  );
+  if (btn) btn.classList.remove("btn-chat-has-unread");
 
-    // إعادة حساب الجرس بعد إزالة هذه الحوالة
-    _notifPoll();
+  // إعادة حساب الجرس بعد إزالة هذه الحوالة
+  _notifPoll();
 }
 
 /* ─── فتح/إغلاق الـ dropdown ─────────────────────────────────────────────── */
 function toggleNotifDropdown(forceState) {
-    const dd = document.getElementById('notif-dropdown');
-    if (!dd) return;
-    if (forceState === false) { dd.classList.add('hidden'); return; }
-    dd.classList.toggle('hidden');
+  const dd = document.getElementById("notif-dropdown");
+  if (!dd) return;
+  if (forceState === false) {
+    dd.classList.add("hidden");
+    return;
+  }
+  dd.classList.toggle("hidden");
 }
 
 /* ─── مسح جميع الإشعارات ────────────────────────────────────────────────── */
 function clearAllNotifications() {
-    Object.keys(_notif.currentCounts).forEach(tid => {
-        _notif.seenCounts[parseInt(tid)] = _notif.currentCounts[parseInt(tid)] ?? 0;
-    });
-    localStorage.setItem('fp_chat_seen', JSON.stringify(_notif.seenCounts));
+  Object.keys(_notif.currentCounts).forEach((tid) => {
+    _notif.seenCounts[parseInt(tid)] = _notif.currentCounts[parseInt(tid)] ?? 0;
+  });
+  localStorage.setItem("fp_chat_seen", JSON.stringify(_notif.seenCounts));
 
-    document.getElementById('notif-bell-badge')?.classList.add('hidden');
-    document.getElementById('notif-dropdown-list').innerHTML =
-        '<div class="notif-empty"><i class="fa-regular fa-bell-slash"></i> لا توجد إشعارات جديدة</div>';
+  document.getElementById("notif-bell-badge")?.classList.add("hidden");
+  document.getElementById("notif-dropdown-list").innerHTML =
+    '<div class="notif-empty"><i class="fa-regular fa-bell-slash"></i> لا توجد إشعارات جديدة</div>';
 
-    document.querySelectorAll('.chat-unread-badge')
-        .forEach(b => { b.classList.add('hidden'); b.textContent = ''; });
-    document.querySelectorAll('.btn-chat-has-unread')
-        .forEach(b => b.classList.remove('btn-chat-has-unread'));
+  document.querySelectorAll(".chat-unread-badge").forEach((b) => {
+    b.classList.add("hidden");
+    b.textContent = "";
+  });
+  document
+    .querySelectorAll(".btn-chat-has-unread")
+    .forEach((b) => b.classList.remove("btn-chat-has-unread"));
 }
 
 /* ─── إغلاق الـ dropdown عند النقر خارجه ────────────────────────────────── */
-document.addEventListener('click', (e) => {
-    const wrap = document.getElementById('notif-bell-wrap');
-    if (wrap && !wrap.contains(e.target)) {
-        document.getElementById('notif-dropdown')?.classList.add('hidden');
-    }
+document.addEventListener("click", (e) => {
+  const wrap = document.getElementById("notif-bell-wrap");
+  if (wrap && !wrap.contains(e.target)) {
+    document.getElementById("notif-dropdown")?.classList.add("hidden");
+  }
 });
 
 /* ─── بدء النظام بمجرد توفر token ────────────────────────────────────────── */
 (function _waitForToken() {
-    if (typeof token !== 'undefined' && token) {
-        _notifInit();
-    } else {
-        setTimeout(_waitForToken, 300);
-    }
+  if (typeof token !== "undefined" && token) {
+    _notifInit();
+  } else {
+    setTimeout(_waitForToken, 300);
+  }
 })();
-
 
 /* ═══════════════════════════════════════════════════════════════════════════
    ★  NEW TRANSFER ARRIVAL NOTIFICATIONS  (حوالات جديدة)
@@ -2809,84 +3289,86 @@ document.addEventListener('click', (e) => {
 
 /* ── State object ─────────────────────────────────────────────────────────── */
 const _tNotif = {
-    POLL_MS    : 20_000,                      // فترة الـ polling
-    STORAGE_KEY: 'fp_seen_transfer_ids',      // مفتاح localStorage
-    seenIds    : new Set(
-        JSON.parse(localStorage.getItem('fp_seen_transfer_ids') || '[]')
-    ),
-    items      : [],                          // الحوالات الجديدة غير المُشاهَدة
-    pollTimer  : null,
+  POLL_MS: 20_000, // فترة الـ polling
+  STORAGE_KEY: "fp_seen_transfer_ids", // مفتاح localStorage
+  seenIds: new Set(
+    JSON.parse(localStorage.getItem("fp_seen_transfer_ids") || "[]"),
+  ),
+  items: [], // الحوالات الجديدة غير المُشاهَدة
+  pollTimer: null,
 };
 
 /* ── Init: يُشغَّل مرة واحدة بعد توفر token ─────────────────────────────── */
 function _tNotifInit() {
-    _tNotifObserveList();                              // ابدأ المراقبة أولاً
-    _tNotifPoll();                                     // أول poll فوري
-    _tNotif.pollTimer = setInterval(_tNotifPoll, _tNotif.POLL_MS);
+  _tNotifObserveList(); // ابدأ المراقبة أولاً
+  _tNotifPoll(); // أول poll فوري
+  _tNotif.pollTimer = setInterval(_tNotifPoll, _tNotif.POLL_MS);
 }
 
 /* ── Poll: جلب الحوالات waiting ومقارنتها بالمُشاهَدة ──────────────────── */
 async function _tNotifPoll() {
-    try {
-        const res = await fetch(`${API_URL}/transfers?status=waiting`, {
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Accept'       : 'application/json',
-            },
-        });
-        if (!res.ok) return;
+  try {
+    const res = await fetch(`${API_URL}/transfers?status=waiting`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/json",
+      },
+    });
+    if (!res.ok) return;
 
-        const json      = await res.json();
-        const transfers = Array.isArray(json.data) ? json.data : [];
-        let   hasNew    = false;
+    const json = await res.json();
+    const transfers = Array.isArray(json.data) ? json.data : [];
+    let hasNew = false;
 
-        transfers.forEach(t => {
-            // تجاهل المُشاهَدة مسبقاً أو الموجودة بالقائمة
-            if (_tNotif.seenIds.has(t.id))              return;
-            if (_tNotif.items.find(p => p.id === t.id)) return;
+    transfers.forEach((t) => {
+      // تجاهل المُشاهَدة مسبقاً أو الموجودة بالقائمة
+      if (_tNotif.seenIds.has(t.id)) return;
+      if (_tNotif.items.find((p) => p.id === t.id)) return;
 
-            _tNotif.items.unshift({
-                id    : t.id,
-                sender: t.sender?.name ?? '—',
-                amount: Number(t.amount_in_usd ?? 0).toFixed(2),
-            });
-            hasNew = true;
-        });
+      _tNotif.items.unshift({
+        id: t.id,
+        sender: t.sender?.name ?? "—",
+        amount: Number(t.amount_in_usd ?? 0).toFixed(2),
+      });
+      hasNew = true;
+    });
 
-        if (hasNew) {
-            _tNotifUpdateBadge();
-            _tNotifInjectSection();
-            _tNotifShowToast(_tNotif.items[0]);   // toast للأحدث واحدة
-        }
-
-    } catch (_) { /* فشل صامت */ }
+    if (hasNew) {
+      _tNotifUpdateBadge();
+      _tNotifInjectSection();
+      _tNotifShowToast(_tNotif.items[0]); // toast للأحدث واحدة
+    }
+  } catch (_) {
+    /* فشل صامت */
+  }
 }
 
 /* ── Orange badge on bell button ─────────────────────────────────────────── */
 function _tNotifUpdateBadge() {
-    const badge = document.getElementById('tnotif-bell-badge');
-    if (!badge) return;
+  const badge = document.getElementById("tnotif-bell-badge");
+  if (!badge) return;
 
-    if (_tNotif.items.length > 0) {
-        badge.textContent = _tNotif.items.length > 9 ? '9+' : String(_tNotif.items.length);
-        badge.classList.remove('hidden');
-    } else {
-        badge.classList.add('hidden');
-    }
+  if (_tNotif.items.length > 0) {
+    badge.textContent =
+      _tNotif.items.length > 9 ? "9+" : String(_tNotif.items.length);
+    badge.classList.remove("hidden");
+  } else {
+    badge.classList.add("hidden");
+  }
 }
 
 /* ── Inject the transfer section into the bell dropdown ──────────────────── */
 function _tNotifInjectSection() {
-    const list = document.getElementById('notif-dropdown-list');
-    if (!list || !_tNotif.items.length) return;
+  const list = document.getElementById("notif-dropdown-list");
+  if (!list || !_tNotif.items.length) return;
 
-    // أزل القسم القديم + رسالة "لا يوجد" إن وُجدت
-    list.querySelector('.tnotif-section-wrapper')?.remove();
-    list.querySelector('.notif-empty')?.remove();
+  // أزل القسم القديم + رسالة "لا يوجد" إن وُجدت
+  list.querySelector(".tnotif-section-wrapper")?.remove();
+  list.querySelector(".notif-empty")?.remove();
 
-    const wrapper = document.createElement('div');
-    wrapper.className = 'tnotif-section-wrapper';
-    wrapper.innerHTML = `
+  const wrapper = document.createElement("div");
+  wrapper.className = "tnotif-section-wrapper";
+  wrapper.innerHTML = `
         <div class="tnotif-section-header">
             <span>
                 <i class="fa-solid fa-arrow-right-to-bracket"></i>
@@ -2894,7 +3376,9 @@ function _tNotifInjectSection() {
             </span>
             <span class="tnotif-section-count">${_tNotif.items.length}</span>
         </div>
-        ${_tNotif.items.map(item => `
+        ${_tNotif.items
+          .map(
+            (item) => `
             <div class="notif-item tnotif-item" onclick="_tNotifClickItem(${item.id})">
                 <div class="notif-item-icon tnotif-icon">
                     <i class="fa-solid fa-paper-plane-top"></i>
@@ -2907,30 +3391,35 @@ function _tNotifInjectSection() {
                 </div>
                 <span class="notif-item-count tnotif-badge-new">جديد</span>
             </div>
-        `).join('')}
+        `,
+          )
+          .join("")}
     `;
 
-    list.prepend(wrapper);
+  list.prepend(wrapper);
 }
 
 /* ── MutationObserver: re-inject after _notifUpdateBell replaces innerHTML ── */
 /*    يضمن ظهور قسم الحوالات حتى بعد كل تحديث لرسائل الدردشة                 */
 function _tNotifObserveList() {
-    const list = document.getElementById('notif-dropdown-list');
-    if (!list) { setTimeout(_tNotifObserveList, 400); return; }
+  const list = document.getElementById("notif-dropdown-list");
+  if (!list) {
+    setTimeout(_tNotifObserveList, 400);
+    return;
+  }
 
-    new MutationObserver(mutations => {
-        // إذا كانت التغييرات هي قسمنا نفسه → تجنّب حلقة لانهائية
-        for (const m of mutations) {
-            for (const node of m.addedNodes) {
-                if (node.classList?.contains('tnotif-section-wrapper')) return;
-            }
-        }
-        // _notifUpdateBell أعاد رسم القائمة → أعد حقن قسم الحوالات
-        if (_tNotif.items.length > 0) {
-            _tNotifInjectSection();
-        }
-    }).observe(list, { childList: true });
+  new MutationObserver((mutations) => {
+    // إذا كانت التغييرات هي قسمنا نفسه → تجنّب حلقة لانهائية
+    for (const m of mutations) {
+      for (const node of m.addedNodes) {
+        if (node.classList?.contains("tnotif-section-wrapper")) return;
+      }
+    }
+    // _notifUpdateBell أعاد رسم القائمة → أعد حقن قسم الحوالات
+    if (_tNotif.items.length > 0) {
+      _tNotifInjectSection();
+    }
+  }).observe(list, { childList: true });
 }
 /* =====================================================
    إدارة الصناديق الإضافية (Extra Boxes)
@@ -2938,55 +3427,63 @@ function _tNotifObserveList() {
 let _currentOfficeIdForBoxes = null;
 
 async function openExtraBoxesModal() {
-    document.getElementById('extra-boxes-modal').classList.remove('hidden');
-    document.body.style.overflow = 'hidden';
-    await loadExtraBoxes();
+  document.getElementById("extra-boxes-modal").classList.remove("hidden");
+  document.body.style.overflow = "hidden";
+  await loadExtraBoxes();
 }
 
 function closeExtraBoxesModal() {
-    document.getElementById('extra-boxes-modal').classList.add('hidden');
-    document.body.style.overflow = '';
+  document.getElementById("extra-boxes-modal").classList.add("hidden");
+  document.body.style.overflow = "";
 }
 
 // إغلاق المودال عند النقر في الخلفية
 document.addEventListener("DOMContentLoaded", () => {
-    const extraOverlay = document.getElementById("extra-boxes-modal");
-    if (extraOverlay) {
-        extraOverlay.addEventListener("click", function (e) {
-            if (e.target === extraOverlay) closeExtraBoxesModal();
-        });
-    }
+  const extraOverlay = document.getElementById("extra-boxes-modal");
+  if (extraOverlay) {
+    extraOverlay.addEventListener("click", function (e) {
+      if (e.target === extraOverlay) closeExtraBoxesModal();
+    });
+  }
 });
 
 async function loadExtraBoxes() {
-    const tbody = document.getElementById('extra-boxes-list');
-    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding: 20px;">جاري التحميل... <i class="fa-solid fa-spinner fa-spin"></i></td></tr>';
+  const tbody = document.getElementById("extra-boxes-list");
+  tbody.innerHTML =
+    '<tr><td colspan="3" style="text-align:center; padding: 20px;">جاري التحميل... <i class="fa-solid fa-spinner fa-spin"></i></td></tr>';
 
-    try {
-        // التأكد من جلب office_id للمستخدم الحالي
-        if (!_currentOfficeIdForBoxes) {
-            const meRes = await fetch(`${API_URL}/me`, { headers: { Authorization: `Bearer ${token}` } });
-            const meData = await meRes.json();
-            _currentOfficeIdForBoxes = meData.user?.office_id;
-        }
+  try {
+    // التأكد من جلب office_id للمستخدم الحالي
+    if (!_currentOfficeIdForBoxes) {
+      const meRes = await fetch(`${API_URL}/me`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const meData = await meRes.json();
+      _currentOfficeIdForBoxes = meData.user?.office_id;
+    }
 
-        const res = await fetch(`${API_URL}/extra-boxes`, {
-            headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' }
-        });
-        const json = await res.json();
-        const allBoxes = json.data || [];
+    const res = await fetch(`${API_URL}/extra-boxes`, {
+      headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
+    });
+    const json = await res.json();
+    const allBoxes = json.data || [];
 
-        // فلترة الصناديق بحيث تظهر فقط التابعة لمكتب المدير الحالي
-        const myBoxes = allBoxes.filter(b => b.office_id === _currentOfficeIdForBoxes);
+    // فلترة الصناديق بحيث تظهر فقط التابعة لمكتب المدير الحالي
+    const myBoxes = allBoxes.filter(
+      (b) => b.office_id === _currentOfficeIdForBoxes,
+    );
 
-        if (myBoxes.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color: var(--gray); padding: 20px;">لا توجد صناديق إضافية مسجلة حالياً.</td></tr>';
-            return;
-        }
+    if (myBoxes.length === 0) {
+      tbody.innerHTML =
+        '<tr><td colspan="3" style="text-align:center; color: var(--gray); padding: 20px;">لا توجد صناديق إضافية مسجلة حالياً.</td></tr>';
+      return;
+    }
 
-        // ابحث عن هذا الجزء داخل دالة loadExtraBoxes في ملف admin.js وقم باستبداله
-// ابحث عن الجزء المسؤول عن رسم الجدول في loadExtraBoxes واستبدله بهذا:
-tbody.innerHTML = myBoxes.map(box => `
+    // ابحث عن هذا الجزء داخل دالة loadExtraBoxes في ملف admin.js وقم باستبداله
+    // ابحث عن الجزء المسؤول عن رسم الجدول في loadExtraBoxes واستبدله بهذا:
+    tbody.innerHTML = myBoxes
+      .map(
+        (box) => `
     <tr>
         <td style="font-weight:700; color: var(--dark);">${box.name}</td>
         <td style="font-weight:800; color: var(--primary);">${parseFloat(box.amount).toLocaleString()}</td>
@@ -3008,12 +3505,14 @@ tbody.innerHTML = myBoxes.map(box => `
             </button>
         </td>
     </tr>
-`).join('');
-
-    } catch (e) {
-        console.error(e);
-        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color: var(--danger); padding: 20px;">حدث خطأ أثناء تحميل البيانات</td></tr>';
-    }
+`,
+      )
+      .join("");
+  } catch (e) {
+    console.error(e);
+    tbody.innerHTML =
+      '<tr><td colspan="3" style="text-align:center; color: var(--danger); padding: 20px;">حدث خطأ أثناء تحميل البيانات</td></tr>';
+  }
 }
 /**
  * تعديل رصيد الصندوق الإضافي يدوياً
@@ -3027,195 +3526,227 @@ tbody.innerHTML = myBoxes.map(box => `
  * @param {string} type - 'deposit' (إيداع) أو 'withdraw' (سحب)
  */
 async function handleBoxTransaction(boxId, currentAmount, boxName, type) {
-    const actionText = type === 'deposit' ? 'إيداع في' : 'سحب من';
-    const amountStr = prompt(`أدخل المبلغ المراد ${actionText} صندوق (${boxName}):`);
-    
-    if (amountStr === null) return;
-    
-    const amountValue = parseFloat(amountStr);
-    if (isNaN(amountValue) || amountValue <= 0) {
-        alert("يرجى إدخال مبلغ صحيح أكبر من الصفر.");
-        return;
-    }
+  const actionText = type === "deposit" ? "إيداع في" : "سحب من";
+  const amountStr = prompt(
+    `أدخل المبلغ المراد ${actionText} صندوق (${boxName}):`,
+  );
 
-    let newTotal;
-    if (type === 'deposit') {
-        newTotal = currentAmount + amountValue;
+  if (amountStr === null) return;
+
+  const amountValue = parseFloat(amountStr);
+  if (isNaN(amountValue) || amountValue <= 0) {
+    alert("يرجى إدخال مبلغ صحيح أكبر من الصفر.");
+    return;
+  }
+
+  let newTotal;
+  if (type === "deposit") {
+    newTotal = currentAmount + amountValue;
+  } else {
+    if (amountValue > currentAmount) {
+      alert("عذراً، الرصيد الحالي غير كافٍ لإتمام عملية السحب.");
+      return;
+    }
+    newTotal = currentAmount - amountValue;
+  }
+
+  try {
+    const res = await fetch(`${API_URL}/extra-boxes/${boxId}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+        Accept: "application/json",
+      },
+      body: JSON.stringify({ amount: newTotal }),
+    });
+
+    if (res.ok) {
+      showAdminToast(
+        `تمت عملية ${type === "deposit" ? "الإيداع" : "السحب"} بنجاح.`,
+      );
+      loadExtraBoxes(); // تحديث القائمة
     } else {
-        if (amountValue > currentAmount) {
-            alert("عذراً، الرصيد الحالي غير كافٍ لإتمام عملية السحب.");
-            return;
-        }
-        newTotal = currentAmount - amountValue;
+      const err = await res.json();
+      alert(err.message || "فشل في تحديث بيانات الصندوق.");
     }
-
-    try {
-        const res = await fetch(`${API_URL}/extra-boxes/${boxId}`, {
-            method: 'PUT',
-            headers: { 
-                'Content-Type': 'application/json', 
-                'Authorization': `Bearer ${token}`,
-                'Accept': 'application/json'
-            },
-            body: JSON.stringify({ amount: newTotal })
-        });
-
-        if (res.ok) {
-            showAdminToast(`تمت عملية ${type === 'deposit' ? 'الإيداع' : 'السحب'} بنجاح.`);
-            loadExtraBoxes(); // تحديث القائمة
-        } else {
-            const err = await res.json();
-            alert(err.message || "فشل في تحديث بيانات الصندوق.");
-        }
-    } catch (e) {
-        console.error(e);
-        alert("خطأ في الاتصال بالخادم.");
-    }
+  } catch (e) {
+    console.error(e);
+    alert("خطأ في الاتصال بالخادم.");
+  }
 }
 async function editExtraBoxAmount(boxId, currentAmount, boxName) {
-    const newAmountStr = prompt(`تعديل رصيد صندوق "${boxName}":`, currentAmount);
-    
-    // إذا ضغط المستخدم إلغاء أو لم يدخل شيئاً
-    if (newAmountStr === null) return;
-    
-    const newAmount = parseFloat(newAmountStr);
-    if (isNaN(newAmount) || newAmount < 0) {
-        alert("يرجى إدخال مبلغ صحيح.");
-        return;
-    }
+  const newAmountStr = prompt(`تعديل رصيد صندوق "${boxName}":`, currentAmount);
 
-    try {
-        const res = await fetch(`${API_URL}/extra-boxes/${boxId}`, {
-            method: 'PUT',
-            headers: { 
-                'Content-Type': 'application/json', 
-                'Authorization': `Bearer ${token}`,
-                'Accept': 'application/json'
-            },
-            body: JSON.stringify({ amount: newAmount })
-        });
+  // إذا ضغط المستخدم إلغاء أو لم يدخل شيئاً
+  if (newAmountStr === null) return;
 
-        const data = await res.json();
-        if (res.ok) {
-            showAdminToast("تم تحديث مبلغ الصندوق بنجاح.");
-            loadExtraBoxes(); // إعادة تحميل القائمة لتحديث الأرقام
-        } else {
-            alert(data.message || "فشل في تحديث المبلغ.");
-        }
-    } catch (e) {
-        console.error(e);
-        alert("خطأ في الاتصال بالخادم.");
+  const newAmount = parseFloat(newAmountStr);
+  if (isNaN(newAmount) || newAmount < 0) {
+    alert("يرجى إدخال مبلغ صحيح.");
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_URL}/extra-boxes/${boxId}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+        Accept: "application/json",
+      },
+      body: JSON.stringify({ amount: newAmount }),
+    });
+
+    const data = await res.json();
+    if (res.ok) {
+      showAdminToast("تم تحديث مبلغ الصندوق بنجاح.");
+      loadExtraBoxes(); // إعادة تحميل القائمة لتحديث الأرقام
+    } else {
+      alert(data.message || "فشل في تحديث المبلغ.");
     }
+  } catch (e) {
+    console.error(e);
+    alert("خطأ في الاتصال بالخادم.");
+  }
 }
 async function createExtraBox() {
-    const nameInput = document.getElementById('eb-name');
-    const amountInput = document.getElementById('eb-amount');
-    const name = nameInput.value.trim();
-    const amount = parseFloat(amountInput.value);
+  const nameInput = document.getElementById("eb-name");
+  const amountInput = document.getElementById("eb-amount");
+  const name = nameInput.value.trim();
+  const amount = parseFloat(amountInput.value);
 
-    if (!name || isNaN(amount) || amount < 0) {
-        alert("يرجى إدخال اسم للصندوق ومبلغ صالح.");
-        return;
+  if (!name || isNaN(amount) || amount < 0) {
+    alert("يرجى إدخال اسم للصندوق ومبلغ صالح.");
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_URL}/extra-boxes`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        name,
+        amount,
+        office_id: _currentOfficeIdForBoxes,
+      }),
+    });
+
+    const data = await res.json();
+    if (res.ok) {
+      nameInput.value = "";
+      amountInput.value = "";
+      showAdminToast("تم إضافة الصندوق بنجاح!");
+      loadExtraBoxes();
+    } else {
+      alert(data.message || "حدث خطأ أثناء الإضافة.");
     }
-
-    try {
-        const res = await fetch(`${API_URL}/extra-boxes`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-            body: JSON.stringify({ name, amount, office_id: _currentOfficeIdForBoxes })
-        });
-
-        const data = await res.json();
-        if (res.ok) {
-            nameInput.value = '';
-            amountInput.value = '';
-            showAdminToast("تم إضافة الصندوق بنجاح!");
-            loadExtraBoxes();
-        } else {
-            alert(data.message || "حدث خطأ أثناء الإضافة.");
-        }
-    } catch (e) {
-        console.error(e);
-        alert("خطأ في الاتصال بالخادم.");
-    }
+  } catch (e) {
+    console.error(e);
+    alert("خطأ في الاتصال بالخادم.");
+  }
 }
 
 async function transferExtraBoxToOffice(boxId, maxAmount, boxName) {
-    const amountStr = prompt(`كم تريد أن تنقل من صندوق "${boxName}" إلى خزنة المكتب؟\nالرصيد المتاح: ${parseFloat(maxAmount).toLocaleString()}`);
-    if (!amountStr) return;
+  const amountStr = prompt(
+    `كم تريد أن تنقل من صندوق "${boxName}" إلى خزنة المكتب؟\nالرصيد المتاح: ${parseFloat(maxAmount).toLocaleString()}`,
+  );
+  if (!amountStr) return;
 
-    const transferAmount = parseFloat(amountStr);
-    if (isNaN(transferAmount) || transferAmount <= 0 || transferAmount > maxAmount) {
-        alert("المبلغ المدخل غير صحيح أو يتجاوز الرصيد المتاح في الصندوق.");
-        return;
+  const transferAmount = parseFloat(amountStr);
+  if (
+    isNaN(transferAmount) ||
+    transferAmount <= 0 ||
+    transferAmount > maxAmount
+  ) {
+    alert("المبلغ المدخل غير صحيح أو يتجاوز الرصيد المتاح في الصندوق.");
+    return;
+  }
+
+  try {
+    // 1. خصم المبلغ من الصندوق الإضافي
+    const newBoxAmount = maxAmount - transferAmount;
+    const resBox = await fetch(`${API_URL}/extra-boxes/${boxId}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ amount: newBoxAmount }),
+    });
+
+    if (!resBox.ok) {
+      alert("فشل في تحديث رصيد الصندوق الإضافي.");
+      return;
     }
 
-    try {
-        // 1. خصم المبلغ من الصندوق الإضافي
-        const newBoxAmount = maxAmount - transferAmount;
-        const resBox = await fetch(`${API_URL}/extra-boxes/${boxId}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-            body: JSON.stringify({ amount: newBoxAmount })
-        });
+    // 2. إيداع المبلغ المخصوم في خزنة المكتب
+    const resOffice = await fetch(
+      `${API_URL}/offices/${_currentOfficeIdForBoxes}/safe`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ amount: transferAmount, type: "deposit" }),
+      },
+    );
 
-        if (!resBox.ok) {
-            alert("فشل في تحديث رصيد الصندوق الإضافي.");
-            return;
-        }
+    if (resOffice.ok) {
+      showAdminToast("✅ تم نقل المبلغ إلى خزنة المكتب بنجاح.");
+      loadExtraBoxes();
 
-        // 2. إيداع المبلغ المخصوم في خزنة المكتب
-        const resOffice = await fetch(`${API_URL}/offices/${_currentOfficeIdForBoxes}/safe`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-            body: JSON.stringify({ amount: transferAmount, type: 'deposit' })
-        });
-
-        if (resOffice.ok) {
-            showAdminToast("✅ تم نقل المبلغ إلى خزنة المكتب بنجاح.");
-            loadExtraBoxes();
-            
-            // تحديث العرض الخلفي للصناديق الأساسية لتظهر القيمة الجديدة
-            if(document.getElementById('safes-card').style.display !== 'none') {
-                showSafesSection(); 
-            }
-        } else {
-            alert("تنبيه: تم خصم المبلغ من الصندوق ولكن فشل إيداعه في الخزنة. يرجى مراجعة الدعم الفني.");
-        }
-
-    } catch (e) {
-        console.error(e);
-        alert("حدث خطأ في الاتصال بالخادم أثناء النقل.");
+      // تحديث العرض الخلفي للصناديق الأساسية لتظهر القيمة الجديدة
+      if (document.getElementById("safes-card").style.display !== "none") {
+        showSafesSection();
+      }
+    } else {
+      alert(
+        "تنبيه: تم خصم المبلغ من الصندوق ولكن فشل إيداعه في الخزنة. يرجى مراجعة الدعم الفني.",
+      );
     }
+  } catch (e) {
+    console.error(e);
+    alert("حدث خطأ في الاتصال بالخادم أثناء النقل.");
+  }
 }
 
 async function deleteExtraBox(boxId) {
-    if (!confirm("هل أنت متأكد من حذف هذا الصندوق؟\n(ملاحظة: سيتم حذفه مع الرصيد المتبقي فيه)")) return;
+  if (
+    !confirm(
+      "هل أنت متأكد من حذف هذا الصندوق؟\n(ملاحظة: سيتم حذفه مع الرصيد المتبقي فيه)",
+    )
+  )
+    return;
 
-    try {
-        const res = await fetch(`${API_URL}/extra-boxes/${boxId}`, {
-            method: 'DELETE',
-            headers: { Authorization: `Bearer ${token}` }
-        });
-        
-        if (res.ok) {
-            showAdminToast("تم حذف الصندوق بنجاح.");
-            loadExtraBoxes();
-        } else {
-            alert("فشل في حذف الصندوق.");
-        }
-    } catch (e) {
-        alert("حدث خطأ في الاتصال بالخادم.");
+  try {
+    const res = await fetch(`${API_URL}/extra-boxes/${boxId}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    if (res.ok) {
+      showAdminToast("تم حذف الصندوق بنجاح.");
+      loadExtraBoxes();
+    } else {
+      alert("فشل في حذف الصندوق.");
     }
+  } catch (e) {
+    alert("حدث خطأ في الاتصال بالخادم.");
+  }
 }
 /* ── Toast notification (top-left corner) ────────────────────────────────── */
 function _tNotifShowToast(item) {
-    const container = document.getElementById('tnotif-toast-container');
-    if (!container) return;
+  const container = document.getElementById("tnotif-toast-container");
+  if (!container) return;
 
-    const toast = document.createElement('div');
-    toast.className = 'tnotif-toast';
-    toast.innerHTML = `
+  const toast = document.createElement("div");
+  toast.className = "tnotif-toast";
+  toast.innerHTML = `
         <div class="tnotif-toast-icon">
             <i class="fa-solid fa-paper-plane-top"></i>
         </div>
@@ -3235,79 +3766,88 @@ function _tNotifShowToast(item) {
         </button>
     `;
 
-    // النقر على جسم الـ toast → انتقال للحوالة
-    toast.addEventListener('click', e => {
-        if (e.target.closest('.tnotif-toast-close')) return;
-        _tNotifClickItem(item.id);
-        toast.remove();
-    });
+  // النقر على جسم الـ toast → انتقال للحوالة
+  toast.addEventListener("click", (e) => {
+    if (e.target.closest(".tnotif-toast-close")) return;
+    _tNotifClickItem(item.id);
+    toast.remove();
+  });
 
-    container.prepend(toast);
+  container.prepend(toast);
 
-    // إزالة تلقائية بعد 8 ثوان
-    setTimeout(() => toast.classList.add('tnotif-toast-exit'), 7500);
-    setTimeout(() => { toast.remove(); }, 8200);
+  // إزالة تلقائية بعد 8 ثوان
+  setTimeout(() => toast.classList.add("tnotif-toast-exit"), 7500);
+  setTimeout(() => {
+    toast.remove();
+  }, 8200);
 }
 
 /* ── Click item: navigate to pending transfers & highlight the row ────────── */
 function _tNotifClickItem(transferId) {
-    toggleNotifDropdown(false);
+  toggleNotifDropdown(false);
 
-    // الانتقال لقسم الحوالات المعلقة
-    const pendingLink = document.querySelector('.sidebar nav li:first-child a');
-    if (pendingLink) pendingLink.click();
-    else showPendingTransfers();
+  // الانتقال لقسم الحوالات المعلقة
+  const pendingLink = document.querySelector(".sidebar nav li:first-child a");
+  if (pendingLink) pendingLink.click();
+  else showPendingTransfers();
 
-    // تمييز الصف المعني بعد انتهاء تحميل الجدول
-    setTimeout(() => {
-        const row = [...document.querySelectorAll('#transfers-list tr')]
-            .find(r => r.querySelector('td')?.textContent?.trim() === `#${transferId}`);
-        if (row) {
-            row.classList.add('tnotif-row-highlight');
-            row.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            setTimeout(() => row.classList.remove('tnotif-row-highlight'), 3200);
-        }
-    }, 800);
+  // تمييز الصف المعني بعد انتهاء تحميل الجدول
+  setTimeout(() => {
+    const row = [...document.querySelectorAll("#transfers-list tr")].find(
+      (r) => r.querySelector("td")?.textContent?.trim() === `#${transferId}`,
+    );
+    if (row) {
+      row.classList.add("tnotif-row-highlight");
+      row.scrollIntoView({ behavior: "smooth", block: "center" });
+      setTimeout(() => row.classList.remove("tnotif-row-highlight"), 3200);
+    }
+  }, 800);
 
-    _tNotifMarkSeen(transferId);
+  _tNotifMarkSeen(transferId);
 }
 
 /* ── Mark a transfer as seen ─────────────────────────────────────────────── */
 function _tNotifMarkSeen(transferId) {
-    _tNotif.seenIds.add(transferId);
-    _tNotif.items = _tNotif.items.filter(p => p.id !== transferId);
-    localStorage.setItem(_tNotif.STORAGE_KEY, JSON.stringify([..._tNotif.seenIds]));
-    _tNotifUpdateBadge();
+  _tNotif.seenIds.add(transferId);
+  _tNotif.items = _tNotif.items.filter((p) => p.id !== transferId);
+  localStorage.setItem(
+    _tNotif.STORAGE_KEY,
+    JSON.stringify([..._tNotif.seenIds]),
+  );
+  _tNotifUpdateBadge();
 
-    // أعد رسم القسم أو أزله إن فرغ
-    document.querySelector('.tnotif-section-wrapper')?.remove();
-    if (_tNotif.items.length > 0) _tNotifInjectSection();
+  // أعد رسم القسم أو أزله إن فرغ
+  document.querySelector(".tnotif-section-wrapper")?.remove();
+  if (_tNotif.items.length > 0) _tNotifInjectSection();
 }
 
 /* ── Hook clearAllNotifications to also clear transfer notifications ───────
      نلتف حول الدالة الموجودة دون تعديل كودها                               */
 const _tNotif_origClear = clearAllNotifications;
 clearAllNotifications = function () {
-    // سجّل جميع الحوالات المعلقة كمشاهَدة
-    _tNotif.items.forEach(item => _tNotif.seenIds.add(item.id));
-    _tNotif.items = [];
-    localStorage.setItem(_tNotif.STORAGE_KEY, JSON.stringify([..._tNotif.seenIds]));
+  // سجّل جميع الحوالات المعلقة كمشاهَدة
+  _tNotif.items.forEach((item) => _tNotif.seenIds.add(item.id));
+  _tNotif.items = [];
+  localStorage.setItem(
+    _tNotif.STORAGE_KEY,
+    JSON.stringify([..._tNotif.seenIds]),
+  );
 
-    // نظّف الـ UI الخاص بالحوالات
-    document.querySelector('.tnotif-section-wrapper')?.remove();
-    document.getElementById('tnotif-bell-badge')?.classList.add('hidden');
+  // نظّف الـ UI الخاص بالحوالات
+  document.querySelector(".tnotif-section-wrapper")?.remove();
+  document.getElementById("tnotif-bell-badge")?.classList.add("hidden");
 
-    // استدعاء الدالة الأصلية (رسائل الدردشة)
-    _tNotif_origClear();
+  // استدعاء الدالة الأصلية (رسائل الدردشة)
+  _tNotif_origClear();
 };
 
 /* ── Bootstrap: wait for token then init ─────────────────────────────────── */
 (function _tWaitForToken() {
-    if (typeof token !== 'undefined' && token) {
-        _tNotifInit();
-    } else {
-        setTimeout(_tWaitForToken, 300);
-    }
+  if (typeof token !== "undefined" && token) {
+    _tNotifInit();
+  } else {
+    setTimeout(_tWaitForToken, 300);
+  }
 })();
 
 /* =====================================================
@@ -3325,7 +3865,7 @@ function showSafeLogsSection() {
 }
 
 async function loadSafeLogs() {
-  const tbody   = document.getElementById("safe-logs-list");
+  const tbody = document.getElementById("safe-logs-list");
   const emptyEl = document.getElementById("safe-logs-empty");
   if (!tbody) return;
 
@@ -3340,17 +3880,25 @@ async function loadSafeLogs() {
 
   try {
     const [safesRes, meRes, logsRes, tradingRes] = await Promise.all([
-      fetch(`${API_URL}/safes`,       { headers: { Authorization: `Bearer ${token}` } }),
-      fetch(`${API_URL}/me`,          { headers: { Authorization: `Bearer ${token}` } }),
-      fetch(`${API_URL}/safe-logs`,   { headers: { Authorization: `Bearer ${token}` } }).catch(() => null),
-      fetch(`${API_URL}/trading/report/details?date=${new Date().toISOString().split('T')[0]}`,
-            { headers: { Authorization: `Bearer ${token}` } }).catch(() => null),
+      fetch(`${API_URL}/safes`, {
+        headers: { Authorization: `Bearer ${token}` },
+      }),
+      fetch(`${API_URL}/me`, { headers: { Authorization: `Bearer ${token}` } }),
+      fetch(`${API_URL}/safe-logs`, {
+        headers: { Authorization: `Bearer ${token}` },
+      }).catch(() => null),
+      fetch(
+        `${API_URL}/trading/report/details?date=${new Date().toISOString().split("T")[0]}`,
+        { headers: { Authorization: `Bearer ${token}` } },
+      ).catch(() => null),
     ]);
 
-    const safesJson  = await safesRes.json();
-    const meData     = await meRes.json();
+    const safesJson = await safesRes.json();
+    const meData = await meRes.json();
     const myOfficeId = meData.user?.office_id;
-    const mySafes    = (safesJson.data || []).filter(s => s.office_id === myOfficeId);
+    const mySafes = (safesJson.data || []).filter(
+      (s) => s.office_id === myOfficeId,
+    );
 
     const logs = [];
 
@@ -3359,57 +3907,80 @@ async function loadSafeLogs() {
     if (logsRes?.ok) {
       try {
         const logsJson = await logsRes.json();
-        const rawLogs  = logsJson.data || [];
+        const rawLogs = logsJson.data || [];
 
-        rawLogs.forEach(row => {
+        rawLogs.forEach((row) => {
           hasRealLogs = true;
 
           // ترجمة action_type → opType + opLabel
           const actionMap = {
-            deposit          : { opType: "deposit",              opLabel: "إيداع" },
-            withdraw         : { opType: "withdraw",             opLabel: "سحب" },
-            transfer_to_office: { opType: "transfer_from_profit", opLabel: "تحويل → خزنة المكتب" },
-            buy              : { opType: "deposit",              opLabel: "شراء (إيداع دولار)" },
-            sell             : { opType: "withdraw",             opLabel: "بيع (سحب دولار)" },
+            deposit: { opType: "deposit", opLabel: "إيداع" },
+            withdraw: { opType: "withdraw", opLabel: "سحب" },
+            transfer_to_office: {
+              opType: "transfer_from_profit",
+              opLabel: "تحويل → خزنة المكتب",
+            },
+            buy: { opType: "deposit", opLabel: "شراء (إيداع دولار)" },
+            sell: { opType: "withdraw", opLabel: "بيع (سحب دولار)" },
           };
-          const mapped   = actionMap[row.action_type] || { opType: row.action_type, opLabel: row.action_type };
-          const isSyp    = (row.currency || "").toUpperCase() === "SYP";
-          const amount   = parseFloat(row.amount || 0);
+          const mapped = actionMap[row.action_type] || {
+            opType: row.action_type,
+            opLabel: row.action_type,
+          };
+          const isSyp = (row.currency || "").toUpperCase() === "SYP";
+          const amount = parseFloat(row.amount || 0);
 
           logs.push({
-            safeType    : row.safe_type || "office_safe",
-            opType      : mapped.opType,
-            opLabel     : `${mapped.opLabel}${row.description ? ` — ${row.description}` : ""}`,
-            balance     : isSyp ? 0 : amount,
-            balance_sy  : isSyp ? amount : 0,
-            cost        : null,
+            safeType: row.safe_type || "office_safe",
+            opType: mapped.opType,
+            opLabel: `${mapped.opLabel}${row.description ? ` — ${row.description}` : ""}`,
+            balance: isSyp ? 0 : amount,
+            balance_sy: isSyp ? amount : 0,
+            cost: null,
             profit_trade: null,
-            profit_main : null,
-            balAfterUsd : row.balance_after    != null ? parseFloat(row.balance_after)    : null,
-            balAfterSy  : row.balance_sy_after != null ? parseFloat(row.balance_sy_after) : null,
-            date        : row.created_at
-              ? new Date(row.created_at).toLocaleDateString("ar-SY", { year:"numeric", month:"2-digit", day:"2-digit", hour:"2-digit", minute:"2-digit" })
+            profit_main: null,
+            balAfterUsd:
+              row.balance_after != null ? parseFloat(row.balance_after) : null,
+            balAfterSy:
+              row.balance_sy_after != null
+                ? parseFloat(row.balance_sy_after)
+                : null,
+            date: row.created_at
+              ? new Date(row.created_at).toLocaleDateString("ar-SY", {
+                  year: "numeric",
+                  month: "2-digit",
+                  day: "2-digit",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })
               : "—",
-            extra       : row.performed_by_name && row.performed_by_name !== "—"
-              ? `بواسطة: ${row.performed_by_name}`
-              : null,
+            extra:
+              row.performed_by_name && row.performed_by_name !== "—"
+                ? `بواسطة: ${row.performed_by_name}`
+                : null,
           });
         });
-      } catch(e) { /* تجاهل */ }
+      } catch (e) {
+        /* تجاهل */
+      }
     }
 
     // ── 2. لقطة حالية لكل صندوق (تُضاف دائماً في الأعلى) ─────────
-    mySafes.forEach(safe => {
+    mySafes.forEach((safe) => {
       logs.push({
-        safeType    : safe.type,
-        opType      : "snapshot",
-        opLabel     : "الرصيد الحالي",
-        balance     : parseFloat(safe.balance    || 0),
-        balance_sy  : parseFloat(safe.balance_sy || 0),
-        cost        : safe.cost         !== undefined ? parseFloat(safe.cost)         : null,
-        profit_trade: safe.profit_trade !== undefined ? parseFloat(safe.profit_trade) : null,
-        profit_main : safe.profit_main  !== undefined ? parseFloat(safe.profit_main)  : null,
-        date        : new Date().toLocaleDateString("ar-SY"),
+        safeType: safe.type,
+        opType: "snapshot",
+        opLabel: "الرصيد الحالي",
+        balance: parseFloat(safe.balance || 0),
+        balance_sy: parseFloat(safe.balance_sy || 0),
+        cost: safe.cost !== undefined ? parseFloat(safe.cost) : null,
+        profit_trade:
+          safe.profit_trade !== undefined
+            ? parseFloat(safe.profit_trade)
+            : null,
+        profit_main:
+          safe.profit_main !== undefined ? parseFloat(safe.profit_main) : null,
+        date: new Date().toLocaleDateString("ar-SY"),
       });
     });
 
@@ -3417,28 +3988,32 @@ async function loadSafeLogs() {
     if (tradingRes) {
       try {
         const tradingJson = await tradingRes.json();
-        const txList      = tradingJson?.transactions || [];
+        const txList = tradingJson?.transactions || [];
 
-        txList.forEach(tx => {
+        txList.forEach((tx) => {
           const isBuy = tx.type === "buy";
           logs.push({
-            safeType    : "trading",
-            opType      : isBuy ? "deposit" : "withdraw",
-            opLabel     : isBuy ? "شراء (إيداع دولار في التداول)" : "بيع (سحب دولار من التداول → خزنة المكتب)",
-            balance     : parseFloat(tx.amount || 0),
-            balance_sy  : isBuy
+            safeType: "trading",
+            opType: isBuy ? "deposit" : "withdraw",
+            opLabel: isBuy
+              ? "شراء (إيداع دولار في التداول)"
+              : "بيع (سحب دولار من التداول → خزنة المكتب)",
+            balance: parseFloat(tx.amount || 0),
+            balance_sy: isBuy
               ? -parseFloat(tx.amount || 0) * parseFloat(tx.price || 0)
-              :  parseFloat(tx.amount || 0) * parseFloat(tx.price || 0),
-            cost        : parseFloat(tx.cost_at_time || 0),
+              : parseFloat(tx.amount || 0) * parseFloat(tx.price || 0),
+            cost: parseFloat(tx.cost_at_time || 0),
             profit_trade: isBuy ? null : parseFloat(tx.profit || 0),
-            profit_main : null,
-            date        : tx.transaction_date
+            profit_main: null,
+            date: tx.transaction_date
               ? new Date(tx.transaction_date).toLocaleDateString("ar-SY")
               : "—",
             extra: `${tx.user?.name || "—"} | سعر: ${parseFloat(tx.price || 0).toFixed(2)}`,
           });
         });
-      } catch(e) { /* تجاهل */ }
+      } catch (e) {
+        /* تجاهل */
+      }
     }
 
     // حفظ للفلترة
@@ -3449,7 +4024,6 @@ async function loadSafeLogs() {
 
     // رسم الجدول
     _renderSafeLogsTable(logs, emptyEl, tbody);
-
   } catch (err) {
     console.error("loadSafeLogs error:", err);
     tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--danger);padding:24px;">
@@ -3463,39 +4037,54 @@ function _renderSafeLogsSummary(safes) {
   const el = document.getElementById("safe-logs-summary");
   if (!el) return;
 
-  const officeSafe  = safes.find(s => s.type === "office_safe")  || {};
-  const tradingSafe = safes.find(s => s.type === "trading")      || {};
-  const profitSafe  = safes.find(s => s.type === "profit_safe")  || {};
+  const officeSafe = safes.find((s) => s.type === "office_safe") || {};
+  const tradingSafe = safes.find((s) => s.type === "trading") || {};
+  const profitSafe = safes.find((s) => s.type === "profit_safe") || {};
 
   const cards = [
     {
-      icon : "fa-building-columns", bg : "#dbeafe", fg : "#1e40af",
+      icon: "fa-building-columns",
+      bg: "#dbeafe",
+      fg: "#1e40af",
       label: "خزنة المكتب (USD)",
       value: `$${parseFloat(officeSafe.balance || 0).toLocaleString("en-US", { minimumFractionDigits: 2 })}`,
     },
     {
-      icon : "fa-money-bill-wave", bg : "#fef3c7", fg : "#92400e",
+      icon: "fa-money-bill-wave",
+      bg: "#fef3c7",
+      fg: "#92400e",
       label: "خزنة المكتب (SYP)",
-      value: parseFloat(officeSafe.balance_sy || 0).toLocaleString("en-US", { maximumFractionDigits: 0 }) + " ل.س",
+      value:
+        parseFloat(officeSafe.balance_sy || 0).toLocaleString("en-US", {
+          maximumFractionDigits: 0,
+        }) + " ل.س",
     },
     {
-      icon : "fa-chart-line", bg : "#d1fae5", fg : "#065f46",
+      icon: "fa-chart-line",
+      bg: "#d1fae5",
+      fg: "#065f46",
       label: "صندوق التداول",
       value: `$${parseFloat(tradingSafe.balance || 0).toLocaleString("en-US", { minimumFractionDigits: 2 })}`,
     },
     {
-      icon : "fa-sack-dollar", bg : "#ede9fe", fg : "#5b21b6",
+      icon: "fa-sack-dollar",
+      bg: "#ede9fe",
+      fg: "#5b21b6",
       label: "أرباح التداول",
       value: `${parseFloat(profitSafe.profit_trade || 0).toLocaleString("en-US", { maximumFractionDigits: 0 })} ل.س`,
     },
     {
-      icon : "fa-coins", bg : "#fce7f3", fg : "#9d174d",
+      icon: "fa-coins",
+      bg: "#fce7f3",
+      fg: "#9d174d",
       label: "الأرباح الرئيسية",
       value: `$${parseFloat(profitSafe.profit_main || 0).toLocaleString("en-US", { minimumFractionDigits: 2 })}`,
     },
   ];
 
-  el.innerHTML = cards.map(c => `
+  el.innerHTML = cards
+    .map(
+      (c) => `
     <div style="background:var(--white);border-radius:12px;padding:14px 16px;
                 border:1.5px solid var(--border);border-right:4px solid ${c.fg};
                 box-shadow:var(--shadow-sm,0 1px 4px rgba(0,0,0,.06));">
@@ -3508,7 +4097,9 @@ function _renderSafeLogsSummary(safes) {
       </div>
       <div style="font-size:15px;font-weight:800;color:${c.fg};">${c.value}</div>
     </div>
-  `).join("");
+  `,
+    )
+    .join("");
 }
 
 function _renderSafeLogsTable(logs, emptyEl, tbody) {
@@ -3520,83 +4111,121 @@ function _renderSafeLogsTable(logs, emptyEl, tbody) {
   emptyEl?.classList.add("hidden");
 
   const typeLabels = {
-    office_safe : "خزنة المكتب",
-    office_main : "الصندوق الرئيسي",
-    trading     : "صندوق التداول",
-    profit_safe : "صندوق الأرباح",
+    office_safe: "خزنة المكتب",
+    office_main: "الصندوق الرئيسي",
+    trading: "صندوق التداول",
+    profit_safe: "صندوق الأرباح",
   };
 
   const opColors = {
-    snapshot              : { bg: "#dbeafe", fg: "#1e40af", icon: "fa-circle-info"        },
-    deposit               : { bg: "#d1fae5", fg: "#065f46", icon: "fa-circle-arrow-down"  },
-    withdraw              : { bg: "#fee2e2", fg: "#991b1b", icon: "fa-circle-arrow-up"    },
-    transfer_from_profit  : { bg: "#ede9fe", fg: "#5b21b6", icon: "fa-right-left"         },
-    transfer_from_trading : { bg: "#fef3c7", fg: "#92400e", icon: "fa-chart-line"         },
-    transfer_from_main    : { bg: "#fce7f3", fg: "#9d174d", icon: "fa-vault"              },
-    transfer_to_office    : { bg: "#ede9fe", fg: "#5b21b6", icon: "fa-arrow-right-to-bracket" },
+    snapshot: { bg: "#dbeafe", fg: "#1e40af", icon: "fa-circle-info" },
+    deposit: { bg: "#d1fae5", fg: "#065f46", icon: "fa-circle-arrow-down" },
+    withdraw: { bg: "#fee2e2", fg: "#991b1b", icon: "fa-circle-arrow-up" },
+    transfer_from_profit: {
+      bg: "#ede9fe",
+      fg: "#5b21b6",
+      icon: "fa-right-left",
+    },
+    transfer_from_trading: {
+      bg: "#fef3c7",
+      fg: "#92400e",
+      icon: "fa-chart-line",
+    },
+    transfer_from_main: { bg: "#fce7f3", fg: "#9d174d", icon: "fa-vault" },
+    transfer_to_office: {
+      bg: "#ede9fe",
+      fg: "#5b21b6",
+      icon: "fa-arrow-right-to-bracket",
+    },
   };
 
-  tbody.innerHTML = logs.map((log, i) => {
-    const typeLabel = typeLabels[log.safeType] || log.safeType;
-    const oc = opColors[log.opType] || { bg: "#f3f4f6", fg: "#374151", icon: "fa-circle" };
+  tbody.innerHTML = logs
+    .map((log, i) => {
+      const typeLabel = typeLabels[log.safeType] || log.safeType;
+      const oc = opColors[log.opType] || {
+        bg: "#f3f4f6",
+        fg: "#374151",
+        icon: "fa-circle",
+      };
 
-    // ── badge نوع الصندوق ───────────────────────────────────────
-    const safeBadgeColors = {
-      office_safe : { bg: "#dbeafe", fg: "#1e40af" },
-      office_main : { bg: "#fef3c7", fg: "#92400e" },
-      trading     : { bg: "#d1fae5", fg: "#065f46" },
-      profit_safe : { bg: "#ede9fe", fg: "#5b21b6" },
-    };
-    const sbc = safeBadgeColors[log.safeType] || { bg: "#f3f4f6", fg: "#374151" };
+      // ── badge نوع الصندوق ───────────────────────────────────────
+      const safeBadgeColors = {
+        office_safe: { bg: "#dbeafe", fg: "#1e40af" },
+        office_main: { bg: "#fef3c7", fg: "#92400e" },
+        trading: { bg: "#d1fae5", fg: "#065f46" },
+        profit_safe: { bg: "#ede9fe", fg: "#5b21b6" },
+      };
+      const sbc = safeBadgeColors[log.safeType] || {
+        bg: "#f3f4f6",
+        fg: "#374151",
+      };
 
-    const typeBadge = `<span style="display:inline-flex;align-items:center;gap:5px;padding:3px 10px;
+      const typeBadge = `<span style="display:inline-flex;align-items:center;gap:5px;padding:3px 10px;
         border-radius:20px;font-size:11px;font-weight:700;background:${sbc.bg};color:${sbc.fg};">
         ${typeLabel}</span>`;
 
-    const opBadge = `<span style="display:inline-flex;align-items:center;gap:5px;padding:4px 10px;
+      const opBadge = `<span style="display:inline-flex;align-items:center;gap:5px;padding:4px 10px;
         border-radius:20px;font-size:11px;font-weight:700;background:${oc.bg};color:${oc.fg};white-space:nowrap;">
         <i class="fa-solid ${oc.icon}" style="font-size:10px;"></i>
         ${log.opLabel}</span>`;
 
-    // ── مبلغ العملية ────────────────────────────────────────────
-    let amtCell = "—";
-    if (log.balance > 0 && log.balance_sy === 0) {
-      // عملية دولار
-      const sign  = log.opType === "withdraw" ? "−" : "+";
-      const color = log.opType === "withdraw" ? "#dc2626" : "#059669";
-      amtCell = `<span style="font-weight:800;color:${color};">${log.opType === "snapshot" ? "" : sign}$${log.balance.toLocaleString("en-US", {minimumFractionDigits:2})}</span>`;
-    } else if (log.balance_sy !== 0 && log.balance === 0) {
-      // عملية ليرة
-      const sign  = log.balance_sy < 0 || log.opType === "withdraw" ? "−" : "+";
-      const color = log.opType === "withdraw" || log.balance_sy < 0 ? "#dc2626" : "#059669";
-      amtCell = `<span style="font-weight:800;color:${color};">${log.opType === "snapshot" ? "" : sign}${Math.abs(log.balance_sy).toLocaleString("en-US",{maximumFractionDigits:0})} ل.س</span>`;
-    } else if (log.balance > 0 || log.balance_sy > 0) {
-      // لقطة: اعرض كلاهما
-      const parts = [];
-      if (log.balance > 0) parts.push(`<span style="font-weight:800;color:var(--primary);">$${log.balance.toLocaleString("en-US",{minimumFractionDigits:2})}</span>`);
-      if (log.balance_sy > 0) parts.push(`<span style="font-weight:700;color:#ea580c;">${log.balance_sy.toLocaleString("en-US",{maximumFractionDigits:0})} ل.س</span>`);
-      amtCell = parts.join("<br>");
-    }
+      // ── مبلغ العملية ────────────────────────────────────────────
+      let amtCell = "—";
+      if (log.balance > 0 && log.balance_sy === 0) {
+        // عملية دولار
+        const sign = log.opType === "withdraw" ? "−" : "+";
+        const color = log.opType === "withdraw" ? "#dc2626" : "#059669";
+        amtCell = `<span style="font-weight:800;color:${color};">${log.opType === "snapshot" ? "" : sign}$${log.balance.toLocaleString("en-US", { minimumFractionDigits: 2 })}</span>`;
+      } else if (log.balance_sy !== 0 && log.balance === 0) {
+        // عملية ليرة
+        const sign =
+          log.balance_sy < 0 || log.opType === "withdraw" ? "−" : "+";
+        const color =
+          log.opType === "withdraw" || log.balance_sy < 0
+            ? "#dc2626"
+            : "#059669";
+        amtCell = `<span style="font-weight:800;color:${color};">${log.opType === "snapshot" ? "" : sign}${Math.abs(log.balance_sy).toLocaleString("en-US", { maximumFractionDigits: 0 })} ل.س</span>`;
+      } else if (log.balance > 0 || log.balance_sy > 0) {
+        // لقطة: اعرض كلاهما
+        const parts = [];
+        if (log.balance > 0)
+          parts.push(
+            `<span style="font-weight:800;color:var(--primary);">$${log.balance.toLocaleString("en-US", { minimumFractionDigits: 2 })}</span>`,
+          );
+        if (log.balance_sy > 0)
+          parts.push(
+            `<span style="font-weight:700;color:#ea580c;">${log.balance_sy.toLocaleString("en-US", { maximumFractionDigits: 0 })} ل.س</span>`,
+          );
+        amtCell = parts.join("<br>");
+      }
 
-    // ── الرصيد بعد العملية ──────────────────────────────────────
-    let afterCell = "—";
-    if (log.balAfterUsd != null && log.balAfterSy != null) {
-      afterCell = `<span style="color:var(--primary);font-weight:700;">$${parseFloat(log.balAfterUsd).toLocaleString("en-US",{minimumFractionDigits:2})}</span>`
-               + `<br><span style="color:#ea580c;font-size:11px;">${parseFloat(log.balAfterSy).toLocaleString("en-US",{maximumFractionDigits:0})} ل.س</span>`;
-    } else if (log.balAfterUsd != null) {
-      afterCell = `<span style="color:var(--primary);font-weight:700;">$${parseFloat(log.balAfterUsd).toLocaleString("en-US",{minimumFractionDigits:2})}</span>`;
-    } else if (log.balAfterSy != null) {
-      afterCell = `<span style="color:#ea580c;font-weight:700;">${parseFloat(log.balAfterSy).toLocaleString("en-US",{maximumFractionDigits:0})} ل.س</span>`;
-    }
+      // ── الرصيد بعد العملية ──────────────────────────────────────
+      let afterCell = "—";
+      if (log.balAfterUsd != null && log.balAfterSy != null) {
+        afterCell =
+          `<span style="color:var(--primary);font-weight:700;">$${parseFloat(log.balAfterUsd).toLocaleString("en-US", { minimumFractionDigits: 2 })}</span>` +
+          `<br><span style="color:#ea580c;font-size:11px;">${parseFloat(log.balAfterSy).toLocaleString("en-US", { maximumFractionDigits: 0 })} ل.س</span>`;
+      } else if (log.balAfterUsd != null) {
+        afterCell = `<span style="color:var(--primary);font-weight:700;">$${parseFloat(log.balAfterUsd).toLocaleString("en-US", { minimumFractionDigits: 2 })}</span>`;
+      } else if (log.balAfterSy != null) {
+        afterCell = `<span style="color:#ea580c;font-weight:700;">${parseFloat(log.balAfterSy).toLocaleString("en-US", { maximumFractionDigits: 0 })} ل.س</span>`;
+      }
 
-    // ── خلايا الأرباح والتكلفة ──────────────────────────────────
-    const costCell = log.cost         !== null ? `<span style="color:#64748b;">${log.cost.toFixed(4)}</span>` : "—";
-    const ptCell   = log.profit_trade !== null
-      ? `<span style="color:#15803d;font-weight:700;">${parseFloat(log.profit_trade).toLocaleString("en-US",{maximumFractionDigits:0})} ل.س</span>` : "—";
-    const pmCell   = log.profit_main  !== null
-      ? `<span style="color:#1d4ed8;font-weight:700;">$${parseFloat(log.profit_main).toLocaleString("en-US",{minimumFractionDigits:2})}</span>` : "—";
+      // ── خلايا الأرباح والتكلفة ──────────────────────────────────
+      const costCell =
+        log.cost !== null
+          ? `<span style="color:#64748b;">${log.cost.toFixed(4)}</span>`
+          : "—";
+      const ptCell =
+        log.profit_trade !== null
+          ? `<span style="color:#15803d;font-weight:700;">${parseFloat(log.profit_trade).toLocaleString("en-US", { maximumFractionDigits: 0 })} ل.س</span>`
+          : "—";
+      const pmCell =
+        log.profit_main !== null
+          ? `<span style="color:#1d4ed8;font-weight:700;">$${parseFloat(log.profit_main).toLocaleString("en-US", { minimumFractionDigits: 2 })}</span>`
+          : "—";
 
-    return `
+      return `
     <tr>
       <td style="color:var(--gray);font-size:12px;">${i + 1}</td>
       <td>${typeBadge}</td>
@@ -3608,14 +4237,17 @@ function _renderSafeLogsTable(logs, emptyEl, tbody) {
       <td>${pmCell}</td>
       <td style="font-size:11px;color:var(--gray);">${log.date || "—"}${log.extra ? `<br><span style="font-size:10px;color:#9ca3af;">${log.extra}</span>` : ""}</td>
     </tr>`;
-  }).join("");
+    })
+    .join("");
 }
 
 function filterSafeLogs() {
-  const q    = (document.getElementById("safe-logs-search")?.value  || "").toLowerCase();
+  const q = (
+    document.getElementById("safe-logs-search")?.value || ""
+  ).toLowerCase();
   const type = document.getElementById("safe-logs-type-filter")?.value || "";
 
-  const filtered = _allSafeLogs.filter(log => {
+  const filtered = _allSafeLogs.filter((log) => {
     if (type && log.safeType !== type) return false;
     if (q) {
       const text = `${log.safeType} ${log.opLabel} ${log.opType}`.toLowerCase();
@@ -3624,7 +4256,7 @@ function filterSafeLogs() {
     return true;
   });
 
-  const tbody   = document.getElementById("safe-logs-list");
+  const tbody = document.getElementById("safe-logs-list");
   const emptyEl = document.getElementById("safe-logs-empty");
   _renderSafeLogsTable(filtered, emptyEl, tbody);
 }

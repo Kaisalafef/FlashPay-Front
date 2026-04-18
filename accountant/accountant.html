@@ -9,9 +9,9 @@
             rel="stylesheet">
         <link rel="stylesheet"
             href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-       <link rel="icon" type="image/svg+xml" 
-      href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 448 512'><path fill='%23FFD700' d='M349.4 44.6c5.9-13.7 1.5-29.7-10.6-38.5s-28.6-8-39.9 1.8l-256 224c-10 8.8-13.6 22.9-8.9 35.3s16.6 20.3 29.8 19.5l115.4-6.9L103.8 456.3c-6.2 13.5-2.2 29.4 9.5 38.5s28.1 9.1 40.1 2.5l256-141.2c11.3-6.2 18.2-18 17.5-30.8s-8.7-24-20.5-29.1l-111.4-48.4 144.1-177.3c8.1-10 9.2-24.1 4.3-35.3z'/></svg>">
-            <link rel="stylesheet"
+        <link rel="icon" type="image/svg+xml"
+            href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 448 512'><path fill='%23FFD700' d='M349.4 44.6c5.9-13.7 1.5-29.7-10.6-38.5s-28.6-8-39.9 1.8l-256 224c-10 8.8-13.6 22.9-8.9 35.3s16.6 20.3 29.8 19.5l115.4-6.9L103.8 456.3c-6.2 13.5-2.2 29.4 9.5 38.5s28.1 9.1 40.1 2.5l256-141.2c11.3-6.2 18.2-18 17.5-30.8s-8.7-24-20.5-29.1l-111.4-48.4 144.1-177.3c8.1-10 9.2-24.1 4.3-35.3z'/></svg>">
+        <link rel="stylesheet"
             href="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.css">
         <script
             src="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.js"></script>
@@ -704,240 +704,251 @@
                     </div>
 
                 </div>
-                
-                    <!-- ===== قسم الصناديق للمحاسب ===== -->
-                    <!-- ===== قسم صناديق المكتب للمحاسب ===== -->
-                    <div id="acct-safes-section" class="section"
-                        style="display:none;">
 
-                        <!-- رأس القسم -->
-                        <div
-                            style="display:flex;align-items:center;gap:14px;margin-bottom:24px;
+                <!-- ===== قسم الصناديق للمحاسب ===== -->
+                <!-- ===== قسم صناديق المكتب للمحاسب ===== -->
+                <div id="acct-safes-section" class="section"
+                    style="display:none;">
+
+                    <!-- رأس القسم -->
+                    <div
+                        style="display:flex;align-items:center;gap:14px;margin-bottom:24px;
                 padding:20px 24px;background:linear-gradient(135deg,#eff6ff,#dbeafe);
                 border-radius:16px;border:1.5px solid #bfdbfe;">
-                            <div
-                                style="width:52px;height:52px;background:linear-gradient(135deg,#1e40af,#3b82f6);
+                        <div
+                            style="width:52px;height:52px;background:linear-gradient(135deg,#1e40af,#3b82f6);
                     border-radius:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                                <i class="fa-solid fa-vault"
-                                    style="color:#fff;font-size:20px;"></i>
-                            </div>
-                            <div style="flex:1;">
-                                <h2
-                                    style="margin:0;font-size:18px;font-weight:800;color:#1e3a8a;">الصناديق</h2>
-                                <p
-                                    style="margin:4px 0 0;font-size:12px;color:#3b82f6;">حالة
-                                    صناديق المكتب الحالية — بيانات مباشرة من
-                                    السيرفر</p>
-                            </div>
-                            <button onclick="loadAccountantSafes()"
-                                style="display:flex;align-items:center;gap:6px;padding:9px 18px;
+                            <i class="fa-solid fa-vault"
+                                style="color:#fff;font-size:20px;"></i>
+                        </div>
+                        <div style="flex:1;">
+                            <h2
+                                style="margin:0;font-size:18px;font-weight:800;color:#1e3a8a;">الصناديق</h2>
+                            <p
+                                style="margin:4px 0 0;font-size:12px;color:#3b82f6;">حالة
+                                صناديق المكتب الحالية — بيانات مباشرة من
+                                السيرفر</p>
+                        </div>
+                        <button onclick="loadAccountantSafes()"
+                            style="display:flex;align-items:center;gap:6px;padding:9px 18px;
                        background:#fff;border:1.5px solid #3b82f6;border-radius:10px;
                        color:#1d4ed8;font-family:'Cairo',sans-serif;font-size:13px;
                        font-weight:700;cursor:pointer;transition:all .2s;"
-                                onmouseover="this.style.background='#eff6ff'"
-                                onmouseout="this.style.background='#fff'">
-                                <i class="fa-solid fa-arrows-rotate"></i> تحديث
-                            </button>
-                        </div>
-
-                        <!-- شبكة بطاقات الصناديق -->
-                        <div id="acct-safes-container"
-                            style="display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:18px;">
-                        </div>
-                        <div class="card" style="margin-top: 24px;">
-    <div class="card-header">
-        <div class="card-title">
-            <i class="fa-solid fa-file-invoice-dollar"></i> سجل حركات الصناديق
-        </div>
-        <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
-            <label style="font-size:12px; font-weight:700; color:var(--gray);">تصفية حسب الشهر:</label>
-            <input type="month" id="safes-report-month" class="filter-select" onchange="loadSafesReport()">
-            
-            <button class="btn-success" onclick="exportSafesReportCSV()">
-                <i class="fa-solid fa-file-csv"></i> تصدير CSV
-            </button>
-            <button class="btn-primary" onclick="printSafesReport()">
-                <i class="fa-solid fa-print"></i> طباعة
-            </button>
-        </div>
-    </div>
-    <div class="table-wrapper">
-        <table class="data-table">
-            <thead>
-                <tr>
-                    <th>#</th>
-                    <th>الصندوق</th>
-                    <th>نوع الحركة</th>
-                    <th>المبلغ</th>
-                    <th>العملة</th>
-                    <th>الرصيد بعد الحركة</th>
-                    <th>الوصف</th>
-                    <th>المنفذ</th>
-                    <th>التاريخ</th>
-                </tr>
-            </thead>
-            <tbody id="safes-report-tbody">
-                <tr>
-                    <td colspan="9" style="text-align:center; padding:30px; color:var(--gray);">
-                        <i class="fa-solid fa-calendar-days" style="font-size:24px; margin-bottom:10px; opacity:0.5; display:block;"></i>
-                        الرجاء تحديد الشهر لعرض السجل
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
-</div>
+                            onmouseover="this.style.background='#eff6ff'"
+                            onmouseout="this.style.background='#fff'">
+                            <i class="fa-solid fa-arrows-rotate"></i> تحديث
+                        </button>
                     </div>
 
-                    <!-- ===== قسم الحوالات الداخلية للمحاسب ===== -->
-                    <div id="acct-internal-section" class="section"
-                        style="display:none;">
+                    <!-- شبكة بطاقات الصناديق -->
+                    <div id="acct-safes-container"
+                        style="display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:18px;">
+                    </div>
+                    <div class="card" style="margin-top: 24px;">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <i class="fa-solid fa-file-invoice-dollar"></i>
+                                سجل حركات الصناديق
+                            </div>
+                            <div
+                                style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+                                <label
+                                    style="font-size:12px; font-weight:700; color:var(--gray);">تصفية
+                                    حسب الشهر:</label>
+                                <input type="month" id="safes-report-month"
+                                    class="filter-select"
+                                    onchange="loadSafesReport()">
 
-                        <!-- رأس القسم -->
-                        <div
-                            style="display:flex;align-items:center;gap:14px;margin-bottom:24px;
+                                <button class="btn-success"
+                                    onclick="exportSafesReportCSV()">
+                                    <i class="fa-solid fa-file-csv"></i> تصدير
+                                    CSV
+                                </button>
+                                <button class="btn-primary"
+                                    onclick="printSafesReport()">
+                                    <i class="fa-solid fa-print"></i> طباعة
+                                </button>
+                            </div>
+                        </div>
+                        <div class="table-wrapper">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>الصندوق</th>
+                                        <th>نوع الحركة</th>
+                                        <th>المبلغ</th>
+                                        <th>العملة</th>
+                                        <th>الرصيد بعد الحركة</th>
+                                        <th>الوصف</th>
+                                        <th>المنفذ</th>
+                                        <th>التاريخ</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="safes-report-tbody">
+                                    <tr>
+                                        <td colspan="9"
+                                            style="text-align:center; padding:30px; color:var(--gray);">
+                                            <i class="fa-solid fa-calendar-days"
+                                                style="font-size:24px; margin-bottom:10px; opacity:0.5; display:block;"></i>
+                                            الرجاء تحديد الشهر لعرض السجل
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ===== قسم الحوالات الداخلية للمحاسب ===== -->
+                <div id="acct-internal-section" class="section"
+                    style="display:none;">
+
+                    <!-- رأس القسم -->
+                    <div
+                        style="display:flex;align-items:center;gap:14px;margin-bottom:24px;
                 padding:20px 24px;background:linear-gradient(135deg,#f0fdf4,#dcfce7);
                 border-radius:16px;border:1.5px solid #86efac;">
-                            <div
-                                style="width:52px;height:52px;background:linear-gradient(135deg,#15803d,#22c55e);
+                        <div
+                            style="width:52px;height:52px;background:linear-gradient(135deg,#15803d,#22c55e);
                     border-radius:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                                <i class="fa-solid fa-right-left"
-                                    style="color:#fff;font-size:20px;"></i>
-                            </div>
-                            <div style="flex:1;">
-                                <h2
-                                    style="margin:0;font-size:18px;font-weight:800;color:#14532d;">سجل
-                                    الحوالات الداخلية</h2>
-                                <p
-                                    style="margin:4px 0 0;font-size:12px;color:#16a34a;">جميع
-                                    الحوالات الداخلية المنفذة في المكتب</p>
-                            </div>
-                            <button onclick="loadAccountantInternals()"
-                                style="display:flex;align-items:center;gap:6px;padding:9px 18px;
+                            <i class="fa-solid fa-right-left"
+                                style="color:#fff;font-size:20px;"></i>
+                        </div>
+                        <div style="flex:1;">
+                            <h2
+                                style="margin:0;font-size:18px;font-weight:800;color:#14532d;">سجل
+                                الحوالات الداخلية</h2>
+                            <p
+                                style="margin:4px 0 0;font-size:12px;color:#16a34a;">جميع
+                                الحوالات الداخلية المنفذة في المكتب</p>
+                        </div>
+                        <button onclick="loadAccountantInternals()"
+                            style="display:flex;align-items:center;gap:6px;padding:9px 18px;
                        background:#fff;border:1.5px solid #22c55e;border-radius:10px;
                        color:#15803d;font-family:'Cairo',sans-serif;font-size:13px;
                        font-weight:700;cursor:pointer;transition:all .2s;"
-                                onmouseover="this.style.background='#f0fdf4'"
-                                onmouseout="this.style.background='#fff'">
-                                <i class="fa-solid fa-arrows-rotate"></i> تحديث
-                            </button>
-                        </div>
+                            onmouseover="this.style.background='#f0fdf4'"
+                            onmouseout="this.style.background='#fff'">
+                            <i class="fa-solid fa-arrows-rotate"></i> تحديث
+                        </button>
+                    </div>
 
-                        <!-- إحصائيات سريعة -->
+                    <!-- إحصائيات سريعة -->
+                    <div
+                        style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:24px;">
                         <div
-                            style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:24px;">
-                            <div
-                                style="background:var(--white);border-radius:14px;padding:18px;
+                            style="background:var(--white);border-radius:14px;padding:18px;
                     border:1.5px solid var(--border);border-right:4px solid var(--primary);
                     box-shadow:0 2px 8px rgba(0,0,0,.04);">
-                                <div
-                                    style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-                                    <i class="fa-solid fa-list-check"
-                                        style="color:var(--primary);"></i>
-                                    <span
-                                        style="font-size:11px;color:var(--gray);font-weight:700;">إجمالي
-                                        الحوالات</span>
-                                </div>
-                                <div id="acct-internal-count"
-                                    style="font-size:28px;font-weight:800;color:var(--primary);">—</div>
-                            </div>
                             <div
-                                style="background:var(--white);border-radius:14px;padding:18px;
+                                style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+                                <i class="fa-solid fa-list-check"
+                                    style="color:var(--primary);"></i>
+                                <span
+                                    style="font-size:11px;color:var(--gray);font-weight:700;">إجمالي
+                                    الحوالات</span>
+                            </div>
+                            <div id="acct-internal-count"
+                                style="font-size:28px;font-weight:800;color:var(--primary);">—</div>
+                        </div>
+                        <div
+                            style="background:var(--white);border-radius:14px;padding:18px;
                     border:1.5px solid var(--border);border-right:4px solid var(--dark);
                     box-shadow:0 2px 8px rgba(0,0,0,.04);">
-                                <div
-                                    style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-                                    <i class="fa-solid fa-money-bills"
-                                        style="color:var(--dark);"></i>
-                                    <span
-                                        style="font-size:11px;color:var(--gray);font-weight:700;">إجمالي
-                                        المبالغ</span>
-                                </div>
-                                <div id="acct-internal-total"
-                                    style="font-size:22px;font-weight:800;color:var(--dark);">—</div>
-                            </div>
                             <div
-                                style="background:var(--white);border-radius:14px;padding:18px;
+                                style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+                                <i class="fa-solid fa-money-bills"
+                                    style="color:var(--dark);"></i>
+                                <span
+                                    style="font-size:11px;color:var(--gray);font-weight:700;">إجمالي
+                                    المبالغ</span>
+                            </div>
+                            <div id="acct-internal-total"
+                                style="font-size:22px;font-weight:800;color:var(--dark);">—</div>
+                        </div>
+                        <div
+                            style="background:var(--white);border-radius:14px;padding:18px;
                     border:1.5px solid var(--border);border-right:4px solid var(--success);
                     box-shadow:0 2px 8px rgba(0,0,0,.04);">
-                                <div
-                                    style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-                                    <i class="fa-solid fa-percent"
-                                        style="color:var(--success);"></i>
-                                    <span
-                                        style="font-size:11px;color:var(--gray);font-weight:700;">إجمالي
-                                        الرسوم</span>
-                                </div>
-                                <div id="acct-internal-profit"
-                                    style="font-size:22px;font-weight:800;color:var(--success);">—</div>
-                            </div>
-                        </div>
-
-                        <!-- شريط بحث -->
-                        <div
-                            style="display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap;align-items:center;">
                             <div
-                                style="flex:1;min-width:220px;position:relative;">
-                                <i class="fa-solid fa-magnifying-glass"
-                                    style="position:absolute;right:12px;top:50%;transform:translateY(-50%);
+                                style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+                                <i class="fa-solid fa-percent"
+                                    style="color:var(--success);"></i>
+                                <span
+                                    style="font-size:11px;color:var(--gray);font-weight:700;">إجمالي
+                                    الرسوم</span>
+                            </div>
+                            <div id="acct-internal-profit"
+                                style="font-size:22px;font-weight:800;color:var(--success);">—</div>
+                        </div>
+                    </div>
+
+                    <!-- شريط بحث -->
+                    <div
+                        style="display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap;align-items:center;">
+                        <div
+                            style="flex:1;min-width:220px;position:relative;">
+                            <i class="fa-solid fa-magnifying-glass"
+                                style="position:absolute;right:12px;top:50%;transform:translateY(-50%);
                       color:var(--gray);font-size:13px;pointer-events:none;"></i>
-                                <input type="text" id="acct-internal-search"
-                                    placeholder="بحث بالاسم أو الوجهة أو الهاتف..."
-                                    oninput="filterAccountantInternals()"
-                                    style="width:100%;padding:10px 38px 10px 14px;box-sizing:border-box;
+                            <input type="text" id="acct-internal-search"
+                                placeholder="بحث بالاسم أو الوجهة أو الهاتف..."
+                                oninput="filterAccountantInternals()"
+                                style="width:100%;padding:10px 38px 10px 14px;box-sizing:border-box;
                           border:1.5px solid var(--border);border-radius:10px;
                           font-family:'Cairo',sans-serif;font-size:13px;outline:none;
                           transition:border-color .2s;"
-                                    onfocus="this.style.borderColor='var(--primary)'"
-                                    onblur="this.style.borderColor='var(--border)'">
-                            </div>
-                            <button onclick="exportAccountantInternalsCSV()"
-                                style="display:flex;align-items:center;gap:6px;padding:10px 16px;
+                                onfocus="this.style.borderColor='var(--primary)'"
+                                onblur="this.style.borderColor='var(--border)'">
+                        </div>
+                        <button onclick="exportAccountantInternalsCSV()"
+                            style="display:flex;align-items:center;gap:6px;padding:10px 16px;
                        background:var(--white);border:1.5px solid var(--border);border-radius:10px;
                        color:var(--dark);font-family:'Cairo',sans-serif;font-size:13px;
                        font-weight:700;cursor:pointer;white-space:nowrap;">
-                                <i class="fa-solid fa-file-csv"
-                                    style="color:#16a34a;"></i> تصدير CSV
-                            </button>
-                        </div>
+                            <i class="fa-solid fa-file-csv"
+                                style="color:#16a34a;"></i> تصدير CSV
+                        </button>
+                    </div>
 
-                        <!-- جدول الحوالات الداخلية -->
-                        <div
-                            style="overflow-x:auto;border-radius:14px;border:1.5px solid var(--border);
+                    <!-- جدول الحوالات الداخلية -->
+                    <div
+                        style="overflow-x:auto;border-radius:14px;border:1.5px solid var(--border);
                 box-shadow:0 2px 8px rgba(0,0,0,.04);">
-                            <table
-                                style="width:100%;border-collapse:collapse;font-family:'Cairo',sans-serif;font-size:13px;min-width:850px;">
-                                <thead>
-                                    <tr
-                                        style="background:linear-gradient(135deg,#f8fafc,#f1f5f9);">
-                                        <th
-                                            style="padding:13px 14px;text-align:right;font-weight:700;color:var(--gray);font-size:12px;border-bottom:1.5px solid var(--border);">#</th>
-                                        <th
-                                            style="padding:13px 14px;text-align:right;font-weight:700;border-bottom:1.5px solid var(--border);">المرسل</th>
-                                        <th
-                                            style="padding:13px 14px;text-align:right;font-weight:700;border-bottom:1.5px solid var(--border);">المستلم</th>
-                                        <th
-                                            style="padding:13px 14px;text-align:right;font-weight:700;border-bottom:1.5px solid var(--border);">الوجهة</th>
-                                        <th
-                                            style="padding:13px 14px;text-align:right;font-weight:700;border-bottom:1.5px solid var(--border);">الهاتف</th>
-                                        <th
-                                            style="padding:13px 14px;text-align:right;font-weight:700;border-bottom:1.5px solid var(--border);">المبلغ</th>
-                                        <th
-                                            style="padding:13px 14px;text-align:right;font-weight:700;border-bottom:1.5px solid var(--border);">الرسوم</th>
-                                        <th
-                                            style="padding:13px 14px;text-align:right;font-weight:700;border-bottom:1.5px solid var(--border);">يدفع
-                                            الرسوم</th>
-                                        <th
-                                            style="padding:13px 14px;text-align:right;font-weight:700;border-bottom:1.5px solid var(--border);">صافي
-                                            المستلم</th>
-                                        <th
-                                            style="padding:13px 14px;text-align:right;font-weight:700;border-bottom:1.5px solid var(--border);">التاريخ</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="acct-internal-tbody"></tbody>
-                            </table>
-                        </div>
-                    </div>  
+                        <table
+                            style="width:100%;border-collapse:collapse;font-family:'Cairo',sans-serif;font-size:13px;min-width:850px;">
+                            <thead>
+                                <tr
+                                    style="background:linear-gradient(135deg,#f8fafc,#f1f5f9);">
+                                    <th
+                                        style="padding:13px 14px;text-align:right;font-weight:700;color:var(--gray);font-size:12px;border-bottom:1.5px solid var(--border);">#</th>
+                                    <th
+                                        style="padding:13px 14px;text-align:right;font-weight:700;border-bottom:1.5px solid var(--border);">المرسل</th>
+                                    <th
+                                        style="padding:13px 14px;text-align:right;font-weight:700;border-bottom:1.5px solid var(--border);">المستلم</th>
+                                    <th
+                                        style="padding:13px 14px;text-align:right;font-weight:700;border-bottom:1.5px solid var(--border);">الوجهة</th>
+                                    <th
+                                        style="padding:13px 14px;text-align:right;font-weight:700;border-bottom:1.5px solid var(--border);">الهاتف</th>
+                                    <th
+                                        style="padding:13px 14px;text-align:right;font-weight:700;border-bottom:1.5px solid var(--border);">المبلغ</th>
+                                    <th
+                                        style="padding:13px 14px;text-align:right;font-weight:700;border-bottom:1.5px solid var(--border);">الرسوم</th>
+                                    <th
+                                        style="padding:13px 14px;text-align:right;font-weight:700;border-bottom:1.5px solid var(--border);">يدفع
+                                        الرسوم</th>
+                                    <th
+                                        style="padding:13px 14px;text-align:right;font-weight:700;border-bottom:1.5px solid var(--border);">صافي
+                                        المستلم</th>
+                                    <th
+                                        style="padding:13px 14px;text-align:right;font-weight:700;border-bottom:1.5px solid var(--border);">التاريخ</th>
+                                </tr>
+                            </thead>
+                            <tbody id="acct-internal-tbody"></tbody>
+                        </table>
+                    </div>
+                </div>
                 <!-- ===== TRADING PROFITS ===== -->
                 <div id="trading-section" class="section">
 
@@ -1308,7 +1319,6 @@
 
                     </div>
 
-
                 </div><!-- /content-body -->
 
                 <!-- ===== قسم سجل التعديلات ===== -->
@@ -1414,20 +1424,27 @@
             <div id="archived-transfers-modal" class="hidden"
                 style="position:fixed;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);
                 z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;">
-                <div style="background:#fff;border-radius:20px;width:100%;max-width:1000px;max-height:92vh;
+                <div
+                    style="background:#fff;border-radius:20px;width:100%;max-width:1000px;max-height:92vh;
                     overflow:hidden;display:flex;flex-direction:column;box-shadow:0 24px 60px rgba(0,0,0,.28);">
 
                     <!-- هيدر المودال -->
-                    <div style="display:flex;align-items:center;justify-content:space-between;padding:20px 24px;
+                    <div
+                        style="display:flex;align-items:center;justify-content:space-between;padding:20px 24px;
                         background:linear-gradient(135deg,#0f172a,#1e293b);color:#fff;">
                         <div style="display:flex;align-items:center;gap:12px;">
-                            <div style="width:40px;height:40px;background:rgba(255,255,255,.12);border-radius:10px;
+                            <div
+                                style="width:40px;height:40px;background:rgba(255,255,255,.12);border-radius:10px;
                                 display:flex;align-items:center;justify-content:center;">
-                                <i class="fa-solid fa-box-archive" style="font-size:16px;"></i>
+                                <i class="fa-solid fa-box-archive"
+                                    style="font-size:16px;"></i>
                             </div>
                             <div>
-                                <div id="archived-modal-title" style="font-weight:800;font-size:16px;">الحوالات المؤرشفة</div>
-                                <div id="archived-modal-sub" style="font-size:11px;opacity:.7;margin-top:2px;">—</div>
+                                <div id="archived-modal-title"
+                                    style="font-weight:800;font-size:16px;">الحوالات
+                                    المؤرشفة</div>
+                                <div id="archived-modal-sub"
+                                    style="font-size:11px;opacity:.7;margin-top:2px;">—</div>
                             </div>
                         </div>
                         <button onclick="closeArchivedModal()"
@@ -1440,34 +1457,57 @@
                     <!-- شريط الإحصاء السريع -->
                     <div id="archived-stats-bar"
                         style="display:flex;gap:0;border-bottom:1px solid #e2e8f0;background:#f8fafc;flex-wrap:wrap;">
-                        <div style="flex:1;min-width:120px;padding:12px 20px;border-left:1px solid #e2e8f0;">
-                            <div style="font-size:11px;color:#64748b;font-weight:700;margin-bottom:3px;">عدد الحوالات</div>
-                            <div id="arch-stat-count" style="font-size:20px;font-weight:800;color:#1e293b;">—</div>
+                        <div
+                            style="flex:1;min-width:120px;padding:12px 20px;border-left:1px solid #e2e8f0;">
+                            <div
+                                style="font-size:11px;color:#64748b;font-weight:700;margin-bottom:3px;">عدد
+                                الحوالات</div>
+                            <div id="arch-stat-count"
+                                style="font-size:20px;font-weight:800;color:#1e293b;">—</div>
                         </div>
-                        <div style="flex:1;min-width:120px;padding:12px 20px;border-left:1px solid #e2e8f0;">
-                            <div style="font-size:11px;color:#64748b;font-weight:700;margin-bottom:3px;">إجمالي المبالغ</div>
-                            <div id="arch-stat-amount" style="font-size:18px;font-weight:800;color:#1e40af;">—</div>
+                        <div
+                            style="flex:1;min-width:120px;padding:12px 20px;border-left:1px solid #e2e8f0;">
+                            <div
+                                style="font-size:11px;color:#64748b;font-weight:700;margin-bottom:3px;">إجمالي
+                                المبالغ</div>
+                            <div id="arch-stat-amount"
+                                style="font-size:18px;font-weight:800;color:#1e40af;">—</div>
                         </div>
                         <div style="flex:1;min-width:120px;padding:12px 20px;">
-                            <div style="font-size:11px;color:#64748b;font-weight:700;margin-bottom:3px;">إجمالي العمولات</div>
-                            <div id="arch-stat-fee" style="font-size:18px;font-weight:800;color:#16a34a;">—</div>
+                            <div
+                                style="font-size:11px;color:#64748b;font-weight:700;margin-bottom:3px;">إجمالي
+                                العمولات</div>
+                            <div id="arch-stat-fee"
+                                style="font-size:18px;font-weight:800;color:#16a34a;">—</div>
                         </div>
                     </div>
 
                     <!-- الجدول -->
                     <div style="overflow:auto;flex:1;padding:16px 20px;">
-                        <table style="width:100%;border-collapse:collapse;font-family:'Cairo',sans-serif;font-size:12px;min-width:780px;">
+                        <table
+                            style="width:100%;border-collapse:collapse;font-family:'Cairo',sans-serif;font-size:12px;min-width:780px;">
                             <thead>
-                                <tr style="background:#f1f5f9;position:sticky;top:0;">
-                                    <th style="padding:10px 12px;text-align:right;font-weight:700;border-bottom:1.5px solid #e2e8f0;">#</th>
-                                    <th style="padding:10px 12px;text-align:right;font-weight:700;border-bottom:1.5px solid #e2e8f0;">رقم التتبع</th>
-                                    <th style="padding:10px 12px;text-align:right;font-weight:700;border-bottom:1.5px solid #e2e8f0;">المرسل</th>
-                                    <th style="padding:10px 12px;text-align:right;font-weight:700;border-bottom:1.5px solid #e2e8f0;">المستلم</th>
-                                    <th style="padding:10px 12px;text-align:right;font-weight:700;border-bottom:1.5px solid #e2e8f0;">الهاتف</th>
-                                    <th style="padding:10px 12px;text-align:right;font-weight:700;border-bottom:1.5px solid #e2e8f0;">المبلغ</th>
-                                    <th style="padding:10px 12px;text-align:right;font-weight:700;border-bottom:1.5px solid #e2e8f0;">USD</th>
-                                    <th style="padding:10px 12px;text-align:right;font-weight:700;border-bottom:1.5px solid #e2e8f0;">العمولة</th>
-                                    <th style="padding:10px 12px;text-align:right;font-weight:700;border-bottom:1.5px solid #e2e8f0;">التاريخ</th>
+                                <tr
+                                    style="background:#f1f5f9;position:sticky;top:0;">
+                                    <th
+                                        style="padding:10px 12px;text-align:right;font-weight:700;border-bottom:1.5px solid #e2e8f0;">#</th>
+                                    <th
+                                        style="padding:10px 12px;text-align:right;font-weight:700;border-bottom:1.5px solid #e2e8f0;">رقم
+                                        التتبع</th>
+                                    <th
+                                        style="padding:10px 12px;text-align:right;font-weight:700;border-bottom:1.5px solid #e2e8f0;">المرسل</th>
+                                    <th
+                                        style="padding:10px 12px;text-align:right;font-weight:700;border-bottom:1.5px solid #e2e8f0;">المستلم</th>
+                                    <th
+                                        style="padding:10px 12px;text-align:right;font-weight:700;border-bottom:1.5px solid #e2e8f0;">الهاتف</th>
+                                    <th
+                                        style="padding:10px 12px;text-align:right;font-weight:700;border-bottom:1.5px solid #e2e8f0;">المبلغ</th>
+                                    <th
+                                        style="padding:10px 12px;text-align:right;font-weight:700;border-bottom:1.5px solid #e2e8f0;">USD</th>
+                                    <th
+                                        style="padding:10px 12px;text-align:right;font-weight:700;border-bottom:1.5px solid #e2e8f0;">العمولة</th>
+                                    <th
+                                        style="padding:10px 12px;text-align:right;font-weight:700;border-bottom:1.5px solid #e2e8f0;">التاريخ</th>
                                 </tr>
                             </thead>
                             <tbody id="archived-transfers-tbody"></tbody>
@@ -1475,7 +1515,8 @@
                     </div>
 
                     <!-- فوتر -->
-                    <div style="padding:14px 24px;border-top:1px solid #e2e8f0;display:flex;justify-content:flex-end;">
+                    <div
+                        style="padding:14px 24px;border-top:1px solid #e2e8f0;display:flex;justify-content:flex-end;">
                         <button onclick="closeArchivedModal()"
                             style="padding:9px 20px;background:#f1f5f9;border:1.5px solid #e2e8f0;border-radius:10px;
                             font-family:'Cairo',sans-serif;font-size:13px;font-weight:700;cursor:pointer;color:#374151;">
@@ -1659,7 +1700,8 @@
                 </div>
 
             </div>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.12.2/lottie.min.js"></script>
+            <script
+                src="https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.12.2/lottie.min.js"></script>
 
             <script src="accountant.js"></script>
             <script src="sidebar-mobile.js"></script>
