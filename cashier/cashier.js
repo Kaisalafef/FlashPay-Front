@@ -593,7 +593,8 @@ function printBankTransferReceipt(tx) {
   const now = new Date();
   const pad = (n) => String(n).padStart(2, "0");
   const printDate = `${now.getFullYear()}/${pad(now.getMonth() + 1)}/${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
-
+const dest =
+        [t.destination_country, t.destination_city]
   const amountFmt = parseFloat(tx.amount).toLocaleString("en-US", {
     minimumFractionDigits: 2,
   });
@@ -643,7 +644,7 @@ function printBankTransferReceipt(tx) {
   <div class="r"><span class="lbl">اسم المستلم:</span> <span class="val">${tx.recipient_name}</span></div>
   <div class="r"><span class="lbl">صاحب الحساب:</span> <span class="val">${tx.full_name}</span></div>
   <div class="r"><span class="lbl">البنك:</span> <span class="val">${tx.bank_name}</span></div>
-  
+  <div class="r"><span class="lbl">الوجهة:</span><span class="val">${dest}</span></div>
   <div class="amt">USD $${amountFmt}</div>
 
   <div class="footer">
