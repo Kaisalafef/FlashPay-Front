@@ -256,7 +256,7 @@ async function acceptTransfer(transferId) {
     const res = await fetch(
       `${API_URL}/transfers/${transferId}/update-status`,
       {
-        method: "PATCH",
+        method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
           Accept: "application/json",
