@@ -3,8 +3,8 @@
 //   البيانات كلها من API حقيقي — لا يوجد بيانات ثابتة
 // =====================================================
 
-const API_URL = "http://127.0.0.1:8000/api";
-const STORAGE_URL = "http://127.0.0.1:8000/storage";
+const API_URL = "https://flashpay-back-1.onrender.com/api";
+const STORAGE_URL = "https://flashpay-back-1.onrender.com/storage";
 
 // ─────────────────────────────────────────────────────
 //  STATE
@@ -54,7 +54,7 @@ async function checkAuth() {
   }
 
   try {
-    const res = await fetch("http://127.0.0.1:8000/api/me", {
+    const res = await fetch("https://flashpay-back-1.onrender.com/api/me", {
       headers: {
         Authorization: "Bearer " + token,
         Accept: "application/json",
