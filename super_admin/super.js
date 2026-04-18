@@ -5,107 +5,106 @@ const STORAGE_URL = "http://127.0.0.1:8000/storage"; // ✅ يُستخدم مع 
    Auth Check
 ========================= */
 async function checkAuth() {
-    const token = localStorage.getItem('auth_token');
+  const token = localStorage.getItem("auth_token");
 
-    if (!token) {
-        window.location.replace('../index.html');
-        return null;
+  if (!token) {
+    window.location.replace("../index.html");
+    return null;
+  }
+
+  try {
+    const res = await fetch("http://127.0.0.1:8000/api/me", {
+      headers: {
+        Authorization: "Bearer " + token,
+        Accept: "application/json",
+      },
+    });
+
+    if (!res.ok) {
+      localStorage.clear();
+      window.location.replace("../index.html");
+      return null;
     }
 
-    try {
-        const res = await fetch('http://127.0.0.1:8000/api/me', {
-            headers: {
-                'Authorization': 'Bearer ' + token,
-                'Accept': 'application/json',
-            }
-        });
+    const data = await res.json();
+    const userRole = data.user.role;
 
-        if (!res.ok) {
-            localStorage.clear();
-            window.location.replace('../index.html');
-            return null;
-        }
+    const ALLOWED_ROLES = ["super_admin"];
 
-        const data = await res.json();
-        const userRole = data.user.role;
+    // 🔴 التحقق من الصلاحية
+    if (!ALLOWED_ROLES.includes(userRole)) {
+      // 1. عرض الـ Lottie
+      showUnauthorizedLottie();
 
-        const ALLOWED_ROLES = ['super_admin'];
+      // 2. الانتظار لمدة 3 ثوانٍ ثم التوجيه
+      setTimeout(() => {
+        redirectByRole(userRole);
+      }, 1000);
 
-        // 🔴 التحقق من الصلاحية
-        if (!ALLOWED_ROLES.includes(userRole)) {
-            // 1. عرض الـ Lottie
-            showUnauthorizedLottie();
-            
-            // 2. الانتظار لمدة 3 ثوانٍ ثم التوجيه
-            setTimeout(() => {
-                redirectByRole(userRole);
-            }, 1000); 
-            
-            return null;
-        }
-
-        return token;
-
-    } catch (e) {
-        localStorage.clear();
-        showUnauthorizedLottie();
-        return null;
+      return null;
     }
+
+    return token;
+  } catch (e) {
+    localStorage.clear();
+    showUnauthorizedLottie();
+    return null;
+  }
 }
 
 // 🟢 دالة لعرض الـ Lottie بملء الشاشة
 function showUnauthorizedLottie() {
-    // إنشاء حاوية تغطي الشاشة بالكامل
-    const container = document.createElement('div');
-    container.style.position = 'fixed';
-    container.style.top = '0';
-    container.style.left = '0';
-    container.style.width = '100vw';
-    container.style.height = '100vh';
-    container.style.backgroundColor = '#ffffff'; // لون الخلفية (يمكنك تغييره)
-    container.style.display = 'flex';
-    container.style.flexDirection = 'column';
-    container.style.justifyContent = 'center';
-    container.style.alignItems = 'center';
-    container.style.zIndex = '9999';
-    
-    // إضافة نص توضيحي (اختياري)
-    const text = document.createElement('h2');
-    text.innerText = 'عذراً، ليس لديك صلاحية للوصول إلى هذه الصفحة';
-    text.style.fontFamily = 'Arial, sans-serif';
-    text.style.color = '#333';
-    text.style.marginTop = '20px';
+  // إنشاء حاوية تغطي الشاشة بالكامل
+  const container = document.createElement("div");
+  container.style.position = "fixed";
+  container.style.top = "0";
+  container.style.left = "0";
+  container.style.width = "100vw";
+  container.style.height = "100vh";
+  container.style.backgroundColor = "#ffffff"; // لون الخلفية (يمكنك تغييره)
+  container.style.display = "flex";
+  container.style.flexDirection = "column";
+  container.style.justifyContent = "center";
+  container.style.alignItems = "center";
+  container.style.zIndex = "9999";
 
-    // حاوية الأنيميشن
-    const lottieContainer = document.createElement('div');
-    lottieContainer.style.width = '300px'; // حجم الأنيميشن
-    lottieContainer.style.height = '300px';
+  // إضافة نص توضيحي (اختياري)
+  const text = document.createElement("h2");
+  text.innerText = "عذراً، ليس لديك صلاحية للوصول إلى هذه الصفحة";
+  text.style.fontFamily = "Arial, sans-serif";
+  text.style.color = "#333";
+  text.style.marginTop = "20px";
 
-    container.appendChild(lottieContainer);
-    container.appendChild(text);
-    document.body.appendChild(container);
+  // حاوية الأنيميشن
+  const lottieContainer = document.createElement("div");
+  lottieContainer.style.width = "300px"; // حجم الأنيميشن
+  lottieContainer.style.height = "300px";
 
-    // تشغيل الأنيميشن
-    lottie.loadAnimation({
-        container: lottieContainer, 
-        renderer: 'svg',
-        loop: true,
-        autoplay: true,
-        // ⚠️ ضع رابط ملف الـ JSON الخاص بالـ Lottie هنا
-        path: 'https://assets3.lottiefiles.com/packages/lf20_0s6tfbuc.json' 
-    });
+  container.appendChild(lottieContainer);
+  container.appendChild(text);
+  document.body.appendChild(container);
+
+  // تشغيل الأنيميشن
+  lottie.loadAnimation({
+    container: lottieContainer,
+    renderer: "svg",
+    loop: true,
+    autoplay: true,
+    // ⚠️ ضع رابط ملف الـ JSON الخاص بالـ Lottie هنا
+    path: "https://assets3.lottiefiles.com/packages/lf20_0s6tfbuc.json",
+  });
 }
 
 function redirectByRole(role) {
-    const routes = {
-        'super_admin': '../super_admin/super.html',
-        'admin':       '../office_manager/admin.html',
-        'cashier':     '../cashier/cashier.html',
-        'accountant':  '../accountant/accountant.html',
-        'agent':       '../agent/agent.html',
-        'customer':    '../customer/customer.html',
-    };
-    window.location.replace(routes[role] || '../index.html');
+  const routes = {
+    super_admin: "../super_admin/super.html",
+    admin: "../office_manager/admin.html",
+    cashier: "../cashier/cashier.html",
+    accountant: "../accountant/accountant.html",
+    agent: "../agent/agent.html",
+    customer: "../customer/customer.html",
+  };
+  window.location.replace(routes[role] || "../index.html");
 }
 /* =========================
    Helpers
@@ -142,41 +141,40 @@ async function fetchCurrencies() {
   }
 }
 async function loadCurrencies() {
-    const tbody = document.getElementById('currencies-table-body');
-    const sel   = document.getElementById('currency-select');
-    const selMain = document.getElementById('main-currency-select');
-    if (!tbody) return;
- 
-    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:28px;color:var(--gray);">
+  const tbody = document.getElementById("currencies-table-body");
+  const sel = document.getElementById("currency-select");
+  const selMain = document.getElementById("main-currency-select");
+  if (!tbody) return;
+
+  tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:28px;color:var(--gray);">
         <i class="fa-solid fa-spinner fa-spin" style="font-size:18px;"></i> جاري التحميل...
     </td></tr>`;
- 
-    try {
-        const res  = await fetch(`${API_URL}/currencies`, { headers: getHeaders() });
-        const json = await res.json();
-        allCurrencies = json.data || json || [];
- 
-        // 1. تعريف المتغير الذي يحتوي على الخيارات (هذا ما كان ينقصك)
-        const optionsHtml = allCurrencies.map(c =>
-            `<option value="${c.id}">${c.name} (${c.code})</option>`
-        ).join('');
- 
-        // 2. تعبئة قائمة تحديث السعر العادي
-        if (sel) {
-            sel.innerHTML = `<option value="">اختر العملة</option>` + optionsHtml;
-        }
 
-        // 3. تعبئة قائمة تحديث السعر الرئيسي
-        if (selMain) {
-            selMain.innerHTML = `<option value="">اختر العملة</option>` + optionsHtml;
-        }
+  try {
+    const res = await fetch(`${API_URL}/currencies`, { headers: getHeaders() });
+    const json = await res.json();
+    allCurrencies = json.data || json || [];
 
-        renderCurrenciesTable(allCurrencies);
- 
-    } catch(err) {
-        console.error('loadCurrencies:', err);
-        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--danger);padding:20px;">خطأ في التحميل</td></tr>`;
+    // 1. تعريف المتغير الذي يحتوي على الخيارات (هذا ما كان ينقصك)
+    const optionsHtml = allCurrencies
+      .map((c) => `<option value="${c.id}">${c.name} (${c.code})</option>`)
+      .join("");
+
+    // 2. تعبئة قائمة تحديث السعر العادي
+    if (sel) {
+      sel.innerHTML = `<option value="">اختر العملة</option>` + optionsHtml;
     }
+
+    // 3. تعبئة قائمة تحديث السعر الرئيسي
+    if (selMain) {
+      selMain.innerHTML = `<option value="">اختر العملة</option>` + optionsHtml;
+    }
+
+    renderCurrenciesTable(allCurrencies);
+  } catch (err) {
+    console.error("loadCurrencies:", err);
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--danger);padding:20px;">خطأ في التحميل</td></tr>`;
+  }
 }
 function fillSelect(select, data, placeholder = "اختر من القائمة") {
   if (!select) return;
@@ -760,7 +758,7 @@ document
         document.getElementById("agent-country-select").value || null;
       data.city_id = document.getElementById("agent-city-select").value || null;
       data.balance = document.getElementById("emp-balance").value || 0;
-       const ratioVal =
+      const ratioVal =
         parseFloat(document.getElementById("emp-profit-ratio")?.value) || 0;
       data.agent_profit_ratio = Math.min(100, Math.max(0, ratioVal));
     } else {
@@ -788,24 +786,24 @@ document
 
       if (res.ok) {
         notyf.success("تم إضافة الموظف بنجاح إلى النظام");
-         if (role === "agent" && json?.data?.id) {
-        const ratio =
-          parseFloat(document.getElementById("emp-profit-ratio")?.value) || 0;
-        if (ratio > 0) {
-          try {
-            await fetch(`${API_URL}/agent/profit-ratio`, {
-              method: "PATCH",
-              headers: getHeaders(),
-              body: JSON.stringify({
-                agent_id: json.data.id,
-                agent_profit_ratio: ratio,
-              }),
-            });
-          } catch (_) {
-            // non-blocking
+        if (role === "agent" && json?.data?.id) {
+          const ratio =
+            parseFloat(document.getElementById("emp-profit-ratio")?.value) || 0;
+          if (ratio > 0) {
+            try {
+              await fetch(`${API_URL}/agent/profit-ratio`, {
+                method: "PATCH",
+                headers: getHeaders(),
+                body: JSON.stringify({
+                  agent_id: json.data.id,
+                  agent_profit_ratio: ratio,
+                }),
+              });
+            } catch (_) {
+              // non-blocking
+            }
           }
         }
-      }
         e.target.reset();
         handleRoleChange();
         await loadEmployees();
@@ -893,74 +891,90 @@ async function handleEditCountryChange() {
 let _allBankTransfers = [];
 let currentBtApproveId = null;
 
-
-
 async function loadBankTransfers() {
-    const tbody = document.getElementById("bt-tbody");
-    if (!tbody) return;
-    
-    document.getElementById("bt-refresh-icon").classList.add("fa-spin");
-    tbody.innerHTML = `<tr><td colspan="11" class="pt-loading-cell"><i class="fa-solid fa-spinner fa-spin"></i> جاري التحميل...</td></tr>`;
+  const tbody = document.getElementById("bt-tbody");
+  if (!tbody) return;
 
-    try {
-        const res = await fetch(`${API_URL}/bank-transfer`, {
-            headers: getHeaders ? getHeaders() : { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' }
-        });
-        const json = await res.json();
-        _allBankTransfers = json.data || [];
-        updateBtStats();
-        filterBankTransfers();
-    } catch (e) {
-      
-        console.error(e);
-        tbody.innerHTML = `<tr><td colspan="11" style="text-align:center;color:red;">فشل التحميل</td></tr>`;
-    } finally {
-        document.getElementById("bt-refresh-icon").classList.remove("fa-spin");
-    }
+  document.getElementById("bt-refresh-icon").classList.add("fa-spin");
+  tbody.innerHTML = `<tr><td colspan="11" class="pt-loading-cell"><i class="fa-solid fa-spinner fa-spin"></i> جاري التحميل...</td></tr>`;
+
+  try {
+    const res = await fetch(`${API_URL}/bank-transfer`, {
+      headers: getHeaders
+        ? getHeaders()
+        : { Authorization: `Bearer ${token}`, Accept: "application/json" },
+    });
+    const json = await res.json();
+    _allBankTransfers = json.data || [];
+    updateBtStats();
+    filterBankTransfers();
+  } catch (e) {
+    console.error(e);
+    tbody.innerHTML = `<tr><td colspan="11" style="text-align:center;color:red;">فشل التحميل</td></tr>`;
+  } finally {
+    document.getElementById("bt-refresh-icon").classList.remove("fa-spin");
+  }
 }
 
 function updateBtStats() {
-    document.getElementById("bt-stat-pending").textContent = _allBankTransfers.filter(t => t.status === 'pending').length;
-    document.getElementById("bt-stat-approved").textContent = _allBankTransfers.filter(t => t.status === 'admin_approved').length;
-    document.getElementById("bt-stat-completed").textContent = _allBankTransfers.filter(t => t.status === 'completed').length;
+  document.getElementById("bt-stat-pending").textContent =
+    _allBankTransfers.filter((t) => t.status === "pending").length;
+  document.getElementById("bt-stat-approved").textContent =
+    _allBankTransfers.filter((t) => t.status === "admin_approved").length;
+  document.getElementById("bt-stat-completed").textContent =
+    _allBankTransfers.filter((t) => t.status === "completed").length;
 }
 
 function filterBankTransfers() {
-    const q = document.getElementById("bt-search").value.toLowerCase().trim();
-    const status = document.getElementById("bt-status-filter").value;
-    const tbody = document.getElementById("bt-tbody");
-    const emptyEl = document.getElementById("bt-empty");
+  const q = document.getElementById("bt-search").value.toLowerCase().trim();
+  const status = document.getElementById("bt-status-filter").value;
+  const tbody = document.getElementById("bt-tbody");
+  const emptyEl = document.getElementById("bt-empty");
 
-    const filtered = _allBankTransfers.filter(t => {
-        const matchQ = !q || (t.full_name||'').toLowerCase().includes(q) 
-                          || (t.recipient_name||'').toLowerCase().includes(q) 
-                          || (t.bank_name||'').toLowerCase().includes(q);
-        const matchStatus = !status || t.status === status;
-        return matchQ && matchStatus;
-    });
+  const filtered = _allBankTransfers.filter((t) => {
+    const matchQ =
+      !q ||
+      (t.full_name || "").toLowerCase().includes(q) ||
+      (t.recipient_name || "").toLowerCase().includes(q) ||
+      (t.bank_name || "").toLowerCase().includes(q);
+    const matchStatus = !status || t.status === status;
+    return matchQ && matchStatus;
+  });
 
-    if (filtered.length === 0) {
-        tbody.innerHTML = '';
-        emptyEl.style.display = 'block';
-        return;
-    }
-    
-    emptyEl.style.display = 'none';
-    
-    const statusMap = {
-        'pending':        { text: 'بانتظار الإدارة', color: '#b45309', bg: '#fef3c7' },
-        'admin_approved': { text: 'بانتظار الكاشير', color: '#1d4ed8', bg: '#dbeafe' },
-        'completed':      { text: 'مكتملة', color: '#15803d', bg: '#dcfce7' },
-        'rejected':       { text: 'مرفوضة', color: '#b91c1c', bg: '#fee2e2' }
-    };
+  if (filtered.length === 0) {
+    tbody.innerHTML = "";
+    emptyEl.style.display = "block";
+    return;
+  }
 
-    tbody.innerHTML = filtered.map((t, index) => {
-        const s = statusMap[t.status] || { text: t.status, color: 'gray', bg: '#eee' };
-        const date = new Date(t.created_at).toLocaleDateString('ar-SY');
-        
-        let actions = '';
-        if (t.status === 'pending') {
-            actions = `
+  emptyEl.style.display = "none";
+
+  const statusMap = {
+    pending: { text: "بانتظار الإدارة", color: "#b45309", bg: "#fef3c7" },
+    admin_approved: {
+      text: "بانتظار الكاشير",
+      color: "#1d4ed8",
+      bg: "#dbeafe",
+    },
+    completed: { text: "مكتملة", color: "#15803d", bg: "#dcfce7" },
+    rejected: { text: "مرفوضة", color: "#b91c1c", bg: "#fee2e2" },
+  };
+
+  tbody.innerHTML = filtered
+    .map((t, index) => {
+      const s = statusMap[t.status] || {
+        text: t.status,
+        color: "gray",
+        bg: "#eee",
+      };
+      const date = new Date(t.created_at).toLocaleDateString("ar-SY");
+      const dest =
+        [t.destination_country, t.destination_city]
+          .filter(Boolean)
+          .join(" - ") || "—";
+      let actions = "";
+      if (t.status === "pending") {
+        actions = `
                 <button onclick="openBtApproveModal(${t.id}, '${t.recipient_name}')" style="background:#dcfce7;color:#15803d;border:none;padding:5px 10px;border-radius:5px;cursor:pointer;font-weight:bold;margin-bottom:4px;">
                     <i class="fa-solid fa-check"></i> موافقة
                 </button>
@@ -968,120 +982,127 @@ function filterBankTransfers() {
                     <i class="fa-solid fa-xmark"></i> رفض
                 </button>
             `;
-        } else {
-            actions = `<span style="color:var(--gray);font-size:12px;">مُعالج</span>`;
-        }
+      } else {
+        actions = `<span style="color:var(--gray);font-size:12px;">مُعالج</span>`;
+      }
 
-        return `
+      return `
         <tr>
             <td>${index + 1}</td>
-            <td><span style="font-weight:bold;">${t.agent?.name || '—'}</span></td>
-            <td><span style="font-weight:bold;color:var(--primary);">${t.recipient_name || '—'}</span></td>
+            <td><span style="font-weight:bold;">${t.agent?.name || "—"}</span></td>
+            <td><span style="font-weight:bold;color:var(--primary);">${t.recipient_name || "—"}</span></td>
             <td>${t.full_name}</td>
             <td>${t.bank_name}</td>
             <td style="direction:ltr;text-align:right;font-family:monospace;">${t.account_number}</td>
             <td style="direction:ltr;text-align:right;">${t.phone}</td>
+            <td style="font-size:12px;color:var(--gray);">${dest}</td>
             <td style="font-weight:900;color:var(--success);">$${parseFloat(t.amount).toLocaleString()}</td>
             <td><span style="background:${s.bg};color:${s.color};padding:4px 10px;border-radius:20px;font-size:11px;font-weight:bold;white-space:nowrap;">${s.text}</span></td>
             <td style="font-size:11px;color:var(--gray);">${date}</td>
             <td style="display:flex;flex-direction:column;gap:4px;">${actions}</td>
         </tr>`;
-    }).join('');
+    })
+    .join("");
 }
 
 function openBtApproveModal(id, recipientName) {
-    currentBtApproveId = id;
-    document.getElementById("bt-approve-desc").innerHTML = `هل أنت متأكد من الموافقة على الحوالة للمستلم <strong>${recipientName}</strong>؟<br>سيتم إرسالها للكاشير لتسليمها.`;
-    document.getElementById("bt-approve-modal").style.display = 'flex';
-    loadCashiers();
+  currentBtApproveId = id;
+  document.getElementById("bt-approve-desc").innerHTML =
+    `هل أنت متأكد من الموافقة على الحوالة للمستلم <strong>${recipientName}</strong>؟<br>سيتم إرسالها للكاشير لتسليمها.`;
+  document.getElementById("bt-approve-modal").style.display = "flex";
+  loadCashiers();
 }
 
 function closeBtApproveModal() {
-    currentBtApproveId = null;
-    document.getElementById("bt-approve-modal").style.display = 'none';
+  currentBtApproveId = null;
+  document.getElementById("bt-approve-modal").style.display = "none";
 }
 
 async function confirmBtApprove() {
-    const cashierId = document.getElementById("bt-cashier-select").value;
+  const cashierId = document.getElementById("bt-cashier-select").value;
 
-    if (!cashierId) {
-        alert("⚠️ يجب اختيار الكاشير");
-        return;
+  if (!cashierId) {
+    alert("⚠️ يجب اختيار الكاشير");
+    return;
+  }
+
+  try {
+    // ✅ تم تصحيح اسم المتغير هنا إلى currentBtApproveId
+    const res = await fetch(
+      `${API_URL}/bank-transfer/${currentBtApproveId}/approve`,
+      {
+        method: "PATCH", // تأكد أن نوع الطلب يتطابق مع الراوت في لارافيل (POST أو PATCH)
+        headers: getHeaders(),
+        body: JSON.stringify({
+          cashier_id: cashierId,
+        }),
+      },
+    );
+
+    const data = await res.json();
+
+    if (res.ok) {
+      alert("✅ تم إرسال الحوالة للكاشير بنجاح");
+      closeBtApproveModal();
+      loadBankTransfers();
+    } else {
+      alert(data.message || "خطأ");
     }
-
-    try {
-        // ✅ تم تصحيح اسم المتغير هنا إلى currentBtApproveId
-        const res = await fetch(`${API_URL}/bank-transfer/${currentBtApproveId}/approve`, {
-            method: "PATCH", // تأكد أن نوع الطلب يتطابق مع الراوت في لارافيل (POST أو PATCH)
-            headers: getHeaders(),
-            body: JSON.stringify({
-                cashier_id: cashierId
-            })
-        });
-
-        const data = await res.json();
-
-        if (res.ok) {
-            alert("✅ تم إرسال الحوالة للكاشير بنجاح");
-            closeBtApproveModal();
-            loadBankTransfers();
-        } else {
-            alert(data.message || "خطأ");
-        }
-
-    } catch (e) {
-        console.error(e);
-        alert("خطأ في الاتصال");
-    }
+  } catch (e) {
+    console.error(e);
+    alert("خطأ في الاتصال");
+  }
 }
 
 async function rejectBankTransfer(id) {
-    if (!confirm('هل أنت متأكد من رفض هذه الحوالة البنكية؟')) return;
-    
-    try {
-        const res = await fetch(`${API_URL}/bank-transfer/${id}/reject`, {
-            method: 'PATCH',
-            headers: getHeaders ? getHeaders() : { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' }
-        });
-        if (res.ok) {
-            loadBankTransfers();
-            if (typeof showToast !== 'undefined') showToast("تم رفض الحوالة", "error");
-        } else {
-            alert("حدث خطأ");
-        }
-    } catch (e) {
-        alert("فشل الاتصال");
+  if (!confirm("هل أنت متأكد من رفض هذه الحوالة البنكية؟")) return;
+
+  try {
+    const res = await fetch(`${API_URL}/bank-transfer/${id}/reject`, {
+      method: "PATCH",
+      headers: getHeaders
+        ? getHeaders()
+        : { Authorization: `Bearer ${token}`, Accept: "application/json" },
+    });
+    if (res.ok) {
+      loadBankTransfers();
+      if (typeof showToast !== "undefined")
+        showToast("تم رفض الحوالة", "error");
+    } else {
+      alert("حدث خطأ");
     }
+  } catch (e) {
+    alert("فشل الاتصال");
+  }
 }
 async function loadCashiers() {
-    const select = document.getElementById("bt-cashier-select");
+  const select = document.getElementById("bt-cashier-select");
 
-    try {
-        const res = await fetch(`${API_URL}/users`, {
-            headers: getHeaders()
-        });
+  try {
+    const res = await fetch(`${API_URL}/users`, {
+      headers: getHeaders(),
+    });
 
-        const json = await res.json();
+    const json = await res.json();
 
-        const cashiers = (json.data || []).filter(u => u.role === "cashier");
+    const cashiers = (json.data || []).filter((u) => u.role === "cashier");
 
-        select.innerHTML = `<option value="">اختر الكاشير</option>`;
+    select.innerHTML = `<option value="">اختر الكاشير</option>`;
 
-        cashiers.forEach(c => {
-            const option = document.createElement("option");
-            option.value = c.id;
-            
-            // ✅ إضافة: إظهار اسم المكتب بجانب اسم الكاشير للسوبر أدمن
-            const officeName = c.office ? c.office.name : 'بدون مكتب';
-            option.textContent = `${c.name} - (مكتب: ${officeName})`;
-            
-            select.appendChild(option);
-        });
+    cashiers.forEach((c) => {
+      const option = document.createElement("option");
+      option.value = c.id;
 
-    } catch (e) {
-        console.error(e);
-        select.innerHTML = `<option>خطأ في التحميل</option>`;
-    }
+      // ✅ إضافة: إظهار اسم المكتب بجانب اسم الكاشير للسوبر أدمن
+      const officeName = c.office ? c.office.name : "بدون مكتب";
+      option.textContent = `${c.name} - (مكتب: ${officeName})`;
+
+      select.appendChild(option);
+    });
+  } catch (e) {
+    console.error(e);
+    select.innerHTML = `<option>خطأ في التحميل</option>`;
+  }
 }
 // دالة فتح نافذة التعديل مع تعبئة البيانات
 async function openEditModal(user) {
@@ -1140,7 +1161,6 @@ document.getElementById("edit-user-form").onsubmit = async (e) => {
     data.city_id = document.getElementById("edit-user-city").value;
   } else {
     data.office_id = document.getElementById("edit-user-office").value;
-    
   }
 
   const res = await fetch(`${API_URL}/users/${id}`, {
@@ -1162,42 +1182,47 @@ function closeEditModal() {
 }
 // أضف هذا الكود في آخر سطر في ملف super.js
 async function updateMainPrice() {
-    console.log("تم الضغط على زر تحديث السعر الرئيسي"); // للتأكد من الاتصال
-    
-    const currencyId = document.getElementById("main-currency-select").value;
-    const newMainPrice = document.getElementById("new-main-price").value;
+  console.log("تم الضغط على زر تحديث السعر الرئيسي"); // للتأكد من الاتصال
 
-    if (!currencyId || !newMainPrice) {
-        if (typeof notyf !== 'undefined') notyf.error("يرجى اختيار العملة وإدخال السعر الجديد");
-        else alert("يرجى اختيار العملة وإدخال السعر الجديد");
-        return;
+  const currencyId = document.getElementById("main-currency-select").value;
+  const newMainPrice = document.getElementById("new-main-price").value;
+
+  if (!currencyId || !newMainPrice) {
+    if (typeof notyf !== "undefined")
+      notyf.error("يرجى اختيار العملة وإدخال السعر الجديد");
+    else alert("يرجى اختيار العملة وإدخال السعر الجديد");
+    return;
+  }
+
+  try {
+    const res = await fetch(
+      `${API_URL}/currencies/update-main-price/${currencyId}`,
+      {
+        method: "PUT",
+        headers: getHeaders(),
+        body: JSON.stringify({ main_price: newMainPrice }),
+      },
+    );
+
+    const data = await res.json();
+
+    if (data.status === "success" || res.ok) {
+      if (typeof notyf !== "undefined")
+        notyf.success("تم تحديث السعر الرئيسي بنجاح");
+      else alert("تم تحديث السعر الرئيسي بنجاح");
+
+      // تحديث البيانات في الجدول
+      if (typeof loadCurrencies === "function") loadCurrencies();
+    } else {
+      const msg = data.message || "حدث خطأ أثناء التحديث";
+      if (typeof notyf !== "undefined") notyf.error(msg);
+      else alert(msg);
     }
-
-    try {
-        const res = await fetch(`${API_URL}/currencies/update-main-price/${currencyId}`, {
-            method: "PUT",
-            headers: getHeaders(),
-            body: JSON.stringify({ main_price: newMainPrice }),
-        });
-
-        const data = await res.json();
-
-        if (data.status === "success" || res.ok) {
-            if (typeof notyf !== 'undefined') notyf.success("تم تحديث السعر الرئيسي بنجاح");
-            else alert("تم تحديث السعر الرئيسي بنجاح");
-            
-            // تحديث البيانات في الجدول
-            if (typeof loadCurrencies === "function") loadCurrencies();
-        } else {
-            const msg = data.message || "حدث خطأ أثناء التحديث";
-            if (typeof notyf !== 'undefined') notyf.error(msg);
-            else alert(msg);
-        }
-    } catch (error) {
-        console.error("Error updating main price:", error);
-        if (typeof notyf !== 'undefined') notyf.error("تعذر الاتصال بالسيرفر");
-        else alert("تعذر الاتصال بالسيرفر");
-    }
+  } catch (error) {
+    console.error("Error updating main price:", error);
+    if (typeof notyf !== "undefined") notyf.error("تعذر الاتصال بالسيرفر");
+    else alert("تعذر الاتصال بالسيرفر");
+  }
 }
 async function updatePrice() {
   const currencyId = document.getElementById("currency-select").value;
@@ -1230,99 +1255,107 @@ async function updatePrice() {
   }
 }
 async function initPricePreview() {
-    cachedCurrencies = await fetchCurrencies();
+  cachedCurrencies = await fetchCurrencies();
 
-    // عناصر السعر العادي
-    const priceInput = document.getElementById("new-price");
-    const currencySelect = document.getElementById("currency-select");
-    const preview = document.getElementById("syp-preview");
-    const box = document.querySelector(".syp-preview-box");
+  // عناصر السعر العادي
+  const priceInput = document.getElementById("new-price");
+  const currencySelect = document.getElementById("currency-select");
+  const preview = document.getElementById("syp-preview");
+  const box = document.querySelector(".syp-preview-box");
 
-    // عناصر السعر الرئيسي
-    const mainPriceInput = document.getElementById("new-main-price");
-    const mainCurrencySelect = document.getElementById("main-currency-select");
-    const mainPreview = document.getElementById("main-syp-preview");
-    const mainBox = document.getElementById("main-syp-preview-box");
+  // عناصر السعر الرئيسي
+  const mainPriceInput = document.getElementById("new-main-price");
+  const mainCurrencySelect = document.getElementById("main-currency-select");
+  const mainPreview = document.getElementById("main-syp-preview");
+  const mainBox = document.getElementById("main-syp-preview-box");
 
-    function calculate(inputEl, previewEl, boxEl) {
-        if (!inputEl || !previewEl || !boxEl) return;
-        
-        const price = parseFloat(inputEl.value);
-        if (!price) {
-            previewEl.textContent = "0";
-            boxEl.classList.remove("active");
-            return;
-        }
+  function calculate(inputEl, previewEl, boxEl) {
+    if (!inputEl || !previewEl || !boxEl) return;
 
-        const sypCurrency = cachedCurrencies.find(c => c.code === 'SYP');
-        if (!sypCurrency) return;
-
-        const sypPriceInUsd = parseFloat(sypCurrency.price);
-        if (sypPriceInUsd <= 0) return;
-
-        const result = price / sypPriceInUsd;
-        const formatted = new Intl.NumberFormat('en-US', {
-            maximumFractionDigits: 2
-        }).format(result);
-
-        previewEl.textContent = formatted;
-        boxEl.classList.add("active");
+    const price = parseFloat(inputEl.value);
+    if (!price) {
+      previewEl.textContent = "0";
+      boxEl.classList.remove("active");
+      return;
     }
 
-    // ربط الأحداث للسعر العادي
-    if (priceInput && currencySelect) {
-        priceInput.addEventListener("input", () => calculate(priceInput, preview, box));
-        currencySelect.addEventListener("change", () => calculate(priceInput, preview, box));
-    }
+    const sypCurrency = cachedCurrencies.find((c) => c.code === "SYP");
+    if (!sypCurrency) return;
 
-    // ربط الأحداث للسعر الرئيسي
-    if (mainPriceInput && mainCurrencySelect) {
-        mainPriceInput.addEventListener("input", () => calculate(mainPriceInput, mainPreview, mainBox));
-        mainCurrencySelect.addEventListener("change", () => calculate(mainPriceInput, mainPreview, mainBox));
-    }
+    const sypPriceInUsd = parseFloat(sypCurrency.price);
+    if (sypPriceInUsd <= 0) return;
+
+    const result = price / sypPriceInUsd;
+    const formatted = new Intl.NumberFormat("en-US", {
+      maximumFractionDigits: 2,
+    }).format(result);
+
+    previewEl.textContent = formatted;
+    boxEl.classList.add("active");
+  }
+
+  // ربط الأحداث للسعر العادي
+  if (priceInput && currencySelect) {
+    priceInput.addEventListener("input", () =>
+      calculate(priceInput, preview, box),
+    );
+    currencySelect.addEventListener("change", () =>
+      calculate(priceInput, preview, box),
+    );
+  }
+
+  // ربط الأحداث للسعر الرئيسي
+  if (mainPriceInput && mainCurrencySelect) {
+    mainPriceInput.addEventListener("input", () =>
+      calculate(mainPriceInput, mainPreview, mainBox),
+    );
+    mainCurrencySelect.addEventListener("change", () =>
+      calculate(mainPriceInput, mainPreview, mainBox),
+    );
+  }
 }
-
 
 /* =========================
    Load Currencies Table
 ========================= */
 async function renderCurrenciesTable() {
-    const tbody = document.getElementById('currencies-table-body');
-    if (!tbody) return;
+  const tbody = document.getElementById("currencies-table-body");
+  if (!tbody) return;
 
-    const currencies = await fetchCurrencies(); 
-    tbody.innerHTML = '';
+  const currencies = await fetchCurrencies();
+  tbody.innerHTML = "";
 
-    if (!currencies || currencies.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">لا توجد بيانات للعملات</td></tr>';
-        return;
+  if (!currencies || currencies.length === 0) {
+    tbody.innerHTML =
+      '<tr><td colspan="5" style="text-align:center;">لا توجد بيانات للعملات</td></tr>';
+    return;
+  }
+
+  // 1. استخراج سعر الليرة السورية مقابل الدولار لإجراء العملية الحسابية
+  const sypCurrency = currencies.find((c) => c.code === "SYP");
+  const sypPriceInUsd = sypCurrency ? parseFloat(sypCurrency.price) : 0;
+
+  currencies.forEach((currency, index) => {
+    // تنسيق السعر بالدولار
+    const priceInUsd = parseFloat(currency.price);
+    const mainPrice = parseFloat(currency.main_price || 0);
+    const formattedPriceUsd = priceInUsd.toFixed(6).replace(/\.?0+$/, "");
+
+    // 2. حساب السعر بالليرة السورية وتنسيقه (Frontend Only)
+    let priceInSypHtml = "-";
+    if (sypPriceInUsd > 0) {
+      // المعادلة: سعر العملة / سعر الليرة السورية
+      const calculatedSyp = priceInUsd / sypPriceInUsd;
+
+      // تنسيق الرقم ليحتوي على فواصل الألوف (مثال: 15,000)
+      const formattedSyp = new Intl.NumberFormat("en-US", {
+        maximumFractionDigits: 2,
+      }).format(calculatedSyp);
+
+      priceInSypHtml = formattedSyp;
     }
 
-    // 1. استخراج سعر الليرة السورية مقابل الدولار لإجراء العملية الحسابية
-    const sypCurrency = currencies.find(c => c.code === 'SYP');
-    const sypPriceInUsd = sypCurrency ? parseFloat(sypCurrency.price) : 0;
-
-    currencies.forEach((currency, index) => {
-        // تنسيق السعر بالدولار
-        const priceInUsd = parseFloat(currency.price);
-        const mainPrice  = parseFloat(currency.main_price || 0);
-        const formattedPriceUsd = priceInUsd.toFixed(6).replace(/\.?0+$/, '');
-
-        // 2. حساب السعر بالليرة السورية وتنسيقه (Frontend Only)
-        let priceInSypHtml = "-";
-        if (sypPriceInUsd > 0) {
-            // المعادلة: سعر العملة / سعر الليرة السورية
-            const calculatedSyp = priceInUsd / sypPriceInUsd; 
-            
-            // تنسيق الرقم ليحتوي على فواصل الألوف (مثال: 15,000)
-            const formattedSyp = new Intl.NumberFormat('en-US', { 
-                maximumFractionDigits: 2 
-            }).format(calculatedSyp);
-
-            priceInSypHtml = formattedSyp;
-        }
-
-        tbody.innerHTML += `
+    tbody.innerHTML += `
             <tr>
                 <td>${index + 1}</td>
                 <td><strong>${currency.name}</strong></td>
@@ -1337,63 +1370,62 @@ async function renderCurrenciesTable() {
                     ${priceInSypHtml}
                 </td>
                 <td>
-                    ${currency.rates && currency.rates.length > 0
+                    ${
+                      currency.rates && currency.rates.length > 0
                         ? `<span class="tiers-count-badge"><i class="fa-solid fa-layer-group"></i> ${currency.rates.length} شريحة</span>`
                         : `<span class="tiers-count-badge tiers-empty"><i class="fa-solid fa-minus"></i> لا يوجد</span>`
                     }
                 </td>
                 <td>
-                    <button class="btn-manage-rates" onclick="openRatesModal(${currency.id}, '${currency.name}', '${currency.code}', ${JSON.stringify(currency.rates || []).replace(/"/g, '&quot;')})">
+                    <button class="btn-manage-rates" onclick="openRatesModal(${currency.id}, '${currency.name}', '${currency.code}', ${JSON.stringify(currency.rates || []).replace(/"/g, "&quot;")})">
                         <i class="fa-solid fa-sliders"></i> إدارة الشرائح
                     </button>
                 </td>
             </tr>
         `;
-    });
+  });
 }
 
 let cachedCurrencies = [];
 
 async function initPricePreview() {
+  cachedCurrencies = await fetchCurrencies();
 
-    cachedCurrencies = await fetchCurrencies();
+  const priceInput = document.getElementById("new-price");
+  const currencySelect = document.getElementById("currency-select");
+  const preview = document.getElementById("syp-preview");
+  const box = document.querySelector(".syp-preview-box");
 
-    const priceInput = document.getElementById("new-price");
-    const currencySelect = document.getElementById("currency-select");
-    const preview = document.getElementById("syp-preview");
-    const box = document.querySelector(".syp-preview-box");
-
-    function calculate() {
-
-        const price = parseFloat(priceInput.value);
-        if (!price) {
-            preview.textContent = "0";
-            box.classList.remove("active");
-            return;
-        }
-
-        // سعر الليرة السورية
-        const sypCurrency = cachedCurrencies.find(c => c.code === 'SYP');
-
-        if (!sypCurrency) return;
-
-        const sypPriceInUsd = parseFloat(sypCurrency.price);
-
-        if (sypPriceInUsd <= 0) return;
-
-        // نفس المعادلة المستخدمة بالجدول
-        const result = price / sypPriceInUsd;
-
-        const formatted = new Intl.NumberFormat('en-US', {
-            maximumFractionDigits: 2
-        }).format(result);
-
-        preview.textContent = formatted;
-        box.classList.add("active");
+  function calculate() {
+    const price = parseFloat(priceInput.value);
+    if (!price) {
+      preview.textContent = "0";
+      box.classList.remove("active");
+      return;
     }
 
-    priceInput.addEventListener("input", calculate);
-    currencySelect.addEventListener("change", calculate);
+    // سعر الليرة السورية
+    const sypCurrency = cachedCurrencies.find((c) => c.code === "SYP");
+
+    if (!sypCurrency) return;
+
+    const sypPriceInUsd = parseFloat(sypCurrency.price);
+
+    if (sypPriceInUsd <= 0) return;
+
+    // نفس المعادلة المستخدمة بالجدول
+    const result = price / sypPriceInUsd;
+
+    const formatted = new Intl.NumberFormat("en-US", {
+      maximumFractionDigits: 2,
+    }).format(result);
+
+    preview.textContent = formatted;
+    box.classList.add("active");
+  }
+
+  priceInput.addEventListener("input", calculate);
+  currencySelect.addEventListener("change", calculate);
 }
 /* =========================
    UI Helpers
@@ -2989,47 +3021,50 @@ async function loadSafes() {
     // 2. حساب الرصيد الإجمالي وتصنيفاته
     // ---------------------------------------------------------
     let totalCompany = parseFloat(_superSafeData?.balance || 0);
-    
+
     // كائن لتخزين مجاميع كل نوع من الصناديق
     let totalsByType = {
-        super: parseFloat(_superSafeData?.balance || 0),
-        office: 0,
-        main: 0,
-        trading: 0,
-        profit: 0,
-        
+      super: parseFloat(_superSafeData?.balance || 0),
+      office: 0,
+      main: 0,
+      trading: 0,
+      profit: 0,
     };
-    
-    allSafes.forEach(safe => {
-        if (safe.type === 'profit_safe') {
-            let profitTotal =   parseFloat(safe.profit_main || 0);
-          
-            totalCompany += profitTotal;
-            totalsByType.profit += profitTotal;
-        } else {
-            let bal = parseFloat(safe.balance || 0);
-            totalCompany += bal;
-            
-            // توزيع الرصيد حسب نوع الصندوق
-            if (safe.type === 'office_safe') totalsByType.office += bal;
-            if (safe.type === 'main_safe') totalsByType.main += bal;
-            if (safe.type === 'trading_safe') totalsByType.trading += bal;
-        }
+
+    allSafes.forEach((safe) => {
+      if (safe.type === "profit_safe") {
+        let profitTotal = parseFloat(safe.profit_main || 0);
+
+        totalCompany += profitTotal;
+        totalsByType.profit += profitTotal;
+      } else {
+        let bal = parseFloat(safe.balance || 0);
+        totalCompany += bal;
+
+        // توزيع الرصيد حسب نوع الصندوق
+        if (safe.type === "office_safe") totalsByType.office += bal;
+        if (safe.type === "main_safe") totalsByType.main += bal;
+        if (safe.type === "trading_safe") totalsByType.trading += bal;
+      }
     });
 
     // دالة مساعدة لتنسيق الأرقام
-    const fmt = (num) => num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    const fmt = (num) =>
+      num.toLocaleString("en-US", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      });
 
     // تحديث الواجهة بالمجموع الكلي
-    const totalCompanyEl = document.getElementById('total-company-balance');
+    const totalCompanyEl = document.getElementById("total-company-balance");
     if (totalCompanyEl) {
-        totalCompanyEl.textContent = "$" + fmt(totalCompany);
+      totalCompanyEl.textContent = "$" + fmt(totalCompany);
     }
 
     // بناء القائمة المنسدلة (Tooltip)
-    const tooltipContainer = document.getElementById('total-tooltip-container');
+    const tooltipContainer = document.getElementById("total-tooltip-container");
     if (tooltipContainer) {
-        tooltipContainer.innerHTML = `
+      tooltipContainer.innerHTML = `
             <div class="custom-tooltip">
                 <div class="tt-row">
                     <span class="tt-label"><i class="fa-solid fa-crown" style="color:var(--warning);"></i>صندوق المدير العام</span> 
@@ -3191,8 +3226,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   await renderCurrenciesTable();
   await initPricePreview();
   await loadSafes();
-await loadBankTransfers();
-await loadCashiers();
+  await loadBankTransfers();
+  await loadCashiers();
   // تحميل عدد الحوالات المعلقة لعرض الـ badge
   loadPendingTransfers();
 
@@ -3364,158 +3399,166 @@ function filterSafesTable() {
 let currentRatesCurrencyId = null;
 
 function openRatesModal(currencyId, name, code, rates) {
-    currentRatesCurrencyId = currencyId;
-    document.getElementById('rates-modal-currency-name').textContent = name;
-    document.getElementById('rates-modal-currency-code').textContent = code;
+  currentRatesCurrencyId = currencyId;
+  document.getElementById("rates-modal-currency-name").textContent = name;
+  document.getElementById("rates-modal-currency-code").textContent = code;
 
-    const container = document.getElementById('rates-tiers-container');
-    container.innerHTML = '';
+  const container = document.getElementById("rates-tiers-container");
+  container.innerHTML = "";
 
-    if (rates && rates.length > 0) {
-        rates.forEach(tier => addRateTier(tier));
-    } else {
-        // شريحة افتراضية واحدة فارغة
-        addRateTier();
-    }
+  if (rates && rates.length > 0) {
+    rates.forEach((tier) => addRateTier(tier));
+  } else {
+    // شريحة افتراضية واحدة فارغة
+    addRateTier();
+  }
 
-    document.getElementById('rates-modal').classList.remove('hidden');
-    document.body.style.overflow = 'hidden';
+  document.getElementById("rates-modal").classList.remove("hidden");
+  document.body.style.overflow = "hidden";
 }
 
 function closeRatesModal() {
-    document.getElementById('rates-modal').classList.add('hidden');
-    document.body.style.overflow = '';
-    currentRatesCurrencyId = null;
+  document.getElementById("rates-modal").classList.add("hidden");
+  document.body.style.overflow = "";
+  currentRatesCurrencyId = null;
 }
 
 function handleRatesModalBackdrop(e) {
-    if (e.target === document.getElementById('rates-modal')) {
-        closeRatesModal();
-    }
+  if (e.target === document.getElementById("rates-modal")) {
+    closeRatesModal();
+  }
 }
 
 function addRateTier(data = null) {
-    const container = document.getElementById('rates-tiers-container');
-    const index = container.querySelectorAll('.rate-tier-row').length + 1;
+  const container = document.getElementById("rates-tiers-container");
+  const index = container.querySelectorAll(".rate-tier-row").length + 1;
 
-    const row = document.createElement('div');
-    row.className = 'rate-tier-row';
-    row.innerHTML = `
+  const row = document.createElement("div");
+  row.className = "rate-tier-row";
+  row.innerHTML = `
         <div class="tier-number">${index}</div>
         <div class="tier-fields">
             <div class="tier-field">
                 <label><i class="fa-solid fa-arrow-down"></i> من (USD)</label>
                 <input type="number" class="tier-min" placeholder="0" min="0" step="any"
-                    value="${data ? data.min_amount : ''}">
+                    value="${data ? data.min_amount : ""}">
             </div>
             <div class="tier-field">
                 <label><i class="fa-solid fa-arrow-up"></i> إلى (USD)</label>
                 <input type="number" class="tier-max" placeholder="∞ لا نهاية" min="0" step="any"
-                    value="${data && data.max_amount != null ? data.max_amount : ''}">
+                    value="${data && data.max_amount != null ? data.max_amount : ""}">
                 <small class="tier-hint">اتركه فارغاً = ما لا نهاية</small>
             </div>
             <div class="tier-field">
                 <label><i class="fa-solid fa-dollar-sign"></i> السعر مقابل الدولار</label>
                 <input type="number" class="tier-rate" placeholder="1.0000" min="0" step="any"
-                    value="${data ? data.rate : ''}">
+                    value="${data ? data.rate : ""}">
             </div>
         </div>
         <button class="tier-delete-btn" onclick="removeTierRow(this)" title="حذف هذه الشريحة">
             <i class="fa-solid fa-trash"></i>
         </button>
     `;
-    container.appendChild(row);
-    reindexTiers();
+  container.appendChild(row);
+  reindexTiers();
 }
 
 function removeTierRow(btn) {
-    const row = btn.closest('.rate-tier-row');
-    row.style.opacity = '0';
-    row.style.transform = 'translateX(20px)';
-    setTimeout(() => {
-        row.remove();
-        reindexTiers();
-    }, 250);
+  const row = btn.closest(".rate-tier-row");
+  row.style.opacity = "0";
+  row.style.transform = "translateX(20px)";
+  setTimeout(() => {
+    row.remove();
+    reindexTiers();
+  }, 250);
 }
 
 function reindexTiers() {
-    const rows = document.querySelectorAll('.rate-tier-row');
-    rows.forEach((row, i) => {
-        row.querySelector('.tier-number').textContent = i + 1;
-    });
+  const rows = document.querySelectorAll(".rate-tier-row");
+  rows.forEach((row, i) => {
+    row.querySelector(".tier-number").textContent = i + 1;
+  });
 }
 
 async function saveRates() {
-    if (!currentRatesCurrencyId) return;
+  if (!currentRatesCurrencyId) return;
 
-    const rows = document.querySelectorAll('.rate-tier-row');
-    const rates = [];
-    let hasError = false;
+  const rows = document.querySelectorAll(".rate-tier-row");
+  const rates = [];
+  let hasError = false;
 
-    rows.forEach((row, i) => {
-        const min = row.querySelector('.tier-min').value;
-        const max = row.querySelector('.tier-max').value;
-        const rate = row.querySelector('.tier-rate').value;
+  rows.forEach((row, i) => {
+    const min = row.querySelector(".tier-min").value;
+    const max = row.querySelector(".tier-max").value;
+    const rate = row.querySelector(".tier-rate").value;
 
-        if (min === '' || rate === '') {
-            row.querySelector('.tier-min').style.borderColor = min === '' ? 'var(--danger)' : '';
-            row.querySelector('.tier-rate').style.borderColor = rate === '' ? 'var(--danger)' : '';
-            hasError = true;
-            return;
-        }
+    if (min === "" || rate === "") {
+      row.querySelector(".tier-min").style.borderColor =
+        min === "" ? "var(--danger)" : "";
+      row.querySelector(".tier-rate").style.borderColor =
+        rate === "" ? "var(--danger)" : "";
+      hasError = true;
+      return;
+    }
 
-        // إعادة تلوين الحقول الصحيحة
-        row.querySelector('.tier-min').style.borderColor = '';
-        row.querySelector('.tier-rate').style.borderColor = '';
+    // إعادة تلوين الحقول الصحيحة
+    row.querySelector(".tier-min").style.borderColor = "";
+    row.querySelector(".tier-rate").style.borderColor = "";
 
-        rates.push({
-            min_amount: parseFloat(min),
-            max_amount: max !== '' ? parseFloat(max) : null,
-            rate: parseFloat(rate)
-        });
+    rates.push({
+      min_amount: parseFloat(min),
+      max_amount: max !== "" ? parseFloat(max) : null,
+      rate: parseFloat(rate),
     });
+  });
 
-    if (hasError) {
-        if (typeof notyf !== 'undefined') notyf.error('يرجى ملء جميع حقول الشريحة (من، السعر)');
-        else alert('يرجى ملء جميع حقول الشريحة (من، السعر)');
-        return;
+  if (hasError) {
+    if (typeof notyf !== "undefined")
+      notyf.error("يرجى ملء جميع حقول الشريحة (من، السعر)");
+    else alert("يرجى ملء جميع حقول الشريحة (من، السعر)");
+    return;
+  }
+
+  if (rates.length === 0) {
+    if (typeof notyf !== "undefined") notyf.error("أضف شريحة واحدة على الأقل");
+    else alert("أضف شريحة واحدة على الأقل");
+    return;
+  }
+
+  const saveBtn = document.querySelector(".btn-save-rates");
+  saveBtn.disabled = true;
+  saveBtn.innerHTML =
+    '<i class="fa-solid fa-spinner fa-spin"></i> جاري الحفظ...';
+
+  try {
+    const res = await fetch(
+      `${API_URL}/currencies/${currentRatesCurrencyId}/rates`,
+      {
+        method: "POST",
+        headers: getHeaders(),
+        body: JSON.stringify({ rates }),
+      },
+    );
+
+    const data = await res.json();
+
+    if (data.status === "success") {
+      if (typeof notyf !== "undefined") notyf.success("تم حفظ الشرائح بنجاح");
+      else alert("تم حفظ الشرائح بنجاح");
+      closeRatesModal();
+      // إعادة تحميل جدول العملات لعرض عدد الشرائح المحدث
+      renderCurrenciesTable();
+    } else {
+      if (typeof notyf !== "undefined")
+        notyf.error(data.message ?? "فشل الحفظ");
+      else alert("فشل الحفظ: " + (data.message ?? ""));
     }
-
-    if (rates.length === 0) {
-        if (typeof notyf !== 'undefined') notyf.error('أضف شريحة واحدة على الأقل');
-        else alert('أضف شريحة واحدة على الأقل');
-        return;
-    }
-
-    const saveBtn = document.querySelector('.btn-save-rates');
-    saveBtn.disabled = true;
-    saveBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري الحفظ...';
-
-    try {
-        const res = await fetch(`${API_URL}/currencies/${currentRatesCurrencyId}/rates`, {
-            method: 'POST',
-            headers: getHeaders(),
-            body: JSON.stringify({ rates })
-        });
-
-        const data = await res.json();
-
-        if (data.status === 'success') {
-            if (typeof notyf !== 'undefined') notyf.success('تم حفظ الشرائح بنجاح');
-            else alert('تم حفظ الشرائح بنجاح');
-            closeRatesModal();
-            // إعادة تحميل جدول العملات لعرض عدد الشرائح المحدث
-            renderCurrenciesTable();
-        } else {
-            if (typeof notyf !== 'undefined') notyf.error(data.message ?? 'فشل الحفظ');
-            else alert('فشل الحفظ: ' + (data.message ?? ''));
-        }
-    } catch (err) {
-        console.error(err);
-        if (typeof notyf !== 'undefined') notyf.error('تعذر الاتصال بالسيرفر');
-        else alert('تعذر الاتصال بالسيرفر');
-    } finally {
-        saveBtn.disabled = false;
-        saveBtn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> حفظ الشرائح';
-    }
+  } catch (err) {
+    console.error(err);
+    if (typeof notyf !== "undefined") notyf.error("تعذر الاتصال بالسيرفر");
+    else alert("تعذر الاتصال بالسيرفر");
+  } finally {
+    saveBtn.disabled = false;
+    saveBtn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> حفظ الشرائح';
+  }
 }
