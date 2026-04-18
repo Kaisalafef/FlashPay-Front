@@ -54,7 +54,7 @@ async function checkAuth() {
   }
 
   try {
-    const res = await fetch("https://flashpay-back-1.onrender.com/api/me", {
+    const res = await fetch("http://127.0.0.1:8000/api/me", {
       headers: {
         Authorization: "Bearer " + token,
         Accept: "application/json",
@@ -277,6 +277,7 @@ function showSection(name) {
     "acct-safes": "الصناديق",
     "acct-internal": "الحوالات الداخلية",
     "monthly-closing": "الإقفال الشهري",
+    "bank-transfers": "الحوالات البنكية",
   };
   setText("page-heading", titles[name] || "");
 
@@ -288,6 +289,7 @@ function showSection(name) {
   if (name === "acct-internal") loadAccountantInternals();
   if (name === "monthly-closing") initMonthlyClosing();
   if (name === "reports") populateCountryFilter();
+  if (name === "bank-transfers") loadBankTransfers();
 
   closeSidebar();
 }
@@ -3099,3 +3101,271 @@ function _matchesCountry(transfer, countryValue) {
 /**
  * نسخة معدّلة من exportReport() تدعم فلتر الدولة
  */
+
+// ═══════════════════════════════════════════════════════════════════
+//  BANK TRANSFERS — قسم الحوالات البنكية (للمحاسب — عرض وتصدير فقط)
+// ═══════════════════════════════════════════════════════════════════
+
+let ALL_BANK_TRANSFERS = [];     // كل السجلات من API
+let FILTERED_BANK_TRANSFERS = []; // بعد تطبيق الفلاتر
+let BT_PAGE = 1;
+const BT_PER_PAGE = 15;
+
+// ── جلب البيانات من API ──
+async function loadBankTransfers() {
+  const tbody = document.getElementById("bt-tbody");
+  if (!tbody) return;
+  tbody.innerHTML = `<tr><td colspan="13" style="text-align:center;padding:30px;color:var(--gray);">
+    <i class="fa-solid fa-spinner fa-spin" style="font-size:22px;margin-bottom:8px;display:block;color:#3b82f6;"></i>
+    جاري التحميل...</td></tr>`;
+
+  try {
+    const res = await fetch(`${API_URL}/bank-transfers`, { headers: getHeaders() });
+    if (!res.ok) throw new Error("فشل الجلب");
+    const json = await res.json();
+    ALL_BANK_TRANSFERS = json.data || [];
+  } catch (e) {
+    ALL_BANK_TRANSFERS = [];
+    tbody.innerHTML = `<tr><td colspan="13" style="text-align:center;padding:30px;color:#ef4444;">
+      <i class="fa-solid fa-triangle-exclamation" style="margin-left:6px;"></i>
+      تعذّر تحميل البيانات. تأكد من الاتصال بالخادم.</td></tr>`;
+    return;
+  }
+
+  BT_PAGE = 1;
+  filterBankTransfers();
+}
+
+// ── تطبيق البحث والفلتر ──
+function filterBankTransfers() {
+  const q     = (document.getElementById("bt-search")?.value || "").trim().toLowerCase();
+  const stat  = document.getElementById("bt-filter-status")?.value || "";
+
+  FILTERED_BANK_TRANSFERS = ALL_BANK_TRANSFERS.filter(t => {
+    const agentName  = (t.agent?.name  || "").toLowerCase();
+    const bankName   = (t.bank_name    || "").toLowerCase();
+    const accNo      = (t.account_number || "").toLowerCase();
+    const fullName   = (t.full_name    || "").toLowerCase();
+    const recipName  = (t.recipient_name || "").toLowerCase();
+    const phone      = (t.phone        || "").toLowerCase();
+
+    const matchQ    = !q || [agentName, bankName, accNo, fullName, recipName, phone].some(v => v.includes(q));
+    const matchStat = !stat || t.status === stat;
+    return matchQ && matchStat;
+  });
+
+  BT_PAGE = 1;
+  renderBankTransfersStats();
+  renderBankTransfersTable();
+}
+
+// ── الإحصائيات ──
+function renderBankTransfersStats() {
+  const all = FILTERED_BANK_TRANSFERS;
+  setText("bt-stat-total",     all.length);
+  setText("bt-stat-pending",   all.filter(t => t.status === "pending").length);
+  setText("bt-stat-completed", all.filter(t => t.status === "completed").length);
+  setText("bt-stat-rejected",  all.filter(t => t.status === "rejected").length);
+  const totalAmt = all.reduce((s, t) => s + parseFloat(t.amount || 0), 0);
+  setText("bt-stat-amount", `$${totalAmt.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
+}
+
+// ── رسم الجدول ──
+function renderBankTransfersTable() {
+  const tbody = document.getElementById("bt-tbody");
+  if (!tbody) return;
+
+  const start  = (BT_PAGE - 1) * BT_PER_PAGE;
+  const paged  = FILTERED_BANK_TRANSFERS.slice(start, start + BT_PER_PAGE);
+
+  if (!paged.length) {
+    tbody.innerHTML = `<tr><td colspan="13" style="text-align:center;padding:40px;color:var(--gray);">
+      <i class="fa-solid fa-inbox" style="font-size:28px;display:block;margin-bottom:8px;"></i>
+      لا توجد سجلات</td></tr>`;
+    renderBtPagination();
+    return;
+  }
+
+  const statusMap = {
+    pending:        { label: "معلّق",        color: "#f59e0b", bg: "#fef3c7" },
+    admin_approved: { label: "موافَق عليه",  color: "#3b82f6", bg: "#dbeafe" },
+    completed:      { label: "مكتمل",        color: "#22c55e", bg: "#dcfce7" },
+    rejected:       { label: "مرفوض",        color: "#ef4444", bg: "#fee2e2" },
+  };
+
+  tbody.innerHTML = paged.map((t, i) => {
+    const s    = statusMap[t.status] || { label: t.status, color: "#6b7280", bg: "#f3f4f6" };
+    const date = t.created_at ? new Date(t.created_at).toLocaleDateString("ar-SY") : "—";
+    const rowBg = i % 2 === 0 ? "#fff" : "#f8fafc";
+
+    return `<tr style="background:${rowBg};transition:background .15s;"
+              onmouseover="this.style.background='#eff6ff'"
+              onmouseout="this.style.background='${rowBg}'">
+      <td style="padding:11px 14px;color:var(--gray);font-size:12px;">${start + i + 1}</td>
+      <td style="padding:11px 14px;font-weight:600;">${t.agent?.name || "—"}</td>
+      <td style="padding:11px 14px;">${t.bank_name || "—"}</td>
+      <td style="padding:11px 14px;font-family:monospace;font-size:12px;">${t.account_number || "—"}</td>
+      <td style="padding:11px 14px;">${t.full_name || "—"}</td>
+      <td style="padding:11px 14px;">${t.recipient_name || "—"}</td>
+      <td style="padding:11px 14px;direction:ltr;text-align:right;">${t.phone || "—"}</td>
+      <td style="padding:11px 14px;">${t.destination_country || "—"}</td>
+      <td style="padding:11px 14px;font-weight:700;color:#1d4ed8;">$${parseFloat(t.amount || 0).toLocaleString("en-US", { minimumFractionDigits: 2 })}</td>
+      <td style="padding:11px 14px;">
+        <span style="display:inline-block;padding:4px 10px;border-radius:20px;font-size:11px;
+          font-weight:700;background:${s.bg};color:${s.color};">${s.label}</span>
+      </td>
+      <td style="padding:11px 14px;">${t.cashier?.name || "—"}</td>
+      <td style="padding:11px 14px;font-size:12px;color:var(--gray);">${date}</td>
+      <td style="padding:11px 14px;">
+        <button onclick="showBtDetail(${t.id})"
+          style="padding:5px 12px;border-radius:8px;border:1.5px solid #3b82f6;
+          background:#fff;color:#1d4ed8;font-family:'Cairo',sans-serif;font-size:12px;
+          font-weight:700;cursor:pointer;"
+          onmouseover="this.style.background='#eff6ff'"
+          onmouseout="this.style.background='#fff'">
+          <i class="fa-solid fa-eye"></i>
+        </button>
+      </td>
+    </tr>`;
+  }).join("");
+
+  renderBtPagination();
+}
+
+// ── pagination ──
+function renderBtPagination() {
+  const container = document.getElementById("bt-pagination");
+  if (!container) return;
+  const total = Math.ceil(FILTERED_BANK_TRANSFERS.length / BT_PER_PAGE);
+  if (total <= 1) { container.innerHTML = ""; return; }
+
+  let html = "";
+  const btnStyle = (active) => `style="padding:7px 14px;border-radius:8px;border:1.5px solid ${active ? "#3b82f6" : "var(--border)"};
+    background:${active ? "#3b82f6" : "#fff"};color:${active ? "#fff" : "var(--dark)"};
+    font-family:'Cairo',sans-serif;font-size:13px;font-weight:700;cursor:pointer;"`;
+
+  if (BT_PAGE > 1)
+    html += `<button ${btnStyle(false)} onclick="btGoPage(${BT_PAGE - 1})">‹ السابق</button>`;
+
+  for (let p = Math.max(1, BT_PAGE - 2); p <= Math.min(total, BT_PAGE + 2); p++)
+    html += `<button ${btnStyle(p === BT_PAGE)} onclick="btGoPage(${p})">${p}</button>`;
+
+  if (BT_PAGE < total)
+    html += `<button ${btnStyle(false)} onclick="btGoPage(${BT_PAGE + 1})">التالي ›</button>`;
+
+  container.innerHTML = html;
+}
+
+function btGoPage(p) {
+  BT_PAGE = p;
+  renderBankTransfersTable();
+  document.getElementById("bank-transfers-section")?.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+// ── مودال التفاصيل ──
+function showBtDetail(id) {
+  const t = ALL_BANK_TRANSFERS.find(x => x.id === id);
+  if (!t) return;
+
+  const statusMap = {
+    pending:        { label: "معلّق",        color: "#f59e0b" },
+    admin_approved: { label: "موافَق عليه",  color: "#3b82f6" },
+    completed:      { label: "مكتمل",        color: "#22c55e" },
+    rejected:       { label: "مرفوض",        color: "#ef4444" },
+  };
+  const s    = statusMap[t.status] || { label: t.status, color: "#6b7280" };
+  const date = t.created_at ? new Date(t.created_at).toLocaleString("ar-SY") : "—";
+
+  const field = (label, value) => `
+    <div style="background:#f8fafc;border-radius:10px;padding:12px 14px;border:1px solid var(--border);">
+      <div style="font-size:11px;color:var(--gray);font-weight:700;margin-bottom:4px;">${label}</div>
+      <div style="font-size:14px;font-weight:700;color:var(--dark);">${value || "—"}</div>
+    </div>`;
+
+  document.getElementById("bt-detail-grid").innerHTML = `
+    ${field("الوكيل",          t.agent?.name)}
+    ${field("البنك",           t.bank_name)}
+    ${field("رقم الحساب",     t.account_number)}
+    ${field("صاحب الحساب",    t.full_name)}
+    ${field("اسم المستلم",    t.recipient_name)}
+    ${field("رقم الهاتف",     t.phone)}
+    ${field("الدولة",          t.destination_country)}
+    ${field("المدينة",         t.destination_city)}
+    ${field("المبلغ (USD)",    `$${parseFloat(t.amount || 0).toLocaleString("en-US", { minimumFractionDigits: 2 })}`)}
+    <div style="background:#f8fafc;border-radius:10px;padding:12px 14px;border:1px solid var(--border);">
+      <div style="font-size:11px;color:var(--gray);font-weight:700;margin-bottom:4px;">الحالة</div>
+      <div style="font-size:14px;font-weight:800;color:${s.color};">${s.label}</div>
+    </div>
+    ${field("الكاشير",         t.cashier?.name)}
+    ${field("الموافق عليه",   t.approvedBy?.name)}
+    ${field("تاريخ الطلب",    date)}
+    <div style="background:#f8fafc;border-radius:10px;padding:12px 14px;border:1px solid var(--border);grid-column:1/-1;">
+      <div style="font-size:11px;color:var(--gray);font-weight:700;margin-bottom:4px;">ملاحظات</div>
+      <div style="font-size:13px;color:var(--dark);line-height:1.6;">${t.notes || "لا توجد ملاحظات"}</div>
+    </div>`;
+
+  const modal = document.getElementById("bt-detail-modal");
+  modal.style.display = "flex";
+  modal.style.alignItems = "center";
+  modal.style.justifyContent = "center";
+}
+
+function closeBtModal() {
+  const modal = document.getElementById("bt-detail-modal");
+  if (modal) modal.style.display = "none";
+}
+
+// ── تصدير CSV ──
+function exportBankTransfersCSV() {
+  const data = FILTERED_BANK_TRANSFERS;
+  if (!data.length) {
+    showToast("لا توجد بيانات للتصدير", "error");
+    return;
+  }
+
+  const statusLabel = {
+    pending:        "معلّق",
+    admin_approved: "موافَق عليه",
+    completed:      "مكتمل",
+    rejected:       "مرفوض",
+  };
+
+  const headers = [
+    "#", "الوكيل", "البنك", "رقم الحساب", "صاحب الحساب", "اسم المستلم",
+    "الهاتف", "الدولة", "المدينة", "المبلغ (USD)", "الحالة",
+    "الكاشير", "الموافق عليه", "الملاحظات", "تاريخ الطلب"
+  ];
+
+  const rows = data.map((t, i) => [
+    i + 1,
+    t.agent?.name || "",
+    t.bank_name || "",
+    t.account_number || "",
+    t.full_name || "",
+    t.recipient_name || "",
+    t.phone || "",
+    t.destination_country || "",
+    t.destination_city || "",
+    parseFloat(t.amount || 0).toFixed(2),
+    statusLabel[t.status] || t.status,
+    t.cashier?.name || "",
+    t.approvedBy?.name || "",
+    (t.notes || "").replace(/[\r\n,]/g, " "),
+    t.created_at ? new Date(t.created_at).toLocaleString("ar-SY") : "",
+  ]);
+
+  // BOM للعربية في Excel
+  const BOM = "\uFEFF";
+  const csv = BOM + [headers, ...rows]
+    .map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(","))
+    .join("\r\n");
+
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement("a");
+  a.href     = url;
+  a.download = `bank_transfers_${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast(`تم تصدير ${data.length} سجل بنجاح ✓`);
+}
