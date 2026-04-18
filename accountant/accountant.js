@@ -3120,7 +3120,7 @@ async function loadBankTransfers() {
     جاري التحميل...</td></tr>`;
 
   try {
-    const res = await fetch(`${API_URL}/bank-transfer`, { headers: getHeaders() });
+    const res = await fetch(`${API_URL}/bank-transfers`, { headers: getHeaders() });
     if (!res.ok) throw new Error("فشل الجلب");
     const json = await res.json();
     ALL_BANK_TRANSFERS = json.data || [];
