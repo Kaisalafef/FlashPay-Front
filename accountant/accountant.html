@@ -132,7 +132,147 @@
             </header>
 
             <div class="content-body">
+<div id="bank-transfers-section" class="section" style="display:none;">
 
+                <!-- رأس القسم -->
+                <div style="display:flex;align-items:center;gap:14px;margin-bottom:24px;
+                    padding:20px 24px;background:linear-gradient(135deg,#eff6ff,#dbeafe);
+                    border-radius:16px;border:1.5px solid #93c5fd;">
+                    <div style="width:52px;height:52px;background:linear-gradient(135deg,#1d4ed8,#3b82f6);
+                        border-radius:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                        <i class="fa-solid fa-building-columns" style="color:#fff;font-size:20px;"></i>
+                    </div>
+                    <div style="flex:1;">
+                        <h2 style="margin:0;font-size:18px;font-weight:800;color:#1e3a8a;">سجل الحوالات البنكية</h2>
+                        <p style="margin:4px 0 0;font-size:12px;color:#2563eb;">جميع طلبات التحويل البنكي المقدمة من الوكلاء</p>
+                    </div>
+                    <button onclick="loadBankTransfers()"
+                        style="display:flex;align-items:center;gap:6px;padding:9px 18px;
+                        background:#fff;border:1.5px solid #3b82f6;border-radius:10px;
+                        color:#1d4ed8;font-family:'Cairo',sans-serif;font-size:13px;
+                        font-weight:700;cursor:pointer;transition:all .2s;"
+                        onmouseover="this.style.background='#eff6ff'"
+                        onmouseout="this.style.background='#fff'">
+                        <i class="fa-solid fa-arrows-rotate"></i> تحديث
+                    </button>
+                </div>
+
+                <!-- إحصائيات سريعة -->
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:24px;">
+                    <div style="background:var(--white);border-radius:14px;padding:18px;
+                        border:1.5px solid var(--border);border-right:4px solid #3b82f6;
+                        box-shadow:0 2px 8px rgba(0,0,0,.04);">
+                        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+                            <i class="fa-solid fa-list-check" style="color:#3b82f6;"></i>
+                            <span style="font-size:11px;color:var(--gray);font-weight:700;">إجمالي الطلبات</span>
+                        </div>
+                        <div id="bt-stat-total" style="font-size:28px;font-weight:800;color:#3b82f6;">—</div>
+                    </div>
+                    <div style="background:var(--white);border-radius:14px;padding:18px;
+                        border:1.5px solid var(--border);border-right:4px solid #f59e0b;
+                        box-shadow:0 2px 8px rgba(0,0,0,.04);">
+                        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+                            <i class="fa-solid fa-hourglass-half" style="color:#f59e0b;"></i>
+                            <span style="font-size:11px;color:var(--gray);font-weight:700;">معلّق</span>
+                        </div>
+                        <div id="bt-stat-pending" style="font-size:28px;font-weight:800;color:#f59e0b;">—</div>
+                    </div>
+                    <div style="background:var(--white);border-radius:14px;padding:18px;
+                        border:1.5px solid var(--border);border-right:4px solid #22c55e;
+                        box-shadow:0 2px 8px rgba(0,0,0,.04);">
+                        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+                            <i class="fa-solid fa-circle-check" style="color:#22c55e;"></i>
+                            <span style="font-size:11px;color:var(--gray);font-weight:700;">مكتمل</span>
+                        </div>
+                        <div id="bt-stat-completed" style="font-size:28px;font-weight:800;color:#22c55e;">—</div>
+                    </div>
+                    <div style="background:var(--white);border-radius:14px;padding:18px;
+                        border:1.5px solid var(--border);border-right:4px solid #ef4444;
+                        box-shadow:0 2px 8px rgba(0,0,0,.04);">
+                        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+                            <i class="fa-solid fa-circle-xmark" style="color:#ef4444;"></i>
+                            <span style="font-size:11px;color:var(--gray);font-weight:700;">مرفوض</span>
+                        </div>
+                        <div id="bt-stat-rejected" style="font-size:28px;font-weight:800;color:#ef4444;">—</div>
+                    </div>
+                    <div style="background:var(--white);border-radius:14px;padding:18px;
+                        border:1.5px solid var(--border);border-right:4px solid #1d4ed8;
+                        box-shadow:0 2px 8px rgba(0,0,0,.04);">
+                        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+                            <i class="fa-solid fa-dollar-sign" style="color:#1d4ed8;"></i>
+                            <span style="font-size:11px;color:var(--gray);font-weight:700;">إجمالي المبالغ (USD)</span>
+                        </div>
+                        <div id="bt-stat-amount" style="font-size:22px;font-weight:800;color:#1d4ed8;">—</div>
+                    </div>
+                </div>
+
+                <!-- شريط البحث والفلاتر -->
+                <div style="display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap;align-items:center;">
+                    <!-- بحث نصي -->
+                    <div style="flex:1;min-width:220px;position:relative;">
+                        <i class="fa-solid fa-magnifying-glass"
+                            style="position:absolute;right:12px;top:50%;transform:translateY(-50%);
+                            color:var(--gray);font-size:13px;pointer-events:none;"></i>
+                        <input type="text" id="bt-search"
+                            placeholder="بحث بالاسم أو البنك أو رقم الحساب أو الوكيل..."
+                            oninput="filterBankTransfers()"
+                            style="width:100%;padding:10px 38px 10px 14px;box-sizing:border-box;
+                            border:1.5px solid var(--border);border-radius:10px;
+                            font-family:'Cairo',sans-serif;font-size:13px;outline:none;
+                            transition:border-color .2s;"
+                            onfocus="this.style.borderColor='#3b82f6'"
+                            onblur="this.style.borderColor='var(--border)'">
+                    </div>
+                    <!-- فلتر الحالة -->
+                    <select id="bt-filter-status" onchange="filterBankTransfers()"
+                        style="padding:10px 14px;border:1.5px solid var(--border);border-radius:10px;
+                        font-family:'Cairo',sans-serif;font-size:13px;outline:none;
+                        background:var(--white);cursor:pointer;color:var(--dark);">
+                        <option value="">كل الحالات</option>
+                        <option value="pending">معلّق</option>
+                        <option value="admin_approved">موافَق عليه</option>
+                        <option value="completed">مكتمل</option>
+                        <option value="rejected">مرفوض</option>
+                    </select>
+                    <!-- تصدير CSV -->
+                    <button onclick="exportBankTransfersCSV()"
+                        style="display:flex;align-items:center;gap:6px;padding:10px 16px;
+                        background:var(--white);border:1.5px solid var(--border);border-radius:10px;
+                        color:var(--dark);font-family:'Cairo',sans-serif;font-size:13px;
+                        font-weight:700;cursor:pointer;white-space:nowrap;">
+                        <i class="fa-solid fa-file-csv" style="color:#16a34a;"></i> تصدير CSV
+                    </button>
+                </div>
+
+                <!-- الجدول -->
+                <div style="overflow-x:auto;border-radius:14px;border:1.5px solid var(--border);
+                    box-shadow:0 2px 8px rgba(0,0,0,.04);">
+                    <table style="width:100%;border-collapse:collapse;font-family:'Cairo',sans-serif;font-size:13px;min-width:980px;">
+                        <thead>
+                            <tr style="background:linear-gradient(135deg,#f8fafc,#f1f5f9);">
+                                <th style="padding:13px 14px;text-align:right;font-weight:700;color:var(--gray);font-size:12px;border-bottom:1.5px solid var(--border);">#</th>
+                                <th style="padding:13px 14px;text-align:right;font-weight:700;border-bottom:1.5px solid var(--border);">الوكيل</th>
+                                <th style="padding:13px 14px;text-align:right;font-weight:700;border-bottom:1.5px solid var(--border);">البنك</th>
+                                <th style="padding:13px 14px;text-align:right;font-weight:700;border-bottom:1.5px solid var(--border);">رقم الحساب</th>
+                                <th style="padding:13px 14px;text-align:right;font-weight:700;border-bottom:1.5px solid var(--border);">صاحب الحساب</th>
+                                <th style="padding:13px 14px;text-align:right;font-weight:700;border-bottom:1.5px solid var(--border);">اسم المستلم</th>
+                                <th style="padding:13px 14px;text-align:right;font-weight:700;border-bottom:1.5px solid var(--border);">الهاتف</th>
+                                <th style="padding:13px 14px;text-align:right;font-weight:700;border-bottom:1.5px solid var(--border);">الدولة</th>
+                                <th style="padding:13px 14px;text-align:right;font-weight:700;border-bottom:1.5px solid var(--border);">المبلغ (USD)</th>
+                                <th style="padding:13px 14px;text-align:right;font-weight:700;border-bottom:1.5px solid var(--border);">الحالة</th>
+                                <th style="padding:13px 14px;text-align:right;font-weight:700;border-bottom:1.5px solid var(--border);">الكاشير</th>
+                                <th style="padding:13px 14px;text-align:right;font-weight:700;border-bottom:1.5px solid var(--border);">التاريخ</th>
+                                <th style="padding:13px 14px;text-align:right;font-weight:700;border-bottom:1.5px solid var(--border);">تفاصيل</th>
+                            </tr>
+                        </thead>
+                        <tbody id="bt-tbody"></tbody>
+                    </table>
+                </div>
+
+                <!-- pagination -->
+                <div id="bt-pagination" style="display:flex;gap:8px;justify-content:center;margin-top:18px;flex-wrap:wrap;"></div>
+
+            </div>
                 <!-- ===== DASHBOARD ===== -->
                 <div id="dashboard-section" class="section active">
 
@@ -1707,147 +1847,7 @@
 
             </div>
             <!-- ===== قسم الحوالات البنكية للمحاسب ===== -->
-            <div id="bank-transfers-section" class="section" style="display:none;">
-
-                <!-- رأس القسم -->
-                <div style="display:flex;align-items:center;gap:14px;margin-bottom:24px;
-                    padding:20px 24px;background:linear-gradient(135deg,#eff6ff,#dbeafe);
-                    border-radius:16px;border:1.5px solid #93c5fd;">
-                    <div style="width:52px;height:52px;background:linear-gradient(135deg,#1d4ed8,#3b82f6);
-                        border-radius:14px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-                        <i class="fa-solid fa-building-columns" style="color:#fff;font-size:20px;"></i>
-                    </div>
-                    <div style="flex:1;">
-                        <h2 style="margin:0;font-size:18px;font-weight:800;color:#1e3a8a;">سجل الحوالات البنكية</h2>
-                        <p style="margin:4px 0 0;font-size:12px;color:#2563eb;">جميع طلبات التحويل البنكي المقدمة من الوكلاء</p>
-                    </div>
-                    <button onclick="loadBankTransfers()"
-                        style="display:flex;align-items:center;gap:6px;padding:9px 18px;
-                        background:#fff;border:1.5px solid #3b82f6;border-radius:10px;
-                        color:#1d4ed8;font-family:'Cairo',sans-serif;font-size:13px;
-                        font-weight:700;cursor:pointer;transition:all .2s;"
-                        onmouseover="this.style.background='#eff6ff'"
-                        onmouseout="this.style.background='#fff'">
-                        <i class="fa-solid fa-arrows-rotate"></i> تحديث
-                    </button>
-                </div>
-
-                <!-- إحصائيات سريعة -->
-                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:24px;">
-                    <div style="background:var(--white);border-radius:14px;padding:18px;
-                        border:1.5px solid var(--border);border-right:4px solid #3b82f6;
-                        box-shadow:0 2px 8px rgba(0,0,0,.04);">
-                        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-                            <i class="fa-solid fa-list-check" style="color:#3b82f6;"></i>
-                            <span style="font-size:11px;color:var(--gray);font-weight:700;">إجمالي الطلبات</span>
-                        </div>
-                        <div id="bt-stat-total" style="font-size:28px;font-weight:800;color:#3b82f6;">—</div>
-                    </div>
-                    <div style="background:var(--white);border-radius:14px;padding:18px;
-                        border:1.5px solid var(--border);border-right:4px solid #f59e0b;
-                        box-shadow:0 2px 8px rgba(0,0,0,.04);">
-                        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-                            <i class="fa-solid fa-hourglass-half" style="color:#f59e0b;"></i>
-                            <span style="font-size:11px;color:var(--gray);font-weight:700;">معلّق</span>
-                        </div>
-                        <div id="bt-stat-pending" style="font-size:28px;font-weight:800;color:#f59e0b;">—</div>
-                    </div>
-                    <div style="background:var(--white);border-radius:14px;padding:18px;
-                        border:1.5px solid var(--border);border-right:4px solid #22c55e;
-                        box-shadow:0 2px 8px rgba(0,0,0,.04);">
-                        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-                            <i class="fa-solid fa-circle-check" style="color:#22c55e;"></i>
-                            <span style="font-size:11px;color:var(--gray);font-weight:700;">مكتمل</span>
-                        </div>
-                        <div id="bt-stat-completed" style="font-size:28px;font-weight:800;color:#22c55e;">—</div>
-                    </div>
-                    <div style="background:var(--white);border-radius:14px;padding:18px;
-                        border:1.5px solid var(--border);border-right:4px solid #ef4444;
-                        box-shadow:0 2px 8px rgba(0,0,0,.04);">
-                        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-                            <i class="fa-solid fa-circle-xmark" style="color:#ef4444;"></i>
-                            <span style="font-size:11px;color:var(--gray);font-weight:700;">مرفوض</span>
-                        </div>
-                        <div id="bt-stat-rejected" style="font-size:28px;font-weight:800;color:#ef4444;">—</div>
-                    </div>
-                    <div style="background:var(--white);border-radius:14px;padding:18px;
-                        border:1.5px solid var(--border);border-right:4px solid #1d4ed8;
-                        box-shadow:0 2px 8px rgba(0,0,0,.04);">
-                        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-                            <i class="fa-solid fa-dollar-sign" style="color:#1d4ed8;"></i>
-                            <span style="font-size:11px;color:var(--gray);font-weight:700;">إجمالي المبالغ (USD)</span>
-                        </div>
-                        <div id="bt-stat-amount" style="font-size:22px;font-weight:800;color:#1d4ed8;">—</div>
-                    </div>
-                </div>
-
-                <!-- شريط البحث والفلاتر -->
-                <div style="display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap;align-items:center;">
-                    <!-- بحث نصي -->
-                    <div style="flex:1;min-width:220px;position:relative;">
-                        <i class="fa-solid fa-magnifying-glass"
-                            style="position:absolute;right:12px;top:50%;transform:translateY(-50%);
-                            color:var(--gray);font-size:13px;pointer-events:none;"></i>
-                        <input type="text" id="bt-search"
-                            placeholder="بحث بالاسم أو البنك أو رقم الحساب أو الوكيل..."
-                            oninput="filterBankTransfers()"
-                            style="width:100%;padding:10px 38px 10px 14px;box-sizing:border-box;
-                            border:1.5px solid var(--border);border-radius:10px;
-                            font-family:'Cairo',sans-serif;font-size:13px;outline:none;
-                            transition:border-color .2s;"
-                            onfocus="this.style.borderColor='#3b82f6'"
-                            onblur="this.style.borderColor='var(--border)'">
-                    </div>
-                    <!-- فلتر الحالة -->
-                    <select id="bt-filter-status" onchange="filterBankTransfers()"
-                        style="padding:10px 14px;border:1.5px solid var(--border);border-radius:10px;
-                        font-family:'Cairo',sans-serif;font-size:13px;outline:none;
-                        background:var(--white);cursor:pointer;color:var(--dark);">
-                        <option value="">كل الحالات</option>
-                        <option value="pending">معلّق</option>
-                        <option value="admin_approved">موافَق عليه</option>
-                        <option value="completed">مكتمل</option>
-                        <option value="rejected">مرفوض</option>
-                    </select>
-                    <!-- تصدير CSV -->
-                    <button onclick="exportBankTransfersCSV()"
-                        style="display:flex;align-items:center;gap:6px;padding:10px 16px;
-                        background:var(--white);border:1.5px solid var(--border);border-radius:10px;
-                        color:var(--dark);font-family:'Cairo',sans-serif;font-size:13px;
-                        font-weight:700;cursor:pointer;white-space:nowrap;">
-                        <i class="fa-solid fa-file-csv" style="color:#16a34a;"></i> تصدير CSV
-                    </button>
-                </div>
-
-                <!-- الجدول -->
-                <div style="overflow-x:auto;border-radius:14px;border:1.5px solid var(--border);
-                    box-shadow:0 2px 8px rgba(0,0,0,.04);">
-                    <table style="width:100%;border-collapse:collapse;font-family:'Cairo',sans-serif;font-size:13px;min-width:980px;">
-                        <thead>
-                            <tr style="background:linear-gradient(135deg,#f8fafc,#f1f5f9);">
-                                <th style="padding:13px 14px;text-align:right;font-weight:700;color:var(--gray);font-size:12px;border-bottom:1.5px solid var(--border);">#</th>
-                                <th style="padding:13px 14px;text-align:right;font-weight:700;border-bottom:1.5px solid var(--border);">الوكيل</th>
-                                <th style="padding:13px 14px;text-align:right;font-weight:700;border-bottom:1.5px solid var(--border);">البنك</th>
-                                <th style="padding:13px 14px;text-align:right;font-weight:700;border-bottom:1.5px solid var(--border);">رقم الحساب</th>
-                                <th style="padding:13px 14px;text-align:right;font-weight:700;border-bottom:1.5px solid var(--border);">صاحب الحساب</th>
-                                <th style="padding:13px 14px;text-align:right;font-weight:700;border-bottom:1.5px solid var(--border);">اسم المستلم</th>
-                                <th style="padding:13px 14px;text-align:right;font-weight:700;border-bottom:1.5px solid var(--border);">الهاتف</th>
-                                <th style="padding:13px 14px;text-align:right;font-weight:700;border-bottom:1.5px solid var(--border);">الدولة</th>
-                                <th style="padding:13px 14px;text-align:right;font-weight:700;border-bottom:1.5px solid var(--border);">المبلغ (USD)</th>
-                                <th style="padding:13px 14px;text-align:right;font-weight:700;border-bottom:1.5px solid var(--border);">الحالة</th>
-                                <th style="padding:13px 14px;text-align:right;font-weight:700;border-bottom:1.5px solid var(--border);">الكاشير</th>
-                                <th style="padding:13px 14px;text-align:right;font-weight:700;border-bottom:1.5px solid var(--border);">التاريخ</th>
-                                <th style="padding:13px 14px;text-align:right;font-weight:700;border-bottom:1.5px solid var(--border);">تفاصيل</th>
-                            </tr>
-                        </thead>
-                        <tbody id="bt-tbody"></tbody>
-                    </table>
-                </div>
-
-                <!-- pagination -->
-                <div id="bt-pagination" style="display:flex;gap:8px;justify-content:center;margin-top:18px;flex-wrap:wrap;"></div>
-
-            </div>
+            
             <!-- ===== نهاية قسم الحوالات البنكية ===== -->
 
             <!-- مودال تفاصيل الحوالة البنكية -->
