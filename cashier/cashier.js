@@ -594,7 +594,7 @@ function printBankTransferReceipt(tx) {
   const pad = (n) => String(n).padStart(2, "0");
   const printDate = `${now.getFullYear()}/${pad(now.getMonth() + 1)}/${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
 const dest =
-        [t.destination_country, t.destination_city]
+        [tx.destination_country, tx.destination_city]
   const amountFmt = parseFloat(tx.amount).toLocaleString("en-US", {
     minimumFractionDigits: 2,
   });
