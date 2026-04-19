@@ -2571,7 +2571,7 @@ function renderPendingTable(transfers) {
 
       // الحوالة دولية إذا كانت destination_country_id موجودة وبدون مكتب محلي
       const isIntl = !!(t.destination_country_id && !t.destination_office_id);
-      const country = t.destination_country_id|| "—";
+      const country = t.destination_city.country || "—";
       const city    = t.destination_city || "—";
 
       const rowStyle = isIntl
