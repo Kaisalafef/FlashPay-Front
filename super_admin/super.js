@@ -856,7 +856,7 @@ function closeDeleteModal() {
 document.getElementById("confirm-delete-btn").onclick = async () => {
   if (!currentUserIdToDelete) return;
   const notyf = new Notyf({
-    duration: 3000,
+    duration: 4000,
     position: { x: "left", y: "bottom" },
   });
   try {
@@ -864,14 +864,18 @@ document.getElementById("confirm-delete-btn").onclick = async () => {
       method: "DELETE",
       headers: getHeaders(),
     });
+    // قراءة الـ response body دائماً لمعرفة سبب الخطأ
+    const json = await res.json().catch(() => ({}));
     if (res.ok) {
       closeDeleteModal();
       await loadEmployees();
-      notyf.success("تم حذف الموظف بنجاح");
+      notyf.success("✅ تم حذف الحساب بنجاح");
     } else {
-      notyf.error("فشل الحذف: تأكد من صلاحياتك");
+      const msg = json.message || json.error || "فشل الحذف";
+      notyf.error("❌ " + msg);
     }
   } catch (e) {
+    notyf.error("❌ خطأ في الاتصال بالخادم");
     console.error(e);
   }
 };
@@ -2562,13 +2566,28 @@ function renderPendingTable(transfers) {
         : "—";
       const senderName = t.sender?.name || "—";
       const currCode = t.send_currency?.code || t.currency?.code || "—";
-      const destOffice = t.destination_office?.name
-        ? `${t.destination_office?.name}`
-        : t.destination_city || "—";
+      const destOffice = t.destination_office?.name || "—";
       const amount = parseFloat(t.amount).toLocaleString("ar-SY");
 
+      // الحوالة دولية إذا كانت destination_country_id موجودة وبدون مكتب محلي
+      const isIntl = !!(t.destination_country_id && !t.destination_office_id);
+      const country = t.sender?.country?.name || "—";
+      const city    = t.destination_city || "—";
+
+      const rowStyle = isIntl
+        ? 'style="background:linear-gradient(90deg,#eff6ff 0%,#fff 100%);"'
+        : "";
+
+      const countryCell = isIntl
+        ? `<td><span style="display:inline-flex;align-items:center;gap:4px;background:#dbeafe;color:#1d4ed8;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap;"><i class="fa-solid fa-earth-americas"></i> ${country}</span></td>`
+        : `<td><span style="color:var(--gray);font-size:12px;">—</span></td>`;
+
+      const cityCell = isIntl
+        ? `<td><span style="display:inline-flex;align-items:center;gap:4px;background:#e0f2fe;color:#0369a1;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap;"><i class="fa-solid fa-location-dot"></i> ${city}</span></td>`
+        : `<td><span style="color:var(--gray);font-size:12px;">—</span></td>`;
+
       return `
-        <tr>
+        <tr ${rowStyle}>
             <td style="font-family:monospace;font-size:11px;direction:ltr;color:#6366f1;font-weight:700;">${t.tracking_code || "—"}</td>
             <td style="font-weight:700;">${senderName}</td>
             <td style="font-weight:600;">${t.receiver_name || "—"}</td>
@@ -2576,9 +2595,11 @@ function renderPendingTable(transfers) {
             <td style="font-weight:800;">${amount}</td>
             <td><span class="role-badge">${currCode}</span></td>
             <td style="font-size:13px;color:var(--gray);">${destOffice}</td>
+            ${countryCell}
+            ${cityCell}
             <td style="font-size:12px;color:var(--gray);">${date}</td>
             <td>
-                <button onclick="openApproveModal(${t.id},'${t.tracking_code}','${t.receiver_name}')"
+                <button onclick="openApproveModal(${t.id},\'${t.tracking_code}\',\'${t.receiver_name}\')"
                     class="pt-approve-btn">
                     <i class="fa-solid fa-circle-check"></i> موافقة
                 </button>
