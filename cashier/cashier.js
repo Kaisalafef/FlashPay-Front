@@ -1,4 +1,4 @@
-const API_URL = "http://127.0.0.1:8000/api";
+const API_URL = "https://flashpay-back-1.onrender.com/api";
 let token = null;
 
 /* ============================= */
@@ -13,7 +13,7 @@ async function checkAuth() {
     }
 
     try {
-        const res = await fetch('http://127.0.0.1:8000/api/me', {
+        const res = await fetch('https://flashpay-back-1.onrender.com/api/me', {
             headers: {
                 'Authorization': 'Bearer ' + token,
                 'Accept': 'application/json',
@@ -247,7 +247,7 @@ async function acceptTransfer(transferId) {
   button.innerHTML = `<div class="loading-spinner" style="width:16px;height:16px;border-width:2px;margin:0;display:inline-block;"></div> جاري المعالجة...`;
 
   const formData = new FormData();
-  formData.append("_method", "PATCH");
+  formData.append("_method", "PATCH"); // هذه تخبر لارافل أن يتصرف كأن الطلب PATCH
   formData.append("status", "completed");
   formData.append("receiver_id_image", file);
 
@@ -255,10 +255,11 @@ async function acceptTransfer(transferId) {
     const res = await fetch(
       `${API_URL}/transfers/${transferId}/update-status`,
       {
-        method: "POST",
+        method: "POST", // 🚨 يجب أن تكون POST لكي يتم إرسال الملفات بنجاح
         headers: {
           Authorization: `Bearer ${token}`,
           Accept: "application/json",
+          // ملاحظة: لا تقم أبداً بإضافة Content-Type هنا، المتصفح سيضعها تلقائياً مع FormData
         },
         body: formData,
       },

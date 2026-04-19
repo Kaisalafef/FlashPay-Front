@@ -1,5 +1,5 @@
-const API_URL = "http://127.0.0.1:8000/api";
-const STORAGE_URL = "http://127.0.0.1:8000/storage"; // ✅ يُستخدم مع receiver_id_image مباشرة (مثال: receipts/filename.jpg)
+const API_URL = "https://flashpay-back-1.onrender.com/api";
+const STORAGE_URL = "https://flashpay-back-1.onrender.com/storage"; // ✅ يُستخدم مع receiver_id_image مباشرة (مثال: receipts/filename.jpg)
 
 /* =========================
    Auth Check
@@ -13,7 +13,7 @@ async function checkAuth() {
     }
 
     try {
-        const res = await fetch('http://127.0.0.1:8000/api/me', {
+        const res = await fetch('https://flashpay-back-1.onrender.com/api/me', {
             headers: {
                 'Authorization': 'Bearer ' + token,
                 'Accept': 'application/json',
@@ -99,7 +99,7 @@ function showUnauthorizedLottie() {
 function redirectByRole(role) {
     const routes = {
         'super_admin': '../super_admin/super.html',
-        'admin':       '../admin/admin.html',
+        'admin':       '../office_manager/admin.html',
         'cashier':     '../cashier/cashier.html',
         'accountant':  '../accountant/accountant.html',
         'agent':       '../agent/agent.html',

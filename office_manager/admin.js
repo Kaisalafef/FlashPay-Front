@@ -1,4 +1,4 @@
-const API_URL = "http://127.0.0.1:8000/api";
+const API_URL = "https://flashpay-back-1.onrender.com/api";
 async function checkAuth() {
     const token = localStorage.getItem('auth_token'); // ✅ مفتاح موحّد مع getHeaders
 
@@ -8,7 +8,7 @@ async function checkAuth() {
     }
 
     try {
-        const res = await fetch('http://127.0.0.1:8000/api/me', {
+        const res = await fetch('https://flashpay-back-1.onrender.com/api/me', {
             headers: {
                 'Authorization': 'Bearer ' + token,
                 'Accept': 'application/json',
