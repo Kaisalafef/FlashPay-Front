@@ -852,19 +852,38 @@ function closeDeleteModal() {
    Logic: Delete & Edit
 ========================= */
 
-// دالة الحذف المحدثة
+// دالة الحذف — تُحايل قيود المفاتيح الخارجية بتفريغ sender_id أولاً
 document.getElementById("confirm-delete-btn").onclick = async () => {
   if (!currentUserIdToDelete) return;
   const notyf = new Notyf({
     duration: 4000,
     position: { x: "left", y: "bottom" },
   });
+
+  const btn = document.getElementById("confirm-delete-btn");
+  const origHtml = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> جاري الحذف...';
+
   try {
+    // الخطوة 1: تفريغ sender_id في جميع الحوالات المرتبطة بهذا المستخدم
+    //           (نرسل طلب خاص للـ backend يعمل SET NULL على transfers.sender_id)
+    const nullifyRes = await fetch(`${API_URL}/users/${currentUserIdToDelete}/nullify-transfers`, {
+      method: "POST",
+      headers: getHeaders(),
+    });
+    // إذا كان الـ endpoint غير موجود (404) نكمل على أي حال — البعض لا يحتاجها
+    if (!nullifyRes.ok && nullifyRes.status !== 404 && nullifyRes.status !== 405) {
+      const j = await nullifyRes.json().catch(() => ({}));
+      notyf.error("❌ فشل تفريغ الحوالات: " + (j.message || nullifyRes.status));
+      return;
+    }
+
+    // الخطوة 2: حذف المستخدم
     const res = await fetch(`${API_URL}/users/${currentUserIdToDelete}`, {
       method: "DELETE",
       headers: getHeaders(),
     });
-    // قراءة الـ response body دائماً لمعرفة سبب الخطأ
     const json = await res.json().catch(() => ({}));
     if (res.ok) {
       closeDeleteModal();
@@ -877,6 +896,9 @@ document.getElementById("confirm-delete-btn").onclick = async () => {
   } catch (e) {
     notyf.error("❌ خطأ في الاتصال بالخادم");
     console.error(e);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = origHtml;
   }
 };
 
@@ -2571,7 +2593,7 @@ function renderPendingTable(transfers) {
 
       // الحوالة دولية إذا كانت destination_country_id موجودة وبدون مكتب محلي
       const isIntl = !!(t.destination_country_id && !t.destination_office_id);
-      const country = t.destination_city.country || "—";
+      const country = t.destination_country?.name || "—";
       const city    = t.destination_city || "—";
 
       const rowStyle = isIntl
