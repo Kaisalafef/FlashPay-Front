@@ -2592,7 +2592,7 @@ function renderPendingTable(transfers) {
       const amount = parseFloat(t.amount).toLocaleString("ar-SY");
 
       // الحوالة دولية إذا كانت destination_country_id موجودة وبدون مكتب محلي
-      const isIntl = !!(t.destinationCountry && !t.destination_office_id);
+      const isIntl = !!(t.destinationCountry && t.destination_office_id);
       const country = t.destination_country?.name || "—";
       const city    = t.destination_city || "—";
 
