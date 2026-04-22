@@ -335,12 +335,14 @@ function showSafesSection() {
   document.getElementById("section-internal").style.display = "none";
   document.getElementById("section-completed").style.display = "none";
   document.getElementById("section-customers").style.display = "none";
-  document.getElementById("page-heading").textContent = "التداول";
-  document.querySelector(".page-sub").textContent = "صناديق التداول";
+
+  document.getElementById("page-heading").textContent = "الصناديق";
+  document.querySelector(".page-sub").textContent = "صناديق التداول والصناديق الإضافية";
   document.querySelector(".page-icon").innerHTML =
     '<i class="fa-solid fa-vault"></i>';
 
   loadTradingSafes();
+  loadCashierExtraBoxes();
 }
 
 function showProfitsSection() {
@@ -379,119 +381,296 @@ function showInternalSection() {
 /*        TRADING SAFES         */
 /* ============================= */
 
+/* ── بيانات التداول للدايلوج ── */
+let _tradingDialogData = null; // { currencyId, officeId, balance, cost, currency }
+
 async function loadTradingSafes() {
   const container = document.getElementById("safes-container");
-  container.innerHTML = `<div class="loading-row" style="padding:40px;text-align:center;grid-column:1/-1;"><div class="loading-spinner" style="margin:0 auto 10px;"></div> جاري التحميل...</div>`;
+  container.innerHTML = `<div class="safe-loading-placeholder" style="grid-column:1/-1;"><div class="loading-spinner" style="margin:0 auto 10px;"></div> جاري التحميل...</div>`;
 
   try {
     const [safesRes, meRes] = await Promise.all([
-      fetch(`${API_URL}/safes`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: "application/json",
-        },
-      }),
-      fetch(`${API_URL}/me`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: "application/json",
-        },
-      }),
+      fetch(`${API_URL}/safes`, { headers: { Authorization: `Bearer ${token}`, Accept: "application/json" } }),
+      fetch(`${API_URL}/me`,    { headers: { Authorization: `Bearer ${token}`, Accept: "application/json" } }),
     ]);
     const safesJson = await safesRes.json();
-    const meData = await meRes.json();
+    const meData    = await meRes.json();
     const myOfficeId = meData.user?.office_id;
-    const mySafes = (safesJson.data || []).filter(
-      (s) => s.office_id === myOfficeId,
-    );
+    if (!_cashierOfficeId) _cashierOfficeId = myOfficeId;
+    const mySafes   = (safesJson.data || []).filter((s) => s.office_id === myOfficeId);
 
     if (!mySafes.length) {
-      container.innerHTML = `<div class="empty-state" style="grid-column:1/-1;"><i class="fa-solid fa-vault"></i><p>لا توجد صناديق متاحة حالياً</p></div>`;
+      container.innerHTML = `<div class="safe-loading-placeholder" style="grid-column:1/-1;color:var(--gray);">لا توجد صناديق متاحة حالياً</div>`;
       return;
     }
 
-    const officeSafe = mySafes.find((s) => s.type === "office_safe");
-    const mainSafe = mySafes.find((s) => s.type === "office_main");
+    const officeSafe  = mySafes.find((s) => s.type === "office_safe");
+    const mainSafe    = mySafes.find((s) => s.type === "office_main");
     const tradingSafe = mySafes.find((s) => s.type === "trading");
-    const profitSafe = mySafes.find((s) => s.type === "profit_safe") || {
-      profit_trade: 0,
-      profit_main: 0,
-    };
+    const profitSafe  = mySafes.find((s) => s.type === "profit_safe") || { profit_trade: 0, profit_main: 0 };
 
-    let html = "";
+    const total = (parseFloat(officeSafe?.balance||0) + parseFloat(mainSafe?.balance||0) + parseFloat(tradingSafe?.balance||0))
+                  .toLocaleString("en-US", { minimumFractionDigits: 2 });
+    const totalEl = document.getElementById("stat-safes-total");
+    if (totalEl) totalEl.textContent = "$" + total;
 
-    if (officeSafe) {
-      html += `
-      <div class="safe-card safe-card-office">
-        <div class="safe-card-header">
-          <div class="safe-card-icon"><i class="fa-solid fa-building-columns"></i></div>
-          <div><div class="safe-card-title">خزنة المكتب</div><div class="safe-card-subtitle">USD + SYP</div></div>
-        </div>
-        <div class="safe-card-balance">${parseFloat(officeSafe.balance).toLocaleString()}</div>
-        <div class="safe-card-currency">USD</div>
-        ${
-          parseFloat(officeSafe.balance_sy || 0) > 0
-            ? `
-        <div style="padding:8px 12px;background:rgba(234,88,12,.07);border-radius:8px;margin-top:8px;display:flex;align-items:center;gap:6px;">
-          <i class="fa-solid fa-coins" style="color:#ea580c;font-size:13px;"></i>
-          <span style="font-size:13px;color:var(--gray);">رصيد الليرة السورية:</span>
-          <span style="font-size:18px;font-weight:800;color:#ea580c;">${parseFloat(officeSafe.balance_sy || 0).toLocaleString("en-US", { maximumFractionDigits: 0 })} SYP</span>
-        </div>`
-            : ""
-        }
-      </div>`;
-    }
-
-    if (mainSafe) {
-      html += `
-      <div class="safe-card safe-card-main">
-        <div class="safe-card-header">
-          <div class="safe-card-icon"><i class="fa-solid fa-vault"></i></div>
-          <div><div class="safe-card-title">الصندوق الرئيسي</div><div class="safe-card-subtitle">USD</div></div>
-        </div>
-        <div class="safe-card-balance">${parseFloat(mainSafe.balance).toLocaleString()}</div>
-        <div class="safe-card-currency">USD</div>
-      </div>`;
-    }
-
+    // حفظ بيانات صندوق التداول للدايلوج
     if (tradingSafe) {
-      html += `
-      <div class="safe-card safe-card-trading">
-        <div class="safe-card-header">
-          <div class="safe-card-icon"><i class="fa-solid fa-chart-line"></i></div>
-          <div><div class="safe-card-title">صندوق التداول</div><div class="safe-card-subtitle">${tradingSafe.currency || "USD"}</div></div>
-        </div>
-        <div class="safe-card-balance">${parseFloat(tradingSafe.balance).toLocaleString()}</div>
-        <div class="safe-card-currency">${tradingSafe.currency || "USD"}</div>
-        ${tradingSafe.cost !== null && tradingSafe.cost !== undefined ? `<div class="safe-cost">متوسط التكلفة: <span>${parseFloat(tradingSafe.cost).toFixed(2)}</span></div>` : ""}
-        ${buildTradingUI(tradingSafe.currency_id, tradingSafe.office_id)}
-      </div>`;
+      _tradingDialogData = {
+        currencyId: tradingSafe.currency_id,
+        officeId:   tradingSafe.office_id,
+        balance:    parseFloat(tradingSafe.balance),
+        cost:       tradingSafe.cost != null ? parseFloat(tradingSafe.cost) : null,
+        currency:   tradingSafe.currency || "USD",
+      };
     }
 
-    html += `
-    <div class="safe-card" style="border-color:#8b5cf6;">
-      <div class="safe-card-header">
-        <div class="safe-card-icon" style="background:#ede9fe;color:#7c3aed;"><i class="fa-solid fa-sack-dollar"></i></div>
-        <div><div class="safe-card-title">صندوق الأرباح (Profit Safe)</div><div class="safe-card-subtitle">USD</div></div>
-      </div>
-      <div style="display:flex;justify-content:space-between;margin-bottom:15px;">
+    /* ═══════════════════════════════════════════
+       بناء الشبكة الجديدة
+       الصف 1: خزنة المكتب | الصندوق الرئيسي | صندوق التداول | صندوق الأرباح
+       الصف 2: شام كاش | USDT | + صناديق إضافية
+    ═══════════════════════════════════════════ */
+
+    // ── الصف الأول ──
+    const officeCard = officeSafe ? `
+    <div class="nsafe-card nsafe-card-office">
+      <div class="nsafe-header">
+        <div class="nsafe-icon"><i class="fa-solid fa-building-columns"></i></div>
         <div>
-          <div style="font-size:10px;color:var(--gray);">أرباح التداول</div>
-          <div style="font-size:16px;font-weight:800;color:#15803d;">SYP${parseFloat(profitSafe.profit_trade || 0).toFixed(2)}</div>
+          <div class="nsafe-title">خزنة المكتب</div>
+          <div class="nsafe-subtitle">USD + SYP</div>
         </div>
+      </div>
+      <div class="nsafe-balance">$${parseFloat(officeSafe.balance).toLocaleString("en-US",{minimumFractionDigits:2})}</div>
+      <div class="nsafe-currency">USD</div>
+      ${parseFloat(officeSafe.balance_sy||0) > 0 ? `
+      <div class="nsafe-sub-balance">
+        <i class="fa-solid fa-coins" style="color:#ea580c;font-size:12px;"></i>
+        <span>${parseFloat(officeSafe.balance_sy).toLocaleString("en-US",{maximumFractionDigits:0})} SYP</span>
+      </div>` : ""}
+    </div>` : "";
+
+    const mainCard = mainSafe ? `
+    <div class="nsafe-card nsafe-card-main">
+      <div class="nsafe-header">
+        <div class="nsafe-icon"><i class="fa-solid fa-vault"></i></div>
         <div>
-          <div style="font-size:10px;color:var(--gray);">أرباح رئيسية</div>
-          <div style="font-size:16px;font-weight:800;color:#1d4ed8;">$${parseFloat(profitSafe.profit_main || 0).toFixed(2)}</div>
+          <div class="nsafe-title">الصندوق الرئيسي</div>
+          <div class="nsafe-subtitle">USD</div>
+        </div>
+      </div>
+      <div class="nsafe-balance">$${parseFloat(mainSafe.balance).toLocaleString("en-US",{minimumFractionDigits:2})}</div>
+      <div class="nsafe-currency">USD</div>
+    </div>` : "";
+
+    const tradingCard = tradingSafe ? `
+    <div class="nsafe-card nsafe-card-trading nsafe-clickable" onclick="openTradingDialog()">
+      <div class="nsafe-header">
+        <div class="nsafe-icon"><i class="fa-solid fa-chart-line"></i></div>
+        <div>
+          <div class="nsafe-title">صندوق التداول</div>
+          <div class="nsafe-subtitle">${tradingSafe.currency||"USD"}</div>
+        </div>
+      </div>
+      <div class="nsafe-balance">${parseFloat(tradingSafe.balance).toLocaleString("en-US",{minimumFractionDigits:2})}</div>
+      <div class="nsafe-currency">${tradingSafe.currency||"USD"}</div>
+      ${tradingSafe.cost != null ? `<div class="nsafe-sub-balance" style="color:#92400e;background:#fffbeb;border:1px solid #fde68a;"><i class="fa-solid fa-scale-balanced" style="color:#f59e0b;font-size:11px;"></i> تكلفة: ${parseFloat(tradingSafe.cost).toFixed(2)}</div>` : ""}
+      <div class="nsafe-trade-badge"><i class="fa-solid fa-sliders"></i> اضغط للتداول</div>
+      <div class="nsafe-click-hint"><i class="fa-solid fa-arrow-pointer"></i> بيع / شراء</div>
+    </div>` : "";
+
+    const profitCard = `
+    <div class="nsafe-card nsafe-card-profit">
+      <div class="nsafe-header">
+        <div class="nsafe-icon"><i class="fa-solid fa-sack-dollar"></i></div>
+        <div>
+          <div class="nsafe-title">صندوق الأرباح</div>
+          <div class="nsafe-subtitle">USD + SYP</div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-top:4px;">
+        <div style="background:#f5f3ff;border-radius:8px;padding:8px 10px;">
+          <div style="font-size:10px;color:#7c3aed;font-weight:700;margin-bottom:2px;">أرباح التداول</div>
+          <div style="font-size:15px;font-weight:800;color:#059669;direction:ltr;">${parseFloat(profitSafe.profit_trade||0).toLocaleString("en-US",{maximumFractionDigits:0})} SYP</div>
+        </div>
+        <div style="background:#eff6ff;border-radius:8px;padding:8px 10px;">
+          <div style="font-size:10px;color:#2563eb;font-weight:700;margin-bottom:2px;">أرباح رئيسية</div>
+          <div style="font-size:15px;font-weight:800;color:#1d4ed8;direction:ltr;">$${parseFloat(profitSafe.profit_main||0).toFixed(2)}</div>
         </div>
       </div>
     </div>`;
 
-    container.innerHTML = html;
+    // ── الصف الثاني ──
+    const row2 = `
+    <div class="nsafe-row2">
+      <!-- شام كاش -->
+      <div class="nsafe-card nsafe-card-shamcash nsafe-clickable" onclick="openShamCashDialog()">
+        <div class="nsafe-header">
+          <div class="nsafe-icon"><i class="fa-solid fa-money-bills"></i></div>
+          <div>
+            <div class="nsafe-title">صندوق شام كاش</div>
+            <div class="nsafe-subtitle">SYP / USD</div>
+          </div>
+        </div>
+        <div class="nsafe-balance" style="font-size:20px;">—</div>
+        <div class="nsafe-currency">قريباً</div>
+        <div class="nsafe-trade-badge nsafe-badge-blue"><i class="fa-solid fa-sliders"></i> بيع / شراء + 2%</div>
+        <div class="nsafe-click-hint"><i class="fa-solid fa-arrow-pointer"></i> فتح الصندوق</div>
+      </div>
+
+      <!-- USDT -->
+      <div class="nsafe-card nsafe-card-usdt nsafe-clickable" onclick="openUsdtDialog()">
+        <div class="nsafe-header">
+          <div class="nsafe-icon"><i class="fa-solid fa-coins"></i></div>
+          <div>
+            <div class="nsafe-title">صندوق USDT</div>
+            <div class="nsafe-subtitle">USDT / USD</div>
+          </div>
+        </div>
+        <div class="nsafe-balance" style="font-size:20px;">—</div>
+        <div class="nsafe-currency">قريباً</div>
+        <div class="nsafe-trade-badge nsafe-badge-green"><i class="fa-solid fa-sliders"></i> بيع / شراء</div>
+        <div class="nsafe-click-hint"><i class="fa-solid fa-arrow-pointer"></i> فتح الصندوق</div>
+      </div>
+
+      <!-- الصناديق الإضافية -->
+      <div class="nsafe-card nsafe-card-extra nsafe-extra-btn-card" onclick="openCashierExtraBoxesModal()">
+        <div class="nsafe-extra-icon-large"><i class="fa-solid fa-boxes-stacked"></i></div>
+        <div class="nsafe-extra-label">الصناديق الإضافية</div>
+        <div class="nsafe-extra-sublabel">إضافة وإدارة الصناديق</div>
+        <div class="nsafe-trade-badge nsafe-badge-green" style="margin:4px auto 0;"><i class="fa-solid fa-plus"></i> إدارة</div>
+      </div>
+    </div>`;
+
+    container.innerHTML = officeCard + mainCard + tradingCard + profitCard + row2;
+
   } catch (error) {
     console.error("Error loading safes:", error);
     container.innerHTML = `<p style="grid-column:1/-1;text-align:center;padding:40px;color:var(--danger);">خطأ في الاتصال بالسيرفر</p>`;
   }
 }
+
+/* ═══════════════════════════════════════════════════
+   دايلوج صندوق التداول
+═══════════════════════════════════════════════════ */
+function openTradingDialog() {
+  if (!_tradingDialogData) { alert("لا توجد بيانات صندوق تداول."); return; }
+  const d = _tradingDialogData;
+
+  document.getElementById("trading-dialog-currency-label").textContent = d.currency;
+  document.getElementById("td-balance").textContent =
+    d.balance.toLocaleString("en-US",{minimumFractionDigits:2}) + " " + d.currency;
+  document.getElementById("td-cost").textContent =
+    d.cost != null ? d.cost.toFixed(2) + " " + d.currency : "—";
+
+  // حقن واجهة التداول
+  document.getElementById("trading-dialog-inner").innerHTML =
+    buildTradingUI(d.currencyId, d.officeId);
+
+  document.getElementById("trading-dialog").classList.remove("hidden");
+  document.body.style.overflow = "hidden";
+}
+
+function closeTradingDialog() {
+  document.getElementById("trading-dialog").classList.add("hidden");
+  document.body.style.overflow = "";
+}
+
+/* ═══════════════════════════════════════════════════
+   دايلوج شام كاش (فرونت فقط)
+═══════════════════════════════════════════════════ */
+let _scCurrency = "usd"; // العملة المُدخلة
+
+function openShamCashDialog() {
+  document.getElementById("shamcash-dialog").classList.remove("hidden");
+  document.body.style.overflow = "hidden";
+}
+
+function closeShamCashDialog() {
+  document.getElementById("shamcash-dialog").classList.add("hidden");
+  document.body.style.overflow = "";
+}
+
+function scSetCurrency(cur, btn) {
+  _scCurrency = cur;
+  document.querySelectorAll(".sc-tab").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  document.getElementById("sc-amount-badge").textContent = cur === "usd" ? "$" : "ل.س";
+  scCalcPreview();
+}
+
+function scCalcPreview() {
+  const rate   = parseFloat(document.getElementById("sc-rate").value);
+  const amount = parseFloat(document.getElementById("sc-amount").value);
+  const preview = document.getElementById("sc-preview");
+
+  if (!rate || !amount || rate <= 0 || amount <= 0) {
+    preview.style.display = "none"; return;
+  }
+
+  let grossSYP, grossUSD, commSYP, commUSD, netSYP, netUSD;
+  const COMM = 0.02;
+
+  if (_scCurrency === "usd") {
+    grossSYP = amount * rate;
+    commSYP  = grossSYP * COMM;
+    netSYP   = grossSYP - commSYP;
+    document.getElementById("sc-pre-gross").textContent      = grossSYP.toLocaleString("en-US",{maximumFractionDigits:0}) + " ل.س";
+    document.getElementById("sc-pre-commission").textContent = commSYP.toLocaleString("en-US",{maximumFractionDigits:0}) + " ل.س";
+    document.getElementById("sc-pre-net").textContent        = netSYP.toLocaleString("en-US",{maximumFractionDigits:0}) + " ل.س";
+  } else {
+    grossUSD = amount / rate;
+    commUSD  = grossUSD * COMM;
+    netUSD   = grossUSD - commUSD;
+    document.getElementById("sc-pre-gross").textContent      = "$" + grossUSD.toFixed(2);
+    document.getElementById("sc-pre-commission").textContent = "$" + commUSD.toFixed(4);
+    document.getElementById("sc-pre-net").textContent        = "$" + netUSD.toFixed(2);
+  }
+
+  preview.style.display = "flex";
+}
+
+function scExecute(type) {
+  const rate   = parseFloat(document.getElementById("sc-rate").value);
+  const amount = parseFloat(document.getElementById("sc-amount").value);
+  if (!rate || !amount) { alert("يرجى إدخال السعر والمبلغ."); return; }
+  // ملاحظة: هذه الصناديق فرونت فقط — الباك قيد التطوير
+  const action = type === "buy" ? "شراء ليرة" : "بيع ليرة";
+  alert(`✅ ${action}\nالسعر: ${rate.toLocaleString()} ل.س/$\nالمبلغ: ${amount.toLocaleString()}\n\n⚠️ هذه الميزة قيد التطوير في الباك إند.`);
+}
+
+/* ═══════════════════════════════════════════════════
+   دايلوج USDT (فرونت فقط)
+═══════════════════════════════════════════════════ */
+function openUsdtDialog() {
+  document.getElementById("usdt-dialog").classList.remove("hidden");
+  document.body.style.overflow = "hidden";
+}
+
+function closeUsdtDialog() {
+  document.getElementById("usdt-dialog").classList.add("hidden");
+  document.body.style.overflow = "";
+}
+
+function usdtCalcPreview() {
+  const rate   = parseFloat(document.getElementById("usdt-rate").value);
+  const amount = parseFloat(document.getElementById("usdt-amount").value);
+  const preview = document.getElementById("usdt-preview");
+  if (!rate || !amount) { preview.style.display="none"; return; }
+  const usdVal = amount * rate;
+  document.getElementById("usdt-pre-amount").textContent = amount.toLocaleString("en-US",{minimumFractionDigits:2}) + " USDT";
+  document.getElementById("usdt-pre-usd").textContent    = "$" + usdVal.toFixed(2);
+  preview.style.display = "flex";
+}
+
+function usdtExecute(type) {
+  const rate   = parseFloat(document.getElementById("usdt-rate").value);
+  const amount = parseFloat(document.getElementById("usdt-amount").value);
+  if (!rate || !amount) { alert("يرجى إدخال السعر والكمية."); return; }
+  const action = type === "buy" ? "شراء USDT" : "بيع USDT";
+  alert(`✅ ${action}\nالسعر: $${rate} / USDT\nالكمية: ${amount} USDT\n\n⚠️ هذه الميزة قيد التطوير في الباك إند.`);
+}
+
 
 function renderTradingSafes(safes) {
   // تُستدعى من loadTradingSafes فقط — محتفظ بها للتوافق
@@ -593,8 +772,7 @@ function printBankTransferReceipt(tx) {
   const now = new Date();
   const pad = (n) => String(n).padStart(2, "0");
   const printDate = `${now.getFullYear()}/${pad(now.getMonth() + 1)}/${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
-const dest =
-        [tx.destination_country, tx.destination_city]
+  const dest = [tx.destination_country, tx.destination_city].filter(Boolean).join(' - ');
   const amountFmt = parseFloat(tx.amount).toLocaleString("en-US", {
     minimumFractionDigits: 2,
   });
@@ -971,6 +1149,293 @@ function showCustomersSection() {
     '<i class="fa-solid fa-users"></i>';
 
   loadCustomers();
+}
+
+/* ============================= */
+/*      EXTRA BOXES (CASHIER)    */
+/* ============================= */
+
+let _cashierOfficeId = null;
+
+
+/* ── Extra Boxes — كاشير (نفس أسلوب admin) ── */
+let _cashierExtraOfficeId = null;
+
+async function openCashierExtraBoxesModal() {
+  document.getElementById("cashier-extra-boxes-modal").classList.remove("hidden");
+  document.body.style.overflow = "hidden";
+  await loadCashierExtraBoxes();
+}
+
+function closeCashierExtraBoxesModal() {
+  document.getElementById("cashier-extra-boxes-modal").classList.add("hidden");
+  document.body.style.overflow = "";
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  // إغلاق الدايلوجات عند النقر خارجها
+  const dialogs = [
+    { id: "cashier-extra-boxes-modal",   fn: () => closeCashierExtraBoxesModal() },
+    { id: "trading-dialog",              fn: () => closeTradingDialog() },
+    { id: "shamcash-dialog",             fn: () => closeShamCashDialog() },
+    { id: "usdt-dialog",                 fn: () => closeUsdtDialog() },
+    { id: "cashier-box-tx-dialog",       fn: () => closeCashierBoxTxDialog() },
+  ];
+  dialogs.forEach(({ id, fn }) => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener("click", (e) => { if (e.target === el) fn(); });
+  });
+  // Escape key
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      closeTradingDialog();
+      closeShamCashDialog();
+      closeUsdtDialog();
+      closeCashierBoxTxDialog();
+      closeCashierExtraBoxesModal();
+    }
+  });
+});
+
+async function loadCashierExtraBoxes() {
+  const grid = document.getElementById("cashier-extra-boxes-list");
+  grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--gray);"><i class="fa-solid fa-spinner fa-spin" style="font-size:22px;margin-bottom:12px;display:block;"></i>جاري التحميل...</div>`;
+
+  try {
+    if (!_cashierOfficeId) {
+      const meRes  = await fetch(`${API_URL}/me`, { headers: { Authorization: `Bearer ${token}` } });
+      const meData = await meRes.json();
+      _cashierOfficeId = meData.user?.office_id;
+    }
+
+    const res  = await fetch(`${API_URL}/extra-boxes`, { headers: { Authorization: `Bearer ${token}`, Accept: "application/json" } });
+    const json = await res.json();
+    const myBoxes = (json.data || []).filter((b) => b.office_id === _cashierOfficeId);
+
+    if (!myBoxes.length) {
+      grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:50px 20px;color:var(--gray);">
+        <i class="fa-solid fa-box-open" style="font-size:32px;margin-bottom:12px;display:block;opacity:0.4;"></i>
+        لا توجد صناديق إضافية مسجلة حالياً
+      </div>`;
+      return;
+    }
+
+    grid.innerHTML = myBoxes.map((box) => `
+    <div class="eb-safe-card" id="eb-card-${box.id}">
+      <div class="eb-safe-name"><i class="fa-solid fa-box" style="color:#10b981;margin-left:5px;"></i>${box.name}</div>
+      <div class="eb-safe-balance">$${parseFloat(box.amount).toLocaleString("en-US",{minimumFractionDigits:2})}</div>
+      <div class="eb-safe-actions">
+        <button class="eb-action-btn eb-btn-dep" onclick="openCashierBoxTxDialog(${box.id}, ${box.amount}, '${box.name.replace(/'/g,"\\'")}', 'deposit')">
+          <i class="fa-solid fa-plus"></i> إيداع
+        </button>
+        <button class="eb-action-btn eb-btn-wit" onclick="openCashierBoxTxDialog(${box.id}, ${box.amount}, '${box.name.replace(/'/g,"\\'")}', 'withdraw')">
+          <i class="fa-solid fa-minus"></i> سحب
+        </button>
+      </div>
+      <div class="eb-safe-actions" style="margin-top:4px;">
+        <button class="eb-action-btn eb-btn-tra" onclick="cashierTransferExtraBoxToOffice(${box.id}, ${box.amount}, '${box.name.replace(/'/g,"\\'")}')">
+          <i class="fa-solid fa-right-left"></i> للخزنة
+        </button>
+        <button class="eb-action-btn eb-btn-del" onclick="cashierDeleteExtraBox(${box.id})">
+          <i class="fa-solid fa-trash"></i>
+        </button>
+      </div>
+    </div>`).join("");
+
+  } catch (e) {
+    console.error(e);
+    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--danger);">حدث خطأ أثناء تحميل البيانات</div>`;
+  }
+}
+
+/* ── دايلوج عملية الصندوق الإضافي ── */
+let _cBoxTxData = null;
+
+function openCashierBoxTxDialog(boxId, currentAmount, boxName, type) {
+  _cBoxTxData = { id: boxId, currentAmount, name: boxName, type };
+  const isDeposit = type === "deposit";
+  const header = document.getElementById("cashier-box-tx-header");
+  header.style.background = isDeposit
+    ? "linear-gradient(135deg,#059669,#10b981)"
+    : "linear-gradient(135deg,#dc2626,#ef4444)";
+  document.getElementById("cashier-box-tx-title").innerHTML =
+    isDeposit
+      ? `<i class="fa-solid fa-plus-circle"></i> إيداع — ${boxName}`
+      : `<i class="fa-solid fa-minus-circle"></i> سحب — ${boxName}`;
+  document.getElementById("cashier-box-tx-current-balance").textContent =
+    "$" + parseFloat(currentAmount).toLocaleString("en-US",{minimumFractionDigits:2});
+  document.getElementById("cashier-box-tx-amount").value = "";
+  document.getElementById("cashier-box-tx-note").value = "";
+  document.getElementById("cashier-box-tx-preview").style.display = "none";
+  document.getElementById("cashier-box-tx-btn-label").textContent = isDeposit ? "تنفيذ الإيداع" : "تنفيذ السحب";
+  document.getElementById("cashier-box-tx-submit").style.background =
+    isDeposit ? "linear-gradient(135deg,#059669,#10b981)" : "linear-gradient(135deg,#dc2626,#ef4444)";
+  document.getElementById("cashier-box-tx-dialog").classList.remove("hidden");
+  document.body.style.overflow = "hidden";
+}
+
+function closeCashierBoxTxDialog() {
+  document.getElementById("cashier-box-tx-dialog").classList.add("hidden");
+}
+
+function cashierBoxTxPreview() {
+  if (!_cBoxTxData) return;
+  const amount = parseFloat(document.getElementById("cashier-box-tx-amount").value);
+  const preview = document.getElementById("cashier-box-tx-preview");
+  const afterEl = document.getElementById("cashier-box-tx-after");
+  if (!amount || amount <= 0) { preview.style.display="none"; return; }
+  const after = _cBoxTxData.type === "deposit"
+    ? _cBoxTxData.currentAmount + amount
+    : _cBoxTxData.currentAmount - amount;
+  afterEl.textContent = "$" + after.toLocaleString("en-US",{minimumFractionDigits:2});
+  afterEl.style.color = after >= 0 ? "#059669" : "#dc2626";
+  preview.style.display = "flex";
+}
+
+async function submitCashierBoxTx() {
+  if (!_cBoxTxData) return;
+  const amount = parseFloat(document.getElementById("cashier-box-tx-amount").value);
+  const notes  = document.getElementById("cashier-box-tx-note").value.trim();
+  if (!amount || amount <= 0) { showInternalToast("يرجى إدخال مبلغ صحيح."); return; }
+  if (_cBoxTxData.type === "withdraw" && amount > _cBoxTxData.currentAmount) {
+    showInternalToast("الرصيد غير كافٍ للسحب."); return;
+  }
+  const newTotal = _cBoxTxData.type === "deposit"
+    ? _cBoxTxData.currentAmount + amount
+    : _cBoxTxData.currentAmount - amount;
+  const btn = document.getElementById("cashier-box-tx-submit");
+  btn.disabled = true;
+  btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> جاري التنفيذ...`;
+  try {
+    const res = await fetch(`${API_URL}/extra-boxes/${_cBoxTxData.id}`, {
+      method: "PUT",
+      headers: { "Content-Type":"application/json", Authorization:`Bearer ${token}`, Accept:"application/json" },
+      body: JSON.stringify({ amount: newTotal, notes }),
+    });
+    if (res.ok) {
+      showInternalToast(_cBoxTxData.type === "deposit" ? "✓ تم الإيداع بنجاح" : "✓ تم السحب بنجاح");
+      closeCashierBoxTxDialog();
+      loadCashierExtraBoxes();
+    } else {
+      const err = await res.json();
+      showInternalToast(err.message || "فشلت العملية.");
+    }
+  } catch(e) {
+    showInternalToast("خطأ في الاتصال بالخادم.");
+  } finally {
+    btn.disabled = false;
+    const lbl = _cBoxTxData?.type === "deposit" ? "تنفيذ الإيداع" : "تنفيذ السحب";
+    btn.innerHTML = `<i class="fa-solid fa-check"></i> <span id="cashier-box-tx-btn-label">${lbl}</span>`;
+  }
+}
+
+async function cashierCreateExtraBox() {
+  const name   = document.getElementById("cashier-eb-name").value.trim();
+  const amount = parseFloat(document.getElementById("cashier-eb-amount").value);
+  if (!name || isNaN(amount) || amount < 0) { showInternalToast("يرجى إدخال اسم ومبلغ صالح."); return; }
+  try {
+    const res = await fetch(`${API_URL}/extra-boxes`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ name, amount, office_id: _cashierOfficeId }),
+    });
+    const data = await res.json();
+    if (res.ok) {
+      document.getElementById("cashier-eb-name").value = "";
+      document.getElementById("cashier-eb-amount").value = "";
+      showInternalToast("تم إضافة الصندوق بنجاح!");
+      loadCashierExtraBoxes();
+    } else { showInternalToast(data.message || "حدث خطأ أثناء الإضافة."); }
+  } catch (e) { showInternalToast("خطأ في الاتصال بالخادم."); }
+}
+
+async function cashierDeleteExtraBox(boxId) {
+  if (!confirm("هل أنت متأكد من حذف هذا الصندوق؟\n(سيتم حذفه مع الرصيد المتبقي فيه)")) return;
+  try {
+    const res = await fetch(`${API_URL}/extra-boxes/${boxId}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } });
+    if (res.ok) { showInternalToast("تم حذف الصندوق بنجاح."); loadCashierExtraBoxes(); }
+    else { showInternalToast("فشل في حذف الصندوق."); }
+  } catch (e) { showInternalToast("خطأ في الاتصال بالخادم."); }
+}
+
+async function cashierTransferExtraBoxToOffice(boxId, maxAmount, boxName) {
+  const amountStr = prompt(`كم تريد أن تنقل من صندوق "${boxName}" إلى خزنة المكتب؟\nالرصيد المتاح: ${parseFloat(maxAmount).toLocaleString()}`);
+  if (!amountStr) return;
+  const transferAmount = parseFloat(amountStr);
+  if (isNaN(transferAmount) || transferAmount <= 0 || transferAmount > maxAmount) {
+    alert("المبلغ المدخل غير صحيح أو يتجاوز الرصيد المتاح."); return;
+  }
+  try {
+    const resBox = await fetch(`${API_URL}/extra-boxes/${boxId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ amount: maxAmount - transferAmount }),
+    });
+    if (!resBox.ok) { alert("فشل في تحديث رصيد الصندوق الإضافي."); return; }
+    const resOffice = await fetch(`${API_URL}/offices/${_cashierOfficeId}/safe`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ amount: transferAmount, type: "deposit" }),
+    });
+    if (resOffice.ok) { showInternalToast("تم نقل المبلغ إلى خزنة المكتب بنجاح."); loadCashierExtraBoxes(); loadTradingSafes(); }
+    else { alert("تنبيه: تم خصم المبلغ من الصندوق ولكن فشل إيداعه في الخزنة."); }
+  } catch (e) { alert("حدث خطأ في الاتصال بالخادم أثناء النقل."); }
+}
+
+
+async function cashierBoxTransaction(boxId, currentAmount, boxName, type) {
+  const actionText = type === "deposit" ? "إيداع في" : "سحب من";
+
+  const amountStr = prompt(
+    `أدخل المبلغ المراد ${actionText} صندوق (${boxName}):\nالرصيد الحالي: ${parseFloat(currentAmount).toLocaleString()}`,
+  );
+  if (amountStr === null) return;
+
+  const amountValue = parseFloat(amountStr);
+  if (isNaN(amountValue) || amountValue <= 0) {
+    alert("يرجى إدخال مبلغ صحيح أكبر من الصفر.");
+    return;
+  }
+  if (type === "withdraw" && amountValue > currentAmount) {
+    alert(
+      `عذراً، الرصيد الحالي (${parseFloat(currentAmount).toLocaleString()}) غير كافٍ لإتمام عملية السحب.`,
+    );
+    return;
+  }
+
+  // حقل الملاحظات
+  const notes =
+    prompt("ملاحظة على العملية (اختياري — اضغط موافق للتخطي):") ?? "";
+
+  const newTotal =
+    type === "deposit"
+      ? currentAmount + amountValue
+      : currentAmount - amountValue;
+
+  try {
+    const res = await fetch(`${API_URL}/extra-boxes/${boxId}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+        Accept: "application/json",
+      },
+      body: JSON.stringify({ amount: newTotal, notes }),
+    });
+
+    if (res.ok) {
+      showInternalToast(
+        `✅ تمت عملية ${type === "deposit" ? "الإيداع" : "السحب"} بنجاح على صندوق (${boxName}).`,
+      );
+      loadCashierExtraBoxes();
+    } else {
+      const err = await res.json();
+      alert(err.message || "فشل في تحديث بيانات الصندوق.");
+    }
+  } catch (e) {
+    console.error("cashierBoxTransaction:", e);
+    alert("خطأ في الاتصال بالخادم.");
+  }
 }
 
 /* ── جلب الزبائن ── */
