@@ -89,6 +89,7 @@
                             <span>إنشاء حوالة</span>
                         </a>
                     </li>
+
                 </ul>
             </nav>
 
@@ -182,22 +183,355 @@
                     </div>
                 </div>
 
-                <!-- ===== قسم التداول ===== -->
+                <!-- ===== قسم الصناديق ===== -->
                 <div id="section-safes" class="section" style="display:none;">
                     <div class="card fade-in" id="safes-card">
-                        <div class="card-header">
-                            <div class="card-title">
-                                <i class="fa-solid fa-vault"></i>
-                                <h3>الصناديق </h3>
+
+                        <!-- Hero Banner -->
+                        <div class="section-hero cashier-safes-hero">
+                            <div class="section-hero-text">
+                                <h2><i class="fa-solid fa-vault"></i> صناديق المكتب المالية</h2>
+                                <p>الرصيد الحالي لجميع صناديق مكتبك</p>
+                            </div>
+                            <div class="section-hero-stats">
+                                <div class="hero-stat">
+                                    <span id="stat-safes-total">—</span>
+                                    <small>إجمالي USD</small>
+                                </div>
                             </div>
                         </div>
-                        <div class="safes-grid" id="safes-container">
-                            <div class="loading-row"
-                                style="padding:40px; text-align:center;">
-                                <div class="loading-spinner"
-                                    style="margin:0 auto 10px;"></div>
+
+                        <!-- شبكة الصناديق الجديدة -->
+                        <div class="new-safes-grid" id="safes-container">
+                            <div class="safe-loading-placeholder" style="grid-column:1/-1;">
+                                <div class="loading-spinner" style="margin:0 auto 10px;"></div>
                                 جاري التحميل...
                             </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- ===================================================
+                     دايلوج صندوق التداول
+                     =================================================== -->
+                <div id="trading-dialog" class="modal-overlay hidden">
+                    <div class="modal-box trading-dialog-box">
+                        <div class="modal-header trading-dialog-header">
+                            <div class="trading-dialog-title">
+                                <div class="trading-dialog-icon">
+                                    <i class="fa-solid fa-chart-line"></i>
+                                </div>
+                                <div>
+                                    <h3>صندوق التداول</h3>
+                                    <p id="trading-dialog-currency-label">—</p>
+                                </div>
+                            </div>
+                            <button class="modal-close-btn" onclick="closeTradingDialog()">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
+                        <div class="modal-body" style="padding:0;">
+                            <!-- بيانات الصندوق -->
+                            <div class="trading-dialog-stats" id="trading-dialog-stats">
+                                <div class="tds-item">
+                                    <i class="fa-solid fa-wallet"></i>
+                                    <div>
+                                        <span class="tds-label">الرصيد الحالي</span>
+                                        <span class="tds-value" id="td-balance">—</span>
+                                    </div>
+                                </div>
+                                <div class="tds-item">
+                                    <i class="fa-solid fa-scale-balanced"></i>
+                                    <div>
+                                        <span class="tds-label">متوسط التكلفة</span>
+                                        <span class="tds-value" id="td-cost">—</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- واجهة التداول -->
+                            <div class="trading-dialog-body" id="trading-dialog-inner">
+                                <!-- سيتم حقنها من JS -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ===================================================
+                     دايلوج صندوق شام كاش (فرونت فقط)
+                     =================================================== -->
+                <div id="shamcash-dialog" class="modal-overlay hidden">
+                    <div class="modal-box shamcash-dialog-box">
+                        <div class="modal-header shamcash-dialog-header">
+                            <div class="trading-dialog-title">
+                                <div class="trading-dialog-icon" style="background:linear-gradient(135deg,#0ea5e9,#38bdf8);">
+                                    <i class="fa-solid fa-money-bills"></i>
+                                </div>
+                                <div>
+                                    <h3>صندوق شام كاش</h3>
+                                    <p>شراء وبيع الليرة السورية</p>
+                                </div>
+                            </div>
+                            <button class="modal-close-btn" onclick="closeShamCashDialog()">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
+                        <div class="modal-body" style="padding:0;">
+                            <!-- بيانات الصندوق (فرونت) -->
+                            <div class="trading-dialog-stats shamcash-stats">
+                                <div class="tds-item">
+                                    <i class="fa-solid fa-wallet"></i>
+                                    <div>
+                                        <span class="tds-label">رصيد الدولار</span>
+                                        <span class="tds-value" id="sc-balance-usd" style="color:#0ea5e9;">$0.00</span>
+                                    </div>
+                                </div>
+                                <div class="tds-item">
+                                    <i class="fa-solid fa-coins"></i>
+                                    <div>
+                                        <span class="tds-label">رصيد الليرة</span>
+                                        <span class="tds-value" id="sc-balance-syp" style="color:#0ea5e9;">0 ل.س</span>
+                                    </div>
+                                </div>
+                                <div class="tds-item">
+                                    <i class="fa-solid fa-percent"></i>
+                                    <div>
+                                        <span class="tds-label">نسبة العمولة</span>
+                                        <span class="tds-value" style="color:#f59e0b;">2%</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="shamcash-body">
+                                <!-- سعر الصرف -->
+                                <div class="sc-rate-row">
+                                    <label class="sc-rate-label"><i class="fa-solid fa-sliders"></i> سعر الصرف (ل.س لكل $1)</label>
+                                    <div class="sc-rate-input-wrap">
+                                        <input type="number" id="sc-rate" class="trading-input" placeholder="مثال: 14000" min="1" oninput="scCalcPreview()" style="width:100%;">
+                                        <span class="sc-rate-badge">ل.س / $</span>
+                                    </div>
+                                </div>
+
+                                <!-- مبلغ العملية -->
+                                <div class="sc-rate-row">
+                                    <label class="sc-rate-label"><i class="fa-solid fa-hashtag"></i> المبلغ</label>
+                                    <div class="sc-amount-tabs">
+                                        <button class="sc-tab active" onclick="scSetCurrency('usd', this)">دولار $</button>
+                                        <button class="sc-tab" onclick="scSetCurrency('syp', this)">ليرة ل.س</button>
+                                    </div>
+                                    <div class="sc-rate-input-wrap" style="margin-top:8px;">
+                                        <input type="number" id="sc-amount" class="trading-input" placeholder="0.00" min="0" step="any" oninput="scCalcPreview()" style="width:100%;">
+                                        <span class="sc-rate-badge" id="sc-amount-badge">$</span>
+                                    </div>
+                                </div>
+
+                                <!-- Preview -->
+                                <div class="sc-preview-box" id="sc-preview" style="display:none;">
+                                    <div class="sc-preview-row">
+                                        <span>المبلغ قبل العمولة</span>
+                                        <span id="sc-pre-gross">—</span>
+                                    </div>
+                                    <div class="sc-preview-row sc-commission-row">
+                                        <span>عمولة 2%</span>
+                                        <span id="sc-pre-commission" style="color:#f59e0b;">—</span>
+                                    </div>
+                                    <div class="sc-preview-row sc-net-row">
+                                        <span>الصافي</span>
+                                        <span id="sc-pre-net">—</span>
+                                    </div>
+                                </div>
+
+                                <!-- أزرار البيع والشراء -->
+                                <div class="sc-ops-grid">
+                                    <div class="sc-op sc-op-buy">
+                                        <div class="sc-op-title"><i class="fa-solid fa-arrow-down-to-line"></i> شراء ليرة</div>
+                                        <p class="sc-op-desc">دفع دولار — استلام ليرة سورية</p>
+                                        <button class="sc-exec-btn sc-exec-buy" onclick="scExecute('buy')">
+                                            <i class="fa-solid fa-cart-shopping"></i> تنفيذ الشراء
+                                        </button>
+                                    </div>
+                                    <div class="sc-op sc-op-sell">
+                                        <div class="sc-op-title"><i class="fa-solid fa-arrow-up-from-line"></i> بيع ليرة</div>
+                                        <p class="sc-op-desc">دفع ليرة سورية — استلام دولار</p>
+                                        <button class="sc-exec-btn sc-exec-sell" onclick="scExecute('sell')">
+                                            <i class="fa-solid fa-hand-holding-dollar"></i> تنفيذ البيع
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ===================================================
+                     دايلوج صندوق USDT (فرونت فقط)
+                     =================================================== -->
+                <div id="usdt-dialog" class="modal-overlay hidden">
+                    <div class="modal-box shamcash-dialog-box">
+                        <div class="modal-header" style="background:linear-gradient(135deg,#059669,#10b981); border-radius:16px 16px 0 0; padding:20px 24px;">
+                            <div class="trading-dialog-title">
+                                <div class="trading-dialog-icon" style="background:rgba(255,255,255,0.2); color:#fff; backdrop-filter:blur(4px);">
+                                    <i class="fa-solid fa-coins"></i>
+                                </div>
+                                <div style="color:#fff;">
+                                    <h3 style="color:#fff; margin:0; font-size:17px;">صندوق USDT</h3>
+                                    <p style="color:rgba(255,255,255,0.8); font-size:12px; margin:2px 0 0;">شراء وبيع العملة الرقمية</p>
+                                </div>
+                            </div>
+                            <button class="modal-close-btn" onclick="closeUsdtDialog()" style="background:rgba(255,255,255,0.15); color:#fff; border:none;">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
+                        <div class="modal-body" style="padding:0;">
+                            <div class="trading-dialog-stats" style="background:linear-gradient(135deg,#ecfdf5,#f0fdf4);">
+                                <div class="tds-item">
+                                    <i class="fa-solid fa-wallet" style="color:#059669;"></i>
+                                    <div>
+                                        <span class="tds-label">رصيد USDT</span>
+                                        <span class="tds-value" id="usdt-balance" style="color:#059669;">0.00</span>
+                                    </div>
+                                </div>
+                                <div class="tds-item">
+                                    <i class="fa-solid fa-dollar-sign" style="color:#059669;"></i>
+                                    <div>
+                                        <span class="tds-label">رصيد USD</span>
+                                        <span class="tds-value" id="usdt-usd-balance" style="color:#059669;">$0.00</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="shamcash-body">
+                                <div class="sc-rate-row">
+                                    <label class="sc-rate-label"><i class="fa-solid fa-sliders"></i> سعر USDT (بالدولار)</label>
+                                    <div class="sc-rate-input-wrap">
+                                        <input type="number" id="usdt-rate" class="trading-input" placeholder="مثال: 0.99" min="0" step="0.001" oninput="usdtCalcPreview()" style="width:100%;">
+                                        <span class="sc-rate-badge">$ / USDT</span>
+                                    </div>
+                                </div>
+                                <div class="sc-rate-row">
+                                    <label class="sc-rate-label"><i class="fa-solid fa-hashtag"></i> الكمية (USDT)</label>
+                                    <div class="sc-rate-input-wrap">
+                                        <input type="number" id="usdt-amount" class="trading-input" placeholder="0.00" min="0" step="any" oninput="usdtCalcPreview()" style="width:100%;">
+                                        <span class="sc-rate-badge">USDT</span>
+                                    </div>
+                                </div>
+
+                                <div class="sc-preview-box" id="usdt-preview" style="display:none;">
+                                    <div class="sc-preview-row">
+                                        <span>الكمية</span>
+                                        <span id="usdt-pre-amount">—</span>
+                                    </div>
+                                    <div class="sc-preview-row sc-net-row">
+                                        <span>القيمة بالدولار</span>
+                                        <span id="usdt-pre-usd">—</span>
+                                    </div>
+                                </div>
+
+                                <div class="sc-ops-grid">
+                                    <div class="sc-op" style="background:#ecfdf5; border-color:#6ee7b7;">
+                                        <div class="sc-op-title" style="color:#059669;"><i class="fa-solid fa-arrow-down-to-line"></i> شراء USDT</div>
+                                        <p class="sc-op-desc">دفع دولار — استلام USDT</p>
+                                        <button class="sc-exec-btn sc-exec-buy" onclick="usdtExecute('buy')">
+                                            <i class="fa-solid fa-cart-shopping"></i> تنفيذ الشراء
+                                        </button>
+                                    </div>
+                                    <div class="sc-op" style="background:#fff1f2; border-color:#fecaca;">
+                                        <div class="sc-op-title" style="color:#dc2626;"><i class="fa-solid fa-arrow-up-from-line"></i> بيع USDT</div>
+                                        <p class="sc-op-desc">دفع USDT — استلام دولار</p>
+                                        <button class="sc-exec-btn sc-exec-sell" onclick="usdtExecute('sell')">
+                                            <i class="fa-solid fa-hand-holding-dollar"></i> تنفيذ البيع
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ===================================================
+                     دايلوج الصناديق الإضافية — كبطاقات
+                     =================================================== -->
+                <div id="cashier-extra-boxes-modal" class="modal-overlay hidden">
+                    <div class="modal-box extra-boxes-dialog-box">
+                        <div class="modal-header extra-boxes-dialog-header">
+                            <div class="trading-dialog-title">
+                                <div class="trading-dialog-icon" style="background:linear-gradient(135deg,#10b981,#059669);">
+                                    <i class="fa-solid fa-boxes-stacked"></i>
+                                </div>
+                                <div>
+                                    <h3>الصناديق الإضافية</h3>
+                                    <p>إدارة صناديق المكتب الإضافية</p>
+                                </div>
+                            </div>
+                            <button class="modal-close-btn" onclick="closeCashierExtraBoxesModal()">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
+                        <div class="modal-body" style="padding:20px 24px;">
+                            <!-- إضافة صندوق جديد -->
+                            <div class="eb-add-section">
+                                <div class="eb-add-title">
+                                    <i class="fa-solid fa-plus-circle"></i> إضافة صندوق جديد
+                                </div>
+                                <div class="eb-add-form">
+                                    <input type="text" id="cashier-eb-name" class="modal-input eb-input"
+                                        placeholder="اسم الصندوق...">
+                                    <input type="number" id="cashier-eb-amount" class="modal-input eb-input"
+                                        placeholder="المبلغ الأولي" min="0" step="any" style="max-width:150px;">
+                                    <button class="btn-primary eb-add-btn" onclick="cashierCreateExtraBox()">
+                                        <i class="fa-solid fa-check"></i> إضافة
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- شبكة الصناديق الإضافية -->
+                            <div class="eb-grid" id="cashier-extra-boxes-list">
+                                <div style="grid-column:1/-1; text-align:center; padding:40px; color:var(--gray);">
+                                    <i class="fa-solid fa-spinner fa-spin" style="font-size:24px; margin-bottom:12px; display:block;"></i>
+                                    جاري التحميل...
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- دايلوج عملية صندوق إضافي (إيداع/سحب) -->
+                <div id="cashier-box-tx-dialog" class="modal-overlay hidden">
+                    <div class="modal-box" style="width:420px; max-width:95vw;">
+                        <div class="modal-header" id="cashier-box-tx-header">
+                            <h3 id="cashier-box-tx-title">إيداع</h3>
+                            <button class="modal-close-btn" onclick="closeCashierBoxTxDialog()">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
+                        <div class="modal-body" style="padding:24px;">
+                            <div class="eb-tx-info" id="cashier-box-tx-info">
+                                <div class="eb-tx-info-row">
+                                    <span>الرصيد الحالي</span>
+                                    <span id="cashier-box-tx-current-balance" class="eb-tx-info-val">—</span>
+                                </div>
+                            </div>
+                            <div class="form-group" style="margin-top:16px;">
+                                <label class="form-label"><i class="fa-solid fa-dollar-sign"></i> المبلغ</label>
+                                <input type="number" id="cashier-box-tx-amount" class="modal-input"
+                                    placeholder="0.00" min="0.01" step="any" oninput="cashierBoxTxPreview()" style="width:100%; box-sizing:border-box;">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label"><i class="fa-solid fa-note-sticky"></i> ملاحظة (اختياري)</label>
+                                <input type="text" id="cashier-box-tx-note" class="modal-input"
+                                    placeholder="ملاحظة على العملية..." style="width:100%; box-sizing:border-box;">
+                            </div>
+                            <div class="eb-tx-preview" id="cashier-box-tx-preview" style="display:none;">
+                                <div class="sc-preview-row">
+                                    <span>الرصيد بعد العملية</span>
+                                    <span id="cashier-box-tx-after" class="sc-net-row">—</span>
+                                </div>
+                            </div>
+                            <button class="btn-primary" id="cashier-box-tx-submit" onclick="submitCashierBoxTx()"
+                                style="width:100%; margin-top:20px; padding:14px;">
+                                <i class="fa-solid fa-check"></i> <span id="cashier-box-tx-btn-label">تنفيذ</span>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -864,6 +1198,8 @@
                     </div>
 
                 </div>
+
+
 
             </div>
         </main>
