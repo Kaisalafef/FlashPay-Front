@@ -501,6 +501,21 @@ async function loadTradingSafes() {
     </div>`;
 
     // ── الصف الثاني ──
+    // ── الصف الثاني — مع جلب الأرصدة الإلكترونية ──
+    let scSyp = "—", scUsd = "—", usdtBal = "—";
+    try {
+      const eRes  = await fetch(`${API_URL}/electronic-safe/balances`, {
+        headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
+      });
+      if (eRes.ok) {
+        const eJson = await eRes.json();
+        const ed = eJson.data || {};
+        scSyp   = parseFloat(ed.syp_sham_cash || 0).toLocaleString("en-US",{maximumFractionDigits:0}) + " ل.س";
+        scUsd   = "$" + parseFloat(ed.usd_sham_cash || 0).toLocaleString("en-US",{minimumFractionDigits:2});
+        usdtBal = parseFloat(ed.usdt || 0).toLocaleString("en-US",{minimumFractionDigits:2}) + " USDT";
+      }
+    } catch(e) { /* تجاهل خطأ جلب الأرصدة الإلكترونية */ }
+
     const row2 = `
     <div class="nsafe-row2">
       <!-- شام كاش -->
@@ -512,9 +527,9 @@ async function loadTradingSafes() {
             <div class="nsafe-subtitle">SYP / USD</div>
           </div>
         </div>
-        <div class="nsafe-balance" style="font-size:20px;">—</div>
-        <div class="nsafe-currency">قريباً</div>
-        <div class="nsafe-trade-badge nsafe-badge-blue"><i class="fa-solid fa-sliders"></i> بيع / شراء + 2%</div>
+        <div class="nsafe-balance" id="nsafe-sc-syp" style="font-size:18px;">${scSyp}</div>
+        <div class="nsafe-currency" style="text-align:right; direction:rtl;">${scUsd} دولار</div>
+        <div class="nsafe-trade-badge nsafe-badge-blue"><i class="fa-solid fa-sliders"></i> بيع / شراء</div>
         <div class="nsafe-click-hint"><i class="fa-solid fa-arrow-pointer"></i> فتح الصندوق</div>
       </div>
 
@@ -527,8 +542,8 @@ async function loadTradingSafes() {
             <div class="nsafe-subtitle">USDT / USD</div>
           </div>
         </div>
-        <div class="nsafe-balance" style="font-size:20px;">—</div>
-        <div class="nsafe-currency">قريباً</div>
+        <div class="nsafe-balance" id="nsafe-usdt-bal" style="font-size:18px;">${usdtBal}</div>
+        <div class="nsafe-currency">الرصيد الإلكتروني</div>
         <div class="nsafe-trade-badge nsafe-badge-green"><i class="fa-solid fa-sliders"></i> بيع / شراء</div>
         <div class="nsafe-click-hint"><i class="fa-solid fa-arrow-pointer"></i> فتح الصندوق</div>
       </div>
@@ -576,14 +591,54 @@ function closeTradingDialog() {
   document.body.style.overflow = "";
 }
 
-/* ═══════════════════════════════════════════════════
-   دايلوج شام كاش (فرونت فقط)
-═══════════════════════════════════════════════════ */
-let _scCurrency = "usd"; // العملة المُدخلة
+/* ═══════════════════════════════════════════════════════════════
+   الخزنة الإلكترونية — شام كاش وUSدT
+   API: /electronic-safe/balances | /buy | /sell
+═══════════════════════════════════════════════════════════════ */
 
+let _scCurrency = "usd"; // عملة الإدخال في شام كاش
+
+/* ── جلب الأرصدة وتحديث كلا الدايلوجين ── */
+async function loadElectronicBalances() {
+  try {
+    const res  = await fetch(`${API_URL}/electronic-safe/balances`, {
+      headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
+    });
+    const json = await res.json();
+    if (!res.ok) return;
+    const d = json.data || {};
+
+    // شام كاش
+    const scUsd = document.getElementById("sc-balance-usd");
+    const scSyp = document.getElementById("sc-balance-syp");
+    if (scUsd) scUsd.textContent = "$" + parseFloat(d.usd_sham_cash || 0).toLocaleString("en-US",{minimumFractionDigits:2});
+    if (scSyp) scSyp.textContent = parseFloat(d.syp_sham_cash  || 0).toLocaleString("en-US",{maximumFractionDigits:0}) + " ل.س";
+
+    // USDT
+    const usdtBal  = document.getElementById("usdt-balance");
+    const usdtUsd  = document.getElementById("usdt-usd-balance");
+    if (usdtBal) usdtBal.textContent = parseFloat(d.usdt || 0).toLocaleString("en-US",{minimumFractionDigits:2}) + " USDT";
+    if (usdtUsd) usdtUsd.textContent = parseFloat(d.usdt || 0).toLocaleString("en-US",{minimumFractionDigits:2}) + " USDT";
+
+    // تحديث بطاقات الشبكة الرئيسية
+    const scCard   = document.getElementById("nsafe-sc-syp");
+    const usdtCard = document.getElementById("nsafe-usdt-bal");
+    if (scCard)   scCard.textContent   = parseFloat(d.syp_sham_cash||0).toLocaleString("en-US",{maximumFractionDigits:0}) + " ل.س";
+    if (usdtCard) usdtCard.textContent = parseFloat(d.usdt||0).toLocaleString("en-US",{minimumFractionDigits:2}) + " USDT";
+
+  } catch (e) {
+    console.warn("loadElectronicBalances:", e);
+  }
+}
+
+/* ══════════════════════════════════
+   صندوق شام كاش
+══════════════════════════════════ */
 function openShamCashDialog() {
   document.getElementById("shamcash-dialog").classList.remove("hidden");
   document.body.style.overflow = "hidden";
+  loadElectronicBalances();
+  scCalcPreview();
 }
 
 function closeShamCashDialog() {
@@ -593,58 +648,112 @@ function closeShamCashDialog() {
 
 function scSetCurrency(cur, btn) {
   _scCurrency = cur;
-  document.querySelectorAll(".sc-tab").forEach(b => b.classList.remove("active"));
+  document.querySelectorAll("#shamcash-dialog .sc-tab").forEach(b => b.classList.remove("active"));
   btn.classList.add("active");
   document.getElementById("sc-amount-badge").textContent = cur === "usd" ? "$" : "ل.س";
   scCalcPreview();
 }
 
 function scCalcPreview() {
-  const rate   = parseFloat(document.getElementById("sc-rate").value);
-  const amount = parseFloat(document.getElementById("sc-amount").value);
-  const preview = document.getElementById("sc-preview");
+  const rate    = parseFloat(document.getElementById("sc-rate").value);
+  const amount  = parseFloat(document.getElementById("sc-amount").value);
+  const commBuy  = parseFloat(document.getElementById("sc-comm-buy").value  || 0);
+  const commSell = parseFloat(document.getElementById("sc-comm-sell").value || 0);
+  const preview  = document.getElementById("sc-preview");
 
   if (!rate || !amount || rate <= 0 || amount <= 0) {
     preview.style.display = "none"; return;
   }
 
-  let grossSYP, grossUSD, commSYP, commUSD, netSYP, netUSD;
-  const COMM = 0.02;
-
   if (_scCurrency === "usd") {
-    grossSYP = amount * rate;
-    commSYP  = grossSYP * COMM;
-    netSYP   = grossSYP - commSYP;
-    document.getElementById("sc-pre-gross").textContent      = grossSYP.toLocaleString("en-US",{maximumFractionDigits:0}) + " ل.س";
-    document.getElementById("sc-pre-commission").textContent = commSYP.toLocaleString("en-US",{maximumFractionDigits:0}) + " ل.س";
-    document.getElementById("sc-pre-net").textContent        = netSYP.toLocaleString("en-US",{maximumFractionDigits:0}) + " ل.س";
+    // ── الإدخال بالدولار → عملية على usd_sham_cash ──
+    // الباك: amount = amount (دولار) — لا يتأثر شيء خارجي
+    const buyComm  = (amount * commBuy)  / 100;
+    const sellComm = (amount * commSell) / 100;
+    document.getElementById("sc-pre-gross").textContent      = amount.toLocaleString("en-US",{minimumFractionDigits:2}) + " $ دولار شام كاش";
+    document.getElementById("sc-pre-commission").textContent = buyComm.toFixed(4)  + " $ (شراء) / " + sellComm.toFixed(4) + " $ (بيع)";
+    document.getElementById("sc-pre-net").textContent        =
+      "شراء: رصيد يزيد " + amount.toFixed(2) + "$ | بيع: رصيد ينقص " + amount.toFixed(2) + "$";
   } else {
-    grossUSD = amount / rate;
-    commUSD  = grossUSD * COMM;
-    netUSD   = grossUSD - commUSD;
-    document.getElementById("sc-pre-gross").textContent      = "$" + grossUSD.toFixed(2);
-    document.getElementById("sc-pre-commission").textContent = "$" + commUSD.toFixed(4);
-    document.getElementById("sc-pre-net").textContent        = "$" + netUSD.toFixed(2);
+    // ── الإدخال بالليرة → عملية على syp_sham_cash ──
+    // الباك: amount = amount (ليرة) — لا يتأثر شيء خارجي
+    const buyComm  = (amount * commBuy)  / 100;
+    const sellComm = (amount * commSell) / 100;
+    document.getElementById("sc-pre-gross").textContent      = amount.toLocaleString("en-US",{maximumFractionDigits:0}) + " ل.س ليرة شام كاش";
+    document.getElementById("sc-pre-commission").textContent = buyComm.toLocaleString("en-US",{maximumFractionDigits:0}) + " ل.س (شراء) / " + sellComm.toLocaleString("en-US",{maximumFractionDigits:0}) + " ل.س (بيع)";
+    document.getElementById("sc-pre-net").textContent        =
+      "شراء: رصيد يزيد " + amount.toLocaleString("en-US",{maximumFractionDigits:0}) + " ل.س | بيع: رصيد ينقص " + amount.toLocaleString("en-US",{maximumFractionDigits:0}) + " ل.س";
   }
 
+  document.getElementById("sc-pre-comm-label").textContent = `عمولة (${commBuy}% شراء / ${commSell}% بيع)`;
   preview.style.display = "flex";
 }
 
-function scExecute(type) {
-  const rate   = parseFloat(document.getElementById("sc-rate").value);
-  const amount = parseFloat(document.getElementById("sc-amount").value);
-  if (!rate || !amount) { alert("يرجى إدخال السعر والمبلغ."); return; }
-  // ملاحظة: هذه الصناديق فرونت فقط — الباك قيد التطوير
-  const action = type === "buy" ? "شراء ليرة" : "بيع ليرة";
-  alert(`✅ ${action}\nالسعر: ${rate.toLocaleString()} ل.س/$\nالمبلغ: ${amount.toLocaleString()}\n\n⚠️ هذه الميزة قيد التطوير في الباك إند.`);
+async function scExecute(type) {
+  const rate    = parseFloat(document.getElementById("sc-rate").value);
+  const amount  = parseFloat(document.getElementById("sc-amount").value);
+  const commBuy  = parseFloat(document.getElementById("sc-comm-buy").value  || 0);
+  const commSell = parseFloat(document.getElementById("sc-comm-sell").value || 0);
+  const note    = document.getElementById("sc-note").value.trim();
+
+  if (!rate   || rate   <= 0) { showInternalToast("يرجى إدخال سعر الصرف."); return; }
+  if (!amount || amount <= 0) { showInternalToast("يرجى إدخال المبلغ.");    return; }
+
+  // currency_type بناءً على العملة المختارة — كل منهما مستقل
+  const currencyType = _scCurrency === "usd" ? "usd_sham_cash" : "syp_sham_cash";
+  const commRate     = type === "buy" ? commBuy : commSell;
+  // amount يُرسل كما هو — الباك يزيد/ينقص نفس الحقل فقط
+  const backendAmount = amount;
+
+  const btn = document.getElementById(type === "buy" ? "sc-btn-buy" : "sc-btn-sell");
+  btn.disabled = true;
+  btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> جاري التنفيذ...`;
+
+  try {
+    const res = await fetch(`${API_URL}/electronic-safe/${type}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+        Accept: "application/json",
+      },
+      body: JSON.stringify({
+        currency_type:   currencyType,
+        amount:          backendAmount,
+        commission_rate: commRate,
+        exchange_rate:   rate,
+        note:            note || undefined,
+      }),
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
+      showInternalToast(`✓ تمت عملية ${type === "buy" ? "الشراء" : "البيع"} بنجاح`);
+      loadElectronicBalances();
+      document.getElementById("sc-amount").value = "";
+      document.getElementById("sc-preview").style.display = "none";
+    } else {
+      showInternalToast(data.message || "فشلت العملية.");
+    }
+  } catch (e) {
+    showInternalToast("خطأ في الاتصال بالخادم.");
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = type === "buy"
+      ? `<i class="fa-solid fa-cart-shopping"></i> تنفيذ الشراء`
+      : `<i class="fa-solid fa-hand-holding-dollar"></i> تنفيذ البيع`;
+  }
 }
 
-/* ═══════════════════════════════════════════════════
-   دايلوج USDT (فرونت فقط)
-═══════════════════════════════════════════════════ */
+/* ══════════════════════════════════
+   صندوق USDT
+══════════════════════════════════ */
 function openUsdtDialog() {
   document.getElementById("usdt-dialog").classList.remove("hidden");
   document.body.style.overflow = "hidden";
+  loadElectronicBalances();
+  usdtCalcPreview();
 }
 
 function closeUsdtDialog() {
@@ -653,22 +762,86 @@ function closeUsdtDialog() {
 }
 
 function usdtCalcPreview() {
-  const rate   = parseFloat(document.getElementById("usdt-rate").value);
-  const amount = parseFloat(document.getElementById("usdt-amount").value);
-  const preview = document.getElementById("usdt-preview");
-  if (!rate || !amount) { preview.style.display="none"; return; }
-  const usdVal = amount * rate;
-  document.getElementById("usdt-pre-amount").textContent = amount.toLocaleString("en-US",{minimumFractionDigits:2}) + " USDT";
-  document.getElementById("usdt-pre-usd").textContent    = "$" + usdVal.toFixed(2);
+  const rate     = parseFloat(document.getElementById("usdt-rate").value);
+  const amount   = parseFloat(document.getElementById("usdt-amount").value);
+  const commBuy  = parseFloat(document.getElementById("usdt-comm-buy").value  || 0);
+  const commSell = parseFloat(document.getElementById("usdt-comm-sell").value || 0);
+  const preview  = document.getElementById("usdt-preview");
+
+  if (!rate || !amount || rate <= 0 || amount <= 0) {
+    preview.style.display = "none"; return;
+  }
+
+  // العمولة تُحسب على الكمية بالـ USDT مباشرة — لا يتأثر شيء خارجي
+  const buyComm  = (amount * commBuy)  / 100;
+  const sellComm = (amount * commSell) / 100;
+
+  document.getElementById("usdt-pre-amount").textContent     = amount.toLocaleString("en-US",{minimumFractionDigits:2}) + " USDT";
+  document.getElementById("usdt-pre-usd").textContent        = "سعر: " + rate + " $ / USDT";
+  document.getElementById("usdt-pre-commission").textContent =
+    buyComm.toFixed(4) + " USDT (شراء) / " + sellComm.toFixed(4) + " USDT (بيع)";
+  document.getElementById("usdt-pre-net").textContent =
+    "شراء: رصيد يزيد " + amount.toFixed(4) + " USDT | بيع: رصيد ينقص " + amount.toFixed(4) + " USDT";
+  document.getElementById("usdt-pre-comm-label").textContent =
+    `عمولة (${commBuy}% شراء / ${commSell}% بيع)`;
+
   preview.style.display = "flex";
 }
 
-function usdtExecute(type) {
-  const rate   = parseFloat(document.getElementById("usdt-rate").value);
-  const amount = parseFloat(document.getElementById("usdt-amount").value);
-  if (!rate || !amount) { alert("يرجى إدخال السعر والكمية."); return; }
-  const action = type === "buy" ? "شراء USDT" : "بيع USDT";
-  alert(`✅ ${action}\nالسعر: $${rate} / USDT\nالكمية: ${amount} USDT\n\n⚠️ هذه الميزة قيد التطوير في الباك إند.`);
+async function usdtExecute(type) {
+  const rate     = parseFloat(document.getElementById("usdt-rate").value);
+  const amount   = parseFloat(document.getElementById("usdt-amount").value);
+  const commBuy  = parseFloat(document.getElementById("usdt-comm-buy").value  || 0);
+  const commSell = parseFloat(document.getElementById("usdt-comm-sell").value || 0);
+  const note     = document.getElementById("usdt-note").value.trim();
+
+  if (!rate   || rate   <= 0) { showInternalToast("يرجى إدخال سعر USDT."); return; }
+  if (!amount || amount <= 0) { showInternalToast("يرجى إدخال الكمية."); return; }
+
+  const commRate = type === "buy" ? commBuy : commSell;
+  const btn = document.getElementById(type === "buy" ? "usdt-btn-buy" : "usdt-btn-sell");
+  btn.disabled = true;
+  btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> جاري التنفيذ...`;
+
+  try {
+    const endpoint = type === "buy" ? "buy" : "sell";
+    const res = await fetch(`${API_URL}/electronic-safe/${endpoint}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+        Accept: "application/json",
+      },
+      body: JSON.stringify({
+        currency_type:   "usdt",
+        amount:          amount,
+        commission_rate: commRate,
+        exchange_rate:   rate,
+        note:            note || undefined,
+      }),
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
+      const action = type === "buy" ? "شراء USDT" : "بيع USDT";
+      showInternalToast(`✓ تمت عملية ${action} بنجاح`);
+      loadElectronicBalances();
+      document.getElementById("usdt-amount").value = "";
+      document.getElementById("usdt-preview").style.display = "none";
+    } else {
+      showInternalToast(data.message || "فشلت العملية.");
+    }
+  } catch (e) {
+    showInternalToast("خطأ في الاتصال بالخادم.");
+  } finally {
+    btn.disabled = false;
+    if (type === "buy") {
+      btn.innerHTML = `<i class="fa-solid fa-cart-shopping"></i> تنفيذ الشراء`;
+    } else {
+      btn.innerHTML = `<i class="fa-solid fa-hand-holding-dollar"></i> تنفيذ البيع`;
+    }
+  }
 }
 
 
