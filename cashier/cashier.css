@@ -3616,3 +3616,22 @@ tr.row-agent:hover {
     background: #fff;
     box-shadow: 0 0 0 3px var(--primary-glow);
 }
+/* ── شبكة حقلي العمولة (شراء / بيع) ── */
+.sc-commission-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.sc-comm-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.sc-comm-buy  .trading-input:focus { border-color:#16a34a; box-shadow:0 0 0 3px #dcfce7; }
+.sc-comm-sell .trading-input:focus { border-color:#dc2626; box-shadow:0 0 0 3px #fee2e2; }
+
+@media (max-width: 480px) {
+    .sc-commission-grid { grid-template-columns: 1fr; }
+}
