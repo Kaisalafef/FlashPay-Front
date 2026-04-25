@@ -3592,6 +3592,7 @@ function _tNotifObserveList() {
    إدارة الصناديق الإضافية (Extra Boxes)
    ===================================================== */
 let _currentOfficeIdForBoxes = null;
+let _ebActionMeta = {}; // { boxId, boxAmount, boxName, actionType }
 
 async function openExtraBoxesModal() {
   document.getElementById("extra-boxes-modal").classList.remove("hidden");
@@ -3604,12 +3605,17 @@ function closeExtraBoxesModal() {
   document.body.style.overflow = "";
 }
 
-// إغلاق المودال عند النقر في الخلفية
 document.addEventListener("DOMContentLoaded", () => {
   const extraOverlay = document.getElementById("extra-boxes-modal");
   if (extraOverlay) {
     extraOverlay.addEventListener("click", function (e) {
       if (e.target === extraOverlay) closeExtraBoxesModal();
+    });
+  }
+  const actionOverlay = document.getElementById("eb-action-modal");
+  if (actionOverlay) {
+    actionOverlay.addEventListener("click", function (e) {
+      if (e.target === actionOverlay) closeEbActionModal();
     });
   }
 });
@@ -3620,7 +3626,6 @@ async function loadExtraBoxes() {
     '<tr><td colspan="3" style="text-align:center; padding: 20px;">جاري التحميل... <i class="fa-solid fa-spinner fa-spin"></i></td></tr>';
 
   try {
-    // التأكد من جلب office_id للمستخدم الحالي
     if (!_currentOfficeIdForBoxes) {
       const meRes = await fetch(`${API_URL}/me`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -3634,11 +3639,7 @@ async function loadExtraBoxes() {
     });
     const json = await res.json();
     const allBoxes = json.data || [];
-
-    // فلترة الصناديق بحيث تظهر فقط التابعة لمكتب المدير الحالي
-    const myBoxes = allBoxes.filter(
-      (b) => b.office_id === _currentOfficeIdForBoxes,
-    );
+    const myBoxes = allBoxes.filter((b) => b.office_id === _currentOfficeIdForBoxes);
 
     if (myBoxes.length === 0) {
       tbody.innerHTML =
@@ -3646,267 +3647,199 @@ async function loadExtraBoxes() {
       return;
     }
 
-    // ابحث عن هذا الجزء داخل دالة loadExtraBoxes في ملف admin.js وقم باستبداله
-    // ابحث عن الجزء المسؤول عن رسم الجدول في loadExtraBoxes واستبدله بهذا:
-    tbody.innerHTML = myBoxes
-      .map(
-        (box) => `
+    tbody.innerHTML = myBoxes.map((box) => `
     <tr>
         <td style="font-weight:700; color: var(--dark);">${box.name}</td>
-        <td style="font-weight:800; color: var(--primary);">${parseFloat(box.amount).toLocaleString()}</td>
-        <td style="text-align: left;">
-            <button class="osafe-btn" onclick="handleBoxTransaction(${box.id}, ${box.amount}, '${box.name}', 'deposit')" title="إيداع" style="background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; padding: 7px 10px;">
+        <td style="font-weight:800; color: var(--primary);">$${parseFloat(box.amount).toLocaleString("en-US",{minimumFractionDigits:2})}</td>
+        <td style="text-align: left; white-space: nowrap;">
+            <button class="osafe-btn" onclick="openEbActionModal(${box.id}, ${box.amount}, '${box.name.replace(/'/g,"\\'")}', 'deposit')"
+                style="background:#dcfce7;color:#15803d;border:1px solid #bbf7d0;padding:7px 10px;">
                 <i class="fa-solid fa-plus-circle"></i> إيداع
             </button>
-            
-            <button class="osafe-btn" onclick="handleBoxTransaction(${box.id}, ${box.amount}, '${box.name}', 'withdraw')" title="سحب" style="background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; padding: 7px 10px;">
+            <button class="osafe-btn" onclick="openEbActionModal(${box.id}, ${box.amount}, '${box.name.replace(/'/g,"\\'")}', 'withdraw')"
+                style="background:#fef2f2;color:#b91c1c;border:1px solid #fecaca;padding:7px 10px;">
                 <i class="fa-solid fa-minus-circle"></i> سحب
             </button>
-
-            <button class="osafe-btn osafe-btn-tra" onclick="transferExtraBoxToOffice(${box.id}, ${box.amount}, '${box.name}')" title="نقل إلى خزنة المكتب">
+            <button class="osafe-btn osafe-btn-tra" onclick="openEbActionModal(${box.id}, ${box.amount}, '${box.name.replace(/'/g,"\\'")}', 'transfer')">
                 <i class="fa-solid fa-right-left"></i> نقل للخزنة
             </button>
-            
-            <button class="osafe-btn osafe-btn-wit" onclick="deleteExtraBox(${box.id})" title="حذف" style="padding: 7px 10px;">
+            <button class="osafe-btn osafe-btn-wit" onclick="deleteExtraBox(${box.id})" style="padding:7px 10px;">
                 <i class="fa-solid fa-trash"></i>
             </button>
         </td>
-    </tr>
-`,
-      )
-      .join("");
+    </tr>`).join("");
   } catch (e) {
     console.error(e);
     tbody.innerHTML =
       '<tr><td colspan="3" style="text-align:center; color: var(--danger); padding: 20px;">حدث خطأ أثناء تحميل البيانات</td></tr>';
   }
 }
-/**
- * تعديل رصيد الصندوق الإضافي يدوياً
- */
 
-/**
- * معالجة عمليات السحب والإيداع للصناديق الإضافية
- * @param {number} boxId - معرف الصندوق
- * @param {number} currentAmount - الرصيد الحالي
- * @param {string} boxName - اسم الصندوق
- * @param {string} type - 'deposit' (إيداع) أو 'withdraw' (سحب)
- */
-async function handleBoxTransaction(boxId, currentAmount, boxName, type) {
-  const actionText = type === "deposit" ? "إيداع في" : "سحب من";
-  const amountStr = prompt(
-    `أدخل المبلغ المراد ${actionText} صندوق (${boxName}):`,
-  );
+/* ── مودال العملية (إيداع / سحب / نقل) ── */
+function openEbActionModal(boxId, boxAmount, boxName, actionType) {
+  _ebActionMeta = { boxId, boxAmount, boxName, actionType };
 
-  if (amountStr === null) return;
+  const titles = {
+    deposit:  { icon: "fa-plus-circle",  color: "#15803d", text: `إيداع في صندوق: ${boxName}` },
+    withdraw: { icon: "fa-minus-circle", color: "#b91c1c", text: `سحب من صندوق: ${boxName}` },
+    transfer: { icon: "fa-right-left",   color: "#1d4ed8", text: `نقل من صندوق [${boxName}] إلى خزنة المكتب` },
+  };
+  const t = titles[actionType];
 
-  const amountValue = parseFloat(amountStr);
-  if (isNaN(amountValue) || amountValue <= 0) {
-    alert("يرجى إدخال مبلغ صحيح أكبر من الصفر.");
-    return;
-  }
+  document.getElementById("eb-action-title-icon").className  = `fa-solid ${t.icon}`;
+  document.getElementById("eb-action-title-icon").style.color = t.color;
+  document.getElementById("eb-action-title-text").textContent = t.text;
+  document.getElementById("eb-action-balance").textContent =
+    `الرصيد الحالي: $${parseFloat(boxAmount).toLocaleString("en-US",{minimumFractionDigits:2})}`;
+  document.getElementById("eb-action-amount").value = "";
+  document.getElementById("eb-action-notes").value  = "";
+  document.getElementById("eb-action-notes-required").style.display =
+    actionType === "transfer" ? "inline" : "none";
 
-  if (type === "withdraw" && amountValue > currentAmount) {
-    alert("عذراً، الرصيد الحالي غير كافٍ لإتمام عملية السحب.");
-    return;
-  }
+  const btn = document.getElementById("eb-action-confirm-btn");
+  btn.style.background = t.color;
+  btn.innerHTML = `<i class="fa-solid ${t.icon}"></i> ${
+    actionType === "deposit" ? "تأكيد الإيداع" :
+    actionType === "withdraw" ? "تأكيد السحب" : "تأكيد النقل"
+  }`;
 
-  const notes = prompt("ملاحظة على العملية (اختياري — اضغط موافق للتخطي):") ?? "";
-
-  let newTotal;
-  if (type === "deposit") {
-    newTotal = currentAmount + amountValue;
-  } else {
-    newTotal = currentAmount - amountValue;
-  }
-
-  try {
-    const res = await fetch(`${API_URL}/extra-boxes/${boxId}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-        Accept: "application/json",
-      },
-      body: JSON.stringify({ amount: newTotal, notes }),
-    });
-
-    if (res.ok) {
-      showAdminToast(
-        `تمت عملية ${type === "deposit" ? "الإيداع" : "السحب"} بنجاح.`,
-      );
-      loadExtraBoxes(); // تحديث القائمة
-    } else {
-      const err = await res.json();
-      alert(err.message || "فشل في تحديث بيانات الصندوق.");
-    }
-  } catch (e) {
-    console.error(e);
-    alert("خطأ في الاتصال بالخادم.");
-  }
+  document.getElementById("eb-action-modal").classList.remove("hidden");
 }
-async function editExtraBoxAmount(boxId, currentAmount, boxName) {
-  const newAmountStr = prompt(`تعديل رصيد صندوق "${boxName}":`, currentAmount);
 
-  // إذا ضغط المستخدم إلغاء أو لم يدخل شيئاً
-  if (newAmountStr === null) return;
+function closeEbActionModal() {
+  document.getElementById("eb-action-modal").classList.add("hidden");
+  _ebActionMeta = {};
+}
 
-  const newAmount = parseFloat(newAmountStr);
-  if (isNaN(newAmount) || newAmount < 0) {
-    alert("يرجى إدخال مبلغ صحيح.");
-    return;
+async function confirmEbAction() {
+  const { boxId, boxAmount, boxName, actionType } = _ebActionMeta;
+  const amount = parseFloat(document.getElementById("eb-action-amount").value);
+  const notes  = document.getElementById("eb-action-notes").value.trim();
+
+  if (!amount || amount <= 0) {
+    showAdminToast("يرجى إدخال مبلغ صحيح أكبر من الصفر.", "danger"); return;
+  }
+  if (actionType === "withdraw" && amount > boxAmount) {
+    showAdminToast("الرصيد الحالي غير كافٍ لإتمام عملية السحب.", "danger"); return;
+  }
+  if (actionType === "transfer" && amount > boxAmount) {
+    showAdminToast("المبلغ يتجاوز رصيد الصندوق.", "danger"); return;
+  }
+  if (actionType === "transfer" && !notes) {
+    showAdminToast("يرجى إدخال ملاحظة للنقل — هذا الحقل مطلوب.", "danger"); return;
   }
 
+  const btn = document.getElementById("eb-action-confirm-btn");
+  const orig = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> جاري التنفيذ...`;
+
   try {
-    const res = await fetch(`${API_URL}/extra-boxes/${boxId}`, {
-      method: "PUT",
+    const endpointMap = { deposit: "deposit", withdraw: "withdraw", transfer: "transfer-to-office" };
+    const res = await fetch(`${API_URL}/extra-boxes/${boxId}/${endpointMap[actionType]}`, {
+      method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
         Accept: "application/json",
       },
-      body: JSON.stringify({ amount: newAmount }),
+      body: JSON.stringify({ amount, notes }),
     });
 
     const data = await res.json();
     if (res.ok) {
-      showAdminToast("تم تحديث مبلغ الصندوق بنجاح.");
-      loadExtraBoxes(); // إعادة تحميل القائمة لتحديث الأرقام
+      closeEbActionModal();
+      const msgMap = { deposit: "✅ تم الإيداع بنجاح", withdraw: "✅ تم السحب بنجاح", transfer: "✅ تم النقل إلى خزنة المكتب بنجاح" };
+      showAdminToast(msgMap[actionType]);
+      await loadExtraBoxes();
+      if (actionType === "transfer" &&
+          document.getElementById("safes-card")?.style.display !== "none") {
+        showSafesSection();
+      }
     } else {
-      alert(data.message || "فشل في تحديث المبلغ.");
+      showAdminToast(data.message || "حدث خطأ في العملية", "danger");
     }
   } catch (e) {
     console.error(e);
-    alert("خطأ في الاتصال بالخادم.");
+    showAdminToast("خطأ في الاتصال بالخادم.", "danger");
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = orig;
   }
 }
-async function createExtraBox() {
-  const nameInput = document.getElementById("eb-name");
-  const amountInput = document.getElementById("eb-amount");
-  const name = nameInput.value.trim();
-  const amount = parseFloat(amountInput.value);
 
-  if (!name || isNaN(amount) || amount < 0) {
-    alert("يرجى إدخال اسم للصندوق ومبلغ صالح.");
-    return;
+async function createExtraBox() {
+  const nameInput   = document.getElementById("eb-name");
+  const debitInput  = document.getElementById("eb-amount-debit");
+  const creditInput = document.getElementById("eb-amount-credit");
+
+  const name   = nameInput.value.trim();
+  const debit  = parseFloat(debitInput.value)  || 0;
+  const credit = parseFloat(creditInput.value) || 0;
+
+  if (!name) {
+    showAdminToast("يرجى إدخال اسم للصندوق.", "danger"); return;
+  }
+  if (debit < 0 || credit < 0) {
+    showAdminToast("القيم يجب أن تكون أكبر من أو تساوي الصفر.", "danger"); return;
   }
 
   try {
     const res = await fetch(`${API_URL}/extra-boxes`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
       body: JSON.stringify({
         name,
-        amount,
+        amount_debit:  debit,
+        amount_credit: credit,
         office_id: _currentOfficeIdForBoxes,
       }),
     });
-
     const data = await res.json();
     if (res.ok) {
-      nameInput.value = "";
-      amountInput.value = "";
-      showAdminToast("تم إضافة الصندوق بنجاح!");
+      nameInput.value   = "";
+      debitInput.value  = "";
+      creditInput.value = "";
+      document.getElementById("eb-net-value").textContent = "$0.00";
+      showAdminToast("✅ تم إضافة الصندوق بنجاح!");
       loadExtraBoxes();
     } else {
-      alert(data.message || "حدث خطأ أثناء الإضافة.");
+      showAdminToast(data.message || "حدث خطأ أثناء الإضافة.", "danger");
     }
   } catch (e) {
     console.error(e);
-    alert("خطأ في الاتصال بالخادم.");
+    showAdminToast("خطأ في الاتصال بالخادم.", "danger");
   }
 }
 
-async function transferExtraBoxToOffice(boxId, maxAmount, boxName) {
-  const amountStr = prompt(
-    `كم تريد أن تنقل من صندوق "${boxName}" إلى خزنة المكتب؟\nالرصيد المتاح: ${parseFloat(maxAmount).toLocaleString()}`,
-  );
-  if (!amountStr) return;
-
-  const transferAmount = parseFloat(amountStr);
-  if (
-    isNaN(transferAmount) ||
-    transferAmount <= 0 ||
-    transferAmount > maxAmount
-  ) {
-    alert("المبلغ المدخل غير صحيح أو يتجاوز الرصيد المتاح في الصندوق.");
-    return;
-  }
-
-  try {
-    // 1. خصم المبلغ من الصندوق الإضافي
-    const newBoxAmount = maxAmount - transferAmount;
-    const resBox = await fetch(`${API_URL}/extra-boxes/${boxId}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ amount: newBoxAmount }),
-    });
-
-    if (!resBox.ok) {
-      alert("فشل في تحديث رصيد الصندوق الإضافي.");
-      return;
-    }
-
-    // 2. إيداع المبلغ المخصوم في خزنة المكتب
-    const resOffice = await fetch(
-      `${API_URL}/offices/${_currentOfficeIdForBoxes}/safe`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ amount: transferAmount, type: "deposit" }),
-      },
-    );
-
-    if (resOffice.ok) {
-      showAdminToast("✅ تم نقل المبلغ إلى خزنة المكتب بنجاح.");
-      loadExtraBoxes();
-
-      // تحديث العرض الخلفي للصناديق الأساسية لتظهر القيمة الجديدة
-      if (document.getElementById("safes-card").style.display !== "none") {
-        showSafesSection();
-      }
-    } else {
-      alert(
-        "تنبيه: تم خصم المبلغ من الصندوق ولكن فشل إيداعه في الخزنة. يرجى مراجعة الدعم الفني.",
-      );
-    }
-  } catch (e) {
-    console.error(e);
-    alert("حدث خطأ في الاتصال بالخادم أثناء النقل.");
-  }
+// حساب الصافي لحظياً عند تغيير منه / عليه
+function _ebUpdateNet() {
+  const debit  = parseFloat(document.getElementById("eb-amount-debit")?.value)  || 0;
+  const credit = parseFloat(document.getElementById("eb-amount-credit")?.value) || 0;
+  const net    = debit - credit;
+  const el     = document.getElementById("eb-net-value");
+  if (!el) return;
+  el.textContent = (net >= 0 ? "+" : "") + "$" + net.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  el.style.color = net >= 0 ? "#15803d" : "#b91c1c";
 }
+
+document.addEventListener("DOMContentLoaded", () => {
+  document.getElementById("eb-amount-debit")?.addEventListener("input",  _ebUpdateNet);
+  document.getElementById("eb-amount-credit")?.addEventListener("input", _ebUpdateNet);
+});
 
 async function deleteExtraBox(boxId) {
-  if (
-    !confirm(
-      "هل أنت متأكد من حذف هذا الصندوق؟\n(ملاحظة: سيتم حذفه مع الرصيد المتبقي فيه)",
-    )
-  )
+  if (!confirm("هل أنت متأكد من حذف هذا الصندوق؟\n(ملاحظة: سيتم حذفه مع الرصيد المتبقي فيه)"))
     return;
-
   try {
     const res = await fetch(`${API_URL}/extra-boxes/${boxId}`, {
       method: "DELETE",
       headers: { Authorization: `Bearer ${token}` },
     });
-
-    if (res.ok) {
-      showAdminToast("تم حذف الصندوق بنجاح.");
-      loadExtraBoxes();
-    } else {
-      alert("فشل في حذف الصندوق.");
-    }
+    if (res.ok) { showAdminToast("تم حذف الصندوق بنجاح."); loadExtraBoxes(); }
+    else showAdminToast("فشل في حذف الصندوق.", "danger");
   } catch (e) {
-    alert("حدث خطأ في الاتصال بالخادم.");
+    showAdminToast("حدث خطأ في الاتصال بالخادم.", "danger");
   }
 }
 /* ── Toast notification (top-left corner) ────────────────────────────────── */
