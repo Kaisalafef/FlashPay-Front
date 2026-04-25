@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>FlashPay - تسجيل الدخول</title>
+        <link rel="icon" type="image/svg+xml"
+            href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 448 512'><path fill='%23FFD700' d='M349.4 44.6c5.9-13.7 1.5-29.7-10.6-38.5s-28.6-8-39.9 1.8l-256 224c-10 8.8-13.6 22.9-8.9 35.3s16.6 20.3 29.8 19.5l115.4-6.9L103.8 456.3c-6.2 13.5-2.2 29.4 9.5 38.5s28.1 9.1 40.1 2.5l256-141.2c11.3-6.2 18.2-18 17.5-30.8s-8.7-24-20.5-29.1l-111.4-48.4 144.1-177.3c8.1-10 9.2-24.1 4.3-35.3z'/></svg>">
+        <link
+            href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap"
+            rel="stylesheet">
+        <link rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+        <link rel="stylesheet" href="login/login.css">
+    </head>
+    <body>
+
+        <div class="loading-overlay" id="loadingOverlay">
+            <div class="loading-spinner"></div>
+            <div class="loading-text">جاري التحقق من البيانات...</div>
+        </div>
+
+        <div class="login-container">
+            <div class="logo-section">
+                <div class="logo">
+                    <i class="fa-solid fa-bolt-lightning"></i>
+                </div>
+                <h1>FlashPay</h1>
+                <p>نظام إدارة الحوالات المالية</p>
+            </div>
+
+            <div class="error-message" id="errorMessage">
+                <i class="fa-solid fa-circle-exclamation"></i>
+                <span id="errorText"></span>
+            </div>
+
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="email">البريد الإلكتروني <span
+                            class="required">*</span></label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-envelope"></i>
+                        <input type="email" id="email" class="form-control"
+                            placeholder="example@flashpay.com" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="password">كلمة المرور <span
+                            class="required">*</span></label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-lock"></i>
+                        <input type="password" id="password"
+                            class="form-control" placeholder="أدخل كلمة المرور"
+                            required>
+                    </div>
+                </div>
+                <button type="submit" class="btn-login" id="loginBtn">
+                    <span>تسجيل الدخول</span>
+                </button>
+            </form>
+
+            <div class="footer-links">
+                <a href="#"
+                    onclick="showAlert('يرجى مراجعة الإدارة لاستعادة كلمة المرور','warning' ); return false;">نسيت
+                    كلمة المرور؟</a>
+            </div>
+
+            <div class="copyright">
+                &copy; 2025 FlashPay. جميع الحقوق محفوظة.
+            </div>
+        </div>
+
+        <script src="login/login.js"></script>
+    </body>
+</html>

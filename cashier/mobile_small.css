@@ -22,6 +22,7 @@
     transition: opacity 0.28s ease;
     pointer-events: none;
 }
+
 .sidebar-overlay.active {
     opacity: 1;
     pointer-events: all;
@@ -32,13 +33,16 @@
    ===================================================== */
 @media (max-width: 480px) {
 
-    html, body {
+    html,
+    body {
         height: 100%;
         overflow: hidden;
         font-size: 12px !important;
     }
 
-    .sidebar-overlay { display: block; }
+    .sidebar-overlay {
+        display: block;
+    }
 
     /* ════════ SIDEBAR DRAWER ════════ */
     .sidebar {
@@ -46,16 +50,20 @@
         top: 0 !important;
         right: -260px !important;
         left: auto !important;
-        width: 210px !important;           /* ← أضيق */
+        width: 210px !important;
+        /* ← أضيق */
         height: 100dvh !important;
         z-index: 200 !important;
-        padding: 16px 11px !important;     /* ← أقل */
+        padding: 16px 11px !important;
+        /* ← أقل */
         overflow-y: auto !important;
-        transition: right 0.3s cubic-bezier(0.4,0,0.2,1) !important;
-        box-shadow: -4px 0 20px rgba(0,0,0,0.16) !important;
+        transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        box-shadow: -4px 0 20px rgba(0, 0, 0, 0.16) !important;
     }
 
-    .sidebar.open { right: 0 !important; }
+    .sidebar.open {
+        right: 0 !important;
+    }
 
     /* ════════ MAIN CONTENT ════════ */
     .main-content {
@@ -72,7 +80,8 @@
         display: flex !important;
         align-items: center;
         justify-content: center;
-        width: 30px !important;            /* ← أصغر */
+        width: 30px !important;
+        /* ← أصغر */
         height: 30px !important;
         background: var(--white);
         border: 1.5px solid var(--border);
@@ -95,9 +104,11 @@
         display: flex !important;
         align-items: center !important;
         justify-content: space-between !important;
-        padding: 0 10px !important;        /* ← أضيق */
+        padding: 0 10px !important;
+        /* ← أضيق */
         height: auto !important;
-        min-height: 46px !important;       /* ← أقصر */
+        min-height: 46px !important;
+        /* ← أقصر */
         gap: 6px !important;
         flex-wrap: nowrap !important;
         position: sticky !important;
@@ -122,28 +133,32 @@
     }
 
     .page-title h2 {
-        font-size: 0.72rem !important;     /* ← أصغر */
+        font-size: 0.72rem !important;
+        /* ← أصغر */
         white-space: nowrap !important;
         overflow: hidden !important;
         text-overflow: ellipsis !important;
         line-height: 1.2 !important;
     }
 
-    .page-title > i {
+    .page-title>i {
         font-size: 0.78rem !important;
         flex-shrink: 0;
     }
 
     /* cashier page-icon */
     .page-icon {
-        width: 28px !important;            /* ← أصغر */
+        width: 28px !important;
+        /* ← أصغر */
         height: 28px !important;
         font-size: 11px !important;
         border-radius: 7px !important;
         flex-shrink: 0 !important;
     }
 
-    .page-sub { font-size: 9.5px !important; }
+    .page-sub {
+        font-size: 9.5px !important;
+    }
 
     .header-right,
     .header-actions {
@@ -176,7 +191,9 @@
     }
 
     .profile-info,
-    .profile-chevron { display: none !important; }
+    .profile-chevron {
+        display: none !important;
+    }
 
     .profile-box {
         padding: 2px !important;
@@ -184,7 +201,9 @@
         gap: 0 !important;
     }
 
-    .profile-box small { display: none !important; }
+    .profile-box small {
+        display: none !important;
+    }
 
     /* ════════ SIDEBAR INTERNALS ════════ */
     .logo {
@@ -192,35 +211,49 @@
         align-items: center !important;
         gap: 8px !important;
         padding: 2px 4px !important;
-        margin-bottom: 18px !important;    /* ← أقل */
+        margin-bottom: 18px !important;
+        /* ← أقل */
     }
 
     .logo-icon {
-        width: 28px !important;            /* ← أصغر */
+        width: 28px !important;
+        /* ← أصغر */
         height: 28px !important;
         font-size: 12px !important;
         border-radius: 7px !important;
     }
 
-    .logo > i { font-size: 1rem !important; flex-shrink: 0; }
+    .logo>i {
+        font-size: 1rem !important;
+        flex-shrink: 0;
+    }
 
     .logo span,
     .logo .pay,
-    .logo .flash { font-size: 13px !important; }  /* ← أصغر */
+    .logo .flash {
+        font-size: 13px !important;
+    }
 
-    .sidebar nav ul { gap: 2px !important; }
+    /* ← أصغر */
+
+    .sidebar nav ul {
+        gap: 2px !important;
+    }
 
     .sidebar nav a {
         display: flex !important;
         align-items: center !important;
         gap: 8px !important;
-        padding: 9px 10px !important;      /* ← أقل */
-        font-size: 11.5px !important;      /* ← أصغر */
+        padding: 9px 10px !important;
+        /* ← أقل */
+        font-size: 11.5px !important;
+        /* ← أصغر */
         border-radius: 7px !important;
     }
 
     .nav-icon {
-        width: 26px !important;            /* ← أصغر */
+        width: 26px !important;
+        /* ← أصغر */
         height: 26px !important;
         font-size: 10.5px !important;
         border-radius: 6px !important;
@@ -240,10 +273,17 @@
         font-size: 11px !important;
     }
 
-    .user-role { font-size: 9px !important; }
-    .user-name { font-size: 11px !important; }
+    .user-role {
+        font-size: 9px !important;
+    }
 
-    .logout { padding-top: 8px !important; }
+    .user-name {
+        font-size: 11px !important;
+    }
+
+    .logout {
+        padding-top: 8px !important;
+    }
 
     .logout a {
         padding: 8px 10px !important;
@@ -253,13 +293,15 @@
 
     /* ════════ CONTENT BODY ════════ */
     .content-body {
-        padding: 8px 8px 20px !important;  /* ← أضيق */
+        padding: 8px 8px 20px !important;
+        /* ← أضيق */
         max-width: 100% !important;
     }
 
     /* ════════ CARDS ════════ */
     .card {
-        padding: 10px 9px !important;      /* ← أقل */
+        padding: 10px 9px !important;
+        /* ← أقل */
         border-radius: 9px !important;
         margin-bottom: 10px !important;
     }
@@ -273,8 +315,13 @@
     }
 
     .card-title h3,
-    .card-title h2 { font-size: 11.5px !important; }
-    .card-title i   { font-size: 11.5px !important; }
+    .card-title h2 {
+        font-size: 11.5px !important;
+    }
+
+    .card-title i {
+        font-size: 11.5px !important;
+    }
 
     /* ════════ SECTION HERO ════════ */
     .section-hero {
@@ -286,8 +333,13 @@
         margin-bottom: 10px !important;
     }
 
-    .section-hero-text h2 { font-size: 0.8rem !important; }
-    .section-hero-text p  { font-size: 10.5px !important; }
+    .section-hero-text h2 {
+        font-size: 0.8rem !important;
+    }
+
+    .section-hero-text p {
+        font-size: 10.5px !important;
+    }
 
     .section-hero-stats {
         display: flex !important;
@@ -303,8 +355,13 @@
         border-radius: 6px !important;
     }
 
-    .hero-stat span  { font-size: 0.88rem !important; }
-    .hero-stat small { font-size: 9px !important; }
+    .hero-stat span {
+        font-size: 0.88rem !important;
+    }
+
+    .hero-stat small {
+        font-size: 9px !important;
+    }
 
     /* ════════ STATS GRID ════════ */
     .stats-grid,
@@ -331,10 +388,14 @@
     }
 
     .stat-value,
-    .dash-stat-value { font-size: 1.05rem !important; }
+    .dash-stat-value {
+        font-size: 1.05rem !important;
+    }
 
     .stat-label,
-    .dash-stat-label { font-size: 10px !important; }
+    .dash-stat-label {
+        font-size: 10px !important;
+    }
 
     /* ════════ FORMS ════════ */
     .collapsible-form {
@@ -347,7 +408,9 @@
         font-size: 11.5px !important;
     }
 
-    .collapse-body .styled-form { padding: 9px !important; }
+    .collapse-body .styled-form {
+        padding: 9px !important;
+    }
 
     .form-row {
         flex-direction: column !important;
@@ -360,7 +423,9 @@
         width: 100% !important;
     }
 
-    label { font-size: 10.5px !important; }
+    label {
+        font-size: 10.5px !important;
+    }
 
     input,
     select,
@@ -376,11 +441,35 @@
         padding-top: 9px !important;
     }
 
-    .btn-primary { font-size: 11.5px !important; padding: 9px 13px !important; border-radius: 7px !important; }
-    .btn-cancel  { font-size: 11px !important;   padding: 8px 12px !important;  border-radius: 7px !important; }
-    .btn-danger  { font-size: 11px !important;   padding: 8px 12px !important;  border-radius: 7px !important; }
-    .btn-refresh { font-size: 10.5px !important; padding: 7px 10px !important;  border-radius: 6px !important; }
-    .btn-confirm { font-size: 11px !important;   padding: 8px 12px !important;  border-radius: 7px !important; }
+    .btn-primary {
+        font-size: 11.5px !important;
+        padding: 9px 13px !important;
+        border-radius: 7px !important;
+    }
+
+    .btn-cancel {
+        font-size: 11px !important;
+        padding: 8px 12px !important;
+        border-radius: 7px !important;
+    }
+
+    .btn-danger {
+        font-size: 11px !important;
+        padding: 8px 12px !important;
+        border-radius: 7px !important;
+    }
+
+    .btn-refresh {
+        font-size: 10.5px !important;
+        padding: 7px 10px !important;
+        border-radius: 6px !important;
+    }
+
+    .btn-confirm {
+        font-size: 11px !important;
+        padding: 8px 12px !important;
+        border-radius: 7px !important;
+    }
 
     /* Date Filter */
     .date-filter {
@@ -390,7 +479,10 @@
         width: 100% !important;
     }
 
-    .date-filter label { font-size: 10.5px !important; }
+    .date-filter label {
+        font-size: 10.5px !important;
+    }
+
     .date-filter input[type="date"] {
         font-size: 11px !important;
         padding: 7px 9px !important;
@@ -410,7 +502,9 @@
         border-radius: 8px !important;
     }
 
-    .data-table { min-width: 420px !important; }
+    .data-table {
+        min-width: 420px !important;
+    }
 
     .data-table th {
         padding: 8px 9px !important;
@@ -432,16 +526,30 @@
     }
 
     .table-empty,
-    .empty-state { padding: 28px 12px !important; }
+    .empty-state {
+        padding: 28px 12px !important;
+    }
 
     .table-empty i,
-    .empty-state i { font-size: 28px !important; }
+    .empty-state i {
+        font-size: 28px !important;
+    }
 
     .table-empty p,
-    .empty-state p { font-size: 11px !important; }
+    .empty-state p {
+        font-size: 11px !important;
+    }
 
-    .loading-row     { padding: 20px 10px !important; font-size: 11px !important; text-align: center; }
-    .loading-spinner { width: 18px !important; height: 18px !important; }
+    .loading-row {
+        padding: 20px 10px !important;
+        font-size: 11px !important;
+        text-align: center;
+    }
+
+    .loading-spinner {
+        width: 18px !important;
+        height: 18px !important;
+    }
 
     /* ════════ CASHIER — SAFES ════════ */
     .safes-grid {
@@ -450,8 +558,15 @@
         gap: 8px !important;
     }
 
-    .safe-card        { padding: 11px 10px !important; border-radius: 8px !important; }
-    .safe-card-header { gap: 8px !important; margin-bottom: 9px !important; }
+    .safe-card {
+        padding: 11px 10px !important;
+        border-radius: 8px !important;
+    }
+
+    .safe-card-header {
+        gap: 8px !important;
+        margin-bottom: 9px !important;
+    }
 
     .safe-card-icon {
         width: 34px !important;
@@ -460,13 +575,32 @@
         border-radius: 8px !important;
     }
 
-    .safe-card-title    { font-size: 11.5px !important; }
-    .safe-card-subtitle { font-size: 10px !important; }
-    .safe-card-balance  { font-size: 18px !important; }
-    .safe-card-currency { font-size: 10px !important; }
+    .safe-card-title {
+        font-size: 11.5px !important;
+    }
 
-    .trade-label { font-size: 10px !important; margin-bottom: 6px !important; }
-    .trade-row   { gap: 5px !important; margin-bottom: 6px !important; flex-wrap: wrap !important; }
+    .safe-card-subtitle {
+        font-size: 10px !important;
+    }
+
+    .safe-card-balance {
+        font-size: 18px !important;
+    }
+
+    .safe-card-currency {
+        font-size: 10px !important;
+    }
+
+    .trade-label {
+        font-size: 10px !important;
+        margin-bottom: 6px !important;
+    }
+
+    .trade-row {
+        gap: 5px !important;
+        margin-bottom: 6px !important;
+        flex-wrap: wrap !important;
+    }
 
     .trading-input {
         padding: 7px 8px !important;
@@ -481,10 +615,19 @@
         border-radius: 6px !important;
     }
 
-    .action-cell { min-width: 130px !important; }
+    .action-cell {
+        min-width: 130px !important;
+    }
 
-    .custom-file-upload { padding: 6px 10px !important; font-size: 10.5px !important; }
-    .preview-img        { width: 64px !important; border-radius: 5px !important; }
+    .custom-file-upload {
+        padding: 6px 10px !important;
+        font-size: 10.5px !important;
+    }
+
+    .preview-img {
+        width: 64px !important;
+        border-radius: 5px !important;
+    }
 
     /* ════════ CASHIER — PROFITS ════════ */
     #profits-summary {
@@ -493,7 +636,10 @@
     }
 
     .badge-buy,
-    .badge-sell { padding: 2px 7px !important; font-size: 10px !important; }
+    .badge-sell {
+        padding: 2px 7px !important;
+        font-size: 10px !important;
+    }
 
     /* ════════ MODALS ════════ */
     .modal-overlay {
@@ -511,10 +657,17 @@
         overflow-y: auto !important;
     }
 
-    .modal-content.modal-lg { width: 98% !important; }
+    .modal-content.modal-lg {
+        width: 98% !important;
+    }
 
-    .modal-header h3 { font-size: 12.5px !important; }
-    .modal-body      { font-size: 11px !important; }
+    .modal-header h3 {
+        font-size: 12.5px !important;
+    }
+
+    .modal-body {
+        font-size: 11px !important;
+    }
 
     .modal-actions {
         flex-direction: column-reverse !important;
@@ -529,60 +682,329 @@
     }
 
     /* Customer Modal */
-    .customer-modal-content { border-radius: 11px !important; width: 100% !important; margin: 0 !important; }
-    .cmodal-header           { padding: 11px 10px !important; }
-    .cmodal-header-info h2   { font-size: 0.82rem !important; }
-    .cmodal-header-meta span { font-size: 10px !important; }
-    .cmodal-body             { padding: 10px !important; }
-    .cmodal-info-grid        { grid-template-columns: repeat(2, 1fr) !important; gap: 5px !important; }
-    .cmodal-info-value       { font-size: 11px !important; }
-    .cmodal-table-wrapper    { overflow-x: auto !important; -webkit-overflow-scrolling: touch !important; }
-    .cmodal-table            { min-width: 380px !important; }
+    .customer-modal-content {
+        border-radius: 11px !important;
+        width: 100% !important;
+        margin: 0 !important;
+    }
+
+    .cmodal-header {
+        padding: 11px 10px !important;
+    }
+
+    .cmodal-header-info h2 {
+        font-size: 0.82rem !important;
+    }
+
+    .cmodal-header-meta span {
+        font-size: 10px !important;
+    }
+
+    .cmodal-body {
+        padding: 10px !important;
+    }
+
+    .cmodal-info-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 5px !important;
+    }
+
+    .cmodal-info-value {
+        font-size: 11px !important;
+    }
+
+    .cmodal-table-wrapper {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+
+    .cmodal-table {
+        min-width: 380px !important;
+    }
 
     /* ════════ ADMIN — Employees ════════ */
-    .emp-avatar        { width: 26px !important; height: 26px !important; font-size: 10.5px !important; }
+    .emp-avatar {
+        width: 26px !important;
+        height: 26px !important;
+        font-size: 10.5px !important;
+    }
+
     .role-badge,
-    .role-badge-new    { font-size: 9.5px !important; padding: 2px 7px !important; }
+    .role-badge-new {
+        font-size: 9.5px !important;
+        padding: 2px 7px !important;
+    }
+
+    /* ════════ CASHIER — Internal Transfer Form ════════ */
+    .internal-card-hero {
+        padding: 12px 14px !important;
+    }
+
+    .internal-hero-icon {
+        width: 38px !important;
+        height: 38px !important;
+        font-size: 15px !important;
+    }
+
+    .internal-hero-text h3 {
+        font-size: 13px !important;
+    }
+
+    .internal-hero-text p {
+        font-size: 10.5px !important;
+    }
+
+    .internal-form-body {
+        padding: 10px !important;
+        gap: 10px !important;
+    }
+
+    .int-row,
+    .int-row-fee {
+        grid-template-columns: 1fr !important;
+    }
+
+    .fee-radio-group {
+        flex-direction: column !important;
+        gap: 8px !important;
+    }
+
+    .fee-radio-card {
+        padding: 10px !important;
+    }
+
+    .fee-radio-title {
+        font-size: 12px !important;
+    }
+
+    .fee-radio-sub {
+        font-size: 10px !important;
+    }
+
+    .int-summary {
+        padding: 12px 14px !important;
+    }
+
+    .int-summary-val {
+        font-size: 13px !important;
+    }
+
+    .int-summary-val.net-val {
+        font-size: 15px !important;
+    }
+
+    .int-actions {
+        flex-direction: column !important;
+        gap: 6px !important;
+    }
+
+    .int-btn-save,
+    .int-btn-reset {
+        width: 100% !important;
+        font-size: 12.5px !important;
+        padding: 10px !important;
+    }
+
+    /* ════════ CASHIER — Completed Transfers ════════ */
+    .completed-hero {
+        padding: 12px 12px !important;
+    }
+
+    .completed-hero-icon {
+        width: 40px !important;
+        height: 40px !important;
+        font-size: 16px !important;
+    }
+
+    .completed-hero-text h3 {
+        font-size: 14px !important;
+    }
+
+    .completed-hero-text p {
+        font-size: 11px !important;
+    }
+
+    .completed-stats {
+        width: 100% !important;
+        justify-content: center !important;
+        padding: 8px 12px !important;
+    }
+
+    .cstat-num {
+        font-size: 16px !important;
+    }
+
+    .cstat-lbl {
+        font-size: 9px !important;
+    }
+
+    .cstat-box {
+        padding: 0 10px !important;
+    }
+
+    .completed-filters {
+        padding: 10px !important;
+        gap: 6px !important;
+    }
+
+    .cf-group {
+        min-width: unset !important;
+    }
+
+    .cf-group-sm {
+        flex: 1 !important;
+        min-width: unset !important;
+    }
+
+    .cf-input {
+        padding: 7px 10px !important;
+        font-size: 12px !important;
+    }
+
+    .completed-pagination {
+        padding: 10px 12px !important;
+        gap: 4px !important;
+    }
+
+    .pg-btn {
+        min-width: 28px !important;
+        height: 28px !important;
+        font-size: 11.5px !important;
+        border-radius: 6px !important;
+    }
+
+    /* ════════ ACCOUNTANT — Stats & Toolbar ════════ */
+    .summary-bar {
+        padding: 10px 12px !important;
+        gap: 8px !important;
+        border-radius: 10px !important;
+    }
+
+    .summary-item .s-value {
+        font-size: 0.95rem !important;
+    }
+
+    .summary-item .s-label {
+        font-size: 0.65rem !important;
+    }
+
+    .search-box {
+        padding: 7px 10px !important;
+    }
+
+    .filter-select {
+        padding: 7px 10px !important;
+        font-size: 12px !important;
+    }
+
+    .acct-safe-card {
+        border-radius: 10px !important;
+    }
+
+    .acct-safe-header {
+        padding: 10px 12px !important;
+        gap: 8px !important;
+    }
+
+    .acct-safe-icon {
+        width: 34px !important;
+        height: 34px !important;
+        font-size: 14px !important;
+    }
+
+    .acct-safe-title {
+        font-size: 12.5px !important;
+    }
+
+    .acct-safe-body {
+        padding: 10px 12px !important;
+    }
+
+    .acct-safe-row {
+        font-size: 11.5px !important;
+        padding: 6px 0 !important;
+    }
 
     /* ════════ SCROLLBAR ════════ */
-    ::-webkit-scrollbar { width: 3px !important; height: 3px !important; }
+    ::-webkit-scrollbar {
+        width: 3px !important;
+        height: 3px !important;
+    }
 
-} /* end 480px */
+}
+
+/* end 480px */
 
 /* =====================================================
    EXTRA SMALL — 360px وأقل
    ===================================================== */
 @media (max-width: 360px) {
 
-    html, body { font-size: 11px !important; }
+    html,
+    body {
+        font-size: 11px !important;
+    }
 
-    .content-body { padding: 6px 6px 16px !important; }
+    .content-body {
+        padding: 6px 6px 16px !important;
+    }
 
     .stats-grid,
     .dashboard-stats-grid,
-    #profits-summary { grid-template-columns: 1fr !important; }
+    #profits-summary {
+        grid-template-columns: 1fr !important;
+    }
 
-    .time-display { display: none !important; }
+    .time-display {
+        display: none !important;
+    }
 
-    .page-title h2 { font-size: 0.66rem !important; }
+    .page-title h2 {
+        font-size: 0.66rem !important;
+    }
 
-    .safe-card-balance { font-size: 16px !important; }
+    .safe-card-balance {
+        font-size: 16px !important;
+    }
 
-    .data-table th { font-size: 9.5px !important; padding: 7px 8px !important; }
-    .data-table td { font-size: 9.5px !important; padding: 8px 8px !important; }
+    .data-table th {
+        font-size: 9.5px !important;
+        padding: 7px 8px !important;
+    }
 
-    .modal-content { padding: 12px 10px !important; width: 98% !important; }
+    .data-table td {
+        font-size: 9.5px !important;
+        padding: 8px 8px !important;
+    }
 
-    .hero-stat      { min-width: 52px !important; }
-    .hero-stat span { font-size: 0.82rem !important; }
+    .modal-content {
+        padding: 12px 10px !important;
+        width: 98% !important;
+    }
 
-    .cmodal-info-grid { grid-template-columns: 1fr !important; }
+    .hero-stat {
+        min-width: 52px !important;
+    }
+
+    .hero-stat span {
+        font-size: 0.82rem !important;
+    }
+
+    .cmodal-info-grid {
+        grid-template-columns: 1fr !important;
+    }
 
     .sidebar {
-        width: 190px !important;           /* أضيق على 360 */
+        width: 190px !important;
+        /* أضيق على 360 */
         right: -240px !important;
     }
 
-    .sidebar nav a { font-size: 11px !important; padding: 8px 9px !important; }
+    .sidebar nav a {
+        font-size: 11px !important;
+        padding: 8px 9px !important;
+    }
 
-} /* end 360px */
+}
+
+/* end 360px */
