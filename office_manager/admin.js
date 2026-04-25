@@ -1455,8 +1455,8 @@ async function loadCashiers() {
    ============================================= */
 function buildTradingUI(currencyId, officeId) {
   const amountChips = [50, 100, 200, 500, 1000];
-  const priceChips = [11500, 11700, 11800, 12000, 12100, 12200];
 
+  // أزرار الكميات تبقى كما هي
   const amountChipsHtml = amountChips
     .map(
       (v) =>
@@ -1464,19 +1464,21 @@ function buildTradingUI(currencyId, officeId) {
     )
     .join("");
 
-  const buyPriceChipsHtml = priceChips
-    .map(
-      (v) =>
-        `<button type="button" class="trade-chip trade-chip-buy" onclick="setTradeVal('buy_price_${currencyId}',null,${v})">${v.toLocaleString()}</button>`,
-    )
-    .join("");
+  // جلب آخر سعر شراء وبيع تم استخدامه من التخزين المحلي
+  const lastBuyPrice = localStorage.getItem(`last_buy_price_${currencyId}`);
+  const lastSellPrice = localStorage.getItem(`last_sell_price_${currencyId}`);
 
-  const sellPriceChipsHtml = priceChips
-    .map(
-      (v) =>
-        `<button type="button" class="trade-chip trade-chip-sell" onclick="setTradeVal('sell_price_${currencyId}',null,${v})">${v.toLocaleString()}</button>`,
-    )
-    .join("");
+  // إنشاء زر واحد لآخر سعر شراء (إن وجد)
+  let buyPriceChipsHtml = "";
+  if (lastBuyPrice) {
+    buyPriceChipsHtml = `<button type="button" class="trade-chip trade-chip-buy" onclick="setTradeVal('buy_price_${currencyId}',null,${lastBuyPrice})">آخر سعر: ${parseFloat(lastBuyPrice).toLocaleString()}</button>`;
+  }
+
+  // إنشاء زر واحد لآخر سعر بيع (إن وجد)
+  let sellPriceChipsHtml = "";
+  if (lastSellPrice) {
+    sellPriceChipsHtml = `<button type="button" class="trade-chip trade-chip-sell" onclick="setTradeVal('sell_price_${currencyId}',null,${lastSellPrice})">آخر سعر: ${parseFloat(lastSellPrice).toLocaleString()}</button>`;
+  }
 
   return `
     <div class="trade-panel">
@@ -1484,7 +1486,6 @@ function buildTradingUI(currencyId, officeId) {
             <i class="fa-solid fa-sliders"></i> عمليات التداول
         </div>
 
-        <!-- الكمية مشتركة -->
         <div class="trade-field-group">
             <label class="trade-field-label"><i class="fa-solid fa-hashtag"></i> الكمية</label>
             <div class="trade-chips-row">${amountChipsHtml}</div>
@@ -1496,7 +1497,6 @@ function buildTradingUI(currencyId, officeId) {
         </div>
 
         <div class="trade-ops-grid">
-            <!-- شراء -->
             <div class="trade-op trade-op-buy">
                 <div class="trade-op-header">
                     <i class="fa-solid fa-arrow-down-to-line"></i> شراء
@@ -1511,7 +1511,6 @@ function buildTradingUI(currencyId, officeId) {
                 </button>
             </div>
 
-            <!-- بيع -->
             <div class="trade-op trade-op-sell">
                 <div class="trade-op-header">
                     <i class="fa-solid fa-arrow-up-from-line"></i> بيع
@@ -1544,28 +1543,31 @@ function setTradeVal(id1, id2, val) {
   event.target.classList.add("trade-chip-active");
   setTimeout(() => event.target.classList.remove("trade-chip-active"), 600);
 }
-
 async function executeTrade(type, officeId, currencyId) {
+  if (!officeId || !currencyId) {
+    alert("بيانات الصندوق غير مكتملة، يرجى تحديث الصفحة");
+    return;
+  }
+
   const amountInput = document.getElementById(`${type}_amount_${currencyId}`);
   const priceInput = document.getElementById(`${type}_price_${currencyId}`);
 
-  const amount = parseFloat(amountInput.value);
-  const price = parseFloat(priceInput.value);
+  const amount = parseFloat(amountInput?.value);
+  const price = parseFloat(priceInput?.value);
 
   if (!amount || amount <= 0 || !price || price <= 0) {
     alert("يرجى إدخال كمية وسعر صحيحين");
     return;
   }
 
-  // تجهيز البيانات للإرسال
   const payload = {
     office_id: officeId,
     currency_id: currencyId,
     amount: amount,
   };
-
+  
   if (type === "buy") payload.buy_price = price;
-  if (type === "sell") payload.sell_price = price;
+  else payload.sell_price = price;
 
   try {
     const res = await fetch(`${API_URL}/trading/${type}`, {
@@ -1581,22 +1583,28 @@ async function executeTrade(type, officeId, currencyId) {
     const data = await res.json();
 
     if (res.ok) {
+      // 🟢 الإضافة الجديدة: حفظ السعر المستخدم بنجاح في التخزين المحلي
+      localStorage.setItem(`last_${type}_price_${currencyId}`, price);
+
       if (type === "sell") {
-        const profitVal = parseFloat(data.profit).toFixed(2);
-        const balSy =
-          data.balance_sy !== undefined
-            ? `\nرصيد SYP في التداول: ${parseFloat(data.balance_sy).toLocaleString()}`
-            : "";
-        alert(
-          `تمت عملية البيع بنجاح!\nالربح المحقق (USD): ${profitVal}${balSy}\n✅ تم تسجيل الربح في صندوق الأرباح تلقائياً`,
-        );
+        const profitVal = data.profit ? parseFloat(data.profit).toFixed(2) : "—";
+        const balSy = data.balance_sy !== undefined ? `\nرصيد SYP في التداول: ${parseFloat(data.balance_sy).toLocaleString()}` : "";
+        alert(`تمت عملية البيع بنجاح!\nالربح: ${profitVal}${balSy}`);
       } else {
-        alert("تمت عملية الشراء بنجاح ودمج متوسط التكلفة!");
+        alert("✅ تمت عملية الشراء بنجاح");
       }
-      // إعادة تفريغ الحقول وتحديث عرض الصناديق
-      amountInput.value = "";
-      priceInput.value = "";
-      showSafesSection();
+      
+      // تفريغ الحقول وإعادة تحميل الواجهة لتحديث زر السعر الجديد
+      if (amountInput) amountInput.value = "";
+      if (priceInput) priceInput.value = "";
+      
+      // استدعاء دالة تحديث الصناديق المناسبة حسب الملف الحالي
+      if (typeof showSafesSection === 'function' && document.getElementById('safes-card')) {
+         showSafesSection(); // Admin
+      } else if (typeof loadTradingSafes === 'function') {
+         loadTradingSafes(); // Cashier
+      }
+      
     } else {
       alert(data.message || "حدث خطأ أثناء العملية");
     }
