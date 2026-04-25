@@ -647,19 +647,12 @@
         align-items: flex-start !important;
         overflow-y: auto !important;
     }
-
-    .modal-content {
-        width: 96% !important;
-        max-width: 96% !important;
-        padding: 14px 12px !important;
-        border-radius: 11px !important;
-        max-height: 93dvh !important;
-        overflow-y: auto !important;
-    }
-
-    .modal-content.modal-lg {
-        width: 98% !important;
-    }
+.modal-box {
+    width: 96% !important;
+    max-width: 96% !important;
+    border-radius: 11px !important;
+    max-height: 93dvh !important;
+}
 
     .modal-header h3 {
         font-size: 12.5px !important;

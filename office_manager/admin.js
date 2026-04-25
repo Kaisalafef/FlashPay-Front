@@ -363,9 +363,10 @@ async function showSafesSection() {
   }
 
   try {
-    const [json, meData] = await Promise.all([
+    const [json, meData, eSafeJson] = await Promise.all([
       safeGet(`${API_URL}/safes`),
       safeGet(`${API_URL}/me`),
+      safeGet(`${API_URL}/electronic-safe/balances`),
     ]);
 
     if (!meData?.user) {
@@ -438,6 +439,10 @@ async function showSafesSection() {
                     <i class="fa-solid fa-minus"></i> سحب
                 </button>
             </div>
+            <div class="office-safe-row" style="margin-top:6px;">
+                <input type="text" id="adjust-notes" class="trading-input"
+                       placeholder="ملاحظة (اختياري)..." style="font-size:12px;">
+            </div>
         </div>
 
         <!-- إيداع / سحب ليرة سورية -->
@@ -457,6 +462,10 @@ async function showSafesSection() {
                     <i class="fa-solid fa-minus"></i> سحب
                 </button>
             </div>
+            <div class="office-safe-row" style="margin-top:6px;">
+                <input type="text" id="adjust-notes-sy" class="trading-input"
+                       placeholder="ملاحظة (اختياري)..." style="font-size:12px;">
+            </div>
         </div>
 
         <!-- تحويل إلى صندوق آخر (USD فقط) -->
@@ -475,6 +484,10 @@ async function showSafesSection() {
                         onclick="officeSafeTransfer(${myOfficeId})">
                     <i class="fa-solid fa-paper-plane"></i> تحويل
                 </button>
+            </div>
+            <div class="office-safe-row" style="margin-top:6px;">
+                <input type="text" id="transfer-notes" class="trading-input"
+                       placeholder="ملاحظة (اختياري)..." style="font-size:12px;">
             </div>
         </div>
     </div>`
@@ -516,6 +529,10 @@ async function showSafesSection() {
                 <option value="sy">ليرة (SYP)</option>
             </select>
         </div>
+        <div class="office-safe-row" style="margin-bottom:7px;">
+            <input type="text" id="profit-adjust-notes" class="trading-input"
+                   placeholder="ملاحظة (اختياري)..." style="font-size:12px;">
+        </div>
         <div class="office-safe-row">
             <button class="osafe-btn osafe-btn-dep" onclick="profitAdjust('deposit', ${myOfficeId})">
                 <i class="fa-solid fa-circle-arrow-down"></i> إيداع
@@ -541,9 +558,128 @@ async function showSafesSection() {
                 <i class="fa-solid fa-paper-plane"></i> نقل
             </button>
         </div>
+        <div class="office-safe-row" style="margin-top:6px;">
+            <input type="text" id="profit-transfer-notes" class="trading-input"
+                   placeholder="ملاحظة (اختياري)..." style="font-size:12px;">
+        </div>
     </div>
 </div>`;
-    // ─── 2. بطاقة الصندوق الرئيسي (MainSafe) ────────────────
+    const eSafe = eSafeJson?.data || { syp_sham_cash: 0, usd_sham_cash: 0, usdt: 0 };
+
+    // ─── بطاقة شام كاش + USDT ──────────────────────────────────
+    const electronicSafeCard = `
+    <div class="safe-card safe-card-electronic" id="electronic-safe-card">
+        <div class="safe-card-header">
+            <div class="safe-card-icon safe-card-icon-electronic">
+                <i class="fa-solid fa-mobile-screen-button"></i>
+            </div>
+            <div>
+                <div class="safe-card-title">خزنة إلكترونية</div>
+                <div class="safe-card-subtitle">شام كاش + USDT</div>
+            </div>
+            <button onclick="refreshElectronicSafe()" title="تحديث" class="esafe-refresh-btn">
+                <i class="fa-solid fa-rotate" id="esafe-refresh-icon"></i>
+            </button>
+        </div>
+
+        <!-- ── أرصدة الثلاثة ── -->
+        <div class="esafe-balances-grid">
+            <div class="esafe-bal-item esafe-bal-syp">
+                <div class="esafe-bal-label"><i class="fa-solid fa-coins"></i> ليرة شام كاش</div>
+                <div class="esafe-bal-value" id="esafe-syp-display">
+                    ${parseFloat(eSafe.syp_sham_cash || 0).toLocaleString("en-US",{maximumFractionDigits:0})} <span class="esafe-unit">ل.س</span>
+                </div>
+            </div>
+            <div class="esafe-bal-item esafe-bal-usd">
+                <div class="esafe-bal-label"><i class="fa-solid fa-dollar-sign"></i> دولار شام كاش</div>
+                <div class="esafe-bal-value" id="esafe-usd-display">
+                    ${parseFloat(eSafe.usd_sham_cash || 0).toLocaleString("en-US",{minimumFractionDigits:2})} <span class="esafe-unit">$</span>
+                </div>
+            </div>
+            <div class="esafe-bal-item esafe-bal-usdt">
+                <div class="esafe-bal-label"><i class="fa-brands fa-bitcoin"></i> USDT</div>
+                <div class="esafe-bal-value" id="esafe-usdt-display">
+                    ${parseFloat(eSafe.usdt || 0).toLocaleString("en-US",{minimumFractionDigits:2})} <span class="esafe-unit">USDT</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── تبويبات العملة ── -->
+        <div class="esafe-tabs">
+            <button class="esafe-tab esafe-tab-active" id="etab-syp" onclick="eSwitchTab('syp', this)">
+                <i class="fa-solid fa-coins"></i> ليرة ل.س
+            </button>
+            <button class="esafe-tab" id="etab-usd" onclick="eSwitchTab('usd', this)">
+                <i class="fa-solid fa-dollar-sign"></i> دولار $
+            </button>
+            <button class="esafe-tab" id="etab-usdt" onclick="eSwitchTab('usdt', this)">
+                <i class="fa-brands fa-bitcoin"></i> USDT
+            </button>
+        </div>
+
+        <!-- ── بانل ليرة شام كاش ── -->
+        <div class="esafe-panel" id="epanel-syp">
+            <div class="office-safe-panel-title" style="color:#ea580c;">
+                <i class="fa-solid fa-coins"></i> تعديل يدوي — ليرة شام كاش (SYP)
+            </div>
+            <div class="office-safe-row">
+                <input type="number" id="esafe-syp-amount" class="trading-input"
+                       placeholder="المبلغ بالليرة..." min="1" step="any">
+                <button class="osafe-btn osafe-btn-dep" onclick="eSafeAdjust('deposit','syp_sham_cash','esafe-syp-amount','esafe-syp-notes')">
+                    <i class="fa-solid fa-plus"></i> إيداع
+                </button>
+                <button class="osafe-btn osafe-btn-wit" onclick="eSafeAdjust('withdraw','syp_sham_cash','esafe-syp-amount','esafe-syp-notes')">
+                    <i class="fa-solid fa-minus"></i> سحب
+                </button>
+            </div>
+            <div class="office-safe-row" style="margin-top:6px;">
+                <input type="text" id="esafe-syp-notes" class="trading-input"
+                       placeholder="ملاحظة (اختياري)..." style="font-size:12px;">
+            </div>
+        </div>
+
+        <!-- ── بانل دولار شام كاش ── -->
+        <div class="esafe-panel" id="epanel-usd" style="display:none;">
+            <div class="office-safe-panel-title" style="color:#1d4ed8;">
+                <i class="fa-solid fa-dollar-sign"></i> تعديل يدوي — دولار شام كاش (USD)
+            </div>
+            <div class="office-safe-row">
+                <input type="number" id="esafe-usd-amount" class="trading-input"
+                       placeholder="المبلغ بالدولار..." min="0.01" step="any">
+                <button class="osafe-btn osafe-btn-dep" onclick="eSafeAdjust('deposit','usd_sham_cash','esafe-usd-amount','esafe-usd-notes')">
+                    <i class="fa-solid fa-plus"></i> إيداع
+                </button>
+                <button class="osafe-btn osafe-btn-wit" onclick="eSafeAdjust('withdraw','usd_sham_cash','esafe-usd-amount','esafe-usd-notes')">
+                    <i class="fa-solid fa-minus"></i> سحب
+                </button>
+            </div>
+            <div class="office-safe-row" style="margin-top:6px;">
+                <input type="text" id="esafe-usd-notes" class="trading-input"
+                       placeholder="ملاحظة (اختياري)..." style="font-size:12px;">
+            </div>
+        </div>
+
+        <!-- ── بانل USDT ── -->
+        <div class="esafe-panel" id="epanel-usdt" style="display:none;">
+            <div class="office-safe-panel-title" style="color:#059669;">
+                <i class="fa-brands fa-bitcoin"></i> تعديل يدوي — USDT
+            </div>
+            <div class="office-safe-row">
+                <input type="number" id="esafe-usdt-amount" class="trading-input"
+                       placeholder="الكمية بـ USDT..." min="0.000001" step="any">
+                <button class="osafe-btn osafe-btn-dep" onclick="eSafeAdjust('deposit','usdt','esafe-usdt-amount','esafe-usdt-notes')">
+                    <i class="fa-solid fa-plus"></i> إيداع
+                </button>
+                <button class="osafe-btn osafe-btn-wit" onclick="eSafeAdjust('withdraw','usdt','esafe-usdt-amount','esafe-usdt-notes')">
+                    <i class="fa-solid fa-minus"></i> سحب
+                </button>
+            </div>
+            <div class="office-safe-row" style="margin-top:6px;">
+                <input type="text" id="esafe-usdt-notes" class="trading-input"
+                       placeholder="ملاحظة (اختياري)..." style="font-size:12px;">
+            </div>
+        </div>
+    </div>`;
     const mainSafeCard = mainSafe
       ? `
     <div class="safe-card safe-card-main" id="safe-card-main">
@@ -568,6 +704,10 @@ async function showSafesSection() {
                         onclick="transferToOfficeSafe('office_main', ${myOfficeId})">
                     <i class="fa-solid fa-paper-plane"></i> تحويل
                 </button>
+            </div>
+            <div class="office-safe-row" style="margin-top:6px;">
+                <input type="text" id="main-to-office-notes" class="trading-input"
+                       placeholder="ملاحظة (اختياري)..." style="font-size:12px;">
             </div>
         </div>
     </div>`
@@ -636,13 +776,17 @@ async function showSafesSection() {
                     <i class="fa-solid fa-paper-plane"></i> تحويل
                 </button>
             </div>
+            <div class="office-safe-row" style="margin-top:6px;">
+                <input type="text" id="trading-to-office-notes" class="trading-input"
+                       placeholder="ملاحظة (اختياري)..." style="font-size:12px;">
+            </div>
         </div>
     </div>`,
       )
       .join("");
 
     container.innerHTML =
-      officeSafeCard + mainSafeCard + tradingCards + profitCard;
+      officeSafeCard + mainSafeCard + tradingCards + profitCard + electronicSafeCard;
   } catch (e) {
     console.error("Error loading safes:", e);
   }
@@ -689,12 +833,14 @@ async function editCostManual(officeId, currentCost) {
 async function transferProfit(officeId) {
   const amountInput = document.getElementById("profit-transfer-amount");
   const sourceSelect = document.getElementById("profit-source");
+  const notesInput = document.getElementById("profit-transfer-notes");
   const amount = parseFloat(amountInput.value);
 
   if (!amount || amount <= 0) {
     alert("يرجى إدخال مبلغ صحيح");
     return;
   }
+  const notes = notesInput ? notesInput.value.trim() : "";
 
   const btn = event.currentTarget;
   const orig = btn.innerHTML;
@@ -712,6 +858,7 @@ async function transferProfit(officeId) {
         office_id: officeId,
         source: sourceSelect.value,
         amount,
+        notes,
       }),
     });
     const data = await res.json();
@@ -725,6 +872,7 @@ async function transferProfit(officeId) {
       if (mainEl)
         mainEl.textContent = `$${parseFloat(data.profit_main || 0).toLocaleString("en-US", { minimumFractionDigits: 2 })}`;
       amountInput.value = "";
+      if (notesInput) notesInput.value = "";
       showAdminToast("✅ تم نقل الأرباح لخزنة المكتب بنجاح");
       setTimeout(() => showSafesSection(), 600);
     } else {
@@ -742,6 +890,7 @@ async function transferProfit(officeId) {
 async function profitAdjust(type, officeId) {
   const amountInput = document.getElementById("profit-adjust-amount");
   const currencySelect = document.getElementById("profit-adjust-currency");
+  const notesInput = document.getElementById("profit-adjust-notes");
   const amount = parseFloat(amountInput.value);
   const currency = currencySelect.value; // 'usd' | 'sy'
 
@@ -749,6 +898,7 @@ async function profitAdjust(type, officeId) {
     alert("يرجى إدخال مبلغ صحيح");
     return;
   }
+  const notes = notesInput ? notesInput.value.trim() : "";
 
   const isDeposit = type === "deposit";
   const panel = amountInput.closest(".office-safe-panel");
@@ -766,7 +916,7 @@ async function profitAdjust(type, officeId) {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({ office_id: officeId, amount, type, currency }),
+      body: JSON.stringify({ office_id: officeId, amount, type, currency, notes }),
     });
     const data = await res.json();
 
@@ -779,6 +929,7 @@ async function profitAdjust(type, officeId) {
       if (mainEl)
         mainEl.textContent = `$${parseFloat(data.profit_main || 0).toLocaleString("en-US", { minimumFractionDigits: 2 })}`;
       amountInput.value = "";
+      if (notesInput) notesInput.value = "";
       const currencyLabel = currency === "usd" ? "USD" : "ل.س";
       showAdminToast(
         `${isDeposit ? "✅ تم الإيداع" : "✅ تم السحب"} (${currencyLabel}) في صندوق الأرباح`,
@@ -797,13 +948,16 @@ async function profitAdjust(type, officeId) {
 /* ── إيداع / سحب يدوي على خزنة المكتب ──────────────────────────────── */
 async function officeSafeAdjust(type, officeId, currency = "usd") {
   const inputId = currency === "sy" ? "adjust-amount-sy" : "adjust-amount";
+  const notesId = currency === "sy" ? "adjust-notes-sy" : "adjust-notes";
   const amountInput = document.getElementById(inputId);
+  const notesInput  = document.getElementById(notesId);
   const amount = parseFloat(amountInput.value);
   if (!amount || amount <= 0) {
     alert("يرجى إدخال مبلغ صحيح");
     return;
   }
 
+  const notes = notesInput ? notesInput.value.trim() : "";
   const isDep = type === "deposit";
   const panel = amountInput.closest(".office-safe-panel");
   const btn = panel.querySelector(isDep ? ".osafe-btn-dep" : ".osafe-btn-wit");
@@ -816,9 +970,10 @@ async function officeSafeAdjust(type, officeId, currency = "usd") {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        "Accept": "application/json",
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({ amount, type, currency }),
+      body: JSON.stringify({ amount, type, currency, notes }),
     });
     const data = await res.json();
     if (res.ok) {
@@ -849,6 +1004,7 @@ async function officeSafeAdjust(type, officeId, currency = "usd") {
         );
       }
       amountInput.value = "";
+      if (notesInput) notesInput.value = "";
     } else {
       alert(data.message || "حدث خطأ");
     }
@@ -864,11 +1020,13 @@ async function officeSafeAdjust(type, officeId, currency = "usd") {
 async function officeSafeTransfer(officeId) {
   const amountInput = document.getElementById("transfer-amount");
   const toType = document.getElementById("transfer-to").value;
+  const notesInput = document.getElementById("transfer-notes");
   const amount = parseFloat(amountInput.value);
   if (!amount || amount <= 0) {
     alert("يرجى إدخال مبلغ صحيح");
     return;
   }
+  const notes = notesInput ? notesInput.value.trim() : "";
 
   const btn = document.querySelector(".osafe-btn-tra");
   const orig = btn.innerHTML;
@@ -882,11 +1040,12 @@ async function officeSafeTransfer(officeId) {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({ office_id: officeId, to_type: toType, amount }),
+      body: JSON.stringify({ office_id: officeId, to_type: toType, amount, notes }),
     });
     const data = await res.json();
     if (res.ok) {
       amountInput.value = "";
+      if (notesInput) notesInput.value = "";
       showAdminToast("✅ تم التحويل بنجاح");
       setTimeout(() => showSafesSection(), 500);
     } else {
@@ -906,12 +1065,18 @@ async function transferToOfficeSafe(fromType, officeId, currencyId = null) {
     fromType === "trading"
       ? `trading-to-office-amount`
       : "main-to-office-amount";
+  const notesId =
+    fromType === "trading"
+      ? "trading-to-office-notes"
+      : "main-to-office-notes";
   const amountInput = document.getElementById(inputId);
+  const notesInput  = document.getElementById(notesId);
   const amount = parseFloat(amountInput.value);
   if (!amount || amount <= 0) {
     alert("يرجى إدخال مبلغ صحيح");
     return;
   }
+  const notes = notesInput ? notesInput.value.trim() : "";
 
   // نجد الزر الصح داخل نفس الـ panel
   const btn = amountInput
@@ -932,11 +1097,13 @@ async function transferToOfficeSafe(fromType, officeId, currencyId = null) {
         office_id: officeId,
         from_type: fromType,
         amount,
+        notes,
       }),
     });
     const data = await res.json();
     if (res.ok) {
       amountInput.value = "";
+      if (notesInput) notesInput.value = "";
       showAdminToast("✅ تم التحويل إلى خزنة المكتب بنجاح");
       setTimeout(() => showSafesSection(), 500);
     } else {
@@ -3539,14 +3706,17 @@ async function handleBoxTransaction(boxId, currentAmount, boxName, type) {
     return;
   }
 
+  if (type === "withdraw" && amountValue > currentAmount) {
+    alert("عذراً، الرصيد الحالي غير كافٍ لإتمام عملية السحب.");
+    return;
+  }
+
+  const notes = prompt("ملاحظة على العملية (اختياري — اضغط موافق للتخطي):") ?? "";
+
   let newTotal;
   if (type === "deposit") {
     newTotal = currentAmount + amountValue;
   } else {
-    if (amountValue > currentAmount) {
-      alert("عذراً، الرصيد الحالي غير كافٍ لإتمام عملية السحب.");
-      return;
-    }
     newTotal = currentAmount - amountValue;
   }
 
@@ -3558,7 +3728,7 @@ async function handleBoxTransaction(boxId, currentAmount, boxName, type) {
         Authorization: `Bearer ${token}`,
         Accept: "application/json",
       },
-      body: JSON.stringify({ amount: newTotal }),
+      body: JSON.stringify({ amount: newTotal, notes }),
     });
 
     if (res.ok) {
@@ -4261,6 +4431,7 @@ function filterSafeLogs() {
   _renderSafeLogsTable(filtered, emptyEl, tbody);
 }
 
+<<<<<<< HEAD
 /* =====================================================
    تقرير سجل حركات الصناديق المتوافق مع SafeLogController
    ===================================================== */
@@ -4486,3 +4657,110 @@ function closeSnapshotModal() {
   if (modal) modal.classList.add("hidden");
   document.body.style.overflow = "";
 }
+=======
+/* ═══════════════════════════════════════════════════════
+   الخزنة الإلكترونية — شام كاش + USDT (Admin)
+   ═══════════════════════════════════════════════════════ */
+
+/** تبديل التبويب النشط */
+function eSwitchTab(tab, btn) {
+  // إخفاء كل البانلات
+  ["syp","usd","usdt"].forEach(t => {
+    const panel = document.getElementById(`epanel-${t}`);
+    const tabBtn = document.getElementById(`etab-${t}`);
+    if (panel) panel.style.display = "none";
+    if (tabBtn) tabBtn.classList.remove("esafe-tab-active");
+  });
+  // إظهار المطلوب
+  const active = document.getElementById(`epanel-${tab}`);
+  if (active) active.style.display = "block";
+  if (btn) btn.classList.add("esafe-tab-active");
+}
+
+/** تحديث أرقام الأرصدة في البطاقة */
+async function refreshElectronicSafe() {
+  const icon = document.getElementById("esafe-refresh-icon");
+  if (icon) icon.classList.add("fa-spin");
+  try {
+    const res  = await fetch(`${API_URL}/electronic-safe/balances`, {
+      headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
+    });
+    const json = await res.json();
+    if (!res.ok) { showAdminToast("تعذر التحديث", "danger"); return; }
+    const d = json.data || {};
+
+    const sypEl  = document.getElementById("esafe-syp-display");
+    const usdEl  = document.getElementById("esafe-usd-display");
+    const usdtEl = document.getElementById("esafe-usdt-display");
+
+    if (sypEl)  sypEl.innerHTML  = parseFloat(d.syp_sham_cash||0).toLocaleString("en-US",{maximumFractionDigits:0}) + ' <span class="esafe-unit">ل.س</span>';
+    if (usdEl)  usdEl.innerHTML  = parseFloat(d.usd_sham_cash||0).toLocaleString("en-US",{minimumFractionDigits:2}) + ' <span class="esafe-unit">$</span>';
+    if (usdtEl) usdtEl.innerHTML = parseFloat(d.usdt||0).toLocaleString("en-US",{minimumFractionDigits:2}) + ' <span class="esafe-unit">USDT</span>';
+
+    showAdminToast("✅ تم تحديث الأرصدة");
+  } catch (e) {
+    showAdminToast("خطأ في الاتصال", "danger");
+  } finally {
+    if (icon) icon.classList.remove("fa-spin");
+  }
+}
+
+/**
+ * إيداع أو سحب في الخزنة الإلكترونية
+ * currencyType : syp_sham_cash | usd_sham_cash | usdt
+ * actionType   : deposit | withdraw
+ */
+async function eSafeAdjust(actionType, currencyType, amountInputId, notesInputId) {
+  const amountInput = document.getElementById(amountInputId);
+  const notesInput  = document.getElementById(notesInputId);
+  const amount = parseFloat(amountInput?.value);
+
+  if (!amount || amount <= 0) {
+    showAdminToast("يرجى إدخال مبلغ صحيح", "danger"); return;
+  }
+
+  const notes = notesInput?.value.trim() || "";
+
+  // إيجاد الزر الصحيح لتعطيله
+  const panel = amountInput.closest(".esafe-panel");
+  const btn   = panel?.querySelector(actionType === "deposit" ? ".osafe-btn-dep" : ".osafe-btn-wit");
+  const orig  = btn?.innerHTML;
+  if (btn) { btn.disabled = true; btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i>`; }
+
+  try {
+    // نستخدم endpoint buy للإيداع وsell للسحب — كلاهما يغير الرصيد فقط
+    const endpoint = actionType === "deposit" ? "buy" : "sell";
+    const res = await fetch(`${API_URL}/electronic-safe/${endpoint}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+        Accept: "application/json",
+      },
+      body: JSON.stringify({
+        currency_type:   currencyType,
+        amount:          amount,
+        commission_rate: 0,
+        exchange_rate:   1,
+        note:            notes || `${actionType === "deposit" ? "إيداع" : "سحب"} يدوي — ${currencyType} (admin)`,
+      }),
+    });
+    const data = await res.json();
+
+    if (res.ok) {
+      amountInput.value = "";
+      if (notesInput) notesInput.value = "";
+      // تحديث الرصيد المعروض فوراً
+      await refreshElectronicSafe();
+      const labels = { syp_sham_cash: "ليرة شام كاش", usd_sham_cash: "دولار شام كاش", usdt: "USDT" };
+      showAdminToast(`✅ ${actionType === "deposit" ? "تم الإيداع" : "تم السحب"} (${labels[currencyType]}) بنجاح`);
+    } else {
+      showAdminToast(data.message || "حدث خطأ في العملية", "danger");
+    }
+  } catch (e) {
+    showAdminToast("تعذر الاتصال بالخادم", "danger");
+  } finally {
+    if (btn) { btn.disabled = false; btn.innerHTML = orig; }
+  }
+}
+>>>>>>> 8bdaac5f219277b9c1a1fe4c7cba90178b334db1
