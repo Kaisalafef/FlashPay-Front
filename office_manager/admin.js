@@ -413,13 +413,13 @@ async function showSafesSection() {
 
         <!-- رصيد الليرة السورية -->
         <div style="display:flex;align-items:baseline;gap:6px;margin-bottom:14px;
-                    padding:8px 12px;background:rgba(234,88,12,.07);border-radius:8px;">
-            <i class="fa-solid fa-coins" style="color:#ea580c;font-size:13px;"></i>
+                    padding:8px 12px;border-radius:8px;">
+            <i class="fa-solid fa-coins" style="font-size:16px;"></i>
             <span style="font-size:13px;color:var(--gray);">رصيد الليرة السورية:</span>
-            <span id="office-safe-balance-sy" style="font-size:20px;font-weight:800;color:#ea580c;">
+            <span id="office-safe-balance-sy" style="font-size:24px;font-weight:900;">
                 ${parseFloat(officeSafe.balance_sy || 0).toLocaleString()}
             </span>
-            <span style="font-size:12px;color:#ea580c;font-weight:600;">SYP</span>
+            <span style="font-size:12px;font-weight:800;">SYP</span>
         </div>
 
         <!-- إيداع / سحب دولار -->
