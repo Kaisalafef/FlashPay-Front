@@ -313,13 +313,9 @@ function setActive(element) {
 }
 
 function showTransfersSection() {
+  document.querySelectorAll(".section").forEach((s) => (s.style.display = "none"));
   document.getElementById("section-transfers").style.display = "block";
-  document.getElementById("section-safes").style.display = "none";
-  document.getElementById("section-profits").style.display = "none";
-  document.getElementById("section-internal").style.display = "none";
-  document.getElementById("section-completed").style.display = "none";
-  document.getElementById("section-customers").style.display = "none";
-  document.getElementById("section-digital-logs").style.display = "none";
+
   document.getElementById("page-heading").textContent = "الحوالات";
   document.querySelector(".page-sub").textContent = "جاهزة للتسليم";
   document.querySelector(".page-icon").innerHTML =
@@ -329,12 +325,8 @@ function showTransfersSection() {
 }
 
 function showSafesSection() {
-  document.getElementById("section-transfers").style.display = "none";
+  document.querySelectorAll(".section").forEach((s) => (s.style.display = "none"));
   document.getElementById("section-safes").style.display = "block";
-  document.getElementById("section-profits").style.display = "none";
-  document.getElementById("section-internal").style.display = "none";
-  document.getElementById("section-completed").style.display = "none";
-  document.getElementById("section-customers").style.display = "none";
 
   document.getElementById("page-heading").textContent = "الصناديق";
   document.querySelector(".page-sub").textContent = "صناديق التداول والصناديق الإضافية";
@@ -346,12 +338,8 @@ function showSafesSection() {
 }
 
 function showProfitsSection() {
-  document.getElementById("section-transfers").style.display = "none";
-  document.getElementById("section-safes").style.display = "none";
+  document.querySelectorAll(".section").forEach((s) => (s.style.display = "none"));
   document.getElementById("section-profits").style.display = "block";
-  document.getElementById("section-internal").style.display = "none";
-  document.getElementById("section-completed").style.display = "none";
-  document.getElementById("section-customers").style.display = "none";
 
   document.getElementById("page-heading").textContent = "أرباح التداول";
   document.querySelector(".page-sub").textContent = "تقرير يومي";
@@ -360,12 +348,8 @@ function showProfitsSection() {
 }
 
 function showInternalSection() {
-  document.getElementById("section-transfers").style.display = "none";
-  document.getElementById("section-safes").style.display = "none";
-  document.getElementById("section-profits").style.display = "none";
+  document.querySelectorAll(".section").forEach((s) => (s.style.display = "none"));
   document.getElementById("section-internal").style.display = "block";
-  document.getElementById("section-completed").style.display = "none";
-  document.getElementById("section-customers").style.display = "none";
 
   document.getElementById("page-heading").textContent = "الحوالات الداخلية";
   document.querySelector(".page-sub").textContent = "حوالات داخل المنطقة";
@@ -858,7 +842,7 @@ function showBankTransfersSection() {
     .querySelectorAll(".section")
     .forEach((s) => (s.style.display = "none"));
   document.getElementById("section-bank-transfers").style.display = "block";
- 
+
   document.getElementById("page-heading").textContent = "حوالات بنكية";
   document.querySelector(".page-sub").textContent =
     "موافق عليها بانتظار التسليم";
@@ -1324,13 +1308,9 @@ let _custCurrencies = []; // العملات
 
 /* ── عرض القسم ── */
 function showCustomersSection() {
-  document.getElementById("section-transfers").style.display = "none";
-  document.getElementById("section-safes").style.display = "none";
-  document.getElementById("section-profits").style.display = "none";
-  document.getElementById("section-internal").style.display = "none";
-  document.getElementById("section-completed").style.display = "none";
+  document.querySelectorAll(".section").forEach((s) => (s.style.display = "none"));
   document.getElementById("section-customers").style.display = "block";
- document.getElementById("section-digital-logs").style.display = "none";
+
   document.getElementById("page-heading").textContent = "إنشاء حوالة";
   document.querySelector(".page-sub").textContent = "اختر الزبون وأنشئ الحوالة";
   document.querySelector(".page-icon").innerHTML =
@@ -2458,12 +2438,8 @@ function showInternalToast(msg) {
 }
 
 function showCompletedSection() {
-  document.getElementById("section-transfers").style.display = "none";
-  document.getElementById("section-safes").style.display = "none";
-  document.getElementById("section-profits").style.display = "none";
-  document.getElementById("section-internal").style.display = "none";
+  document.querySelectorAll(".section").forEach((s) => (s.style.display = "none"));
   document.getElementById("section-completed").style.display = "block";
-  document.getElementById("section-customers").style.display = "none";
 
   document.getElementById("page-heading").textContent = "سجل المكتملة";
   document.querySelector(".page-sub").textContent = "الحوالات المسلّمة";
@@ -2922,15 +2898,7 @@ function printInternalReceipt(t) {
 /* ======================================= */
  
 function showDigitalLogsSection() {
-  // الأسطر البديلة لـ _hideAllSections()
-  document.getElementById("section-transfers").style.display = "none";
-  document.getElementById("section-safes").style.display = "none";
-  document.getElementById("section-profits").style.display = "none";
-  document.getElementById("section-internal").style.display = "none";
-  document.getElementById("section-completed").style.display = "none";
-  document.getElementById("section-customers").style.display = "none";
-
-  // إظهار قسم السجل
+  document.querySelectorAll(".section").forEach((s) => (s.style.display = "none"));
   document.getElementById("section-digital-logs").style.display = "block";
  
   document.getElementById("page-heading").textContent = "سجل العملات الرقمية";
@@ -3026,4 +2994,3 @@ async function loadDigitalLogs() {
     tbody.innerHTML = `<tr><td colspan="9" class="loading-row" style="color:var(--danger);">خطأ في الاتصال بالسيرفر</td></tr>`;
   }
 }
- 
