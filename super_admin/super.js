@@ -3064,181 +3064,255 @@ async function loadSuperSafeLogs() {
    Safes — الصناديق (مع SuperSafe أولاً)
 ========================= */
 async function loadSafes() {
-  const grid = document.getElementById("office-safes-grid");
+  const grid    = document.getElementById("office-safes-grid");
   const emptyEl = document.getElementById("safes-empty");
   if (!grid) return;
-
+ 
+  // Skeleton loading
   grid.innerHTML =
     '<div class="safes-skeleton-grid">' +
     Array(4).fill('<div class="safe-card-skeleton"></div>').join("") +
     "</div>";
   if (emptyEl) emptyEl.classList.add("hidden");
-
-  // 1. جلب رصيد السوبر أدمن أولاً
+ 
+  // 1. تحميل صندوق السوبر أدمن
   await loadSuperSafe();
-
+ 
   try {
-    const res = await fetch(`${API_URL}/safes`, { headers: getHeaders() });
-    const json = await res.json();
-    const allSafes = json.data || [];
-
-    // ---------------------------------------------------------
-    // 2. حساب الرصيد الإجمالي وتصنيفاته
-    // ---------------------------------------------------------
-    let totalCompany = parseFloat(_superSafeData?.balance || 0);
-
-    // كائن لتخزين مجاميع كل نوع من الصناديق
+    // 2. جلب كل الصناديق بالتوازي
+    const [safesRes, eSafesRes] = await Promise.all([
+      fetch(`${API_URL}/safes`,                       { headers: getHeaders() }),
+      fetch(`${API_URL}/electronic-safe/all-balances`, { headers: getHeaders() }),
+    ]);
+ 
+    const safesJson  = await safesRes.json();
+    const eSafesJson = await eSafesRes.json();
+ 
+    const allSafes  = safesJson.data  || [];
+    // eSafesJson.data هو كائن مفتاحه office_id
+    const eSafesMap = eSafesJson.data || {};
+ 
+    // ─── 3. حساب المجاميع الكلية ────────────────────────────────
     let totalsByType = {
-      super: parseFloat(_superSafeData?.balance || 0),
-      office: 0,
-      main: 0,
-      trading: 0,
-      profit: 0,
+      super   : parseFloat(_superSafeData?.balance || 0),
+      office  : 0,
+      main    : 0,
+      trading : 0,
+      profit  : 0,
+      esafe   : 0,
     };
-
-    allSafes.forEach((safe) => {
-      if (safe.type === "profit_safe") {
-        let profitTotal = parseFloat(safe.profit_main || 0);
-
-        totalCompany += profitTotal;
-        totalsByType.profit += profitTotal;
+ 
+    allSafes.forEach((s) => {
+      if (s.type === "profit_safe") {
+        totalsByType.profit += parseFloat(s.profit_main || 0);
       } else {
-        let bal = parseFloat(safe.balance || 0);
-        totalCompany += bal;
-
-        // توزيع الرصيد حسب نوع الصندوق
-        if (safe.type === "office_safe") totalsByType.office += bal;
-        if (safe.type === "main_safe") totalsByType.main += bal;
-        if (safe.type === "trading_safe") totalsByType.trading += bal;
+        const bal = parseFloat(s.balance || 0);
+        if (s.type === "office_safe")  totalsByType.office  += bal;
+        if (s.type === "office_main")  totalsByType.main    += bal;
+        if (s.type === "trading")      totalsByType.trading += bal;
       }
     });
-
-    // دالة مساعدة لتنسيق الأرقام
-    const fmt = (num) =>
-      num.toLocaleString("en-US", {
+ 
+    Object.values(eSafesMap).forEach((es) => {
+      // USDT + usd_sham_cash نعاملهم كدولار تقريباً في الإجمالي
+      totalsByType.esafe += parseFloat(es.usd_sham_cash || 0) + parseFloat(es.usdt || 0);
+    });
+ 
+    const totalCompany =
+      totalsByType.super + totalsByType.office + totalsByType.main +
+      totalsByType.trading + totalsByType.profit + totalsByType.esafe;
+ 
+    const fmt = (n) =>
+      parseFloat(n || 0).toLocaleString("en-US", {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
       });
-
-    // تحديث الواجهة بالمجموع الكلي
+    const fmtSY = (n) =>
+      parseFloat(n || 0).toLocaleString("en-US", { maximumFractionDigits: 0 });
+ 
+    // تحديث الرصيد الكلي في الـ header
     const totalCompanyEl = document.getElementById("total-company-balance");
-    if (totalCompanyEl) {
-      totalCompanyEl.textContent = "$" + fmt(totalCompany);
-    }
-
-    // بناء القائمة المنسدلة (Tooltip)
+    if (totalCompanyEl) totalCompanyEl.textContent = "$" + fmt(totalCompany);
+ 
+    // تحديث الـ tooltip
     const tooltipContainer = document.getElementById("total-tooltip-container");
     if (tooltipContainer) {
       tooltipContainer.innerHTML = `
-            <div class="custom-tooltip">
-                <div class="tt-row">
-                    <span class="tt-label"><i class="fa-solid fa-crown" style="color:var(--warning);"></i>صندوق المدير العام</span> 
-                    <span class="tt-val">$${fmt(totalsByType.super)}</span>
-                </div>
-                <div class="tt-row">
-                    <span class="tt-label"><i class="fa-solid fa-building"></i> صناديق المكاتب :</span> 
-                    <span class="tt-val">$${fmt(totalsByType.office)}</span>
-                </div>
-                <div class="tt-row">
-                    <span class="tt-label"><i class="fa-solid fa-vault"></i> الصناديق الحوالات:</span> 
-                    <span class="tt-val">$${fmt(totalsByType.main)}</span>
-                </div>
-                <div class="tt-row">
-                    <span class="tt-label"><i class="fa-solid fa-chart-line"></i> صناديق التداول :</span> 
-                    <span class="tt-val">$${fmt(totalsByType.trading)}</span>
-                </div>
-                <div class="tt-row">
-                    <span class="tt-label"><i class="fa-solid fa-sack-dollar"></i> صناديق الأرباح :</span> 
-                    <span class="tt-val">$${fmt(totalsByType.profit)}</span>
-                </div>
-            </div>
-        `;
+        <div class="custom-tooltip">
+          <div class="tt-row"><span class="tt-label"><i class="fa-solid fa-crown" style="color:var(--warning);"></i>صندوق المدير العام</span><span class="tt-val">$${fmt(totalsByType.super)}</span></div>
+          <div class="tt-row"><span class="tt-label"><i class="fa-solid fa-building"></i> صناديق المكاتب</span><span class="tt-val">$${fmt(totalsByType.office)}</span></div>
+          <div class="tt-row"><span class="tt-label"><i class="fa-solid fa-vault"></i> صناديق الحوالات</span><span class="tt-val">$${fmt(totalsByType.main)}</span></div>
+          <div class="tt-row"><span class="tt-label"><i class="fa-solid fa-chart-line"></i> صناديق التداول</span><span class="tt-val">$${fmt(totalsByType.trading)}</span></div>
+          <div class="tt-row"><span class="tt-label"><i class="fa-solid fa-sack-dollar"></i> صناديق الأرباح</span><span class="tt-val">$${fmt(totalsByType.profit)}</span></div>
+          <div class="tt-row"><span class="tt-label"><i class="fa-solid fa-mobile-screen-button"></i> الخزنة الإلكترونية</span><span class="tt-val">$${fmt(totalsByType.esafe)}</span></div>
+        </div>`;
     }
-    // ---------------------------------------------------------
-
-    const officeSafes = allSafes
-      .filter((s) => s.type === "office_safe")
+ 
+    // ─── 4. بناء كائن موحّد لكل مكتب ───────────────────────────
+    const officeMap = {}; // key: office_id
+ 
+    allSafes.forEach((s) => {
+      const id = s.office_id;
+      if (!id) return;
+      if (!officeMap[id]) {
+        officeMap[id] = {
+          office_id   : id,
+          owner       : s.owner || "—",
+          office_bal  : 0,
+          office_bal_sy: 0,
+          trading_bal : 0,
+          trading_bal_sy: 0,
+          profit_main : 0,
+          profit_trade: 0,
+        };
+      }
+      if (s.type === "office_safe") {
+        officeMap[id].office_bal   = parseFloat(s.balance    || 0);
+        officeMap[id].office_bal_sy= parseFloat(s.balance_sy || 0);
+        if (s.owner) officeMap[id].owner = s.owner;
+      }
+      if (s.type === "trading") {
+        officeMap[id].trading_bal   += parseFloat(s.balance    || 0);
+        officeMap[id].trading_bal_sy+= parseFloat(s.balance_sy || 0);
+      }
+      if (s.type === "profit_safe") {
+        officeMap[id].profit_main  = parseFloat(s.profit_main  || 0);
+        officeMap[id].profit_trade = parseFloat(s.profit_trade || 0);
+      }
+    });
+ 
+    // دمج بيانات الخزنة الإلكترونية
+    Object.entries(eSafesMap).forEach(([offId, es]) => {
+      if (!officeMap[offId]) {
+        officeMap[offId] = {
+          office_id: offId, owner: "مكتب " + offId,
+          office_bal: 0, office_bal_sy: 0,
+          trading_bal: 0, trading_bal_sy: 0,
+          profit_main: 0, profit_trade: 0,
+        };
+      }
+      officeMap[offId].esafe_syp  = parseFloat(es.syp_sham_cash || 0);
+      officeMap[offId].esafe_usd  = parseFloat(es.usd_sham_cash || 0);
+      officeMap[offId].esafe_usdt = parseFloat(es.usdt          || 0);
+    });
+ 
+    const offices = Object.values(officeMap)
       .sort((a, b) => (a.owner || "").localeCompare(b.owner || ""));
-
-    grid.innerHTML = "";
-
-    const total = officeSafes.reduce(
-      (sum, s) => sum + parseFloat(s.balance || 0),
-      0,
-    );
+ 
+    // تحديث إحصائيات الـ hero
+    const totalOfficeBal = offices.reduce((s, o) => s + o.office_bal, 0);
     const totalEl = document.getElementById("safes-total-balance");
     const countEl = document.getElementById("safes-office-count");
-    if (totalEl) totalEl.textContent = "$" + fmt(total);
-    if (countEl) countEl.textContent = officeSafes.length;
-
+    if (totalEl) totalEl.textContent = "$" + fmt(totalOfficeBal);
+    if (countEl) countEl.textContent = offices.length;
+ 
     const dashSafes = document.getElementById("dash-safes-count");
-    if (dashSafes) dashSafes.textContent = officeSafes.length;
-
-    if (officeSafes.length === 0) {
+    if (dashSafes) dashSafes.textContent = offices.length;
+ 
+    grid.innerHTML = "";
+ 
+    if (offices.length === 0) {
       if (emptyEl) emptyEl.classList.remove("hidden");
       return;
     }
-
-    officeSafes.forEach((safe) => {
-      const balance = parseFloat(safe.balance || 0);
-      const balanceSy = parseFloat(safe.balance_sy || 0);
-      const isPositive = balance >= 0;
-      const initials = (safe.owner || "?").charAt(0).toUpperCase();
+ 
+    // ─── 5. رسم البطاقات ─────────────────────────────────────────
+    offices.forEach((o) => {
+      const initials  = (o.owner || "?").charAt(0).toUpperCase();
       const levelClass =
-        balance >= 10000
-          ? "safe-level-high"
-          : balance >= 1000
-            ? "safe-level-mid"
-            : "safe-level-low";
-
+        o.office_bal >= 10000 ? "safe-level-high" :
+        o.office_bal >= 1000  ? "safe-level-mid"  : "safe-level-low";
+ 
+      const hasEsafe = (o.esafe_syp || 0) + (o.esafe_usd || 0) + (o.esafe_usdt || 0) > 0;
+ 
       const card = document.createElement("div");
-      card.className = `office-safe-card ${levelClass}`;
-      card.dataset.owner = (safe.owner || "").toLowerCase();
+      card.className = `office-safe-card office-safe-card-v2 ${levelClass}`;
+      card.dataset.owner = (o.owner || "").toLowerCase();
+ 
       card.innerHTML = `
-                <div class="osc-header">
-                    <div class="osc-avatar">${initials}</div>
-                    <div class="osc-info">
-                        <div class="osc-name">${safe.owner || "—"}</div>
-                        <div class="osc-badge"><i class="fa-solid fa-building"></i> صندوق مكتب</div>
-                    </div>
-                    <div class="osc-status-dot ${isPositive ? "dot-green" : "dot-red"}"></div>
-                </div>
-                <div class="osc-divider"></div>
-                <div class="osc-balance">
-                    <span class="osc-balance-label">الرصيد (USD)</span>
-                    <span class="osc-balance-value ${isPositive ? "bal-positive" : "bal-negative"}">
-                        $${fmt(balance)}
-                    </span>
-                </div>
-                ${
-                  balanceSy > 0
-                    ? `
-                <div class="osc-balance" style="margin-top:4px;">
-                    <span class="osc-balance-label" style="font-size:11px;">رصيد الليرة السورية</span>
-                    <span style="font-size:16px;font-weight:800;color:#ea580c;">
-                        ${balanceSy.toLocaleString("en-US", { minimumFractionDigits: 0 })} SYP
-                    </span>
-                </div>`
-                    : ""
-                }
-                <div class="osc-footer">
-                    <div class="osc-meta"><i class="fa-solid fa-circle-dollar-to-slot"></i><span>USD</span></div>
-                    <button class="osc-detail-btn" onclick='openSafeDetails(${JSON.stringify(safe)})'>
-                        <i class="fa-solid fa-eye"></i> التفاصيل
-                    </button>
-                </div>`;
+        <!-- رأس البطاقة -->
+        <div class="osc-header">
+          <div class="osc-avatar">${initials}</div>
+          <div class="osc-info">
+            <div class="osc-name">${o.owner}</div>
+            <div class="osc-badge"><i class="fa-solid fa-building"></i> مكتب</div>
+          </div>
+          <div class="osc-status-dot ${o.office_bal >= 0 ? 'dot-green' : 'dot-red'}"></div>
+        </div>
+        <div class="osc-divider"></div>
+ 
+        <!-- شبكة الصناديق الأربعة -->
+        <div class="osc-safes-grid">
+ 
+          <!-- 1. صندوق المكتب -->
+          <div class="osc-mini-safe osc-safe-office">
+            <div class="osc-mini-icon"><i class="fa-solid fa-building-columns"></i></div>
+            <div class="osc-mini-label">صندوق المكتب</div>
+            <div class="osc-mini-vals">
+              <span class="osc-mini-val-primary">$${fmt(o.office_bal)}</span>
+              ${o.office_bal_sy > 0
+                ? `<span class="osc-mini-val-sy">${fmtSY(o.office_bal_sy)} ل.س</span>`
+                : ''}
+            </div>
+          </div>
+ 
+          <!-- 2. الخزنة الإلكترونية (شام كاش) -->
+          <div class="osc-mini-safe osc-safe-esafe">
+            <div class="osc-mini-icon"><i class="fa-solid fa-mobile-screen-button"></i></div>
+            <div class="osc-mini-label">شام كاش</div>
+            <div class="osc-mini-vals">
+              ${hasEsafe ? `
+                ${(o.esafe_usd || 0) > 0  ? `<span class="osc-mini-val-primary">$${fmt(o.esafe_usd)}</span>` : ''}
+                ${(o.esafe_syp || 0) > 0  ? `<span class="osc-mini-val-sy">${fmtSY(o.esafe_syp)} ل.س</span>` : ''}
+              ` : '<span class="osc-mini-empty">—</span>'}
+            </div>
+          </div>
+ 
+          <!-- 3. USDT -->
+          <div class="osc-mini-safe osc-safe-usdt">
+            <div class="osc-mini-icon"><i class="fa-brands fa-bitcoin"></i></div>
+            <div class="osc-mini-label">USDT</div>
+            <div class="osc-mini-vals">
+              <span class="osc-mini-val-usdt">${fmt(o.esafe_usdt || 0)} ₮</span>
+            </div>
+          </div>
+ 
+          <!-- 4. التداول -->
+          <div class="osc-mini-safe osc-safe-trading">
+            <div class="osc-mini-icon"><i class="fa-solid fa-chart-line"></i></div>
+            <div class="osc-mini-label">التداول</div>
+            <div class="osc-mini-vals">
+              <span class="osc-mini-val-primary">$${fmt(o.trading_bal)}</span>
+              ${o.trading_bal_sy > 0
+                ? `<span class="osc-mini-val-sy">${fmtSY(o.trading_bal_sy)} ل.س</span>`
+                : ''}
+            </div>
+          </div>
+ 
+        </div>
+ 
+        <!-- Footer -->
+        <div class="osc-footer" style="margin-top:12px;">
+          <div class="osc-meta"><i class="fa-solid fa-circle-dollar-to-slot"></i><span>USD / SYP / USDT</span></div>
+          <button class="osc-detail-btn" onclick='openSuperSafeTransferModal(${o.office_id})'>
+            <i class="fa-solid fa-arrows-left-right"></i> تحويل
+          </button>
+        </div>
+      `;
+ 
       grid.appendChild(card);
     });
+ 
   } catch (e) {
     console.error("loadSafes error:", e);
     grid.innerHTML =
       '<p style="text-align:center;color:var(--danger);padding:32px;">تعذّر تحميل الصناديق</p>';
   }
 }
+ 
+// ─── filterSafeCards تبقى كما هي ────────────────────────────────
 function filterSafeCards() {
-  const q = (
-    document.getElementById("safes-search")?.value || ""
-  ).toLowerCase();
+  const q = (document.getElementById("safes-search")?.value || "").toLowerCase();
   document.querySelectorAll(".office-safe-card").forEach((card) => {
     card.style.display = card.dataset.owner?.includes(q) ? "" : "none";
   });
