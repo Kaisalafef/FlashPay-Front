@@ -319,7 +319,7 @@ function showTransfersSection() {
   document.getElementById("section-internal").style.display = "none";
   document.getElementById("section-completed").style.display = "none";
   document.getElementById("section-customers").style.display = "none";
-
+  document.getElementById("section-digital-logs").style.display = "none";
   document.getElementById("page-heading").textContent = "الحوالات";
   document.querySelector(".page-sub").textContent = "جاهزة للتسليم";
   document.querySelector(".page-icon").innerHTML =
@@ -858,7 +858,7 @@ function showBankTransfersSection() {
     .querySelectorAll(".section")
     .forEach((s) => (s.style.display = "none"));
   document.getElementById("section-bank-transfers").style.display = "block";
-
+ 
   document.getElementById("page-heading").textContent = "حوالات بنكية";
   document.querySelector(".page-sub").textContent =
     "موافق عليها بانتظار التسليم";
@@ -1330,7 +1330,7 @@ function showCustomersSection() {
   document.getElementById("section-internal").style.display = "none";
   document.getElementById("section-completed").style.display = "none";
   document.getElementById("section-customers").style.display = "block";
-
+ document.getElementById("section-digital-logs").style.display = "none";
   document.getElementById("page-heading").textContent = "إنشاء حوالة";
   document.querySelector(".page-sub").textContent = "اختر الزبون وأنشئ الحوالة";
   document.querySelector(".page-icon").innerHTML =
