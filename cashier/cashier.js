@@ -26,18 +26,8 @@ async function checkAuth() {
       return null;
     }
 
-<<<<<<< HEAD
-    try {
-        const res = await fetch('https://flashpay-back-1.onrender.com/api/me', {
-            headers: {
-                'Authorization': 'Bearer ' + token,
-                'Accept': 'application/json',
-            }
-        });
-=======
     const data = await res.json();
     const userRole = data.user.role;
->>>>>>> e0f0708326dc814bcf3ab8258724fe0d0b55a4a3
 
     const ALLOWED_ROLES = ["cashier"]; // ✅ صلاحية هذا الـ dashboard
 
@@ -258,7 +248,7 @@ async function acceptTransfer(transferId) {
   button.innerHTML = `<div class="loading-spinner" style="width:16px;height:16px;border-width:2px;margin:0;display:inline-block;"></div> جاري المعالجة...`;
 
   const formData = new FormData();
-  formData.append("_method", "PATCH"); // هذه تخبر لارافل أن يتصرف كأن الطلب PATCH
+  formData.append("_method", "PATCH");
   formData.append("status", "completed");
   formData.append("receiver_id_image", file);
 
@@ -266,11 +256,10 @@ async function acceptTransfer(transferId) {
     const res = await fetch(
       `${API_URL}/transfers/${transferId}/update-status`,
       {
-        method: "POST", // 🚨 يجب أن تكون POST لكي يتم إرسال الملفات بنجاح
+        method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
           Accept: "application/json",
-          // ملاحظة: لا تقم أبداً بإضافة Content-Type هنا، المتصفح سيضعها تلقائياً مع FormData
         },
         body: formData,
       },
@@ -1983,8 +1972,7 @@ function printTransferReceipt(tx) {
 
   const trackingCode = toEn(tx.tracking_code ?? "---");
   const senderName = tx.sender?.name ?? "غير معروف";
-  const senderCountry = tx.sender.country?.name ?? "---";
-   const destination = tx.destination_city?? "---";
+  const senderCountry = tx.sender?.country?.name ?? "---";
   const sendAmount = fmtNum(tx.amount);
   const sendCurrencyCode = tx.send_currency?.code ?? "USD";
   const amountUsd = parseFloat(tx.amount_in_usd ?? 0);
@@ -2077,8 +2065,8 @@ function printTransferReceipt(tx) {
   </div>
 
   <div class="r"><span class="lbl">المرسل</span>      <span class="val">${senderName}</span></div>
-  <div class="r"><span class="lbl">من</span> <span class="val">${senderCountry}</span></div>
-   <div class="r"><span class="lbl">إلى</span> <span class="val">${destination}</span></div>
+  <div class="r"><span class="lbl">دولة المرسل</span> <span class="val">${senderCountry}</span></div>
+  <hr class="divider">
   <div class="r"><span class="lbl">المستلم</span>     <span class="val">${receiverName}</span></div>
   <div class="r"><span class="lbl">رقم الهاتف</span>  <span class="val">${receiverPhone}</span></div>
 
@@ -2099,10 +2087,7 @@ function printTransferReceipt(tx) {
     <div class="sig">توقيع الموظف<div class="sig-line"></div></div>
     <div class="sig">توقيع المستلم<div class="sig-line"></div></div>
   </div>
-  <div class="print-spacing">----------------</div>
-  <div class="print-spacing">----------------</div>
-  <div class="print-spacing">----------------</div>
-  <div class="print-spacing">----------------</div>
+
 </body>
 </html>`;
 
@@ -2930,4 +2915,107 @@ function printInternalReceipt(t) {
       }, 5000);
     });
   };
+}
+
+/* ======================================= */
+/*      DIGITAL CURRENCY LOGS SECTION     */
+/* ======================================= */
+ 
+function showDigitalLogsSection() {
+  _hideAllSections();
+  document.getElementById("section-digital-logs").style.display = "block";
+ 
+  document.getElementById("page-heading").textContent = "سجل العملات الرقمية";
+  document.querySelector(".page-sub").textContent = "عمليات الخزنة الإلكترونية";
+  document.querySelector(".page-icon").innerHTML =
+    '<i class="fa-solid fa-bitcoin-sign"></i>';
+ 
+  loadDigitalLogs();
+}
+ 
+async function loadDigitalLogs() {
+  const tbody = document.getElementById("digital-logs-list");
+  if (!tbody) return;
+ 
+  tbody.innerHTML = `<tr><td colspan="9" class="loading-row"><div class="loading-spinner"></div> جاري التحميل...</td></tr>`;
+ 
+  const currency = document.getElementById("dl-filter-currency")?.value || "";
+  const action   = document.getElementById("dl-filter-action")?.value || "";
+  const dateFrom = document.getElementById("dl-filter-from")?.value || "";
+  const dateTo   = document.getElementById("dl-filter-to")?.value || "";
+ 
+  const params = new URLSearchParams();
+  if (currency) params.append("currency_type", currency);
+  if (action)   params.append("action_type", action);
+  if (dateFrom) params.append("date_from", dateFrom);
+  if (dateTo)   params.append("date_to", dateTo);
+  params.append("per_page", "200");
+ 
+  try {
+    const res  = await fetch(`${API_URL}/electronic-safe/logs?${params}`, {
+      headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
+    });
+    const json = await res.json();
+ 
+    if (!res.ok) {
+      tbody.innerHTML = `<tr><td colspan="9" class="loading-row" style="color:var(--danger);">${json.message || "خطأ في جلب البيانات"}</td></tr>`;
+      return;
+    }
+ 
+    const logs    = json.data || [];
+    const totals  = json.totals || {};
+    const count   = json.count  ?? logs.length;
+ 
+    /* ── تحديث شريط الأرباح ── */
+    const fmt = (v) => parseFloat(v || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+ 
+    document.getElementById("dl-buy-profit").textContent  = fmt(totals.total_buy_profit);
+    document.getElementById("dl-sell-profit").textContent = fmt(totals.total_sell_profit);
+    document.getElementById("dl-total-profit").textContent = fmt(totals.total_profit);
+    document.getElementById("dl-count").textContent       = count;
+    document.getElementById("dl-stat-profit").textContent = "$" + fmt(totals.total_profit);
+ 
+    if (!logs.length) {
+      tbody.innerHTML = `<tr><td colspan="9"><div class="empty-state"><i class="fa-solid fa-bitcoin-sign"></i><p>لا توجد عمليات تطابق الفلتر المحدد</p></div></td></tr>`;
+      return;
+    }
+ 
+    const currencyLabels = {
+      syp_sham_cash: '<span style="background:#fef3c7;color:#92400e;padding:3px 8px;border-radius:20px;font-size:11px;font-weight:700;">شام كاش ليرة</span>',
+      usd_sham_cash: '<span style="background:#dbeafe;color:#1e40af;padding:3px 8px;border-radius:20px;font-size:11px;font-weight:700;">شام كاش دولار</span>',
+      usdt:          '<span style="background:#d1fae5;color:#065f46;padding:3px 8px;border-radius:20px;font-size:11px;font-weight:700;">USDT</span>',
+    };
+ 
+    function fmtDate(str) {
+      if (!str) return "—";
+      const d = new Date(str);
+      const pad = (n) => String(n).padStart(2, "0");
+      return `${d.getFullYear()}/${pad(d.getMonth()+1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    }
+ 
+    tbody.innerHTML = logs.map((log, idx) => {
+      const actionBadge = log.action_type === "buy"
+        ? `<span style="background:#dcfce7;color:#15803d;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;"><i class="fa-solid fa-arrow-down-to-line"></i> شراء</span>`
+        : `<span style="background:#fee2e2;color:#b91c1c;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;"><i class="fa-solid fa-arrow-up-from-line"></i> بيع</span>`;
+ 
+      const profitColor = parseFloat(log.profit) >= 0 ? "#15803d" : "#b91c1c";
+ 
+      return `
+      <tr>
+        <td style="color:var(--gray);font-size:12px;">${log.id}</td>
+        <td>${currencyLabels[log.currency_type] || log.currency_type}</td>
+        <td style="text-align:center;">${actionBadge}</td>
+        <td><span class="amount-cell">${fmt(log.amount)}</span></td>
+        <td style="text-align:center;">${parseFloat(log.commission_rate).toFixed(2)}%</td>
+        <td><span class="delivery-price">${fmt(log.net_amount)}</span></td>
+        <td style="font-weight:700;color:${profitColor};">${fmt(log.profit)}</td>
+        <td style="font-size:12px;color:var(--gray);max-width:160px;word-break:break-word;">${log.note || "—"}</td>
+        <td style="font-size:11px;color:var(--gray);white-space:nowrap;direction:ltr;text-align:right;">${fmtDate(log.created_at)}</td>
+      </tr>`;
+    }).join("");
+ 
+  } catch (err) {
+    console.error("loadDigitalLogs error:", err);
+    tbody.innerHTML = `<tr><td colspan="9" class="loading-row" style="color:var(--danger);">خطأ في الاتصال بالسيرفر</td></tr>`;
+  }
 }
