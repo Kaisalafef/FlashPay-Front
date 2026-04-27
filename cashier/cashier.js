@@ -1466,6 +1466,7 @@ async function submitCashierBoxTx() {
   const notes  = document.getElementById("cashier-box-tx-note").value.trim();
   if (!amount || amount <= 0) { showInternalToast("يرجى إدخال مبلغ صحيح."); return; }
 
+  // لا يوجد تحقق من الرصيد — السحب مسموح حتى لو النتيجة سالبة
   const endpoint = _cBoxTxData.type === "deposit"
     ? `${API_URL}/extra-boxes/${_cBoxTxData.id}/deposit`
     : `${API_URL}/extra-boxes/${_cBoxTxData.id}/withdraw`;
@@ -1494,6 +1495,92 @@ async function submitCashierBoxTx() {
     const lbl = _cBoxTxData?.type === "deposit" ? "تنفيذ الإيداع" : "تنفيذ السحب";
     btn.innerHTML = `<i class="fa-solid fa-check"></i> <span id="cashier-box-tx-btn-label">${lbl}</span>`;
   }
+}
+async function cashierCreateExtraBox() {
+  const nameInput   = document.getElementById("cashier-eb-name");
+  const debitInput  = document.getElementById("cashier-eb-amount-debit");
+  const creditInput = document.getElementById("cashier-eb-amount-credit");
+
+  const name   = nameInput.value.trim();
+  const debit  = parseFloat(debitInput.value)  || 0;
+  const credit = parseFloat(creditInput.value) || 0;
+
+  if (!name) { showInternalToast("يرجى إدخال اسم للصندوق."); return; }
+  if (debit < 0 || credit < 0) { showInternalToast("القيم يجب أن تكون أكبر من أو تساوي الصفر."); return; }
+
+  try {
+    const res = await fetch(`${API_URL}/extra-boxes`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({
+        name,
+        amount_debit:  debit,
+        amount_credit: credit,
+        office_id: _cashierOfficeId,
+      }),
+    });
+    const data = await res.json();
+    if (res.ok) {
+      nameInput.value   = "";
+      debitInput.value  = "";
+      creditInput.value = "";
+      const netEl = document.getElementById("cashier-eb-net-value");
+      if (netEl) { netEl.textContent = "$0.00"; netEl.style.color = ""; }
+      showInternalToast("✅ تم إضافة الصندوق بنجاح!");
+      loadCashierExtraBoxes();
+    } else { showInternalToast(data.message || "حدث خطأ أثناء الإضافة."); }
+  } catch (e) { showInternalToast("خطأ في الاتصال بالخادم."); }
+}
+
+// حساب الصافي لحظياً عند تغيير منه / عليه
+function _cashierEbUpdateNet() {
+  const debit  = parseFloat(document.getElementById("cashier-eb-amount-debit")?.value)  || 0;
+  const credit = parseFloat(document.getElementById("cashier-eb-amount-credit")?.value) || 0;
+  const net    = debit - credit;
+  const el     = document.getElementById("cashier-eb-net-value");
+  if (!el) return;
+  el.textContent = (net >= 0 ? "+" : "") + "$" + net.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  el.style.color = net >= 0 ? "#15803d" : "#b91c1c";
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  document.getElementById("cashier-eb-amount-debit")?.addEventListener("input",  _cashierEbUpdateNet);
+  document.getElementById("cashier-eb-amount-credit")?.addEventListener("input", _cashierEbUpdateNet);
+});
+
+async function cashierDeleteExtraBox(boxId) {
+  if (!confirm("هل أنت متأكد من حذف هذا الصندوق؟\n(سيتم حذفه مع الرصيد المتبقي فيه)")) return;
+  try {
+    const res = await fetch(`${API_URL}/extra-boxes/${boxId}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } });
+    if (res.ok) { showInternalToast("تم حذف الصندوق بنجاح."); loadCashierExtraBoxes(); }
+    else { showInternalToast("فشل في حذف الصندوق."); }
+  } catch (e) { showInternalToast("خطأ في الاتصال بالخادم."); }
+}
+
+async function cashierTransferExtraBoxToOffice(boxId, maxAmount, boxName) {
+  const amountStr = prompt(`كم تريد أن تنقل من صندوق "${boxName}" إلى خزنة المكتب؟\nالرصيد المتاح: ${parseFloat(maxAmount).toLocaleString()}`);
+  if (!amountStr) return;
+  const transferAmount = parseFloat(amountStr);
+  if (isNaN(transferAmount) || transferAmount <= 0) {
+    alert("يرجى إدخال مبلغ صحيح أكبر من الصفر."); return;
+  }
+  const notes = prompt("ملاحظة على التحويل (مطلوبة):") ?? "";
+  if (!notes.trim()) { alert("يرجى إدخال ملاحظة على عملية التحويل."); return; }
+  try {
+    const res = await fetch(`${API_URL}/extra-boxes/${boxId}/transfer-to-office`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ amount: transferAmount, notes }),
+    });
+    const data = await res.json();
+    if (res.ok) {
+      showInternalToast("✅ تم نقل المبلغ إلى خزنة المكتب بنجاح.");
+      loadCashierExtraBoxes();
+      loadTradingSafes();
+    } else {
+      showInternalToast(data.message || "فشلت عملية التحويل.");
+    }
+  } catch (e) { alert("حدث خطأ في الاتصال بالخادم أثناء النقل."); }
 }
 
 async function cashierCreateExtraBox() {
@@ -1561,26 +1648,27 @@ async function cashierTransferExtraBoxToOffice(boxId, maxAmount, boxName) {
   const amountStr = prompt(`كم تريد أن تنقل من صندوق "${boxName}" إلى خزنة المكتب؟\nالرصيد المتاح: ${parseFloat(maxAmount).toLocaleString()}`);
   if (!amountStr) return;
   const transferAmount = parseFloat(amountStr);
-  if (isNaN(transferAmount) || transferAmount <= 0 || transferAmount > maxAmount) {
-    alert("المبلغ المدخل غير صحيح أو يتجاوز الرصيد المتاح."); return;
+  if (isNaN(transferAmount) || transferAmount <= 0) {
+    alert("يرجى إدخال مبلغ صحيح أكبر من الصفر."); return;
   }
+  const notes = prompt("ملاحظة على التحويل (مطلوبة):") ?? "";
+  if (!notes.trim()) { alert("يرجى إدخال ملاحظة على عملية التحويل."); return; }
   try {
-    const resBox = await fetch(`${API_URL}/extra-boxes/${boxId}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ amount: maxAmount - transferAmount }),
-    });
-    if (!resBox.ok) { alert("فشل في تحديث رصيد الصندوق الإضافي."); return; }
-    const resOffice = await fetch(`${API_URL}/offices/${_cashierOfficeId}/safe`, {
+    const res = await fetch(`${API_URL}/extra-boxes/${boxId}/transfer-to-office`, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ amount: transferAmount, type: "deposit" }),
+      body: JSON.stringify({ amount: transferAmount, notes }),
     });
-    if (resOffice.ok) { showInternalToast("تم نقل المبلغ إلى خزنة المكتب بنجاح."); loadCashierExtraBoxes(); loadTradingSafes(); }
-    else { alert("تنبيه: تم خصم المبلغ من الصندوق ولكن فشل إيداعه في الخزنة."); }
+    const data = await res.json();
+    if (res.ok) {
+      showInternalToast("✅ تم نقل المبلغ إلى خزنة المكتب بنجاح.");
+      loadCashierExtraBoxes();
+      loadTradingSafes();
+    } else {
+      showInternalToast(data.message || "فشلت عملية التحويل.");
+    }
   } catch (e) { alert("حدث خطأ في الاتصال بالخادم أثناء النقل."); }
 }
-
 
 async function cashierBoxTransaction(boxId, currentAmount, boxName, type) {
   const actionText = type === "deposit" ? "إيداع في" : "سحب من";
@@ -1595,48 +1683,39 @@ async function cashierBoxTransaction(boxId, currentAmount, boxName, type) {
     alert("يرجى إدخال مبلغ صحيح أكبر من الصفر.");
     return;
   }
-  if (type === "withdraw" && amountValue > currentAmount) {
-    alert(
-      `عذراً، الرصيد الحالي (${parseFloat(currentAmount).toLocaleString()}) غير كافٍ لإتمام عملية السحب.`,
-    );
-    return;
-  }
 
-  // حقل الملاحظات
-  const notes =
-    prompt("ملاحظة على العملية (اختياري — اضغط موافق للتخطي):") ?? "";
+  // لا يوجد تحقق من الرصيد — السحب مسموح حتى لو النتيجة سالبة
+  const notes = prompt("ملاحظة على العملية (اختياري — اضغط موافق للتخطي):") ?? "";
 
-  const newTotal =
-    type === "deposit"
-      ? currentAmount + amountValue
-      : currentAmount - amountValue;
+  const endpoint = type === "deposit"
+    ? `${API_URL}/extra-boxes/${boxId}/deposit`
+    : `${API_URL}/extra-boxes/${boxId}/withdraw`;
 
   try {
-    const res = await fetch(`${API_URL}/extra-boxes/${boxId}`, {
-      method: "PUT",
+    const res = await fetch(endpoint, {
+      method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
         Accept: "application/json",
       },
-      body: JSON.stringify({ amount: newTotal, notes }),
+      body: JSON.stringify({ amount: amountValue, notes }),
     });
 
+    const data = await res.json();
     if (res.ok) {
       showInternalToast(
         `✅ تمت عملية ${type === "deposit" ? "الإيداع" : "السحب"} بنجاح على صندوق (${boxName}).`,
       );
       loadCashierExtraBoxes();
     } else {
-      const err = await res.json();
-      alert(err.message || "فشل في تحديث بيانات الصندوق.");
+      alert(data.message || "فشل في تحديث بيانات الصندوق.");
     }
   } catch (e) {
     console.error("cashierBoxTransaction:", e);
     alert("خطأ في الاتصال بالخادم.");
   }
 }
-
 /* ── جلب الزبائن ── */
 async function loadCustomers() {
   const tbody = document.getElementById("customers-list");
