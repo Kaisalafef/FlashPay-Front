@@ -1465,28 +1465,27 @@ async function submitCashierBoxTx() {
   const amount = parseFloat(document.getElementById("cashier-box-tx-amount").value);
   const notes  = document.getElementById("cashier-box-tx-note").value.trim();
   if (!amount || amount <= 0) { showInternalToast("يرجى إدخال مبلغ صحيح."); return; }
-  if (_cBoxTxData.type === "withdraw" && amount > _cBoxTxData.currentAmount) {
-    showInternalToast("الرصيد غير كافٍ للسحب."); return;
-  }
-  const newTotal = _cBoxTxData.type === "deposit"
-    ? _cBoxTxData.currentAmount + amount
-    : _cBoxTxData.currentAmount - amount;
+
+  const endpoint = _cBoxTxData.type === "deposit"
+    ? `${API_URL}/extra-boxes/${_cBoxTxData.id}/deposit`
+    : `${API_URL}/extra-boxes/${_cBoxTxData.id}/withdraw`;
+
   const btn = document.getElementById("cashier-box-tx-submit");
   btn.disabled = true;
   btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> جاري التنفيذ...`;
   try {
-    const res = await fetch(`${API_URL}/extra-boxes/${_cBoxTxData.id}`, {
-      method: "PUT",
+    const res = await fetch(endpoint, {
+      method: "POST",
       headers: { "Content-Type":"application/json", Authorization:`Bearer ${token}`, Accept:"application/json" },
-      body: JSON.stringify({ amount: newTotal, notes }),
+      body: JSON.stringify({ amount, notes }),
     });
+    const data = await res.json();
     if (res.ok) {
       showInternalToast(_cBoxTxData.type === "deposit" ? "✓ تم الإيداع بنجاح" : "✓ تم السحب بنجاح");
       closeCashierBoxTxDialog();
       loadCashierExtraBoxes();
     } else {
-      const err = await res.json();
-      showInternalToast(err.message || "فشلت العملية.");
+      showInternalToast(data.message || "فشلت العملية.");
     }
   } catch(e) {
     showInternalToast("خطأ في الاتصال بالخادم.");
@@ -1498,24 +1497,56 @@ async function submitCashierBoxTx() {
 }
 
 async function cashierCreateExtraBox() {
-  const name   = document.getElementById("cashier-eb-name").value.trim();
-  const amount = parseFloat(document.getElementById("cashier-eb-amount").value);
-  if (!name || isNaN(amount) || amount < 0) { showInternalToast("يرجى إدخال اسم ومبلغ صالح."); return; }
+  const nameInput   = document.getElementById("cashier-eb-name");
+  const debitInput  = document.getElementById("cashier-eb-amount-debit");
+  const creditInput = document.getElementById("cashier-eb-amount-credit");
+
+  const name   = nameInput.value.trim();
+  const debit  = parseFloat(debitInput.value)  || 0;
+  const credit = parseFloat(creditInput.value) || 0;
+
+  if (!name) { showInternalToast("يرجى إدخال اسم للصندوق."); return; }
+  if (debit < 0 || credit < 0) { showInternalToast("القيم يجب أن تكون أكبر من أو تساوي الصفر."); return; }
+
   try {
     const res = await fetch(`${API_URL}/extra-boxes`, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ name, amount, office_id: _cashierOfficeId }),
+      body: JSON.stringify({
+        name,
+        amount_debit:  debit,
+        amount_credit: credit,
+        office_id: _cashierOfficeId,
+      }),
     });
     const data = await res.json();
     if (res.ok) {
-      document.getElementById("cashier-eb-name").value = "";
-      document.getElementById("cashier-eb-amount").value = "";
-      showInternalToast("تم إضافة الصندوق بنجاح!");
+      nameInput.value   = "";
+      debitInput.value  = "";
+      creditInput.value = "";
+      const netEl = document.getElementById("cashier-eb-net-value");
+      if (netEl) { netEl.textContent = "$0.00"; netEl.style.color = ""; }
+      showInternalToast("✅ تم إضافة الصندوق بنجاح!");
       loadCashierExtraBoxes();
     } else { showInternalToast(data.message || "حدث خطأ أثناء الإضافة."); }
   } catch (e) { showInternalToast("خطأ في الاتصال بالخادم."); }
 }
+
+// حساب الصافي لحظياً عند تغيير منه / عليه
+function _cashierEbUpdateNet() {
+  const debit  = parseFloat(document.getElementById("cashier-eb-amount-debit")?.value)  || 0;
+  const credit = parseFloat(document.getElementById("cashier-eb-amount-credit")?.value) || 0;
+  const net    = debit - credit;
+  const el     = document.getElementById("cashier-eb-net-value");
+  if (!el) return;
+  el.textContent = (net >= 0 ? "+" : "") + "$" + net.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  el.style.color = net >= 0 ? "#15803d" : "#b91c1c";
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  document.getElementById("cashier-eb-amount-debit")?.addEventListener("input",  _cashierEbUpdateNet);
+  document.getElementById("cashier-eb-amount-credit")?.addEventListener("input", _cashierEbUpdateNet);
+});
 
 async function cashierDeleteExtraBox(boxId) {
   if (!confirm("هل أنت متأكد من حذف هذا الصندوق؟\n(سيتم حذفه مع الرصيد المتبقي فيه)")) return;
