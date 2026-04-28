@@ -106,7 +106,6 @@ function showUnauthorizedLottie() {
 }
 
 function redirectByRole(role) {
-<<<<<<< HEAD
     const routes = {
         'super_admin': '../super_admin/super.html',
         'admin':       '../office_manager/admin.html',
@@ -116,17 +115,6 @@ function redirectByRole(role) {
         'customer':    '../customer/customer.html',
     };
     window.location.replace(routes[role] || '../login/login.html');
-=======
-  const routes = {
-    super_admin: "../super_admin/super.html",
-    admin: "../office_manager/admin.html",
-    cashier: "../cashier/cashier.html",
-    accountant: "../accountant/accountant.html",
-    agent: "../agent/agent.html",
-    customer: "../customer/customer.html",
-  };
-  window.location.replace(routes[role] || "../index.html");
->>>>>>> e0f0708326dc814bcf3ab8258724fe0d0b55a4a3
 }
 /* =========================
    Helpers
