@@ -94,7 +94,11 @@
                             onclick="setActive(this); showDigitalLogsSection();">
                             <span class="nav-icon"><i
                                     class="fa-solid fa-bitcoin-sign"></i></span>
+<<<<<<< HEAD
                             <span>سجل العملات الرقمية</span>
+=======
+                            <span>سجل الصناديق الإلكترونية </span>
+>>>>>>> 9ca315a77b6489af8496040fa6f93639da3f5165
                         </a>
                     </li>
 
@@ -546,17 +550,48 @@
                         </div>
                         <div class="modal-body" style="padding:20px 24px;">
                             <!-- إضافة صندوق جديد -->
-                            <div class="eb-add-section">
-                                <div class="eb-add-title">
-                                    <i class="fa-solid fa-plus-circle"></i> إضافة صندوق جديد
+                            <div style="background: var(--light); padding: 18px; border-radius: 12px; margin-bottom: 24px; border: 1px solid var(--border);">
+                                <h4 style="margin-bottom: 14px; color: var(--dark); font-size: 14px;">
+                                    <i class="fa-solid fa-plus"></i> إضافة صندوق جديد
+                                </h4>
+
+                                <!-- اسم الصندوق -->
+                                <div class="form-group" style="margin-bottom: 12px;">
+                                    <label style="font-size:13px; font-weight:600;">اسم الصندوق</label>
+                                    <input type="text" id="cashier-eb-name" class="modal-input"
+                                        placeholder="مثال: صندوق المصاريف"
+                                        style="margin-top:5px;">
                                 </div>
-                                <div class="eb-add-form">
-                                    <input type="text" id="cashier-eb-name" class="modal-input eb-input"
-                                        placeholder="اسم الصندوق...">
-                                    <input type="number" id="cashier-eb-amount" class="modal-input eb-input"
-                                        placeholder="المبلغ الأولي" min="0" step="any" style="max-width:150px;">
-                                    <button class="btn-primary eb-add-btn" onclick="cashierCreateExtraBox()">
-                                        <i class="fa-solid fa-check"></i> إضافة
+
+                                <!-- منه / عليه -->
+                                <div style="display:flex; gap:12px; margin-bottom:12px; flex-wrap:wrap;">
+                                    <div class="form-group" style="flex:1; min-width:110px;">
+                                        <label style="font-size:13px; font-weight:700; color:#15803d;">
+                                            <i class="fa-solid fa-arrow-down-to-line"></i> منه (رصيد)
+                                        </label>
+                                        <input type="number" id="cashier-eb-amount-debit" class="modal-input"
+                                            placeholder="0.00" min="0" step="any"
+                                            style="margin-top:5px; border-color:#bbf7d0; color:#15803d; font-weight:700;">
+                                    </div>
+                                    <div class="form-group" style="flex:1; min-width:110px;">
+                                        <label style="font-size:13px; font-weight:700; color:#b91c1c;">
+                                            <i class="fa-solid fa-arrow-up-from-line"></i> عليه (مديونية)
+                                        </label>
+                                        <input type="number" id="cashier-eb-amount-credit" class="modal-input"
+                                            placeholder="0.00" min="0" step="any"
+                                            style="margin-top:5px; border-color:#fecaca; color:#b91c1c; font-weight:700;">
+                                    </div>
+                                </div>
+
+                                <!-- الصافي + زر الإضافة -->
+                                <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
+                                    <div style="font-size:13px; font-weight:700; color:var(--gray); padding:8px 14px;
+                                               background:#fff; border:1px solid var(--border); border-radius:8px; min-width:160px;">
+                                        الصافي: <span id="cashier-eb-net-value">$0.00</span>
+                                    </div>
+                                    <button class="btn-primary" onclick="cashierCreateExtraBox()"
+                                        style="padding: 12px 24px;">
+                                        <i class="fa-solid fa-check"></i> إضافة الصندوق
                                     </button>
                                 </div>
                             </div>
@@ -1282,7 +1317,11 @@
                         <!-- Hero Banner -->
                         <div class="section-hero cashier-safes-hero" style="background:linear-gradient(135deg,#0f172a 0%,#1e3a5f 100%);">
                             <div class="section-hero-text">
+<<<<<<< HEAD
                                 <h2><i class="fa-solid fa-bitcoin-sign"></i> سجل العملات الرقمية</h2>
+=======
+                                <h2><i class="fa-solid fa-bitcoin-sign"></i>   السجل الصناديق الإلكترونية </h2>
+>>>>>>> 9ca315a77b6489af8496040fa6f93639da3f5165
                                 <p>عمليات الشراء والبيع — شام كاش ليرة، شام كاش دولار، USDT</p>
                             </div>
                             <div class="section-hero-stats">

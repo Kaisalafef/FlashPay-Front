@@ -3235,7 +3235,7 @@ async function loadSafes() {
           <div class="osc-avatar">${initials}</div>
           <div class="osc-info">
             <div class="osc-name">${o.owner}</div>
-            <div class="osc-badge"><i class="fa-solid fa-building"></i> مكتب</div>
+            <div class="osc-badge"><i class="fa-solid fa-building"></i>  ${o.office_bal >= 0 ?'مكتب':'مندوب'}</div>
           </div>
           <div class="osc-status-dot ${o.office_bal >= 0 ? 'dot-green' : 'dot-red'}"></div>
         </div>
