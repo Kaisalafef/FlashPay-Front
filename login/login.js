@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 const API_URL = 'https://flashpay-back-1.onrender.com/api';
-=======
-const API_URL = "https://flashpay-back-1.onrender.com/api";
->>>>>>> e0f0708326dc814bcf3ab8258724fe0d0b55a4a3
 
 document
   .getElementById("login-form")
