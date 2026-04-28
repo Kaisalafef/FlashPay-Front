@@ -2087,24 +2087,34 @@ function renderCustomersTable(customers) {
       ? new Date(customer.created_at).toLocaleDateString("ar-SY")
       : "—";
 
+    const hasSelfie = !!customer.selfie_with_id;
+    const hasFront  = !!customer.id_card_front;
+    const hasBack   = !!customer.id_card_back;
+    const hasAnyImg = hasSelfie || hasFront || hasBack;
+
     tbody.innerHTML += `
             <tr>
                 <td>${index + 1}</td>
                 <td>
                     <div style="display:flex; align-items:center; gap:8px;">
                         <strong>${customer.name}</strong>
-                        ${
-                          customer.id_card_image
-                            ? `<button
-                                onclick="openIdImageModal('${STORAGE_URL}/${customer.id_card_image}')"
-                                title="عرض صورة الهوية"
-                                style="border:none; cursor:pointer; border-radius:7px; background:#eff6ff; color:#2563eb; width:28px; height:28px; font-size:13px; display:inline-flex; align-items:center; justify-content:center; flex-shrink:0; transition:all 0.2s;"
+                        ${hasAnyImg ? `
+                        <div class="id-img-dropdown-wrap" style="position:relative; display:inline-block;">
+                            <button
+                                onclick="toggleIdDropdown(event, 'idd-${customer.id}')"
+                                title="صور الهوية"
+                                style="border:none; cursor:pointer; border-radius:7px; background:#eff6ff; color:#2563eb; padding:0 8px; height:28px; font-size:12px; display:inline-flex; align-items:center; gap:4px; flex-shrink:0; transition:all 0.2s; font-family:inherit; font-weight:700;"
                                 onmouseover="this.style.background='#dbeafe'"
                                 onmouseout="this.style.background='#eff6ff'">
                                 <i class="fa-solid fa-id-card"></i>
-                              </button>`
-                            : ""
-                        }
+                                <i class="fa-solid fa-chevron-down" style="font-size:9px;"></i>
+                            </button>
+                            <div id="idd-${customer.id}" class="id-img-dropdown" style="display:none;">
+                                ${hasSelfie  ? `<button onclick="openIdImageModal('${STORAGE_URL}/${customer.selfie_with_id}')" class="id-img-dd-item"><i class="fa-solid fa-user-circle"></i> صورة مع الهوية</button>` : ''}
+                                ${hasFront   ? `<button onclick="openIdImageModal('${STORAGE_URL}/${customer.id_card_front}')"  class="id-img-dd-item"><i class="fa-solid fa-id-card"></i> وجه الهوية</button>` : ''}
+                                ${hasBack    ? `<button onclick="openIdImageModal('${STORAGE_URL}/${customer.id_card_back}')"   class="id-img-dd-item"><i class="fa-regular fa-id-card"></i> ظهر الهوية</button>` : ''}
+                            </div>
+                        </div>` : ''}
                     </div>
                 </td>
                 <td style="direction:ltr; text-align:right;">${customer.phone || "—"}</td>
@@ -2197,15 +2207,38 @@ function openCustomerModal(customerId) {
   document.getElementById("cd-phone").textContent = customer.phone || "—";
   document.getElementById("cd-email").textContent = customer.email || "—";
 
-  // زر عرض صورة الهوية في رأس المودال
+  // أزرار صور الهوية الثلاث في رأس المودال
   const cdIdBtn = document.getElementById("cd-id-card-btn");
   if (cdIdBtn) {
-    if (customer.id_card_image) {
-      cdIdBtn.style.display = "inline-flex";
-      cdIdBtn.onclick = () =>
-        openIdImageModal(`${STORAGE_URL}/${customer.id_card_image}`);
+    const hasSelfie = !!customer.selfie_with_id;
+    const hasFront  = !!customer.id_card_front;
+    const hasBack   = !!customer.id_card_back;
+    const hasAnyImg = hasSelfie || hasFront || hasBack;
+
+    if (hasAnyImg) {
+      cdIdBtn.style.display = "none";
+      let idBtnsWrap = document.getElementById("cd-id-images-wrap");
+      if (!idBtnsWrap) {
+        idBtnsWrap = document.createElement("div");
+        idBtnsWrap.id = "cd-id-images-wrap";
+        idBtnsWrap.style.cssText = "display:flex; gap:6px; flex-wrap:wrap;";
+        cdIdBtn.parentNode.insertBefore(idBtnsWrap, cdIdBtn.nextSibling);
+      }
+      idBtnsWrap.innerHTML = "";
+      const btnStyle = "border:none; cursor:pointer; border-radius:8px; background:#eff6ff; color:#2563eb; padding:6px 10px; font-size:11px; font-weight:700; font-family:inherit; display:inline-flex; align-items:center; gap:5px; transition:all 0.2s; white-space:nowrap;";
+      if (hasSelfie) {
+        idBtnsWrap.innerHTML += `<button onclick="openIdImageModal('${STORAGE_URL}/${customer.selfie_with_id}')" style="${btnStyle}" onmouseover="this.style.background='#dbeafe'" onmouseout="this.style.background='#eff6ff'"><i class="fa-solid fa-user-circle"></i> صورة مع الهوية</button>`;
+      }
+      if (hasFront) {
+        idBtnsWrap.innerHTML += `<button onclick="openIdImageModal('${STORAGE_URL}/${customer.id_card_front}')" style="${btnStyle}" onmouseover="this.style.background='#dbeafe'" onmouseout="this.style.background='#eff6ff'"><i class="fa-solid fa-id-card"></i> وجه الهوية</button>`;
+      }
+      if (hasBack) {
+        idBtnsWrap.innerHTML += `<button onclick="openIdImageModal('${STORAGE_URL}/${customer.id_card_back}')" style="${btnStyle}" onmouseover="this.style.background='#dbeafe'" onmouseout="this.style.background='#eff6ff'"><i class="fa-regular fa-id-card"></i> ظهر الهوية</button>`;
+      }
     } else {
       cdIdBtn.style.display = "none";
+      const wrap = document.getElementById("cd-id-images-wrap");
+      if (wrap) wrap.innerHTML = "";
     }
   }
 
@@ -2363,6 +2396,22 @@ function openCustomerModal(customerId) {
   document.getElementById("customer-detail-modal").classList.remove("hidden");
   document.body.style.overflow = "hidden";
 }
+
+// ── منسدل صور الهوية في جدول الزبائن ──
+function toggleIdDropdown(event, dropdownId) {
+  event.stopPropagation();
+  // إغلاق أي منسدل آخر مفتوح
+  document.querySelectorAll('.id-img-dropdown').forEach(d => {
+    if (d.id !== dropdownId) d.style.display = 'none';
+  });
+  const dd = document.getElementById(dropdownId);
+  if (!dd) return;
+  dd.style.display = dd.style.display === 'none' ? 'block' : 'none';
+}
+// إغلاق المنسدل عند النقر في أي مكان آخر
+document.addEventListener('click', () => {
+  document.querySelectorAll('.id-img-dropdown').forEach(d => d.style.display = 'none');
+});
 
 function openIdImageModal(imageUrl) {
   const modal = document.getElementById("id-image-modal");
@@ -3063,65 +3112,76 @@ async function loadSuperSafeLogs() {
 /* =========================
    Safes — الصناديق (مع SuperSafe أولاً)
 ========================= */
+/* =========================
+   Safes — الصناديق (مع SuperSafe أولاً)
+========================= */
 async function loadSafes() {
   const grid    = document.getElementById("office-safes-grid");
   const emptyEl = document.getElementById("safes-empty");
   if (!grid) return;
- 
+
   // Skeleton loading
   grid.innerHTML =
     '<div class="safes-skeleton-grid">' +
     Array(4).fill('<div class="safe-card-skeleton"></div>').join("") +
     "</div>";
   if (emptyEl) emptyEl.classList.add("hidden");
- 
+
   // 1. تحميل صندوق السوبر أدمن
   await loadSuperSafe();
- 
+
   try {
     // 2. جلب كل الصناديق بالتوازي
-    const [safesRes, eSafesRes] = await Promise.all([
-      fetch(`${API_URL}/safes`,                       { headers: getHeaders() }),
-      fetch(`${API_URL}/electronic-safe/all-balances`, { headers: getHeaders() }),
+    const [safesResult, eSafesResult, agentsResult] = await Promise.allSettled([
+      fetch(`${API_URL}/safes`,                        { headers: getHeaders() }).then(r => r.ok ? r.json() : { data: [] }),
+      fetch(`${API_URL}/electronic-safe/all-balances`, { headers: getHeaders() }).then(r => r.ok ? r.json() : { data: {} }),
+      fetch(`${API_URL}/agents/safes`,                 { headers: getHeaders() }).then(r => r.ok ? r.json() : { data: [] }),
     ]);
- 
-    const safesJson  = await safesRes.json();
-    const eSafesJson = await eSafesRes.json();
- 
-    const allSafes  = safesJson.data  || [];
-    // eSafesJson.data هو كائن مفتاحه office_id
-    const eSafesMap = eSafesJson.data || {};
- 
+
+    const safesJson  = safesResult.status  === 'fulfilled' ? safesResult.value  : { data: [] };
+    const eSafesJson = eSafesResult.status === 'fulfilled' ? eSafesResult.value : { data: {} };
+    const agentsJson = agentsResult.status === 'fulfilled' ? agentsResult.value : { data: [] };
+
+    // ── فلترة: نُظهر فقط office_safe + trading + profit_safe
+    const allSafes   = (safesJson.data  || []).filter(s => s.type !== 'office_main');
+    const eSafesMap  = eSafesJson.data  || {};
+    const agentSafes = agentsJson.data  || [];
+
     // ─── 3. حساب المجاميع الكلية ────────────────────────────────
     let totalsByType = {
       super   : parseFloat(_superSafeData?.balance || 0),
       office  : 0,
-      main    : 0,
       trading : 0,
       profit  : 0,
       esafe   : 0,
+      agents  : 0,
     };
- 
+
     allSafes.forEach((s) => {
       if (s.type === "profit_safe") {
         totalsByType.profit += parseFloat(s.profit_main || 0);
       } else {
         const bal = parseFloat(s.balance || 0);
-        if (s.type === "office_safe")  totalsByType.office  += bal;
-        if (s.type === "office_main")  totalsByType.main    += bal;
-        if (s.type === "trading")      totalsByType.trading += bal;
+        if (s.type === "office_safe") totalsByType.office  += bal;
+        if (s.type === "trading")     totalsByType.trading += bal;
       }
     });
- 
-    Object.values(eSafesMap).forEach((es) => {
-      // USDT + usd_sham_cash نعاملهم كدولار تقريباً في الإجمالي
+
+    // استخراج القيم بشكل آمن سواء كان كائناً أو مصفوفة
+    const eSafesArray = Array.isArray(eSafesMap) ? eSafesMap : Object.values(eSafesMap);
+    eSafesArray.forEach((es) => {
       totalsByType.esafe += parseFloat(es.usd_sham_cash || 0) + parseFloat(es.usdt || 0);
     });
- 
+
+    agentSafes.forEach((a) => {
+      totalsByType.agents += parseFloat(a.balance || 0);
+    });
+
     const totalCompany =
-      totalsByType.super + totalsByType.office + totalsByType.main +
-      totalsByType.trading + totalsByType.profit + totalsByType.esafe;
- 
+      totalsByType.super + totalsByType.office +
+      totalsByType.trading + totalsByType.profit +
+      totalsByType.esafe + totalsByType.agents;
+
     const fmt = (n) =>
       parseFloat(n || 0).toLocaleString("en-US", {
         minimumFractionDigits: 2,
@@ -3129,11 +3189,11 @@ async function loadSafes() {
       });
     const fmtSY = (n) =>
       parseFloat(n || 0).toLocaleString("en-US", { maximumFractionDigits: 0 });
- 
+
     // تحديث الرصيد الكلي في الـ header
     const totalCompanyEl = document.getElementById("total-company-balance");
     if (totalCompanyEl) totalCompanyEl.textContent = "$" + fmt(totalCompany);
- 
+
     // تحديث الـ tooltip
     const tooltipContainer = document.getElementById("total-tooltip-container");
     if (tooltipContainer) {
@@ -3141,48 +3201,54 @@ async function loadSafes() {
         <div class="custom-tooltip">
           <div class="tt-row"><span class="tt-label"><i class="fa-solid fa-crown" style="color:var(--warning);"></i>صندوق المدير العام</span><span class="tt-val">$${fmt(totalsByType.super)}</span></div>
           <div class="tt-row"><span class="tt-label"><i class="fa-solid fa-building"></i> صناديق المكاتب</span><span class="tt-val">$${fmt(totalsByType.office)}</span></div>
-          <div class="tt-row"><span class="tt-label"><i class="fa-solid fa-vault"></i> صناديق الحوالات</span><span class="tt-val">$${fmt(totalsByType.main)}</span></div>
           <div class="tt-row"><span class="tt-label"><i class="fa-solid fa-chart-line"></i> صناديق التداول</span><span class="tt-val">$${fmt(totalsByType.trading)}</span></div>
           <div class="tt-row"><span class="tt-label"><i class="fa-solid fa-sack-dollar"></i> صناديق الأرباح</span><span class="tt-val">$${fmt(totalsByType.profit)}</span></div>
           <div class="tt-row"><span class="tt-label"><i class="fa-solid fa-mobile-screen-button"></i> الخزنة الإلكترونية</span><span class="tt-val">$${fmt(totalsByType.esafe)}</span></div>
+          <div class="tt-row"><span class="tt-label"><i class="fa-solid fa-user-tie"></i> صناديق المندوبين</span><span class="tt-val">$${fmt(totalsByType.agents)}</span></div>
         </div>`;
     }
- 
-    // ─── 4. بناء كائن موحّد لكل مكتب ───────────────────────────
-    const officeMap = {}; // key: office_id
- 
+
+    // ─── 4. بناء كائن موحّد لكل مكتب ──────────
+    const officeMap = {};
+
     allSafes.forEach((s) => {
       const id = s.office_id;
       if (!id) return;
       if (!officeMap[id]) {
         officeMap[id] = {
-          office_id   : id,
-          owner       : s.owner || "—",
-          office_bal  : 0,
+          office_id    : id,
+          owner        : s.owner || "—",
+          office_bal   : 0,
           office_bal_sy: 0,
-          trading_bal : 0,
+          trading_bal  : 0,
           trading_bal_sy: 0,
-          profit_main : 0,
-          profit_trade: 0,
+          profit_main  : 0,
+          profit_trade : 0,
+          esafe_syp    : 0, // تهيئة القيم الافتراضية
+          esafe_usd    : 0,
+          esafe_usdt   : 0,
         };
       }
       if (s.type === "office_safe") {
-        officeMap[id].office_bal   = parseFloat(s.balance    || 0);
-        officeMap[id].office_bal_sy= parseFloat(s.balance_sy || 0);
+        officeMap[id].office_bal    = parseFloat(s.balance    || 0);
+        officeMap[id].office_bal_sy = parseFloat(s.balance_sy || 0);
         if (s.owner) officeMap[id].owner = s.owner;
       }
       if (s.type === "trading") {
-        officeMap[id].trading_bal   += parseFloat(s.balance    || 0);
-        officeMap[id].trading_bal_sy+= parseFloat(s.balance_sy || 0);
+        officeMap[id].trading_bal    += parseFloat(s.balance    || 0);
+        officeMap[id].trading_bal_sy += parseFloat(s.balance_sy || 0);
       }
       if (s.type === "profit_safe") {
         officeMap[id].profit_main  = parseFloat(s.profit_main  || 0);
         officeMap[id].profit_trade = parseFloat(s.profit_trade || 0);
       }
     });
- 
-    // دمج بيانات الخزنة الإلكترونية
-    Object.entries(eSafesMap).forEach(([offId, es]) => {
+
+    // دمج بيانات الخزنة الإلكترونية بشكل آمن
+    eSafesArray.forEach((es) => {
+      const offId = es.office_id;
+      if (!offId) return;
+
       if (!officeMap[offId]) {
         officeMap[offId] = {
           office_id: offId, owner: "مكتب " + offId,
@@ -3195,80 +3261,67 @@ async function loadSafes() {
       officeMap[offId].esafe_usd  = parseFloat(es.usd_sham_cash || 0);
       officeMap[offId].esafe_usdt = parseFloat(es.usdt          || 0);
     });
- 
+
     const offices = Object.values(officeMap)
       .sort((a, b) => (a.owner || "").localeCompare(b.owner || ""));
- 
+
     // تحديث إحصائيات الـ hero
     const totalOfficeBal = offices.reduce((s, o) => s + o.office_bal, 0);
     const totalEl = document.getElementById("safes-total-balance");
     const countEl = document.getElementById("safes-office-count");
     if (totalEl) totalEl.textContent = "$" + fmt(totalOfficeBal);
     if (countEl) countEl.textContent = offices.length;
- 
+
     const dashSafes = document.getElementById("dash-safes-count");
     if (dashSafes) dashSafes.textContent = offices.length;
- 
+
     grid.innerHTML = "";
- 
+
     if (offices.length === 0) {
       if (emptyEl) emptyEl.classList.remove("hidden");
-      return;
     }
- 
-    // ─── 5. رسم البطاقات ─────────────────────────────────────────
+
+    // ─── 5. رسم بطاقات المكاتب ────────────────────────────────────
     offices.forEach((o) => {
       const initials  = (o.owner || "?").charAt(0).toUpperCase();
       const levelClass =
         o.office_bal >= 10000 ? "safe-level-high" :
         o.office_bal >= 1000  ? "safe-level-mid"  : "safe-level-low";
- 
-      const hasEsafe = (o.esafe_syp || 0) + (o.esafe_usd || 0) + (o.esafe_usdt || 0) > 0;
- 
+
       const card = document.createElement("div");
       card.className = `office-safe-card office-safe-card-v2 ${levelClass}`;
       card.dataset.owner = (o.owner || "").toLowerCase();
- 
+
       card.innerHTML = `
-        <!-- رأس البطاقة -->
         <div class="osc-header">
           <div class="osc-avatar">${initials}</div>
           <div class="osc-info">
             <div class="osc-name">${o.owner}</div>
-            <div class="osc-badge"><i class="fa-solid fa-building"></i>  ${o.office_bal >= 0 ?'مكتب':'مندوب'}</div>
+            <div class="osc-badge"><i class="fa-solid fa-building"></i> مكتب</div>
           </div>
-          <div class="osc-status-dot ${o.office_bal >= 0 ? 'dot-green' : 'dot-red'}"></div>
+          <div class="osc-status-dot dot-green"></div>
         </div>
         <div class="osc-divider"></div>
- 
-        <!-- شبكة الصناديق الأربعة -->
+
         <div class="osc-safes-grid">
- 
-          <!-- 1. صندوق المكتب -->
           <div class="osc-mini-safe osc-safe-office">
             <div class="osc-mini-icon"><i class="fa-solid fa-building-columns"></i></div>
             <div class="osc-mini-label">صندوق المكتب</div>
             <div class="osc-mini-vals">
               <span class="osc-mini-val-primary">$${fmt(o.office_bal)}</span>
-              ${o.office_bal_sy > 0
-                ? `<span class="osc-mini-val-sy">${fmtSY(o.office_bal_sy)} ل.س</span>`
-                : ''}
+              <span class="osc-mini-val-sy">${fmtSY(o.office_bal_sy || 0)} ل.س</span>
             </div>
           </div>
- 
-          <!-- 2. الخزنة الإلكترونية (شام كاش) -->
+
           <div class="osc-mini-safe osc-safe-esafe">
             <div class="osc-mini-icon"><i class="fa-solid fa-mobile-screen-button"></i></div>
             <div class="osc-mini-label">شام كاش</div>
             <div class="osc-mini-vals">
-              ${hasEsafe ? `
-                ${(o.esafe_usd || 0) > 0  ? `<span class="osc-mini-val-primary">$${fmt(o.esafe_usd)}</span>` : ''}
-                ${(o.esafe_syp || 0) > 0  ? `<span class="osc-mini-val-sy">${fmtSY(o.esafe_syp)} ل.س</span>` : ''}
-              ` : '<span class="osc-mini-empty">—</span>'}
+              <span class="osc-mini-val-primary">$${fmt(o.esafe_usd || 0)}</span>
+              <span class="osc-mini-val-sy">${fmtSY(o.esafe_syp || 0)} ل.س</span>
             </div>
           </div>
- 
-          <!-- 3. USDT -->
+
           <div class="osc-mini-safe osc-safe-usdt">
             <div class="osc-mini-icon"><i class="fa-brands fa-bitcoin"></i></div>
             <div class="osc-mini-label">USDT</div>
@@ -3276,22 +3329,17 @@ async function loadSafes() {
               <span class="osc-mini-val-usdt">${fmt(o.esafe_usdt || 0)} ₮</span>
             </div>
           </div>
- 
-          <!-- 4. التداول -->
+
           <div class="osc-mini-safe osc-safe-trading">
             <div class="osc-mini-icon"><i class="fa-solid fa-chart-line"></i></div>
             <div class="osc-mini-label">التداول</div>
             <div class="osc-mini-vals">
               <span class="osc-mini-val-primary">$${fmt(o.trading_bal)}</span>
-              ${o.trading_bal_sy > 0
-                ? `<span class="osc-mini-val-sy">${fmtSY(o.trading_bal_sy)} ل.س</span>`
-                : ''}
+              <span class="osc-mini-val-sy">${fmtSY(o.trading_bal_sy || 0)} ل.س</span>
             </div>
           </div>
- 
         </div>
- 
-        <!-- Footer -->
+
         <div class="osc-footer" style="margin-top:12px;">
           <div class="osc-meta"><i class="fa-solid fa-circle-dollar-to-slot"></i><span>USD / SYP / USDT</span></div>
           <button class="osc-detail-btn" onclick='openSuperSafeTransferModal(${o.office_id})'>
@@ -3299,14 +3347,393 @@ async function loadSafes() {
           </button>
         </div>
       `;
- 
+
       grid.appendChild(card);
     });
- 
+
+    // ─── 6. رسم قسم المندوبين ─────────────────────────────────────
+    renderAgentSafeCards(agentSafes, fmt);
+
   } catch (e) {
     console.error("loadSafes error:", e);
     grid.innerHTML =
       '<p style="text-align:center;color:var(--danger);padding:32px;">تعذّر تحميل الصناديق</p>';
+  }
+}
+
+// ─── عرض بطاقات صناديق المندوبين ────────────────────────────────────────────
+function renderAgentSafeCards(agents, fmt) {
+  // إذا لم يكن هناك container للمندوبين، نُنشئه بعد grid المكاتب
+  let agentSection = document.getElementById("agent-safes-section");
+  if (!agentSection) {
+    const grid = document.getElementById("office-safes-grid");
+    if (!grid) return;
+    agentSection = document.createElement("div");
+    agentSection.id = "agent-safes-section";
+    agentSection.style.cssText = "margin-top:36px;";
+    grid.parentNode.insertBefore(agentSection, grid.nextSibling);
+  }
+
+  if (!agents || agents.length === 0) {
+    agentSection.innerHTML = "";
+    return;
+  }
+
+  const fmtN = fmt || ((n) => parseFloat(n || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+
+  agentSection.innerHTML = `
+    <div class="agent-safes-header">
+      <div class="agent-safes-title">
+        <i class="fa-solid fa-user-tie"></i>
+        <span>صناديق المندوبين</span>
+        <span class="agent-safes-count">${agents.length}</span>
+      </div>
+    </div>
+    <div class="agent-safes-grid" id="agent-safes-grid">
+      ${agents.map(a => buildAgentCard(a, fmtN)).join("")}
+    </div>
+  `;
+}
+
+function buildAgentCard(a, fmt) {
+  const initials     = (a.agent_name || "?").charAt(0).toUpperCase();
+  const hasProfit    = parseFloat(a.agent_profit || 0) > 0;
+  const profitRatio  = parseFloat(a.agent_profit_ratio || 0);
+  const balance      = parseFloat(a.balance || 0);
+  const profit       = parseFloat(a.agent_profit || 0);
+
+  return `
+    <div class="agent-safe-card" data-agent-id="${a.agent_id}" data-owner="${(a.agent_name || '').toLowerCase()}">
+      <div class="asc-header">
+        <div class="asc-avatar">${initials}</div>
+        <div class="asc-info">
+          <div class="asc-name">${a.agent_name}</div>
+          <div class="asc-badge">
+            <i class="fa-solid fa-user-tie"></i> مندوب
+            ${a.city ? `<span class="asc-location"><i class="fa-solid fa-location-dot"></i> ${a.city}</span>` : ''}
+          </div>
+        </div>
+        <div class="asc-status-dot ${balance > 0 ? 'dot-green' : 'dot-gray'}"></div>
+      </div>
+      <div class="asc-divider"></div>
+
+      <div class="asc-body">
+        <!-- رصيد الصندوق -->
+        <div class="asc-balance-row">
+          <div class="asc-balance-item">
+            <span class="asc-balance-label"><i class="fa-solid fa-wallet"></i> رصيد الصندوق</span>
+            <span class="asc-balance-val">$${fmt(balance)}</span>
+          </div>
+          <div class="asc-balance-item asc-profit-item ${hasProfit ? 'has-profit' : ''}">
+            <span class="asc-balance-label"><i class="fa-solid fa-sack-dollar"></i> الأرباح المستحقة</span>
+            <span class="asc-balance-val asc-profit-val">$${fmt(profit)}</span>
+          </div>
+        </div>
+
+        <!-- نسبة الربح -->
+        <div class="asc-ratio-row">
+          <span class="asc-ratio-label"><i class="fa-solid fa-percent"></i> نسبة الربح</span>
+          <div class="asc-ratio-badge">${profitRatio}%</div>
+        </div>
+      </div>
+
+      <div class="asc-footer">
+        <button class="asc-btn asc-btn-edit" onclick='openAgentProfitRatioModal(${JSON.stringify(a)})'>
+          <i class="fa-solid fa-sliders"></i> تعديل النسبة
+        </button>
+        <button class="asc-btn asc-btn-withdraw ${!hasProfit ? 'asc-btn-disabled' : ''}"
+          ${!hasProfit ? 'disabled' : ''}
+          onclick='openAgentWithdrawModal(${JSON.stringify(a)})'>
+          <i class="fa-solid fa-arrow-up-from-bracket"></i> سحب الأرباح
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+// ─── Modal: تعديل نسبة ربح المندوب ──────────────────────────────────────────
+function openAgentProfitRatioModal(agent) {
+  let modal = document.getElementById("agent-ratio-modal");
+  if (!modal) {
+    modal = document.createElement("div");
+    modal.id = "agent-ratio-modal";
+    modal.className = "modal-overlay hidden";
+    modal.innerHTML = `
+      <div class="arm-dialog">
+
+        <!-- Header -->
+        <div class="arm-header">
+          <div class="arm-header-icon">
+            <i class="fa-solid fa-percent"></i>
+          </div>
+          <div class="arm-header-text">
+            <h3>تعديل نسبة الربح</h3>
+            <p>تحديد النسبة المئوية من أرباح التداول</p>
+          </div>
+          <button class="arm-close-btn" onclick="closeAgentRatioModal()">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+
+        <input type="hidden" id="arm-agent-id">
+
+        <!-- Agent Info Card -->
+        <div class="arm-agent-card">
+          <div class="arm-agent-avatar" id="arm-agent-avatar">K</div>
+          <div class="arm-agent-info">
+            <div class="arm-agent-name" id="arm-agent-name">—</div>
+            <div class="arm-agent-sub">
+              <i class="fa-solid fa-user-tie"></i>
+              <span>مندوب</span>
+              <span class="arm-separator">•</span>
+              <span id="arm-agent-location">—</span>
+            </div>
+          </div>
+          <div class="arm-current-ratio">
+            <span class="arm-current-label">الحالية</span>
+            <span class="arm-current-val" id="arm-current-ratio-display">0%</span>
+          </div>
+        </div>
+
+        <!-- Ratio Input -->
+        <div class="arm-input-section">
+          <label class="arm-label">
+            <i class="fa-solid fa-sliders"></i>
+            نسبة الربح الجديدة
+          </label>
+
+          <!-- Slider + Number -->
+          <div class="arm-slider-wrapper">
+            <input type="range" id="arm-ratio-slider" min="0" max="30" step="0.5"
+              class="arm-slider" oninput="syncRatioInputs('slider')">
+            <div class="arm-slider-labels">
+              <span>0%</span>
+              <span>10%</span>
+              <span>20%</span>
+              <span>30%</span>
+            </div>
+          </div>
+
+          <div class="arm-number-row">
+            <div class="arm-number-wrapper">
+              <button class="arm-step-btn" onclick="stepRatio(-0.5)">
+                <i class="fa-solid fa-minus"></i>
+              </button>
+              <input type="number" id="arm-ratio-input" min="0" max="100" step="0.5"
+                class="arm-number-input" placeholder="0.0"
+                oninput="syncRatioInputs('number')">
+              <button class="arm-step-btn" onclick="stepRatio(0.5)">
+                <i class="fa-solid fa-plus"></i>
+              </button>
+            </div>
+            <span class="arm-percent-symbol">%</span>
+          </div>
+
+          <!-- Quick Presets -->
+          <div class="arm-presets">
+            <span class="arm-presets-label">اختيار سريع:</span>
+            ${[1, 2, 3, 5, 7, 10].map(v => `
+              <button class="arm-preset-btn" onclick="setRatioPreset(${v})">${v}%</button>
+            `).join('')}
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="arm-footer">
+          <button class="arm-btn-cancel" onclick="closeAgentRatioModal()">
+            <i class="fa-solid fa-xmark"></i> إلغاء
+          </button>
+          <button class="arm-btn-save" id="arm-save-btn" onclick="submitAgentProfitRatio()">
+            <i class="fa-solid fa-check"></i>
+            <span>حفظ النسبة</span>
+          </button>
+        </div>
+
+      </div>
+    `;
+    document.body.appendChild(modal);
+
+    // إغلاق عند الضغط على الخلفية
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) closeAgentRatioModal();
+    });
+  }
+
+  const ratio = parseFloat(agent.agent_profit_ratio || 0);
+  const initials = (agent.agent_name || "?").charAt(0).toUpperCase();
+
+  document.getElementById("arm-agent-id").value        = agent.agent_id;
+  document.getElementById("arm-agent-name").textContent = agent.agent_name;
+  document.getElementById("arm-agent-avatar").textContent = initials;
+  document.getElementById("arm-agent-location").textContent = agent.city || "—";
+  document.getElementById("arm-current-ratio-display").textContent = ratio + "%";
+  document.getElementById("arm-ratio-input").value  = ratio;
+  document.getElementById("arm-ratio-slider").value = Math.min(ratio, 30);
+
+  // تحديث اللون الحالي في الـ slider
+  updateSliderFill(ratio);
+
+  modal.classList.remove("hidden");
+  // انيميشن دخول
+  requestAnimationFrame(() => {
+    modal.querySelector(".arm-dialog").classList.add("arm-dialog-enter");
+  });
+}
+
+function closeAgentRatioModal() {
+  const modal = document.getElementById("agent-ratio-modal");
+  if (!modal) return;
+  const dialog = modal.querySelector(".arm-dialog");
+  dialog.classList.add("arm-dialog-exit");
+  setTimeout(() => {
+    modal.classList.add("hidden");
+    dialog.classList.remove("arm-dialog-enter", "arm-dialog-exit");
+  }, 250);
+}
+
+function syncRatioInputs(source) {
+  const slider = document.getElementById("arm-ratio-slider");
+  const input  = document.getElementById("arm-ratio-input");
+  if (!slider || !input) return;
+  if (source === "slider") {
+    input.value = slider.value;
+  } else {
+    const v = Math.min(parseFloat(input.value) || 0, 30);
+    slider.value = v;
+  }
+  updateSliderFill(parseFloat(input.value) || 0);
+}
+
+function updateSliderFill(val) {
+  const slider = document.getElementById("arm-ratio-slider");
+  if (!slider) return;
+  const pct = Math.min((val / 30) * 100, 100);
+  slider.style.setProperty("--fill", pct + "%");
+}
+
+function stepRatio(delta) {
+  const input = document.getElementById("arm-ratio-input");
+  if (!input) return;
+  const current = parseFloat(input.value) || 0;
+  const next = Math.max(0, Math.min(100, parseFloat((current + delta).toFixed(1))));
+  input.value = next;
+  syncRatioInputs("number");
+}
+
+function setRatioPreset(val) {
+  const input  = document.getElementById("arm-ratio-input");
+  const slider = document.getElementById("arm-ratio-slider");
+  if (!input || !slider) return;
+  input.value  = val;
+  slider.value = Math.min(val, 30);
+  updateSliderFill(val);
+
+  // إضاءة الزر المختار
+  document.querySelectorAll(".arm-preset-btn").forEach(btn => {
+    btn.classList.toggle("arm-preset-active", parseFloat(btn.textContent) === val);
+  });
+}
+
+async function submitAgentProfitRatio() {
+  const agentId = document.getElementById("arm-agent-id").value;
+  const ratio   = parseFloat(document.getElementById("arm-ratio-input").value);
+
+  if (isNaN(ratio) || ratio < 0 || ratio > 100) {
+    showToast("أدخل نسبة صحيحة بين 0 و 100", "error");
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_URL}/agents/${agentId}/profit-ratio`, {
+      method: "PUT",
+      headers: getHeaders(),
+      body: JSON.stringify({ agent_profit_ratio: ratio }),
+    });
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.message || "فشل التحديث");
+
+    showToast(json.message || "تم تحديث نسبة الربح بنجاح");
+    document.getElementById("agent-ratio-modal").classList.add("hidden");
+    await loadSafes();
+  } catch (e) {
+    showToast(e.message, "error");
+  }
+}
+
+// ─── Modal: سحب أرباح المندوب ────────────────────────────────────────────────
+function openAgentWithdrawModal(agent) {
+  let modal = document.getElementById("agent-withdraw-modal");
+  if (!modal) {
+    modal = document.createElement("div");
+    modal.id = "agent-withdraw-modal";
+    modal.className = "modal-overlay";
+    modal.innerHTML = `
+      <div class="modal-box" style="max-width:420px;">
+        <div class="modal-header">
+          <h3><i class="fa-solid fa-arrow-up-from-bracket"></i> سحب أرباح المندوب</h3>
+          <button class="modal-close" onclick="document.getElementById('agent-withdraw-modal').classList.add('hidden')">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="awm-agent-id">
+          <div class="form-group" style="margin-bottom:16px;">
+            <label style="font-size:13px;color:var(--gray-dark);margin-bottom:6px;display:block;">المندوب</label>
+            <div id="awm-agent-name" style="font-weight:700;font-size:16px;color:var(--text);"></div>
+          </div>
+          <div class="form-group" style="margin-bottom:16px;">
+            <label style="font-size:13px;color:var(--gray-dark);margin-bottom:6px;display:block;">الأرباح المتاحة للسحب</label>
+            <div id="awm-available" style="font-weight:700;font-size:18px;color:#16a34a;"></div>
+          </div>
+          <div class="form-group">
+            <label style="font-size:13px;color:var(--gray-dark);margin-bottom:6px;display:block;">المبلغ المراد سحبه ($)</label>
+            <input type="number" id="awm-amount-input" min="0.01" step="0.01"
+              style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:15px;font-family:inherit;"
+              placeholder="0.00">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-secondary" onclick="document.getElementById('agent-withdraw-modal').classList.add('hidden')">إلغاء</button>
+          <button class="btn-primary" style="background:var(--success,#16a34a);" onclick="submitAgentWithdrawProfit()">
+            <i class="fa-solid fa-check"></i> تأكيد السحب
+          </button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+  }
+
+  document.getElementById("awm-agent-id").value = agent.agent_id;
+  document.getElementById("awm-agent-name").textContent = agent.agent_name;
+  document.getElementById("awm-available").textContent =
+    "$" + parseFloat(agent.agent_profit || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  document.getElementById("awm-amount-input").value = "";
+  modal.classList.remove("hidden");
+}
+
+async function submitAgentWithdrawProfit() {
+  const agentId = document.getElementById("awm-agent-id").value;
+  const amount  = parseFloat(document.getElementById("awm-amount-input").value);
+
+  if (isNaN(amount) || amount <= 0) {
+    showToast("أدخل مبلغاً صحيحاً أكبر من صفر", "error");
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_URL}/agents/${agentId}/withdraw-profit`, {
+      method: "POST",
+      headers: getHeaders(),
+      body: JSON.stringify({ amount }),
+    });
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.message || "فشل السحب");
+
+    showToast(json.message || "تم سحب الأرباح بنجاح");
+    document.getElementById("agent-withdraw-modal").classList.add("hidden");
+    await loadSafes();
+  } catch (e) {
+    showToast(e.message, "error");
   }
 }
  
