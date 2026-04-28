@@ -1571,121 +1571,6 @@
                     </div>
                 </div>
 
-                <!-- ===== قسم سجل العملات الرقمية ===== -->
-                <div id="digital-logs-section" class="section" style="display:none;">
-
-                    <!-- Hero -->
-                    <div class="section-hero" style="background:linear-gradient(135deg,#0f172a 0%,#1e3a5f 60%,#1d4ed8 100%);">
-                        <div class="section-hero-content">
-                            <div class="section-hero-icon" style="background:rgba(255,255,255,0.15);">
-                                <i class="fa-solid fa-bitcoin-sign"></i>
-                            </div>
-                            <div>
-                                <h1>سجل العملات الرقمية</h1>
-                                <p>عمليات شراء وبيع الخزنة الإلكترونية — جميع المكاتب</p>
-                            </div>
-                        </div>
-                        <div style="display:flex;gap:20px;flex-wrap:wrap;">
-                            <div style="text-align:center;">
-                                <div id="dl-hero-buy" style="font-size:22px;font-weight:800;color:#86efac;">—</div>
-                                <div style="font-size:11px;opacity:.8;">ربح الشراء</div>
-                            </div>
-                            <div style="text-align:center;">
-                                <div id="dl-hero-sell" style="font-size:22px;font-weight:800;color:#fca5a5;">—</div>
-                                <div style="font-size:11px;opacity:.8;">ربح البيع</div>
-                            </div>
-                            <div style="text-align:center;">
-                                <div id="dl-hero-total" style="font-size:22px;font-weight:800;color:#fde68a;">—</div>
-                                <div style="font-size:11px;opacity:.8;">إجمالي الأرباح</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- فلاتر -->
-                    <div class="card" style="margin-bottom:0;border-radius:var(--radius) var(--radius) 0 0;">
-                        <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;">
-                            <div style="display:flex;flex-direction:column;gap:4px;">
-                                <label style="font-size:12px;font-weight:700;color:#64748b;">نوع العملة</label>
-                                <select id="dl-filter-currency" class="filter-select" style="min-width:160px;" onchange="loadDigitalLogs()">
-                                    <option value="">الكل</option>
-                                    <option value="syp_sham_cash">شام كاش ليرة</option>
-                                    <option value="usd_sham_cash">شام كاش دولار</option>
-                                    <option value="usdt">USDT</option>
-                                </select>
-                            </div>
-                            <div style="display:flex;flex-direction:column;gap:4px;">
-                                <label style="font-size:12px;font-weight:700;color:#64748b;">نوع العملية</label>
-                                <select id="dl-filter-action" class="filter-select" style="min-width:140px;" onchange="loadDigitalLogs()">
-                                    <option value="">الكل</option>
-                                    <option value="buy">شراء</option>
-                                    <option value="sell">بيع</option>
-                                </select>
-                            </div>
-                            <div style="display:flex;flex-direction:column;gap:4px;">
-                                <label style="font-size:12px;font-weight:700;color:#64748b;">من تاريخ</label>
-                                <input type="date" id="dl-filter-from" class="filter-select" style="min-width:145px;" onchange="loadDigitalLogs()">
-                            </div>
-                            <div style="display:flex;flex-direction:column;gap:4px;">
-                                <label style="font-size:12px;font-weight:700;color:#64748b;">إلى تاريخ</label>
-                                <input type="date" id="dl-filter-to" class="filter-select" style="min-width:145px;" onchange="loadDigitalLogs()">
-                            </div>
-                            <button onclick="loadDigitalLogs()" class="btn-primary" style="padding:8px 18px;font-size:13px;">
-                                <i class="fa-solid fa-rotate"></i> تحديث
-                            </button>
-                            <button onclick="exportDigitalLogs()" class="btn-export" style="padding:8px 18px;font-size:13px;margin-right:auto;">
-                                <i class="fa-solid fa-file-excel"></i> تصدير
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- شريط الإحصاء -->
-                    <div style="display:flex;gap:0;border-bottom:1px solid #e2e8f0;background:#f8fafc;flex-wrap:wrap;">
-                        <div style="flex:1;min-width:120px;padding:12px 20px;border-left:1px solid #e2e8f0;">
-                            <div style="font-size:11px;color:#64748b;font-weight:700;margin-bottom:3px;">عدد العمليات</div>
-                            <div id="dl-stat-count" style="font-size:20px;font-weight:800;color:#1e293b;">—</div>
-                        </div>
-                        <div style="flex:1;min-width:120px;padding:12px 20px;border-left:1px solid #e2e8f0;">
-                            <div style="font-size:11px;color:#64748b;font-weight:700;margin-bottom:3px;">ربح الشراء</div>
-                            <div id="dl-stat-buy" style="font-size:18px;font-weight:800;color:#15803d;">—</div>
-                        </div>
-                        <div style="flex:1;min-width:120px;padding:12px 20px;border-left:1px solid #e2e8f0;">
-                            <div style="font-size:11px;color:#64748b;font-weight:700;margin-bottom:3px;">ربح البيع</div>
-                            <div id="dl-stat-sell" style="font-size:18px;font-weight:800;color:#b91c1c;">—</div>
-                        </div>
-                        <div style="flex:1;min-width:120px;padding:12px 20px;">
-                            <div style="font-size:11px;color:#64748b;font-weight:700;margin-bottom:3px;">إجمالي الأرباح</div>
-                            <div id="dl-stat-total" style="font-size:18px;font-weight:800;color:#1d4ed8;">—</div>
-                        </div>
-                    </div>
-
-                    <!-- الجدول -->
-                    <div class="card" style="border-radius:0 0 var(--radius) var(--radius);padding:0;overflow:auto;">
-                        <table class="data-table" style="min-width:850px;">
-                            <thead>
-                                <tr>
-                                    <th>#</th>
-                                    <th>المكتب</th>
-                                    <th>نوع العملة</th>
-                                    <th>العملية</th>
-                                    <th>المبلغ</th>
-                                    <th>نسبة العمولة</th>
-                                    <th>المبلغ الصافي</th>
-                                    <th>الربح</th>
-                                    <th>الملاحظة</th>
-                                    <th>التاريخ</th>
-                                </tr>
-                            </thead>
-                            <tbody id="dl-table-body">
-                                <tr><td colspan="10" class="loading-row">
-                                    <div class="loading-spinner"></div> جاري التحميل...
-                                </td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-
-                </div>
-                <!-- ===== نهاية قسم سجل العملات الرقمية ===== -->
-
             </main>
             <!-- ===== مودال الحوالات المؤرشفة ===== -->
             <div id="archived-transfers-modal" class="hidden"
@@ -1995,8 +1880,120 @@
                 </div>
             </div>
 
+            <!-- ===== قسم سجل العملات الرقمية ===== -->
+            <div id="digital-logs-section" class="section" style="display:none;">
 
-            <script
+                <!-- Hero -->
+                <div class="section-hero" style="background:linear-gradient(135deg,#0f172a 0%,#1e3a5f 60%,#1d4ed8 100%);">
+                    <div class="section-hero-content">
+                        <div class="section-hero-icon" style="background:rgba(255,255,255,0.15);">
+                            <i class="fa-solid fa-bitcoin-sign"></i>
+                        </div>
+                        <div>
+                            <h1>سجل العملات الرقمية</h1>
+                            <p>عمليات شراء وبيع الخزنة الإلكترونية — جميع المكاتب</p>
+                        </div>
+                    </div>
+                    <div style="display:flex;gap:20px;flex-wrap:wrap;">
+                        <div style="text-align:center;">
+                            <div id="dl-hero-buy" style="font-size:22px;font-weight:800;color:#86efac;">—</div>
+                            <div style="font-size:11px;opacity:.8;">ربح الشراء</div>
+                        </div>
+                        <div style="text-align:center;">
+                            <div id="dl-hero-sell" style="font-size:22px;font-weight:800;color:#fca5a5;">—</div>
+                            <div style="font-size:11px;opacity:.8;">ربح البيع</div>
+                        </div>
+                        <div style="text-align:center;">
+                            <div id="dl-hero-total" style="font-size:22px;font-weight:800;color:#fde68a;">—</div>
+                            <div style="font-size:11px;opacity:.8;">إجمالي الأرباح</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- فلاتر -->
+                <div class="card" style="margin-bottom:0;border-radius:var(--radius) var(--radius) 0 0;">
+                    <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;">
+                        <div style="display:flex;flex-direction:column;gap:4px;">
+                            <label style="font-size:12px;font-weight:700;color:#64748b;">نوع العملة</label>
+                            <select id="dl-filter-currency" class="filter-select" style="min-width:160px;" onchange="loadDigitalLogs()">
+                                <option value="">الكل</option>
+                                <option value="syp_sham_cash">شام كاش ليرة</option>
+                                <option value="usd_sham_cash">شام كاش دولار</option>
+                                <option value="usdt">USDT</option>
+                            </select>
+                        </div>
+                        <div style="display:flex;flex-direction:column;gap:4px;">
+                            <label style="font-size:12px;font-weight:700;color:#64748b;">نوع العملية</label>
+                            <select id="dl-filter-action" class="filter-select" style="min-width:140px;" onchange="loadDigitalLogs()">
+                                <option value="">الكل</option>
+                                <option value="buy">شراء</option>
+                                <option value="sell">بيع</option>
+                            </select>
+                        </div>
+                        <div style="display:flex;flex-direction:column;gap:4px;">
+                            <label style="font-size:12px;font-weight:700;color:#64748b;">من تاريخ</label>
+                            <input type="date" id="dl-filter-from" class="filter-select" style="min-width:145px;" onchange="loadDigitalLogs()">
+                        </div>
+                        <div style="display:flex;flex-direction:column;gap:4px;">
+                            <label style="font-size:12px;font-weight:700;color:#64748b;">إلى تاريخ</label>
+                            <input type="date" id="dl-filter-to" class="filter-select" style="min-width:145px;" onchange="loadDigitalLogs()">
+                        </div>
+                        <button onclick="loadDigitalLogs()" class="btn-primary" style="padding:8px 18px;font-size:13px;">
+                            <i class="fa-solid fa-rotate"></i> تحديث
+                        </button>
+                        <button onclick="exportDigitalLogs()" class="btn-export" style="padding:8px 18px;font-size:13px;margin-right:auto;">
+                            <i class="fa-solid fa-file-excel"></i> تصدير
+                        </button>
+                    </div>
+                </div>
+
+                <!-- شريط الإحصاء -->
+                <div style="display:flex;gap:0;border-bottom:1px solid #e2e8f0;background:#f8fafc;flex-wrap:wrap;">
+                    <div style="flex:1;min-width:120px;padding:12px 20px;border-left:1px solid #e2e8f0;">
+                        <div style="font-size:11px;color:#64748b;font-weight:700;margin-bottom:3px;">عدد العمليات</div>
+                        <div id="dl-stat-count" style="font-size:20px;font-weight:800;color:#1e293b;">—</div>
+                    </div>
+                    <div style="flex:1;min-width:120px;padding:12px 20px;border-left:1px solid #e2e8f0;">
+                        <div style="font-size:11px;color:#64748b;font-weight:700;margin-bottom:3px;">ربح الشراء</div>
+                        <div id="dl-stat-buy" style="font-size:18px;font-weight:800;color:#15803d;">—</div>
+                    </div>
+                    <div style="flex:1;min-width:120px;padding:12px 20px;border-left:1px solid #e2e8f0;">
+                        <div style="font-size:11px;color:#64748b;font-weight:700;margin-bottom:3px;">ربح البيع</div>
+                        <div id="dl-stat-sell" style="font-size:18px;font-weight:800;color:#b91c1c;">—</div>
+                    </div>
+                    <div style="flex:1;min-width:120px;padding:12px 20px;">
+                        <div style="font-size:11px;color:#64748b;font-weight:700;margin-bottom:3px;">إجمالي الأرباح</div>
+                        <div id="dl-stat-total" style="font-size:18px;font-weight:800;color:#1d4ed8;">—</div>
+                    </div>
+                </div>
+
+                <!-- الجدول -->
+                <div class="card" style="border-radius:0 0 var(--radius) var(--radius);padding:0;overflow:auto;">
+                    <table class="data-table" style="min-width:850px;">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>المكتب</th>
+                                <th>نوع العملة</th>
+                                <th>العملية</th>
+                                <th>المبلغ</th>
+                                <th>نسبة العمولة</th>
+                                <th>المبلغ الصافي</th>
+                                <th>الربح</th>
+                                <th>الملاحظة</th>
+                                <th>التاريخ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dl-table-body">
+                            <tr><td colspan="10" class="loading-row">
+                                <div class="loading-spinner"></div> جاري التحميل...
+                            </td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+            <!-- ===== نهاية قسم سجل العملات الرقمية ===== -->
 
             <script
                 src="https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.12.2/lottie.min.js"></script>
