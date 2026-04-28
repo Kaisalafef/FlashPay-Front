@@ -2065,24 +2065,34 @@ function renderCustomersTable(customers) {
       ? new Date(customer.created_at).toLocaleDateString("ar-SY")
       : "—";
 
+    const hasSelfie = !!customer.selfie_with_id;
+    const hasFront  = !!customer.id_card_front;
+    const hasBack   = !!customer.id_card_back;
+    const hasAnyImg = hasSelfie || hasFront || hasBack;
+
     tbody.innerHTML += `
             <tr>
                 <td>${index + 1}</td>
                 <td>
                     <div style="display:flex; align-items:center; gap:8px;">
                         <strong>${customer.name}</strong>
-                        ${
-                          customer.id_card_image
-                            ? `<button
-                                onclick="openIdImageModal('${STORAGE_URL}/${customer.id_card_image}')"
-                                title="عرض صورة الهوية"
-                                style="border:none; cursor:pointer; border-radius:7px; background:#eff6ff; color:#2563eb; width:28px; height:28px; font-size:13px; display:inline-flex; align-items:center; justify-content:center; flex-shrink:0; transition:all 0.2s;"
+                        ${hasAnyImg ? `
+                        <div class="id-img-dropdown-wrap" style="position:relative; display:inline-block;">
+                            <button
+                                onclick="toggleIdDropdown(event, 'idd-${customer.id}')"
+                                title="صور الهوية"
+                                style="border:none; cursor:pointer; border-radius:7px; background:#eff6ff; color:#2563eb; padding:0 8px; height:28px; font-size:12px; display:inline-flex; align-items:center; gap:4px; flex-shrink:0; transition:all 0.2s; font-family:inherit; font-weight:700;"
                                 onmouseover="this.style.background='#dbeafe'"
                                 onmouseout="this.style.background='#eff6ff'">
                                 <i class="fa-solid fa-id-card"></i>
-                              </button>`
-                            : ""
-                        }
+                                <i class="fa-solid fa-chevron-down" style="font-size:9px;"></i>
+                            </button>
+                            <div id="idd-${customer.id}" class="id-img-dropdown" style="display:none;">
+                                ${hasSelfie  ? `<button onclick="openIdImageModal('${STORAGE_URL}/${customer.selfie_with_id}')" class="id-img-dd-item"><i class="fa-solid fa-user-circle"></i> صورة مع الهوية</button>` : ''}
+                                ${hasFront   ? `<button onclick="openIdImageModal('${STORAGE_URL}/${customer.id_card_front}')"  class="id-img-dd-item"><i class="fa-solid fa-id-card"></i> وجه الهوية</button>` : ''}
+                                ${hasBack    ? `<button onclick="openIdImageModal('${STORAGE_URL}/${customer.id_card_back}')"   class="id-img-dd-item"><i class="fa-regular fa-id-card"></i> ظهر الهوية</button>` : ''}
+                            </div>
+                        </div>` : ''}
                     </div>
                 </td>
                 <td style="direction:ltr; text-align:right;">${customer.phone || "—"}</td>
@@ -2175,15 +2185,38 @@ function openCustomerModal(customerId) {
   document.getElementById("cd-phone").textContent = customer.phone || "—";
   document.getElementById("cd-email").textContent = customer.email || "—";
 
-  // زر عرض صورة الهوية في رأس المودال
+  // أزرار صور الهوية الثلاث في رأس المودال
   const cdIdBtn = document.getElementById("cd-id-card-btn");
   if (cdIdBtn) {
-    if (customer.id_card_image) {
-      cdIdBtn.style.display = "inline-flex";
-      cdIdBtn.onclick = () =>
-        openIdImageModal(`${STORAGE_URL}/${customer.id_card_image}`);
+    const hasSelfie = !!customer.selfie_with_id;
+    const hasFront  = !!customer.id_card_front;
+    const hasBack   = !!customer.id_card_back;
+    const hasAnyImg = hasSelfie || hasFront || hasBack;
+
+    if (hasAnyImg) {
+      cdIdBtn.style.display = "none";
+      let idBtnsWrap = document.getElementById("cd-id-images-wrap");
+      if (!idBtnsWrap) {
+        idBtnsWrap = document.createElement("div");
+        idBtnsWrap.id = "cd-id-images-wrap";
+        idBtnsWrap.style.cssText = "display:flex; gap:6px; flex-wrap:wrap;";
+        cdIdBtn.parentNode.insertBefore(idBtnsWrap, cdIdBtn.nextSibling);
+      }
+      idBtnsWrap.innerHTML = "";
+      const btnStyle = "border:none; cursor:pointer; border-radius:8px; background:#eff6ff; color:#2563eb; padding:6px 10px; font-size:11px; font-weight:700; font-family:inherit; display:inline-flex; align-items:center; gap:5px; transition:all 0.2s; white-space:nowrap;";
+      if (hasSelfie) {
+        idBtnsWrap.innerHTML += `<button onclick="openIdImageModal('${STORAGE_URL}/${customer.selfie_with_id}')" style="${btnStyle}" onmouseover="this.style.background='#dbeafe'" onmouseout="this.style.background='#eff6ff'"><i class="fa-solid fa-user-circle"></i> صورة مع الهوية</button>`;
+      }
+      if (hasFront) {
+        idBtnsWrap.innerHTML += `<button onclick="openIdImageModal('${STORAGE_URL}/${customer.id_card_front}')" style="${btnStyle}" onmouseover="this.style.background='#dbeafe'" onmouseout="this.style.background='#eff6ff'"><i class="fa-solid fa-id-card"></i> وجه الهوية</button>`;
+      }
+      if (hasBack) {
+        idBtnsWrap.innerHTML += `<button onclick="openIdImageModal('${STORAGE_URL}/${customer.id_card_back}')" style="${btnStyle}" onmouseover="this.style.background='#dbeafe'" onmouseout="this.style.background='#eff6ff'"><i class="fa-regular fa-id-card"></i> ظهر الهوية</button>`;
+      }
     } else {
       cdIdBtn.style.display = "none";
+      const wrap = document.getElementById("cd-id-images-wrap");
+      if (wrap) wrap.innerHTML = "";
     }
   }
 
@@ -2341,6 +2374,22 @@ function openCustomerModal(customerId) {
   document.getElementById("customer-detail-modal").classList.remove("hidden");
   document.body.style.overflow = "hidden";
 }
+
+// ── منسدل صور الهوية في جدول الزبائن ──
+function toggleIdDropdown(event, dropdownId) {
+  event.stopPropagation();
+  // إغلاق أي منسدل آخر مفتوح
+  document.querySelectorAll('.id-img-dropdown').forEach(d => {
+    if (d.id !== dropdownId) d.style.display = 'none';
+  });
+  const dd = document.getElementById(dropdownId);
+  if (!dd) return;
+  dd.style.display = dd.style.display === 'none' ? 'block' : 'none';
+}
+// إغلاق المنسدل عند النقر في أي مكان آخر
+document.addEventListener('click', () => {
+  document.querySelectorAll('.id-img-dropdown').forEach(d => d.style.display = 'none');
+});
 
 function openIdImageModal(imageUrl) {
   const modal = document.getElementById("id-image-modal");
