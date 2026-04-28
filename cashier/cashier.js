@@ -3008,7 +3008,15 @@ function printInternalReceipt(t) {
 /* ======================================= */
  
 function showDigitalLogsSection() {
-  document.querySelectorAll(".section").forEach((s) => (s.style.display = "none"));
+  // الأسطر البديلة لـ _hideAllSections()
+  document.getElementById("section-transfers").style.display = "none";
+  document.getElementById("section-safes").style.display = "none";
+  document.getElementById("section-profits").style.display = "none";
+  document.getElementById("section-internal").style.display = "none";
+  document.getElementById("section-completed").style.display = "none";
+  document.getElementById("section-customers").style.display = "none";
+
+  // إظهار قسم السجل
   document.getElementById("section-digital-logs").style.display = "block";
  
   document.getElementById("page-heading").textContent = "سجل العملات الرقمية";
@@ -3104,3 +3112,4 @@ async function loadDigitalLogs() {
     tbody.innerHTML = `<tr><td colspan="9" class="loading-row" style="color:var(--danger);">خطأ في الاتصال بالسيرفر</td></tr>`;
   }
 }
+ 
