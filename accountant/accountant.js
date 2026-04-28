@@ -278,6 +278,7 @@ function showSection(name) {
     "acct-internal": "الحوالات الداخلية",
     "monthly-closing": "الإقفال الشهري",
     "bank-transfers": "الحوالات البنكية",
+    "digital-logs": "سجل العملات الرقمية",
   };
   setText("page-heading", titles[name] || "");
 
@@ -290,6 +291,7 @@ function showSection(name) {
   if (name === "monthly-closing") initMonthlyClosing();
   if (name === "reports") populateCountryFilter();
   if (name === "bank-transfers") loadBankTransfers();
+  if (name === "digital-logs") loadDigitalLogs();
 
   closeSidebar();
 }
@@ -3368,4 +3370,137 @@ function exportBankTransfersCSV() {
   a.click();
   URL.revokeObjectURL(url);
   showToast(`تم تصدير ${data.length} سجل بنجاح ✓`);
+}
+/* ════════════════════════════════════════════════
+   سجل العملات الرقمية — للمحاسب (جميع المكاتب)
+════════════════════════════════════════════════ */
+
+async function loadDigitalLogs() {
+  const tbody = document.getElementById("dl-table-body");
+  if (!tbody) return;
+
+  tbody.innerHTML = `<tr><td colspan="10" class="loading-row"><div class="loading-spinner"></div> جاري التحميل...</td></tr>`;
+
+  const currency = document.getElementById("dl-filter-currency")?.value || "";
+  const action   = document.getElementById("dl-filter-action")?.value   || "";
+  const dateFrom = document.getElementById("dl-filter-from")?.value     || "";
+  const dateTo   = document.getElementById("dl-filter-to")?.value       || "";
+
+  const params = new URLSearchParams();
+  if (currency) params.append("currency_type", currency);
+  if (action)   params.append("action_type",   action);
+  if (dateFrom) params.append("date_from",     dateFrom);
+  if (dateTo)   params.append("date_to",       dateTo);
+  params.append("per_page", "500");
+
+  try {
+    const res  = await fetch(`${API_URL}/electronic-safe/logs?${params}`, {
+      headers: getHeaders(),
+    });
+    const json = await res.json();
+
+    if (!res.ok) {
+      tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;padding:30px;color:#dc2626;">${json.message || "خطأ في جلب البيانات"}</td></tr>`;
+      return;
+    }
+
+    const logs   = json.data   || [];
+    const totals = json.totals || {};
+    const count  = json.count  ?? logs.length;
+
+    const fmt = (v) => parseFloat(v || 0).toLocaleString("en-US", {
+      minimumFractionDigits: 2, maximumFractionDigits: 2,
+    });
+
+    // تحديث Hero
+    document.getElementById("dl-hero-buy").textContent   = "$" + fmt(totals.total_buy_profit);
+    document.getElementById("dl-hero-sell").textContent  = "$" + fmt(totals.total_sell_profit);
+    document.getElementById("dl-hero-total").textContent = "$" + fmt(totals.total_profit);
+
+    // تحديث شريط الإحصاء
+    document.getElementById("dl-stat-count").textContent = count;
+    document.getElementById("dl-stat-buy").textContent   = "$" + fmt(totals.total_buy_profit);
+    document.getElementById("dl-stat-sell").textContent  = "$" + fmt(totals.total_sell_profit);
+    document.getElementById("dl-stat-total").textContent = "$" + fmt(totals.total_profit);
+
+    if (!logs.length) {
+      tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;padding:40px;color:#94a3b8;">
+        <i class="fa-solid fa-bitcoin-sign" style="font-size:32px;display:block;margin-bottom:10px;opacity:.3;"></i>
+        لا توجد عمليات تطابق الفلتر المحدد</td></tr>`;
+      return;
+    }
+
+    const currencyLabel = {
+      syp_sham_cash: `<span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700;">شام كاش ليرة</span>`,
+      usd_sham_cash: `<span style="background:#dbeafe;color:#1e40af;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700;">شام كاش دولار</span>`,
+      usdt:          `<span style="background:#d1fae5;color:#065f46;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700;">USDT</span>`,
+    };
+
+    const fmtDate = (str) => {
+      if (!str) return "—";
+      const d = new Date(str);
+      const p = (n) => String(n).padStart(2, "0");
+      return `${d.getFullYear()}/${p(d.getMonth()+1)}/${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+    };
+
+    // حفظ البيانات للتصدير
+    window._dlLogsCache = logs;
+
+    tbody.innerHTML = logs.map((log) => {
+      const badge = log.action_type === "buy"
+        ? `<span style="background:#dcfce7;color:#15803d;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:700;"><i class="fa-solid fa-arrow-down-to-line"></i> شراء</span>`
+        : `<span style="background:#fee2e2;color:#b91c1c;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:700;"><i class="fa-solid fa-arrow-up-from-line"></i> بيع</span>`;
+
+      const profitColor = parseFloat(log.profit) >= 0 ? "#15803d" : "#b91c1c";
+
+      return `<tr>
+        <td style="font-size:12px;color:#94a3b8;">${log.id}</td>
+        <td style="font-weight:600;font-size:12px;">${log.office_id || "—"}</td>
+        <td>${currencyLabel[log.currency_type] || log.currency_type}</td>
+        <td style="text-align:center;">${badge}</td>
+        <td style="font-weight:600;">${fmt(log.amount)}</td>
+        <td style="text-align:center;">${parseFloat(log.commission_rate).toFixed(2)}%</td>
+        <td>${fmt(log.net_amount)}</td>
+        <td style="font-weight:700;color:${profitColor};">${fmt(log.profit)}</td>
+        <td style="font-size:12px;color:#64748b;max-width:160px;word-break:break-word;">${log.note || "—"}</td>
+        <td style="font-size:11px;color:#94a3b8;white-space:nowrap;direction:ltr;text-align:right;">${fmtDate(log.created_at)}</td>
+      </tr>`;
+    }).join("");
+
+  } catch (err) {
+    console.error("loadDigitalLogs:", err);
+    tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;padding:30px;color:#dc2626;">خطأ في الاتصال بالسيرفر</td></tr>`;
+  }
+}
+
+function exportDigitalLogs() {
+  const logs = window._dlLogsCache;
+  if (!logs || !logs.length) { showToast("لا توجد بيانات للتصدير", "error"); return; }
+
+  const currencyMap = { syp_sham_cash: "شام كاش ليرة", usd_sham_cash: "شام كاش دولار", usdt: "USDT" };
+  const actionMap   = { buy: "شراء", sell: "بيع" };
+  const fmtDate = (str) => str ? new Date(str).toLocaleString("ar-SY") : "";
+
+  const rows = [
+    ["#", "المكتب", "نوع العملة", "العملية", "المبلغ", "نسبة العمولة%", "المبلغ الصافي", "الربح", "الملاحظة", "التاريخ"],
+    ...logs.map(l => [
+      l.id,
+      l.office_id,
+      currencyMap[l.currency_type] || l.currency_type,
+      actionMap[l.action_type]     || l.action_type,
+      l.amount,
+      l.commission_rate,
+      l.net_amount,
+      l.profit,
+      l.note || "",
+      fmtDate(l.created_at),
+    ])
+  ];
+
+  const csv = "\uFEFF" + rows.map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(",")).join("\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement("a");
+  a.href = url; a.download = "digital_logs.csv"; a.click();
+  URL.revokeObjectURL(url);
 }
