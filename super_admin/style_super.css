@@ -1694,6 +1694,7 @@ select:focus {
 
 /* ================= TABLE WRAPPER ================= */
 .table-wrapper {
+    
     border: 1px solid var(--border);
     border-radius: 14px;
     overflow: hidden;
@@ -4212,8 +4213,67 @@ select:focus {
     align-items: flex-end;
   }
 
+
   .arm-number-input {
     width: 70px;
     font-size: 20px;
   }
+}
+
+/* ================= صور الهوية الثلاث — منسدل جدول الزبائن ================= */
+.id-img-dropdown-wrap {
+    position: relative;
+    display: inline-block;
+}
+
+.id-img-dropdown {
+    position: absolute;
+    bottom: calc(100% + 6px);
+    right: 0;
+    background: var(--white);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    min-width: 170px;
+    z-index: 999;
+    overflow: hidden;
+    animation: dropdownFade 0.15s ease;
+}
+
+@keyframes dropdownFade {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.id-img-dd-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 10px 14px;
+    border: none;
+    background: transparent;
+    color: var(--dark);
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: right;
+    transition: background 0.15s;
+}
+
+.id-img-dd-item:not(:last-child) {
+    border-bottom: 1px solid var(--border);
+}
+
+.id-img-dd-item:hover {
+    background: #eff6ff;
+    color: #2563eb;
+}
+
+.id-img-dd-item i {
+    font-size: 13px;
+    width: 16px;
+    text-align: center;
+    flex-shrink: 0;
 }
