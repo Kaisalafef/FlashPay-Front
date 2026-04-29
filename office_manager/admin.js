@@ -1490,7 +1490,7 @@ function buildTradingUI(currencyId, officeId) {
             <div class="trade-chips-row">${amountChipsHtml}</div>
             <div class="trade-input-row">
                 <input type="number" id="buy_amount_${currencyId}"  class="trading-input" placeholder="أدخل الكمية يدوياً..." min="0" step="any"
-                       oninput="document.getElementById('sell_amount_${currencyId}').value=this.value">
+                       oninput="document.getElementById('sell_amount_${currencyId}').value=this.value; _updateTradePreview(${currencyId});">
                 <input type="number" id="sell_amount_${currencyId}" class="trading-input" style="display:none;" placeholder="الكمية" min="0" step="any">
             </div>
         </div>
@@ -1503,7 +1503,13 @@ function buildTradingUI(currencyId, officeId) {
                 </div>
                 <div class="trade-chips-row">${buyPriceChipsHtml}</div>
                 <div class="trade-input-row">
-                    <input type="number" id="buy_price_${currencyId}" class="trading-input" placeholder="سعر الشراء يدوياً..." min="0" step="any">
+                    <input type="number" id="buy_price_${currencyId}" class="trading-input" placeholder="سعر الشراء يدوياً..." min="0" step="any"
+                           oninput="_updateTradePreview(${currencyId})">
+                </div>
+                <div id="buy_preview_${currencyId}" style="display:none;margin:8px 0;padding:10px 14px;background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:1.5px solid #86efac;border-radius:10px;text-align:center;">
+                    <div style="font-size:11px;color:#15803d;font-weight:700;margin-bottom:4px;">الناتج الإجمالي</div>
+                    <div id="buy_preview_val_${currencyId}" style="font-size:22px;font-weight:800;color:#15803d;direction:ltr;letter-spacing:0.5px;">—</div>
+                    <div style="font-size:10px;color:#16a34a;margin-top:2px;">ل.س تُدفع مقابل الشراء</div>
                 </div>
                 <button class="trade-exec-btn trade-exec-buy"
                         onclick="executeTrade('buy', ${officeId}, ${currencyId})">
@@ -1518,7 +1524,13 @@ function buildTradingUI(currencyId, officeId) {
                 </div>
                 <div class="trade-chips-row">${sellPriceChipsHtml}</div>
                 <div class="trade-input-row">
-                    <input type="number" id="sell_price_${currencyId}" class="trading-input" placeholder="سعر البيع يدوياً..." min="0" step="any">
+                    <input type="number" id="sell_price_${currencyId}" class="trading-input" placeholder="سعر البيع يدوياً..." min="0" step="any"
+                           oninput="_updateTradePreview(${currencyId})">
+                </div>
+                <div id="sell_preview_${currencyId}" style="display:none;margin:8px 0;padding:10px 14px;background:linear-gradient(135deg,#fff1f2,#fee2e2);border:1.5px solid #fca5a5;border-radius:10px;text-align:center;">
+                    <div style="font-size:11px;color:#b91c1c;font-weight:700;margin-bottom:4px;">الناتج الإجمالي</div>
+                    <div id="sell_preview_val_${currencyId}" style="font-size:22px;font-weight:800;color:#b91c1c;direction:ltr;letter-spacing:0.5px;">—</div>
+                    <div style="font-size:10px;color:#dc2626;margin-top:2px;">ل.س تُستلم من البيع</div>
                 </div>
                 <button class="trade-exec-btn trade-exec-sell"
                         onclick="executeTrade('sell', ${officeId}, ${currencyId})">
@@ -1543,6 +1555,37 @@ function setTradeVal(id1, id2, val) {
   // تأثير بصري على الزر المضغوط
   event.target.classList.add("trade-chip-active");
   setTimeout(() => event.target.classList.remove("trade-chip-active"), 600);
+}
+
+/** حساب الناتج الإجمالي (الكمية × السعر) وعرضه في الـ preview */
+function _updateTradePreview(currencyId) {
+  const amount    = parseFloat(document.getElementById('buy_amount_' + currencyId)?.value) || 0;
+  const buyPrice  = parseFloat(document.getElementById('buy_price_'  + currencyId)?.value) || 0;
+  const sellPrice = parseFloat(document.getElementById('sell_price_' + currencyId)?.value) || 0;
+
+  const buyPrev  = document.getElementById('buy_preview_'      + currencyId);
+  const buyVal   = document.getElementById('buy_preview_val_'  + currencyId);
+  const sellPrev = document.getElementById('sell_preview_'     + currencyId);
+  const sellVal  = document.getElementById('sell_preview_val_' + currencyId);
+
+  if (buyPrev && buyVal) {
+    if (amount > 0 && buyPrice > 0) {
+      const total = amount * buyPrice;
+      buyVal.textContent = total.toLocaleString('en-US', {minimumFractionDigits:0,maximumFractionDigits:0}) + ' ل.س';
+      buyPrev.style.display = 'block';
+    } else {
+      buyPrev.style.display = 'none';
+    }
+  }
+  if (sellPrev && sellVal) {
+    if (amount > 0 && sellPrice > 0) {
+      const total = amount * sellPrice;
+      sellVal.textContent = total.toLocaleString('en-US', {minimumFractionDigits:0,maximumFractionDigits:0}) + ' ل.س';
+      sellPrev.style.display = 'block';
+    } else {
+      sellPrev.style.display = 'none';
+    }
+  }
 }
 
 async function executeTrade(type, officeId, currencyId) {
