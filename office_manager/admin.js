@@ -4429,6 +4429,233 @@ function filterSafeLogs() {
   _renderSafeLogsTable(filtered, emptyEl, tbody);
 }
 
+<<<<<<< HEAD
+/* =====================================================
+   تقرير سجل حركات الصناديق المتوافق مع SafeLogController
+   ===================================================== */
+let SAFES_REPORT_DATA = [];
+
+// تهيئة التقرير بالشهر الحالي
+function initSafesReport() {
+  const monthInput = document.getElementById("safes-report-month");
+  if (monthInput && !monthInput.value) {
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, "0");
+    monthInput.value = `${yyyy}-${mm}`;
+    loadSafesReport();
+  }
+}
+
+// جلب البيانات من SafeLogController باستخدام date_from و date_to
+async function loadSafesReport() {
+  const monthVal = document.getElementById("safes-report-month")?.value;
+  const tbody = document.getElementById("safes-report-tbody");
+
+  if (!monthVal || !tbody) return;
+
+  // استخراج أول وآخر يوم من الشهر المختار
+  const [year, month] = monthVal.split("-");
+  const dateFrom = `${year}-${month}-01`;
+  const lastDay = new Date(year, month, 0).getDate();
+  const dateTo = `${year}-${month}-${lastDay}`;
+
+  tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:30px;color:var(--gray);">
+        <div style="width:28px;height:28px;border:3px solid #e5e7eb;border-top:3px solid var(--primary);
+                    border-radius:50%;animation:acct-spin 0.8s linear infinite;margin:0 auto 10px;"></div>
+        جاري جلب السجلات...
+    </td></tr>`;
+
+  try {
+    // نرسل التواريخ للمسار الموجود في الباك إند
+    const res = await fetch(
+      `${API_URL}/safe-logs?date_from=${dateFrom}&date_to=${dateTo}&per_page=500`,
+      {
+        headers: getHeaders(),
+      },
+    );
+
+    if (!res.ok) throw new Error("فشل في جلب البيانات");
+
+    const json = await res.json();
+    SAFES_REPORT_DATA = json.data || [];
+    _renderSafesReport(SAFES_REPORT_DATA);
+  } catch (err) {
+    console.error("loadSafesReport error:", err);
+    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center; color:var(--danger); padding:20px;">
+            <i class="fa-solid fa-circle-exclamation" style="font-size:24px; display:block; margin-bottom:8px;"></i>
+            خطأ في الاتصال بالخادم أو السجل غير متوفر
+        </td></tr>`;
+  }
+}
+
+// رسم الجدول بالبيانات المجلوبة
+function _renderSafesReport(data) {
+  const tbody = document.getElementById("safes-report-tbody");
+  if (!tbody) return;
+
+  if (!data || data.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center; padding:30px; color:var(--gray);">
+            <i class="fa-solid fa-folder-open" style="font-size:24px; margin-bottom:10px; opacity:0.5; display:block;"></i>
+            لا توجد حركات صناديق مسجلة في هذا الشهر
+        </td></tr>`;
+    return;
+  }
+
+  // قواميس لترجمة الحالات والصناديق لتظهر بشكل احترافي
+  const safeNames = {
+    office_safe: { label: "خزنة المكتب", color: "#1e40af", bg: "#dbeafe" },
+    trading: { label: "صندوق التداول", color: "#92400e", bg: "#fef3c7" },
+    profit_safe: { label: "صندوق الأرباح", color: "#5b21b6", bg: "#ede9fe" },
+    office_main: { label: "الصندوق الرئيسي", color: "#065f46", bg: "#d1fae5" },
+  };
+
+  const actionNames = {
+    deposit: "إيداع",
+    withdraw: "سحب",
+    transfer_to_office: "تحويل للمكتب",
+    buy: "شراء",
+    sell: "بيع",
+    snapshot: "لقطة",
+  };
+
+  tbody.innerHTML = data
+    .map((log, i) => {
+      const fmtN = (n) =>
+        parseFloat(n ?? 0).toLocaleString("en-US", {
+          minimumFractionDigits: 2,
+        });
+      const dateStr = log.created_at
+        ? new Date(log.created_at).toLocaleString("ar-SY", {
+            dateStyle: "short",
+            timeStyle: "short",
+          })
+        : "—";
+
+      const safeInfo = safeNames[log.safe_type] || {
+        label: log.safe_type,
+        color: "var(--primary)",
+        bg: "var(--primary-bg)",
+      };
+      const actionLabel = actionNames[log.action_type] || log.action_type;
+
+      // تلوين المبلغ بناءً على نوع الحركة
+      const isPositive = ["deposit", "sell"].includes(log.action_type);
+      const amountColor = isPositive ? "var(--success)" : "var(--danger)";
+      const amountSign = isPositive ? "+" : "-";
+
+      // دمج الأرصدة لعرضها بطريقة ذكية
+      let balanceHtml = "";
+      if (log.currency === "USD" || log.currency === "usd") {
+        balanceHtml = `<span style="color:#1e40af; font-weight:700;">$${fmtN(log.balance_after)}</span>`;
+      } else {
+        balanceHtml = `<span style="color:#ea580c; font-weight:700;">${fmtN(log.balance_sy_after)} ل.س</span>`;
+      }
+
+      return `
+        <tr style="background:${i % 2 === 0 ? "var(--white)" : "#fafafa"}">
+            <td>${i + 1}</td>
+            <td>
+                <span class="badge" style="background:${safeInfo.bg}; color:${safeInfo.color}; border:none;">
+                    ${safeInfo.label}
+                </span>
+            </td>
+            <td style="font-weight:600;">${actionLabel}</td>
+            <td style="color:${amountColor}; font-weight:700; direction:ltr;">${amountSign}${fmtN(log.amount)}</td>
+            <td style="font-weight:600;">${log.currency}</td>
+            <td>${balanceHtml}</td>
+            <td style="font-size:11px; color:var(--gray); max-width:180px;">${log.description || "—"}</td>
+            <td style="font-size:12px; font-weight:600;">${log.performed_by_name || "—"}</td>
+            <td style="color:var(--gray); font-size:12px;">${dateStr}</td>
+        </tr>`;
+    })
+    .join("");
+}
+
+// تصدير الجدول إلى ملف CSV
+function exportSafesReportCSV() {
+  if (!SAFES_REPORT_DATA || SAFES_REPORT_DATA.length === 0) {
+    showToast("لا توجد بيانات للتصدير في هذا الشهر", "error");
+    return;
+  }
+
+  const month = document.getElementById("safes-report-month")?.value || "all";
+  const headers = [
+    "#",
+    "نوع الصندوق",
+    "نوع الحركة",
+    "العملة",
+    "المبلغ",
+    "رصيد دولار بعد",
+    "رصيد ليرة بعد",
+    "الوصف",
+    "المنفذ",
+    "التاريخ",
+  ];
+
+  const actionNames = {
+    deposit: "إيداع",
+    withdraw: "سحب",
+    transfer_to_office: "تحويل للمكتب",
+    buy: "شراء",
+    sell: "بيع",
+    snapshot: "لقطة",
+  };
+  const safeNames = {
+    office_safe: "خزنة المكتب",
+    trading: "صندوق التداول",
+    profit_safe: "صندوق الأرباح",
+    office_main: "الرئيسي",
+  };
+
+  const rows = SAFES_REPORT_DATA.map((log, i) => [
+    i + 1,
+    safeNames[log.safe_type] || log.safe_type,
+    actionNames[log.action_type] || log.action_type,
+    log.currency,
+    parseFloat(log.amount || 0).toFixed(2),
+    parseFloat(log.balance_after || 0).toFixed(2),
+    parseFloat(log.balance_sy_after || 0).toFixed(2),
+    log.description || "",
+    log.performed_by_name || "",
+    log.created_at ? new Date(log.created_at).toLocaleString("ar-SY") : "",
+  ]);
+
+  const csv = [headers, ...rows]
+    .map((r) => r.map((v) => `"${v}"`).join(","))
+    .join("\n");
+  const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `safes_logs_${month}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast("تم تصدير سجل الصناديق بنجاح ✓", "success");
+}
+
+// طباعة التقرير
+function printSafesReport() {
+  window.print();
+}
+/**
+ * إغلاق مودال الحوالات المؤرشفة
+ */
+function closeArchivedModal() {
+  const modal = document.getElementById("archived-transfers-modal");
+  if (modal) modal.classList.add("hidden");
+  document.body.style.overflow = "";
+}
+
+/**
+ * إغلاق مودال الـ snapshot
+ */
+function closeSnapshotModal() {
+  const modal = document.getElementById("closing-snapshot-modal");
+  if (modal) modal.classList.add("hidden");
+  document.body.style.overflow = "";
+}
+=======
 /* ═══════════════════════════════════════════════════════
    الخزنة الإلكترونية — شام كاش + USDT (Admin)
    ═══════════════════════════════════════════════════════ */
@@ -4534,3 +4761,4 @@ async function eSafeAdjust(actionType, currencyType, amountInputId, notesInputId
     if (btn) { btn.disabled = false; btn.innerHTML = orig; }
   }
 }
+>>>>>>> 8bdaac5f219277b9c1a1fe4c7cba90178b334db1
