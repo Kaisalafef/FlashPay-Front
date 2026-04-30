@@ -3115,14 +3115,30 @@ async function loadDigitalLogs() {
     const totals  = json.totals || {};
     const count   = json.count  ?? logs.length;
  
-    /* ── تحديث شريط الأرباح ── */
+    /* ── حساب الأرباح منفصلة حسب العملة ── */
     const fmt = (v) => parseFloat(v || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
- 
-    document.getElementById("dl-buy-profit").textContent  = fmt(totals.total_buy_profit);
-    document.getElementById("dl-sell-profit").textContent = fmt(totals.total_sell_profit);
-    document.getElementById("dl-total-profit").textContent = fmt(totals.total_profit);
-    document.getElementById("dl-count").textContent       = count;
-    document.getElementById("dl-stat-profit").textContent = "$" + fmt(totals.total_profit);
+
+    // syp_sham_cash → ليرة سورية | usd_sham_cash + usdt → دولار
+    const sypLogs = logs.filter(l => l.currency_type === "syp_sham_cash");
+    const usdLogs = logs.filter(l => l.currency_type !== "syp_sham_cash");
+
+    const buyUsd  = usdLogs.filter(l => l.action_type === "buy").reduce((s,l)  => s + parseFloat(l.profit||0), 0);
+    const sellUsd = usdLogs.filter(l => l.action_type === "sell").reduce((s,l) => s + parseFloat(l.profit||0), 0);
+    const totalUsd = buyUsd + sellUsd;
+
+    const buySyp  = sypLogs.filter(l => l.action_type === "buy").reduce((s,l)  => s + parseFloat(l.profit||0), 0);
+    const sellSyp = sypLogs.filter(l => l.action_type === "sell").reduce((s,l) => s + parseFloat(l.profit||0), 0);
+    const totalSyp = buySyp + sellSyp;
+
+    document.getElementById("dl-count").textContent    = count;
+    document.getElementById("dl-buy-usd").textContent  = fmt(buyUsd);
+    document.getElementById("dl-sell-usd").textContent = fmt(sellUsd);
+    document.getElementById("dl-total-usd").textContent = fmt(totalUsd);
+    document.getElementById("dl-buy-syp").textContent  = fmt(buySyp);
+    document.getElementById("dl-sell-syp").textContent = fmt(sellSyp);
+    document.getElementById("dl-total-syp").textContent = fmt(totalSyp);
+    document.getElementById("dl-stat-usd").textContent = "$" + fmt(totalUsd);
+    document.getElementById("dl-stat-syp").textContent = fmt(totalSyp) + " ل.س";
  
     if (!logs.length) {
       tbody.innerHTML = `<tr><td colspan="9"><div class="empty-state"><i class="fa-solid fa-bitcoin-sign"></i><p>لا توجد عمليات تطابق الفلتر المحدد</p></div></td></tr>`;
@@ -3168,4 +3184,3 @@ async function loadDigitalLogs() {
     tbody.innerHTML = `<tr><td colspan="9" class="loading-row" style="color:var(--danger);">خطأ في الاتصال بالسيرفر</td></tr>`;
   }
 }
- 
