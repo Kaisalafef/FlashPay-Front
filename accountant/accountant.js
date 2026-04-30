@@ -3412,16 +3412,30 @@ async function loadDigitalLogs() {
       minimumFractionDigits: 2, maximumFractionDigits: 2,
     });
 
+    // حساب الأرباح منفصلة: syp_sham_cash → ليرة | usd_sham_cash + usdt → دولار
+    const sypLogs = logs.filter(l => l.currency_type === "syp_sham_cash");
+    const usdLogs = logs.filter(l => l.currency_type !== "syp_sham_cash");
+
+    const buyUsd   = usdLogs.filter(l => l.action_type === "buy").reduce((s,l)  => s + parseFloat(l.profit||0), 0);
+    const sellUsd  = usdLogs.filter(l => l.action_type === "sell").reduce((s,l) => s + parseFloat(l.profit||0), 0);
+    const totalUsd = buyUsd + sellUsd;
+
+    const buySyp   = sypLogs.filter(l => l.action_type === "buy").reduce((s,l)  => s + parseFloat(l.profit||0), 0);
+    const sellSyp  = sypLogs.filter(l => l.action_type === "sell").reduce((s,l) => s + parseFloat(l.profit||0), 0);
+    const totalSyp = buySyp + sellSyp;
+
     // تحديث Hero
-    document.getElementById("dl-hero-buy").textContent   = "$" + fmt(totals.total_buy_profit);
-    document.getElementById("dl-hero-sell").textContent  = "$" + fmt(totals.total_sell_profit);
-    document.getElementById("dl-hero-total").textContent = "$" + fmt(totals.total_profit);
+    document.getElementById("dl-hero-usd").textContent = "$" + fmt(totalUsd);
+    document.getElementById("dl-hero-syp").textContent = fmt(totalSyp) + " ل.س";
 
     // تحديث شريط الإحصاء
-    document.getElementById("dl-stat-count").textContent = count;
-    document.getElementById("dl-stat-buy").textContent   = "$" + fmt(totals.total_buy_profit);
-    document.getElementById("dl-stat-sell").textContent  = "$" + fmt(totals.total_sell_profit);
-    document.getElementById("dl-stat-total").textContent = "$" + fmt(totals.total_profit);
+    document.getElementById("dl-stat-count").textContent     = count;
+    document.getElementById("dl-stat-buy-usd").textContent   = "$" + fmt(buyUsd);
+    document.getElementById("dl-stat-sell-usd").textContent  = "$" + fmt(sellUsd);
+    document.getElementById("dl-stat-total-usd").textContent = "$" + fmt(totalUsd);
+    document.getElementById("dl-stat-buy-syp").textContent   = fmt(buySyp) + " ل.س";
+    document.getElementById("dl-stat-sell-syp").textContent  = fmt(sellSyp) + " ل.س";
+    document.getElementById("dl-stat-total-syp").textContent = fmt(totalSyp) + " ل.س";
 
     if (!logs.length) {
       tbody.innerHTML = `<tr><td colspan="11" style="text-align:center;padding:40px;color:#94a3b8;">
