@@ -3041,6 +3041,7 @@ function printInternalReceipt(t) {
     alert("يرجى السماح بالنوافذ المنبثقة (Popups) ثم أعد المحاولة");
     return;
   }
+  
   printWin.document.open();
   printWin.document.write(receiptHtml);
   printWin.document.close();

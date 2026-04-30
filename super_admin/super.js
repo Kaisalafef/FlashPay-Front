@@ -96,15 +96,15 @@ function showUnauthorizedLottie() {
 }
 
 function redirectByRole(role) {
-    const routes = {
-        'super_admin': '../super_admin/super.html',
-        'admin':       '../office_manager/admin.html',
-        'cashier':     '../cashier/cashier.html',
-        'accountant':  '../accountant/accountant.html',
-        'agent':       '../agent/agent.html',
-        'customer':    '../customer/customer.html',
-    };
-    window.location.replace(routes[role] || '../login/login.html');
+  const routes = {
+    super_admin: "../super_admin/super.html",
+    admin: "../office_manager/admin.html",
+    cashier: "../cashier/cashier.html",
+    accountant: "../accountant/accountant.html",
+    agent: "../agent/agent.html",
+    customer: "../customer/customer.html",
+  };
+  window.location.replace(routes[role] || "../index.html");
 }
 /* =========================
    Helpers
