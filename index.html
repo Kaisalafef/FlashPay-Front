@@ -47,11 +47,20 @@
                 <div class="form-group">
                     <label for="password">كلمة المرور <span
                             class="required">*</span></label>
-                    <div class="input-wrapper">
+                    <div class="input-wrapper" style="position:relative;">
                         <i class="fa-solid fa-lock"></i>
                         <input type="password" id="password"
                             class="form-control" placeholder="أدخل كلمة المرور"
-                            required>
+                            required style="padding-left:42px;">
+                        <button type="button" id="togglePassword"
+                            onclick="togglePasswordVisibility()"
+                            style="position:absolute;left:50px;top:50%;transform:translateY(-50%);
+                            background:none;border:none;cursor:pointer;padding:0;
+                            color:#9ca3af;font-size:16px;line-height:1;transition:color .2s;"
+                            onmouseenter="this.style.color='#f97316'"
+                            onmouseleave="this.style.color='#9ca3af'">
+                            <i class="fa-solid fa-eye" id="eyeIcon"></i>
+                        </button>
                     </div>
                 </div>
                 <button type="submit" class="btn-login" id="loginBtn">

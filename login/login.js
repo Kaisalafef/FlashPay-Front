@@ -162,3 +162,16 @@ function showAlert(message, type = "error") {
     }, 500);
   }, 5000);
 }
+
+// إظهار/إخفاء كلمة المرور
+function togglePasswordVisibility() {
+  const input = document.getElementById("password");
+  const icon  = document.getElementById("eyeIcon");
+  if (input.type === "password") {
+    input.type = "text";
+    icon.className = "fa-solid fa-eye-slash";
+  } else {
+    input.type = "password";
+    icon.className = "fa-solid fa-eye";
+  }
+}
