@@ -1216,43 +1216,127 @@ function filterBankTransfers() {
     .map((t, index) => {
       const s = statusMap[t.status] || {
         text: t.status,
-        color: "gray",
-        bg: "#eee",
+        color: "#6b7280",
+        bg: "#f3f4f6",
       };
-      const date = new Date(t.created_at).toLocaleDateString("ar-SY");
-      const dest =
-        [t.destination_country, t.destination_city]
-          .filter(Boolean)
-          .join(" - ") || "—";
+
+      // تنسيق التاريخ والوقت
+      const d = new Date(t.created_at);
+      const pad = n => String(n).padStart(2,"0");
+      const dateStr = `${d.getFullYear()}/${pad(d.getMonth()+1)}/${pad(d.getDate())}`;
+      const timeStr = `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+
+      const dest = [t.destination_country, t.destination_city].filter(Boolean).join(" · ") || "—";
+
+      const statusIcon = {
+        pending: "fa-clock",
+        admin_approved: "fa-circle-check",
+        completed: "fa-flag-checkered",
+        rejected: "fa-circle-xmark",
+      }[t.status] || "fa-circle";
 
       let actions = "";
       if (t.status === "pending") {
         actions = `
-                <button onclick="openBtApproveModal(${t.id}, '${t.recipient_name}')" style="background:#dcfce7;color:#15803d;border:none;padding:5px 10px;border-radius:5px;cursor:pointer;font-weight:bold;margin-bottom:4px;">
-                    <i class="fa-solid fa-check"></i> موافقة
-                </button>
-                <button onclick="rejectBankTransfer(${t.id})" style="background:#fee2e2;color:#b91c1c;border:none;padding:5px 10px;border-radius:5px;cursor:pointer;font-weight:bold;">
-                    <i class="fa-solid fa-xmark"></i> رفض
-                </button>
-            `;
+          <div style="display:flex;flex-direction:column;gap:6px;">
+            <button onclick="openBtApproveModal(${t.id}, '${(t.recipient_name||'').replace(/'/g,"\'")}') "
+                    style="display:flex;align-items:center;justify-content:center;gap:6px;
+                           padding:7px 14px;background:linear-gradient(135deg,#15803d,#16a34a);
+                           color:#fff;border:none;border-radius:8px;cursor:pointer;
+                           font-family:inherit;font-size:12px;font-weight:700;
+                           transition:opacity .15s;"
+                    onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
+              <i class="fa-solid fa-circle-check"></i> موافقة
+            </button>
+            <button onclick="rejectBankTransfer(${t.id})"
+                    style="display:flex;align-items:center;justify-content:center;gap:6px;
+                           padding:7px 14px;background:linear-gradient(135deg,#b91c1c,#dc2626);
+                           color:#fff;border:none;border-radius:8px;cursor:pointer;
+                           font-family:inherit;font-size:12px;font-weight:700;
+                           transition:opacity .15s;"
+                    onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
+              <i class="fa-solid fa-xmark"></i> رفض
+            </button>
+          </div>`;
       } else {
-        actions = `<span style="color:var(--gray);font-size:12px;">مُعالج</span>`;
+        actions = `
+          <button onclick="openBtDetailModal && openBtDetailModal(${t.id})"
+                  style="display:flex;align-items:center;gap:6px;padding:7px 14px;
+                         background:#f1f5f9;color:#475569;border:1px solid #e2e8f0;
+                         border-radius:8px;cursor:pointer;font-family:inherit;
+                         font-size:12px;font-weight:700;transition:background .15s;"
+                  onmouseover="this.style.background='#e2e8f0'" onmouseout="this.style.background='#f1f5f9'">
+            <i class="fa-solid fa-eye"></i> عرض
+          </button>`;
       }
 
       return `
-        <tr>
-            <td>${index + 1}</td>
-            <td><span style="font-weight:bold;">${t.agent?.name || "—"}</span></td>
-            <td><span style="font-weight:bold;color:var(--primary);">${t.recipient_name || "—"}</span></td>
-            <td>${t.full_name}</td>
-            <td>${t.bank_name}</td>
-            <td style="direction:ltr;text-align:right;font-family:monospace;">${t.account_number}</td>
-            <td style="direction:ltr;text-align:right;">${t.phone}</td>
-           <td style="font-size:12px;color:var(--gray);">${dest}</td>
-            <td style="font-weight:900;color:var(--success);">$${parseFloat(t.amount).toLocaleString()}</td>
-            <td><span style="background:${s.bg};color:${s.color};padding:4px 10px;border-radius:20px;font-size:11px;font-weight:bold;white-space:nowrap;">${s.text}</span></td>
-            <td style="font-size:11px;color:var(--gray);">${date}</td>
-            <td style="display:flex;flex-direction:column;gap:4px;">${actions}</td>
+        <tr style="transition:background .15s;">
+          <td style="color:#94a3b8;font-size:12px;font-weight:700;text-align:center;">${index + 1}</td>
+
+          <td>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div style="width:32px;height:32px;background:linear-gradient(135deg,#0f172a,#334155);
+                          border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                <i class="fa-solid fa-user" style="color:#94a3b8;font-size:11px;"></i>
+              </div>
+              <span style="font-weight:700;font-size:13px;">${t.agent?.name || "—"}</span>
+            </div>
+          </td>
+
+          <td>
+            <div style="font-weight:800;font-size:13px;color:#1d4ed8;">${t.recipient_name || "—"}</div>
+            <div style="font-size:11px;color:#94a3b8;margin-top:2px;">${t.full_name || ""}</div>
+          </td>
+
+          <td style="font-size:12px;color:#374151;">${t.full_name || "—"}</td>
+
+          <td>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <i class="fa-solid fa-building-columns" style="color:#b45309;font-size:12px;"></i>
+              <span style="font-weight:700;font-size:13px;">${t.bank_name || "—"}</span>
+            </div>
+          </td>
+
+          <td>
+            <code style="background:#f1f5f9;padding:3px 8px;border-radius:6px;
+                         font-size:12px;direction:ltr;display:inline-block;
+                         letter-spacing:.5px;color:#334155;">${t.account_number || "—"}</code>
+          </td>
+
+          <td style="direction:ltr;text-align:right;font-size:12px;color:#475569;font-family:monospace;">
+            ${t.phone || "—"}
+          </td>
+
+          <td>
+            <span style="display:inline-flex;align-items:center;gap:4px;background:#f1f5f9;
+                         padding:3px 10px;border-radius:20px;font-size:11px;color:#475569;font-weight:600;">
+              <i class="fa-solid fa-location-dot" style="color:#b45309;font-size:10px;"></i>
+              ${dest}
+            </span>
+          </td>
+
+          <td>
+            <div style="font-weight:900;font-size:15px;color:#15803d;direction:ltr;text-align:right;">
+              $${parseFloat(t.amount || 0).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2})}
+            </div>
+          </td>
+
+          <td>
+            <span style="display:inline-flex;align-items:center;gap:5px;background:${s.bg};
+                         color:${s.color};padding:5px 12px;border-radius:20px;
+                         font-size:11px;font-weight:700;white-space:nowrap;border:1px solid ${s.color}22;">
+              <i class="fa-solid ${statusIcon}" style="font-size:10px;"></i>
+              ${s.text}
+            </span>
+          </td>
+
+          <td>
+            <div style="font-size:12px;font-weight:600;color:#374151;">${dateStr}</div>
+            <div style="font-size:11px;color:#94a3b8;margin-top:1px;direction:ltr;text-align:right;">${timeStr}</div>
+          </td>
+
+          <td>${actions}</td>
         </tr>`;
     })
     .join("");

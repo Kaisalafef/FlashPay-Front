@@ -937,60 +937,106 @@
 
                 <!-- ===== قسم الحوالات البنكية ===== -->
 
-                <div id="bank-transfers-section" class="card hidden">
+                <!-- ╔══════════════════════════════════════════╗
+                     ║      قسم الحوالات البنكية – Admin         ║
+                     ╚══════════════════════════════════════════╝ -->
+                <div id="bank-transfers-section" class="card hidden" style="padding:0;overflow:hidden;">
 
-                    <div class="section-hero pending-hero"
-                        style="background:linear-gradient(135deg,#78350f 0%,#b45309 100%);">
-                        <div class="section-hero-text">
-                            <h2><i class="fa-solid fa-landmark"></i> الحوالات
-                                البنكية</h2>
-                            <p>مراجعة وموافقة طلبات التحويل البنكي الواردة من
-                                المندوبين</p>
-                        </div>
-                        <div class="section-hero-stats">
-                            <div class="hero-stat"><span
-                                    id="bt-stat-pending">—</span><small>بانتظار
-                                    الموافقة</small></div>
-                            <div class="hero-stat"><span
-                                    id="bt-stat-approved">—</span><small>موافق
-                                    عليه</small></div>
-                            <div class="hero-stat"><span
-                                    id="bt-stat-completed">—</span><small>مكتمل</small></div>
+                    <!-- Hero Banner -->
+                    <div style="background:linear-gradient(135deg,#0f172a 0%,#78350f 60%,#b45309 100%);
+                                padding:28px 32px;position:relative;overflow:hidden;">
+                        <!-- خلفية زخرفية -->
+                        <div style="position:absolute;inset:0;opacity:.07;background:
+                            radial-gradient(circle at 20% 50%,#fff 0%,transparent 55%),
+                            radial-gradient(circle at 80% 20%,#fbbf24 0%,transparent 40%);"></div>
+
+                        <div style="position:relative;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:20px;">
+                            <!-- العنوان -->
+                            <div>
+                                <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px;">
+                                    <div style="width:44px;height:44px;background:rgba(255,255,255,.15);
+                                                border-radius:12px;display:flex;align-items:center;
+                                                justify-content:center;backdrop-filter:blur(4px);">
+                                        <i class="fa-solid fa-landmark" style="color:#fbbf24;font-size:20px;"></i>
+                                    </div>
+                                    <h2 style="margin:0;color:#fff;font-size:20px;font-weight:800;">الحوالات البنكية</h2>
+                                </div>
+                                <p style="margin:0;color:rgba(255,255,255,.7);font-size:13px;padding-right:56px;">
+                                    مراجعة وموافقة طلبات التحويل البنكي الواردة من المندوبين
+                                </p>
+                            </div>
+
+                            <!-- إحصائيات Hero -->
+                            <div style="display:flex;gap:12px;flex-wrap:wrap;">
+                                <div style="background:rgba(255,255,255,.12);backdrop-filter:blur(8px);
+                                            border:1px solid rgba(255,255,255,.2);border-radius:14px;
+                                            padding:12px 20px;text-align:center;min-width:90px;">
+                                    <div id="bt-stat-pending" style="font-size:24px;font-weight:900;color:#fde68a;line-height:1;">—</div>
+                                    <div style="font-size:11px;color:rgba(255,255,255,.75);margin-top:4px;font-weight:600;">بانتظار الموافقة</div>
+                                </div>
+                                <div style="background:rgba(255,255,255,.12);backdrop-filter:blur(8px);
+                                            border:1px solid rgba(255,255,255,.2);border-radius:14px;
+                                            padding:12px 20px;text-align:center;min-width:90px;">
+                                    <div id="bt-stat-approved" style="font-size:24px;font-weight:900;color:#93c5fd;line-height:1;">—</div>
+                                    <div style="font-size:11px;color:rgba(255,255,255,.75);margin-top:4px;font-weight:600;">موافق عليه</div>
+                                </div>
+                                <div style="background:rgba(255,255,255,.12);backdrop-filter:blur(8px);
+                                            border:1px solid rgba(255,255,255,.2);border-radius:14px;
+                                            padding:12px 20px;text-align:center;min-width:90px;">
+                                    <div id="bt-stat-completed" style="font-size:24px;font-weight:900;color:#86efac;line-height:1;">—</div>
+                                    <div style="font-size:11px;color:rgba(255,255,255,.75);margin-top:4px;font-weight:600;">مكتمل</div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- فلاتر -->
-                    <div class="pt-filters-bar">
-                        <div class="pt-search-wrap">
-                            <i
-                                class="fa-solid fa-magnifying-glass pt-search-icon"></i>
+                    <!-- شريط الفلاتر -->
+                    <div style="display:flex;flex-wrap:wrap;gap:12px;padding:16px 24px;
+                                background:#f8fafc;border-bottom:1px solid var(--border);align-items:center;">
+                        <!-- بحث -->
+                        <div style="position:relative;flex:1;min-width:220px;">
+                            <i class="fa-solid fa-magnifying-glass"
+                               style="position:absolute;right:14px;top:50%;transform:translateY(-50%);
+                                      color:#94a3b8;font-size:13px;pointer-events:none;"></i>
                             <input id="bt-search" type="text"
-                                placeholder="بحث باسم المستلم أو البنك أو الوكيل..."
-                                oninput="filterBankTransfers()"
-                                onfocus="this.style.borderColor='#b45309'"
-                                onblur="this.style.borderColor='var(--border)'">
+                                   placeholder="بحث باسم المستلم أو البنك أو الوكيل..."
+                                   oninput="filterBankTransfers()"
+                                   style="width:100%;padding:10px 38px 10px 14px;border:1.5px solid var(--border);
+                                          border-radius:10px;font-family:inherit;font-size:13px;
+                                          background:#fff;outline:none;box-sizing:border-box;
+                                          transition:border-color .2s;"
+                                   onfocus="this.style.borderColor='#b45309'"
+                                   onblur="this.style.borderColor='var(--border)'">
                         </div>
-                        <select id="bt-status-filter"
-                            onchange="filterBankTransfers()">
+                        <!-- فلتر الحالة -->
+                        <select id="bt-status-filter" onchange="filterBankTransfers()"
+                                style="padding:10px 14px;border:1.5px solid var(--border);border-radius:10px;
+                                       font-family:inherit;font-size:13px;background:#fff;
+                                       outline:none;cursor:pointer;min-width:160px;">
                             <option value>كل الحالات</option>
-                            <option value="pending">بانتظار الموافقة</option>
-                            <option value="admin_approved">موافق عليه</option>
-                            <option value="completed">مكتمل</option>
-                            <option value="rejected">مرفوض</option>
+                            <option value="pending">⏳ بانتظار الموافقة</option>
+                            <option value="admin_approved">✅ موافق عليه</option>
+                            <option value="completed">🏁 مكتمل</option>
+                            <option value="rejected">❌ مرفوض</option>
                         </select>
-                        <button class="pt-refresh-btn"
-                            onclick="loadBankTransfers()">
-                            <i class="fa-solid fa-arrows-rotate"
-                                id="bt-refresh-icon"></i> تحديث
+                        <!-- زر تحديث -->
+                        <button onclick="loadBankTransfers()"
+                                style="display:flex;align-items:center;gap:8px;padding:10px 18px;
+                                       background:linear-gradient(135deg,#b45309,#d97706);color:#fff;
+                                       border:none;border-radius:10px;font-family:inherit;font-size:13px;
+                                       font-weight:700;cursor:pointer;white-space:nowrap;
+                                       transition:opacity .2s;"
+                                onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
+                            <i class="fa-solid fa-arrows-rotate" id="bt-refresh-icon"></i> تحديث
                         </button>
                     </div>
 
                     <!-- الجدول -->
-                    <div class="pt-table-wrap">
-                        <table class="data-table">
+                    <div style="overflow-x:auto;">
+                        <table class="data-table" style="min-width:900px;">
                             <thead>
                                 <tr>
-                                    <th>#</th>
+                                    <th style="width:42px;">#</th>
                                     <th>الوكيل</th>
                                     <th>المستلم</th>
                                     <th>صاحب الحساب</th>
@@ -998,76 +1044,107 @@
                                     <th>رقم الحساب</th>
                                     <th>هاتف</th>
                                     <th>الوجهة</th>
-                                    <th>المبلغ (USD)</th>
+                                    <th>المبلغ</th>
                                     <th>الحالة</th>
                                     <th>التاريخ</th>
-                                    <th>الإجراء</th>
+                                    <th style="width:120px;">الإجراء</th>
                                 </tr>
                             </thead>
                             <tbody id="bt-tbody">
-                                <tr><td colspan="12" class="pt-loading-cell">
-                                        <i
-                                            class="fa-solid fa-spinner fa-spin"></i>
+                                <tr>
+                                    <td colspan="12" style="text-align:center;padding:40px;color:#94a3b8;">
+                                        <i class="fa-solid fa-spinner fa-spin" style="font-size:20px;display:block;margin-bottom:10px;"></i>
                                         جاري التحميل...
-                                    </td></tr>
+                                    </td>
+                                </tr>
                             </tbody>
                         </table>
                     </div>
 
-                    <div id="bt-empty" class="pt-empty-state"
-                        style="display:none;">
-                        <i class="fa-solid fa-landmark"></i>
-                        <p>لا توجد حوالات بنكية</p>
+                    <!-- حالة فارغة -->
+                    <div id="bt-empty" style="display:none;padding:60px 20px;text-align:center;">
+                        <div style="width:72px;height:72px;background:#fef3c7;border-radius:50%;
+                                    display:flex;align-items:center;justify-content:center;
+                                    margin:0 auto 16px auto;">
+                            <i class="fa-solid fa-landmark" style="font-size:28px;color:#b45309;"></i>
+                        </div>
+                        <p style="font-size:15px;font-weight:700;color:#374151;margin:0 0 6px 0;">لا توجد حوالات بنكية</p>
+                        <p style="font-size:13px;color:#94a3b8;margin:0;">لا توجد نتائج تطابق الفلتر المحدد</p>
                     </div>
                 </div>
 
                 <!-- ===== مودال تأكيد موافقة الحوالة البنكية ===== -->
                 <div id="bt-approve-modal"
-                    style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55); z-index:9999; align-items:center; justify-content:center;">
-                    <div
-                        style="background:var(--white); border-radius:18px; padding:32px; max-width:460px; width:92%; box-shadow:0 24px 60px rgba(0,0,0,0.25); text-align:center; position:relative;">
-                        <div
-                            style="width:64px;height:64px;background:#fef3c7;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px auto;">
-                            <i class="fa-solid fa-landmark"
-                                style="font-size:26px;color:#b45309;"></i>
-                        </div>
-                        <div style="margin-bottom:18px; text-align:right;">
-                            <label
-                                style="font-size:13px;font-weight:700;color:var(--dark);">
-                                اختر الكاشير:
-                            </label>
+                    style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.6);
+                           backdrop-filter:blur(4px);z-index:9999;align-items:center;justify-content:center;">
+                    <div style="background:#fff;border-radius:20px;max-width:460px;width:92%;
+                                box-shadow:0 32px 80px rgba(0,0,0,0.3);overflow:hidden;position:relative;">
 
-                            <select id="bt-cashier-select"
-                                style="width:100%;margin-top:8px;padding:10px;border-radius:10px;
-               border:1.5px solid var(--border);font-family:inherit;">
-                                <option value>جاري التحميل...</option>
-                            </select>
-                        </div>
-                        <h3
-                            style="margin:0 0 8px 0;font-size:18px;font-weight:800;color:var(--dark);">تأكيد
-                            الموافقة على الحوالة البنكية</h3>
-                        <p id="bt-approve-desc"
-                            style="margin:0 0 20px 0;font-size:14px;color:var(--gray);line-height:1.7;"></p>
-                        <div
-                            style="background:#fffbeb;border:1.5px solid #fbbf24;border-radius:10px;padding:12px 16px;margin-bottom:20px;text-align:right;">
-                            <i class="fa-solid fa-circle-info"
-                                style="color:#b45309;"></i>
-                            <span style="font-size:13px;color:#78350f;"> بعد
-                                الموافقة سيظهر الطلب للكاشير لإتمام التسليم
-                                وطباعة الإيصال</span>
-                        </div>
-                        <div
-                            style="display:flex;gap:12px;justify-content:center;">
+                        <!-- هيدر المودال -->
+                        <div style="background:linear-gradient(135deg,#78350f,#b45309);padding:20px 24px;
+                                    display:flex;align-items:center;justify-content:space-between;">
+                            <div style="display:flex;align-items:center;gap:10px;color:#fff;">
+                                <i class="fa-solid fa-landmark" style="font-size:18px;color:#fbbf24;"></i>
+                                <span style="font-weight:800;font-size:15px;">تأكيد الموافقة</span>
+                            </div>
                             <button onclick="closeBtApproveModal()"
-                                style="padding:11px 24px;border-radius:10px;border:1.5px solid var(--border);background:var(--white);color:var(--dark);font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;">
-                                إلغاء
+                                    style="background:rgba(255,255,255,.2);border:none;color:#fff;
+                                           width:30px;height:30px;border-radius:50%;cursor:pointer;
+                                           font-size:14px;display:flex;align-items:center;justify-content:center;">
+                                <i class="fa-solid fa-xmark"></i>
                             </button>
-                            <button id="bt-approve-confirm-btn"
-                                onclick="confirmBtApprove()"
-                                style="padding:11px 28px;border-radius:10px;border:none;background:linear-gradient(135deg,#b45309,#d97706);color:#fff;font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:8px;">
-                                <i class="fa-solid fa-circle-check"></i> موافقة
-                                وإرسال للكاشير
-                            </button>
+                        </div>
+
+                        <!-- محتوى المودال -->
+                        <div style="padding:24px;">
+                            <!-- وصف -->
+                            <p id="bt-approve-desc"
+                               style="margin:0 0 20px 0;font-size:14px;color:#374151;
+                                      line-height:1.8;text-align:center;"></p>
+
+                            <!-- اختيار الكاشير -->
+                            <div style="margin-bottom:18px;">
+                                <label style="display:block;font-size:13px;font-weight:700;
+                                              color:#374151;margin-bottom:8px;">
+                                    <i class="fa-solid fa-user-tie" style="color:#b45309;margin-left:6px;"></i>
+                                    اختر الكاشير المسؤول عن التسليم:
+                                </label>
+                                <select id="bt-cashier-select"
+                                        style="width:100%;padding:11px 14px;border:1.5px solid #e2e8f0;
+                                               border-radius:10px;font-family:inherit;font-size:13px;
+                                               background:#f8fafc;outline:none;cursor:pointer;">
+                                    <option value>جاري التحميل...</option>
+                                </select>
+                            </div>
+
+                            <!-- تنبيه -->
+                            <div style="background:#fffbeb;border:1.5px solid #fbbf24;border-radius:12px;
+                                        padding:12px 16px;margin-bottom:22px;
+                                        display:flex;align-items:flex-start;gap:10px;text-align:right;">
+                                <i class="fa-solid fa-circle-info" style="color:#b45309;margin-top:2px;flex-shrink:0;"></i>
+                                <span style="font-size:13px;color:#78350f;line-height:1.6;">
+                                    بعد الموافقة سيظهر الطلب للكاشير المختار لإتمام التسليم وطباعة الإيصال
+                                </span>
+                            </div>
+
+                            <!-- أزرار -->
+                            <div style="display:flex;gap:10px;">
+                                <button onclick="closeBtApproveModal()"
+                                        style="flex:1;padding:12px;border-radius:10px;
+                                               border:1.5px solid #e2e8f0;background:#f8fafc;
+                                               color:#374151;font-family:inherit;font-size:14px;
+                                               font-weight:700;cursor:pointer;">
+                                    إلغاء
+                                </button>
+                                <button id="bt-approve-confirm-btn" onclick="confirmBtApprove()"
+                                        style="flex:2;padding:12px;border-radius:10px;border:none;
+                                               background:linear-gradient(135deg,#15803d,#16a34a);
+                                               color:#fff;font-family:inherit;font-size:14px;
+                                               font-weight:700;cursor:pointer;
+                                               display:flex;align-items:center;justify-content:center;gap:8px;">
+                                    <i class="fa-solid fa-circle-check"></i> موافقة وإرسال للكاشير
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
