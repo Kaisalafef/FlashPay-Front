@@ -3400,7 +3400,7 @@ async function loadDigitalLogs() {
     const json = await res.json();
 
     if (!res.ok) {
-      tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;padding:30px;color:#dc2626;">${json.message || "خطأ في جلب البيانات"}</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="11" style="text-align:center;padding:30px;color:#dc2626;">${json.message || "خطأ في جلب البيانات"}</td></tr>`;
       return;
     }
 
@@ -3424,7 +3424,7 @@ async function loadDigitalLogs() {
     document.getElementById("dl-stat-total").textContent = "$" + fmt(totals.total_profit);
 
     if (!logs.length) {
-      tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;padding:40px;color:#94a3b8;">
+      tbody.innerHTML = `<tr><td colspan="11" style="text-align:center;padding:40px;color:#94a3b8;">
         <i class="fa-solid fa-bitcoin-sign" style="font-size:32px;display:block;margin-bottom:10px;opacity:.3;"></i>
         لا توجد عمليات تطابق الفلتر المحدد</td></tr>`;
       return;
@@ -3463,6 +3463,14 @@ async function loadDigitalLogs() {
         <td>${fmt(log.net_amount)}</td>
         <td style="font-weight:700;color:${profitColor};">${fmt(log.profit)}</td>
         <td style="font-size:12px;color:#64748b;max-width:160px;word-break:break-word;">${log.note || "—"}</td>
+        <td style="font-size:12px;font-weight:600;color:#374151;">
+          ${log.performer?.name
+            ? `<span style="display:inline-flex;align-items:center;gap:4px;">
+                 <i class="fa-solid fa-user-circle" style="color:#6366f1;font-size:11px;"></i>
+                 ${log.performer.name}
+               </span>`
+            : "—"}
+        </td>
         <td style="font-size:11px;color:#94a3b8;white-space:nowrap;direction:ltr;text-align:right;">${fmtDate(log.created_at)}</td>
       </tr>`;
     }).join("");
@@ -3482,7 +3490,7 @@ function exportDigitalLogs() {
   const fmtDate = (str) => str ? new Date(str).toLocaleString("ar-SY") : "";
 
   const rows = [
-    ["#", "المكتب", "نوع العملة", "العملية", "المبلغ", "نسبة العمولة%", "المبلغ الصافي", "الربح", "الملاحظة", "التاريخ"],
+    ["#", "المكتب", "نوع العملة", "العملية", "المبلغ", "نسبة العمولة%", "المبلغ الصافي", "الربح", "الملاحظة", "المنفذ", "التاريخ"],
     ...logs.map(l => [
       l.id,
       l.office_id,
@@ -3493,6 +3501,7 @@ function exportDigitalLogs() {
       l.net_amount,
       l.profit,
       l.note || "",
+      l.performer?.name || "",
       fmtDate(l.created_at),
     ])
   ];
