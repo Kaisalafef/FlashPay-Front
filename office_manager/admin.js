@@ -270,12 +270,6 @@ function hideAllCards() {
   document.getElementById("createtransfer").style.display = "none";
   const intlCard = document.getElementById("createtransfer-intl");
   if (intlCard) intlCard.style.display = "none";
-  // إخفاء قسم الحوالات البنكية عند الانتقال لأي قسم آخر
-  const bankSection = document.getElementById("bank-transfers-section");
-  if (bankSection) {
-    bankSection.style.display = "none";
-    bankSection.classList.add("hidden");
-  }
 }
 
 async function showOfficeSection() {
