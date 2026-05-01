@@ -1023,6 +1023,7 @@ function filterBankTransfers() {
             <td style="direction:ltr;text-align:right;">${t.phone}</td>
             <td style="font-size:12px;color:var(--gray);">${dest}</td>
             <td style="font-weight:900;color:var(--success);">$${parseFloat(t.amount).toLocaleString()}</td>
+            <td style="font-size:12px;">${t.currency ? `<span style="background:#ede9fe;color:#6d28d9;padding:3px 8px;border-radius:12px;font-weight:700;font-size:11px;">${t.currency.name} (${t.currency.code})</span>` : '<span style="color:#94a3b8;font-size:11px;">—</span>'}</td>
             <td><span style="background:${s.bg};color:${s.color};padding:4px 10px;border-radius:20px;font-size:11px;font-weight:bold;white-space:nowrap;">${s.text}</span></td>
             <td style="font-size:11px;color:var(--gray);">${date}</td>
             <td style="display:flex;flex-direction:column;gap:4px;">${actions}</td>

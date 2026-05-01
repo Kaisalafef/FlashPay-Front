@@ -897,6 +897,7 @@ async function loadCashierBankTransfers() {
                 <td>${t.full_name}</td>
                 <td>${t.bank_name}</td>
                 <td style="font-weight:900;color:var(--success);">$${parseFloat(t.amount).toLocaleString()}</td>
+                <td>${t.currency ? `<span style="background:#ede9fe;color:#6d28d9;padding:3px 8px;border-radius:12px;font-weight:700;font-size:11px;">${t.currency.name} (${t.currency.code})</span>` : '<span style="color:#94a3b8;font-size:11px;">—</span>'}</td>
                 <td style="font-size:12px;color:var(--gray);">${date}</td>
                 <td>
                     <button class="btn-confirm" onclick="completeBankTransfer(${t.id}, '${printObj}')" style="padding:8px 16px;">
@@ -907,7 +908,7 @@ async function loadCashierBankTransfers() {
       })
       .join("");
   } catch (e) {
-    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:red;">خطأ في الاتصال بالخادم</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:red;">خطأ في الاتصال بالخادم</td></tr>`;
   }
 }
 
