@@ -1771,7 +1771,7 @@ async function loadPendingTransfers() {
     tbody.innerHTML = "";
 
     if (!json.data || !json.data.length) {
-      tbody.innerHTML = `<tr><td colspan="10"><div class="empty-state"><i class="fa-solid fa-inbox"></i><p>لا توجد حوالات معلقة</p></div></td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="12"><div class="empty-state"><i class="fa-solid fa-inbox"></i><p>لا توجد حوالات معلقة</p></div></td></tr>`;
       return;
     }
 
@@ -1796,6 +1796,17 @@ async function loadPendingTransfers() {
       const destText = transfer.destination_office_id
         ? `<i class="fa-solid fa-building" style="color:var(--primary);font-size:11px;"></i> ${transfer.destination_office?.name ?? `مكتب #${transfer.destination_office_id}`}`
         : `<i class="fa-solid fa-globe" style="color:#7c3aed;font-size:11px;"></i> ${transfer.destination_city ?? "—"}`;
+
+      const countryName = transfer.destination_country?.name || null;
+      const cityName    = transfer.destination_city || null;
+
+      const countryCell = countryName
+        ? `<span style="display:inline-flex;align-items:center;gap:4px;background:#dbeafe;color:#1d4ed8;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap;"><i class="fa-solid fa-earth-americas"></i> ${countryName}</span>`
+        : `<span style="color:var(--gray);font-size:12px;">—</span>`;
+
+      const cityCell = cityName
+        ? `<span style="display:inline-flex;align-items:center;gap:4px;background:#e0f2fe;color:#0369a1;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap;"><i class="fa-solid fa-location-dot"></i> ${cityName}</span>`
+        : `<span style="color:var(--gray);font-size:12px;">—</span>`;
 
       const notes = transfer.notes
         ? `<span style="font-size:11px;color:var(--gray);max-width:130px;display:inline-block;word-break:break-word;">${transfer.notes}</span>`
@@ -1823,6 +1834,8 @@ async function loadPendingTransfers() {
             ${fee > 0 ? `<div style="font-size:11px;color:var(--success);">رسوم: $${fee.toFixed(2)}</div>` : ""}
           </td>
           <td style="font-size:12px;">${destText}</td>
+          <td>${countryCell}</td>
+          <td>${cityCell}</td>
           <td>${notes}</td>
           <td style="font-size:11px;color:var(--gray);white-space:nowrap;">${date}</td>
           <td>
