@@ -1452,6 +1452,12 @@ function filterBankTransfers() {
           </td>
 
           <td>
+            ${t.currency
+              ? `<span style="background:#ede9fe;color:#6d28d9;padding:3px 9px;border-radius:12px;font-weight:700;font-size:11px;white-space:nowrap;">${t.currency.name} (${t.currency.code})</span>`
+              : `<span style="color:#94a3b8;font-size:11px;">—</span>`}
+          </td>
+
+          <td>
             <span style="display:inline-flex;align-items:center;gap:5px;background:${s.bg};
                          color:${s.color};padding:5px 12px;border-radius:20px;
                          font-size:11px;font-weight:700;white-space:nowrap;border:1px solid ${s.color}22;">
