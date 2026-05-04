@@ -2641,20 +2641,20 @@ function renderPendingTable(transfers) {
       const destOffice = t.destination_office?.name || "—";
       const amount = parseFloat(t.amount).toLocaleString("ar-SY");
 
-      // الحوالة دولية إذا كانت destination_country_id موجودة وبدون مكتب محلي
-      const isIntl = !!(t.destination_country_id && t.destination_office_id);
+      // إظهار الدولة والمدينة متى كانتا موجودتين (حوالة دولية أو مع مكتب)
+      const hasCountry = !!(t.destination_country_id || t.destination_country?.name);
       const country = t.destination_country?.name || "—";
       const city    = t.destination_city || "—";
 
-      const rowStyle = isIntl
+      const rowStyle = hasCountry
         ? 'style="background:linear-gradient(90deg,#eff6ff 0%,#fff 100%);"'
         : "";
 
-      const countryCell = isIntl
+      const countryCell = hasCountry
         ? `<td><span style="display:inline-flex;align-items:center;gap:4px;background:#dbeafe;color:#1d4ed8;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap;"><i class="fa-solid fa-earth-americas"></i> ${country}</span></td>`
         : `<td><span style="color:var(--gray);font-size:12px;">—</span></td>`;
 
-      const cityCell = isIntl
+      const cityCell = (hasCountry && t.destination_city)
         ? `<td><span style="display:inline-flex;align-items:center;gap:4px;background:#e0f2fe;color:#0369a1;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap;"><i class="fa-solid fa-location-dot"></i> ${city}</span></td>`
         : `<td><span style="color:var(--gray);font-size:12px;">—</span></td>`;
 

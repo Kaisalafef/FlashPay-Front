@@ -798,6 +798,135 @@ async function showSafesSection() {
   }
 }
 
+/** تبديل التبويب النشط في الخزنة الإلكترونية */
+function eSwitchTab(tab, btn) {
+  // إخفاء كل البانلات وإزالة الـ active من كل الأزرار
+  ["syp", "usd", "usdt"].forEach((t) => {
+    const panel = document.getElementById(`epanel-${t}`);
+    const tabBtn = document.getElementById(`etab-${t}`);
+    if (panel) panel.style.display = "none";
+    if (tabBtn) tabBtn.classList.remove("esafe-tab-active");
+  });
+  // إظهار البانل المطلوب وتفعيل الزر
+  const active = document.getElementById(`epanel-${tab}`);
+  if (active) active.style.display = "block";
+  if (btn) btn.classList.add("esafe-tab-active");
+}
+
+/** تحديث أرصدة الخزنة الإلكترونية من الـ API */
+async function refreshElectronicSafe() {
+  const icon = document.getElementById("esafe-refresh-icon");
+  if (icon) icon.classList.add("fa-spin");
+  try {
+    const res = await fetch(`${API_URL}/electronic-safe/balances`, {
+      headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
+    });
+    const json = await res.json();
+    if (!res.ok) {
+      showAdminToast("تعذر التحديث", "danger");
+      return;
+    }
+    const d = json.data || {};
+
+    const sypEl  = document.getElementById("esafe-syp-display");
+    const usdEl  = document.getElementById("esafe-usd-display");
+    const usdtEl = document.getElementById("esafe-usdt-display");
+
+    if (sypEl)
+      sypEl.innerHTML =
+        parseFloat(d.syp_sham_cash || 0).toLocaleString("en-US", { maximumFractionDigits: 0 }) +
+        ' <span class="esafe-unit">ل.س</span>';
+    if (usdEl)
+      usdEl.innerHTML =
+        parseFloat(d.usd_sham_cash || 0).toLocaleString("en-US", { minimumFractionDigits: 2 }) +
+        ' <span class="esafe-unit">$</span>';
+    if (usdtEl)
+      usdtEl.innerHTML =
+        parseFloat(d.usdt || 0).toLocaleString("en-US", { minimumFractionDigits: 2 }) +
+        ' <span class="esafe-unit">USDT</span>';
+
+    showAdminToast("✅ تم تحديث الأرصدة");
+  } catch (e) {
+    showAdminToast("خطأ في الاتصال", "danger");
+  } finally {
+    if (icon) icon.classList.remove("fa-spin");
+  }
+}
+
+/**
+ * إيداع أو سحب في الخزنة الإلكترونية
+ * @param {string} actionType    - 'deposit' | 'withdraw'
+ * @param {string} currencyType  - 'syp_sham_cash' | 'usd_sham_cash' | 'usdt'
+ * @param {string} amountInputId - id حقل المبلغ
+ * @param {string} notesInputId  - id حقل الملاحظة
+ */
+async function eSafeAdjust(actionType, currencyType, amountInputId, notesInputId) {
+  const amountInput = document.getElementById(amountInputId);
+  const notesInput  = document.getElementById(notesInputId);
+  const amount = parseFloat(amountInput?.value);
+
+  if (!amount || amount <= 0) {
+    showAdminToast("يرجى إدخال مبلغ صحيح", "danger");
+    return;
+  }
+
+  const notes = notesInput?.value.trim() || "";
+
+  // تعطيل الزر أثناء الإرسال
+  const panel = amountInput.closest(".esafe-panel");
+  const btn   = panel?.querySelector(actionType === "deposit" ? ".osafe-btn-dep" : ".osafe-btn-wit");
+  const orig  = btn?.innerHTML;
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i>`;
+  }
+
+  try {
+    const endpoint = actionType === "deposit" ? "buy" : "sell";
+    const res = await fetch(`${API_URL}/electronic-safe/${endpoint}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+        Accept: "application/json",
+      },
+      body: JSON.stringify({
+        currency_type:   currencyType,
+        amount:          amount,
+        commission_rate: 0,
+        exchange_rate:   1,
+        note:
+          notes ||
+          `${actionType === "deposit" ? "إيداع" : "سحب"} يدوي — ${currencyType} (admin)`,
+      }),
+    });
+    const data = await res.json();
+
+    if (res.ok) {
+      amountInput.value = "";
+      if (notesInput) notesInput.value = "";
+      await refreshElectronicSafe();
+      const labels = {
+        syp_sham_cash: "ليرة شام كاش",
+        usd_sham_cash: "دولار شام كاش",
+        usdt:          "USDT",
+      };
+      showAdminToast(
+        `✅ ${actionType === "deposit" ? "تم الإيداع" : "تم السحب"} (${labels[currencyType]}) بنجاح`
+      );
+    } else {
+      showAdminToast(data.message || "حدث خطأ في العملية", "danger");
+    }
+  } catch (e) {
+    showAdminToast("تعذر الاتصال بالخادم", "danger");
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = orig;
+    }
+  }
+}
+
 async function editCostManual(officeId, currentCost) {
   const newCost = prompt(
     "أدخل قيمة التكلفة الجديدة (أدخل 0 للتصفير):",
@@ -1777,7 +1906,7 @@ async function loadPendingTransfers() {
     tbody.innerHTML = "";
 
     if (!json.data || !json.data.length) {
-      tbody.innerHTML = `<tr><td colspan="10"><div class="empty-state"><i class="fa-solid fa-inbox"></i><p>لا توجد حوالات معلقة</p></div></td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="12"><div class="empty-state"><i class="fa-solid fa-inbox"></i><p>لا توجد حوالات معلقة</p></div></td></tr>`;
       return;
     }
 
@@ -1802,6 +1931,17 @@ async function loadPendingTransfers() {
       const destText = transfer.destination_office_id
         ? `<i class="fa-solid fa-building" style="color:var(--primary);font-size:11px;"></i> ${transfer.destination_office?.name ?? `مكتب #${transfer.destination_office_id}`}`
         : `<i class="fa-solid fa-globe" style="color:#7c3aed;font-size:11px;"></i> ${transfer.destination_city ?? "—"}`;
+
+      const countryName = transfer.destination_country?.name || null;
+      const cityName    = transfer.destination_city || null;
+
+      const countryCell = countryName
+        ? `<span style="display:inline-flex;align-items:center;gap:4px;background:#dbeafe;color:#1d4ed8;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap;"><i class="fa-solid fa-earth-americas"></i> ${countryName}</span>`
+        : `<span style="color:var(--gray);font-size:12px;">—</span>`;
+
+      const cityCell = cityName
+        ? `<span style="display:inline-flex;align-items:center;gap:4px;background:#e0f2fe;color:#0369a1;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700;white-space:nowrap;"><i class="fa-solid fa-location-dot"></i> ${cityName}</span>`
+        : `<span style="color:var(--gray);font-size:12px;">—</span>`;
 
       const notes = transfer.notes
         ? `<span style="font-size:11px;color:var(--gray);max-width:130px;display:inline-block;word-break:break-word;">${transfer.notes}</span>`
@@ -1829,6 +1969,8 @@ async function loadPendingTransfers() {
             ${fee > 0 ? `<div style="font-size:11px;color:var(--success);">رسوم: $${fee.toFixed(2)}</div>` : ""}
           </td>
           <td style="font-size:12px;">${destText}</td>
+          <td>${countryCell}</td>
+          <td>${cityCell}</td>
           <td>${notes}</td>
           <td style="font-size:11px;color:var(--gray);white-space:nowrap;">${date}</td>
           <td>
