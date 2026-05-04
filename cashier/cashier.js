@@ -649,32 +649,31 @@ function scCalcPreview() {
     preview.style.display = "none"; return;
   }
 
+  const fmtUsd = n => parseFloat(n.toFixed(2)).toLocaleString("en-US", {maximumFractionDigits:2});
+
   if (_scCurrency === "usd") {
-    // ── الإدخال بالدولار → عملية على usd_sham_cash ──
-    // الباك: amount = amount (دولار) — لا يتأثر شيء خارجي
     const buyComm  = (amount * commBuy)  / 100;
     const sellComm = (amount * commSell) / 100;
-    document.getElementById("sc-pre-gross").textContent      = amount.toLocaleString("en-US",{minimumFractionDigits:2}) + " $ دولار شام كاش";
-    document.getElementById("sc-pre-commission").textContent = buyComm.toFixed(4)  + " $ (شراء) / " + sellComm.toFixed(4) + " $ (بيع)";
-    const netBuyUsd  = amount - buyComm;
-    const netSellUsd = amount - sellComm;
+    document.getElementById("sc-pre-gross").textContent      = fmtUsd(amount) + " $ دولار شام كاش";
+    document.getElementById("sc-pre-commission").textContent = fmtUsd(buyComm) + " $ (شراء) / " + fmtUsd(sellComm) + " $ (بيع)";
+    const netBuyUsd  = amount - buyComm;   // شراء: نطرح العمولة (العميل يستلم أقل)
+    const netSellUsd = amount + sellComm;  // بيع:  نضيف العمولة (العميل يدفع أكثر)
     document.getElementById("sc-pre-net").innerHTML =
-      '<span style="color:#15803d;font-weight:800;font-size:15px;">شراء: ' + netBuyUsd.toFixed(4) + ' $</span>'
+      '<span style="color:#15803d;font-weight:800;font-size:15px;">شراء: ' + fmtUsd(netBuyUsd) + ' $</span>'
       + '  /  '
-      + '<span style="color:#b91c1c;font-weight:800;font-size:15px;">بيع: ' + netSellUsd.toFixed(4) + ' $</span>';
+      + '<span style="color:#b91c1c;font-weight:800;font-size:15px;">بيع: ' + fmtUsd(netSellUsd) + ' $</span>';
   } else {
-    // ── الإدخال بالليرة → عملية على syp_sham_cash ──
-    // الباك: amount = amount (ليرة) — لا يتأثر شيء خارجي
     const buyComm  = (amount * commBuy)  / 100;
     const sellComm = (amount * commSell) / 100;
-    document.getElementById("sc-pre-gross").textContent      = amount.toLocaleString("en-US",{maximumFractionDigits:0}) + " ل.س ليرة شام كاش";
-    document.getElementById("sc-pre-commission").textContent = buyComm.toLocaleString("en-US",{maximumFractionDigits:0}) + " ل.س (شراء) / " + sellComm.toLocaleString("en-US",{maximumFractionDigits:0}) + " ل.س (بيع)";
-    const netBuySyp  = amount - buyComm;
-    const netSellSyp = amount - sellComm;
+    const fmtSyp = n => Math.round(n).toLocaleString("en-US");
+    document.getElementById("sc-pre-gross").textContent      = fmtSyp(amount) + " ل.س ليرة شام كاش";
+    document.getElementById("sc-pre-commission").textContent = fmtSyp(buyComm) + " ل.س (شراء) / " + fmtSyp(sellComm) + " ل.س (بيع)";
+    const netBuySyp  = amount - buyComm;   // شراء: نطرح العمولة
+    const netSellSyp = amount + sellComm;  // بيع:  نضيف العمولة
     document.getElementById("sc-pre-net").innerHTML =
-      '<span style="color:#15803d;font-weight:800;font-size:15px;">شراء: ' + netBuySyp.toLocaleString("en-US",{maximumFractionDigits:0}) + ' ل.س</span>'
+      '<span style="color:#15803d;font-weight:800;font-size:15px;">شراء: ' + fmtSyp(netBuySyp) + ' ل.س</span>'
       + '  /  '
-      + '<span style="color:#b91c1c;font-weight:800;font-size:15px;">بيع: ' + netSellSyp.toLocaleString("en-US",{maximumFractionDigits:0}) + ' ل.س</span>';
+      + '<span style="color:#b91c1c;font-weight:800;font-size:15px;">بيع: ' + fmtSyp(netSellSyp) + ' ل.س</span>';
   }
 
   document.getElementById("sc-pre-comm-label").textContent = `عمولة (${commBuy}% شراء / ${commSell}% بيع)`;
@@ -768,16 +767,18 @@ function usdtCalcPreview() {
   const buyComm  = (amount * commBuy)  / 100;
   const sellComm = (amount * commSell) / 100;
 
-  document.getElementById("usdt-pre-amount").textContent     = amount.toLocaleString("en-US",{minimumFractionDigits:2}) + " USDT";
+  const fmtUsdt = n => parseFloat(n.toFixed(2)).toLocaleString("en-US", {maximumFractionDigits:2});
+
+  document.getElementById("usdt-pre-amount").textContent     = fmtUsdt(amount) + " USDT";
   document.getElementById("usdt-pre-usd").textContent        = "سعر: " + rate + " $ / USDT";
   document.getElementById("usdt-pre-commission").textContent =
-    buyComm.toFixed(4) + " USDT (شراء) / " + sellComm.toFixed(4) + " USDT (بيع)";
-  const netBuyUsdt  = amount - buyComm;
-  const netSellUsdt = amount - sellComm;
+    fmtUsdt(buyComm) + " USDT (شراء) / " + fmtUsdt(sellComm) + " USDT (بيع)";
+  const netBuyUsdt  = amount - buyComm;  // شراء: نطرح العمولة
+  const netSellUsdt = amount + sellComm; // بيع:  نضيف العمولة
   document.getElementById("usdt-pre-net").innerHTML =
-    '<span style="color:#15803d;font-weight:800;font-size:15px;">شراء: ' + netBuyUsdt.toFixed(4) + ' USDT</span>'
+    '<span style="color:#15803d;font-weight:800;font-size:15px;">شراء: ' + fmtUsdt(netBuyUsdt) + ' USDT</span>'
     + '  /  '
-    + '<span style="color:#b91c1c;font-weight:800;font-size:15px;">بيع: ' + netSellUsdt.toFixed(4) + ' USDT</span>';
+    + '<span style="color:#b91c1c;font-weight:800;font-size:15px;">بيع: ' + fmtUsdt(netSellUsdt) + ' USDT</span>';
   document.getElementById("usdt-pre-comm-label").textContent =
     `عمولة (${commBuy}% شراء / ${commSell}% بيع)`;
 
