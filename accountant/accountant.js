@@ -3,8 +3,8 @@
 //   البيانات كلها من API حقيقي — لا يوجد بيانات ثابتة
 // =====================================================
 
-const API_URL = "https://flashpay-back-1.onrender.com/api";
-const STORAGE_URL = "https://flashpay-back-1.onrender.com/storage";
+const API_URL = "https://api.flashpay.website/api";
+const STORAGE_URL = "https://api.flashpay.website/storage";
 
 // ─────────────────────────────────────────────────────
 //  STATE
@@ -54,7 +54,7 @@ async function checkAuth() {
   }
 
   try {
-    const res = await fetch("https://flashpay-back-1.onrender.com/api/me", {
+    const res = await fetch("https://api.flashpay.website/api/me", {
       headers: {
         Authorization: "Bearer " + token,
         Accept: "application/json",
@@ -422,6 +422,23 @@ function renderStatusChart(all) {
     '<p style="color:var(--gray);font-size:0.8rem;text-align:center;padding:10px;">لا توجد بيانات</p>';
 }
 
+/* ── المبلغ الذي يستلمه المستلم: يأتي جاهزاً من الـ API (receive_amount) ──
+   حوالة بالسوري → amount_in_syp | حوالة بالدولار → amount_in_usd ÷ سعر عملة الاستلام */
+function getTransferReceiveAmount(t) {
+  if (t.receive_amount !== undefined && t.receive_amount !== null) {
+    return Number(t.receive_amount);
+  }
+  const price = Number(t.currency?.price ?? 1);
+  return price > 0 ? Number(t.amount_in_usd ?? 0) / price : 0;
+}
+
+function fmtReceiveAmount(v, code) {
+  const n = Number(v) || 0;
+  return String(code).toUpperCase() === "SYP"
+    ? Math.round(n).toLocaleString("en-US")
+    : n.toFixed(2);
+}
+
 function renderRecentTable(all) {
   const tbody = document.getElementById("recent-tbody");
   if (!tbody) return;
@@ -606,6 +623,11 @@ function renderTransfersTable() {
             <td style="font-weight:700;color:var(--secondary);">
                 ${fmtMoney(t.amount_in_usd)}
                 <small style="color:var(--gray);font-size:0.7rem;">USD</small>
+                ${
+                  t.rate_type === "syp"
+                    ? `<div style="font-size:11px;color:#7c3aed;">يستلم: ${fmtReceiveAmount(getTransferReceiveAmount(t), "SYP")} SYP</div>`
+                    : ""
+                }
             </td>
             <td style="color:var(--success);font-weight:600;">${fmtMoney(t.fee)}</td>
             <td>${statusBadge(t.status)}</td>
@@ -972,9 +994,12 @@ function viewTransfer(id) {
   setText("md-sender", senderName(t));
   setText("md-receiver", t.receiver_name || "—");
   setText("md-phone", t.receiver_phone || "—");
-  setText("md-amount", fmtMoney(t.amount) + " " + currencyName(t));
+  setText("md-amount", fmtMoney(t.amount) + " " + sendCurrencyName(t));
   setText("md-amount-usd", fmtMoney(t.amount_in_usd) + " USD");
-  setText("md-currency", currencyName(t));
+  setText(
+    "md-currency",
+    `${currencyName(t)} — يستلم: ${fmtReceiveAmount(getTransferReceiveAmount(t), t.currency?.code ?? "")} ${t.currency?.code ?? ""}`,
+  );
   setText("md-send-currency", sendCurrencyName(t));
   setText("md-commission", fmtMoney(t.fee));
   setText(
@@ -992,8 +1017,16 @@ function viewTransfer(id) {
   const imgWrap = document.getElementById("md-id-image-wrap");
   const imgEl = document.getElementById("md-id-image");
   if (t.receiver_id_image && imgWrap && imgEl) {
-    imgEl.src = `${STORAGE_URL}/${t.receiver_id_image}`;
     imgWrap.style.display = "block";
+    imgEl.removeAttribute("src");
+    loadSecureImage(`${STORAGE_URL}/${t.receiver_id_image}`)
+      .then((src) => {
+        imgEl.src = src;
+      })
+      .catch((e) => {
+        console.error("md-id-image error:", e);
+        imgWrap.style.display = "none";
+      });
   } else if (imgWrap) {
     imgWrap.style.display = "none";
   }
@@ -1513,15 +1546,56 @@ function showToast(msg, type = "success") {
 //   صورة الهوية — ID Image Modal
 // ═══════════════════════════════════════════════════════
 
-function openIdModal(url) {
+// ═══════════════════════════════════════════════════════
+//   تحميل الصور المحمية (هوية / إيصالات) عبر API بدل /storage
+//   السبب: nginx يعترض الروابط المنتهية بـ .jpg/.png ويُرجع 404،
+//   كما أن صور الهوية حساسة ويجب ألا تكون عامة.
+// ═══════════════════════════════════════════════════════
+const _secureImgCache = new Map();
+
+/** يقبل رابط STORAGE_URL/<path> ويُرجع blob: URL صالحاً للعرض والتنزيل */
+async function loadSecureImage(url) {
+  const prefix = STORAGE_URL + "/";
+  if (!url || !url.startsWith(prefix)) return url; // رابط خارجي/جاهز
+  const path = url.slice(prefix.length);
+  if (_secureImgCache.has(path)) return _secureImgCache.get(path);
+
+  const res = await fetch(
+    `${API_URL}/secure-file?p=${encodeURIComponent(path)}`,
+    {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+        Accept: "image/*",
+      },
+    },
+  );
+  if (!res.ok) throw new Error("HTTP " + res.status);
+  const blobUrl = URL.createObjectURL(await res.blob());
+  _secureImgCache.set(path, blobUrl);
+  return blobUrl;
+}
+
+async function openIdModal(url) {
   const modal = document.getElementById("id-img-modal");
   const img = document.getElementById("id-img-viewer");
   const dlBtn = document.getElementById("id-img-download");
   if (!modal || !img) return;
-  img.src = url;
-  dlBtn.href = url;
+  img.removeAttribute("src");
   modal.classList.remove("hidden");
   document.body.style.overflow = "hidden";
+  try {
+    const src = await loadSecureImage(url);
+    img.src = src;
+    if (dlBtn) {
+      dlBtn.href = src;
+      dlBtn.download = decodeURIComponent(url.split("/").pop() || "image");
+    }
+  } catch (e) {
+    console.error("openIdModal error:", e);
+    modal.classList.add("hidden");
+    document.body.style.overflow = "";
+    alert("تعذّر تحميل الصورة");
+  }
 }
 
 function closeIdModal(e) {

@@ -727,7 +727,8 @@
                                             <span class="ct-required">*</span>
                                         </label>
                                         <select id="ct-recv-currency"
-                                            class="ct-select">
+                                            class="ct-select"
+                                            onchange="ctCalculateUsd()">
                                             <option value>جاري
                                                 التحميل...</option>
                                         </select>
@@ -1251,7 +1252,8 @@
                                             عملة الاستلام <span
                                                 class="ct-required">*</span></label>
                                         <select id="intl-recv-currency"
-                                            class="ct-select">
+                                            class="ct-select"
+                                            onchange="intlCalculateUsd()">
                                             <option value>جاري
                                                 التحميل...</option>
                                         </select>
@@ -1569,7 +1571,7 @@
         <div id="chat-panel-overlay" class="chat-overlay hidden"
             onclick="closeChatPanel()"></div>
 
-        <div id="chat-panel" class="chat-panel hidden">
+        <div id="chat-panel" class="chat-panel hidden" role="complementary" aria-label="دردشة الحوالة">
             <!-- Header -->
             <div class="chat-panel-header">
                 <div class="chat-panel-title">
@@ -1585,11 +1587,11 @@
                 </div>
                 <div class="chat-panel-actions">
                     <button class="chat-reload-btn" onclick="loadChatMessages()"
-                        title="تحديث">
+                        title="تحديث" aria-label="تحديث المحادثة">
                         <i class="fa-solid fa-arrows-rotate"></i>
                     </button>
                     <button class="chat-close-btn" onclick="closeChatPanel()"
-                        title="إغلاق">
+                        title="إغلاق" aria-label="إغلاق الدردشة">
                         <i class="fa-solid fa-xmark"></i>
                     </button>
                 </div>
@@ -1606,7 +1608,7 @@
                     <p>لا توجد رسائل بعد</p>
                     <small>ابدأ المحادثة مع الزبون</small>
                 </div>
-                <div id="chat-messages-list"></div>
+                <div id="chat-messages-list" role="log" aria-live="polite" aria-relevant="additions"></div>
             </div>
 
             <!-- Input Area -->
@@ -1626,7 +1628,7 @@
                         </div>
                     </div>
                     <button class="chat-img-remove-btn"
-                        onclick="clearImageSelection()" title="إلغاء">
+                        onclick="clearImageSelection()" title="إلغاء" aria-label="إلغاء الصورة">
                         <i class="fa-solid fa-xmark"></i>
                     </button>
                 </div>
@@ -1636,7 +1638,7 @@
 
                     <!-- زر إرفاق صورة -->
                     <label class="chat-attach-btn" for="chat-image-input"
-                        title="إرفاق صورة">
+                        title="إرفاق صورة" aria-label="إرفاق صورة" role="button">
                         <i class="fa-solid fa-image"></i>
                     </label>
                     <input
@@ -1650,13 +1652,13 @@
                         id="chat-message-input"
                         class="chat-textarea"
                         placeholder="اكتب رسالتك هنا..."
+                        aria-label="نص الرسالة"
                         rows="1"
                         onkeydown="handleChatKeydown(event)"
-                        oninput="autoResizeTextarea(this)">
-                </textarea>
+                        oninput="autoResizeTextarea(this)"></textarea>
 
                     <button class="chat-send-btn" id="chat-send-btn"
-                        onclick="sendChatMessageOrImage()" title="إرسال">
+                        onclick="sendChatMessageOrImage()" title="إرسال" aria-label="إرسال الرسالة">
                         <i class="fa-solid fa-paper-plane"></i>
                     </button>
                 </div>

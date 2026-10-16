@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="سياسة الخصوصية لتطبيق Flash Pay" />
+  <title>سياسة الخصوصية | Flash Pay</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --primary: #ff9700;
+      --primary-dark: #df7f00;
+      --navy: #00093f;
+      --navy-2: #071252;
+      --bg: #f5f7fb;
+      --card: #ffffff;
+      --text: #17203a;
+      --muted: #667085;
+      --border: #e7eaf1;
+      --soft-orange: #fff5e6;
+      --shadow: 0 18px 50px rgba(0, 9, 63, .08);
+      --radius: 22px;
+    }
+
+    * { box-sizing: border-box; }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Cairo", sans-serif;
+      color: var(--text);
+      background: var(--bg);
+      line-height: 1.9;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .hero {
+      position: relative;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 10% 20%, rgba(255,151,0,.18), transparent 28%),
+        radial-gradient(circle at 90% 80%, rgba(255,151,0,.12), transparent 25%),
+        linear-gradient(135deg, var(--navy), var(--navy-2));
+      color: #fff;
+      padding: 0 20px 90px;
+    }
+
+    .hero::before {
+      content: "";
+      position: absolute;
+      width: 420px;
+      height: 420px;
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 50%;
+      left: -180px;
+      top: -180px;
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      width: 280px;
+      height: 280px;
+      border: 1px solid rgba(255,151,0,.18);
+      border-radius: 50%;
+      right: -100px;
+      bottom: -150px;
+    }
+
+    .nav {
+      position: relative;
+      z-index: 2;
+      max-width: 1180px;
+      margin: auto;
+      height: 82px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 22px;
+      font-weight: 800;
+    }
+
+    .brand-mark {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border-radius: 13px;
+      background: var(--primary);
+      color: var(--navy);
+      font-weight: 900;
+      box-shadow: 0 10px 25px rgba(255,151,0,.22);
+    }
+
+    .nav-link {
+      color: rgba(255,255,255,.78);
+      font-size: 14px;
+      transition: .2s ease;
+    }
+
+    .nav-link:hover {
+      color: #fff;
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 1;
+      max-width: 900px;
+      margin: 70px auto 0;
+      text-align: center;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 14px;
+      border-radius: 999px;
+      color: #ffe4bb;
+      background: rgba(255,151,0,.12);
+      border: 1px solid rgba(255,151,0,.28);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .hero h1 {
+      margin: 22px 0 12px;
+      font-size: clamp(34px, 5vw, 58px);
+      line-height: 1.25;
+      letter-spacing: -.8px;
+    }
+
+    .hero h1 span {
+      color: var(--primary);
+    }
+
+    .hero p {
+      max-width: 720px;
+      margin: auto;
+      color: rgba(255,255,255,.72);
+      font-size: 17px;
+    }
+
+    .updated {
+      margin-top: 20px;
+      color: rgba(255,255,255,.5);
+      font-size: 13px;
+    }
+
+    .layout {
+      position: relative;
+      z-index: 3;
+      max-width: 1180px;
+      margin: -45px auto 70px;
+      padding: 0 20px;
+      display: grid;
+      grid-template-columns: 275px minmax(0, 1fr);
+      gap: 24px;
+      align-items: start;
+    }
+
+    .toc {
+      position: sticky;
+      top: 20px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      box-shadow: var(--shadow);
+    }
+
+    .toc-title {
+      font-weight: 800;
+      color: var(--navy);
+      margin-bottom: 12px;
+    }
+
+    .toc a {
+      display: block;
+      padding: 9px 12px;
+      border-radius: 11px;
+      color: var(--muted);
+      font-size: 13px;
+      transition: .2s ease;
+    }
+
+    .toc a:hover {
+      background: var(--soft-orange);
+      color: var(--primary-dark);
+    }
+
+    .content {
+      min-width: 0;
+    }
+
+    .notice {
+      background: linear-gradient(135deg, #fff9ef, #fff);
+      border: 1px solid #ffe0ae;
+      border-right: 4px solid var(--primary);
+      border-radius: var(--radius);
+      padding: 22px 24px;
+      margin-bottom: 18px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.03);
+    }
+
+    .notice strong {
+      color: var(--navy);
+    }
+
+    .section {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 30px;
+      margin-bottom: 18px;
+      box-shadow: 0 10px 35px rgba(0, 9, 63, .045);
+      scroll-margin-top: 25px;
+    }
+
+    .section-head {
+      display: flex;
+      align-items: flex-start;
+      gap: 15px;
+      margin-bottom: 16px;
+    }
+
+    .number {
+      flex: 0 0 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border-radius: 13px;
+      background: var(--soft-orange);
+      color: var(--primary-dark);
+      font-weight: 800;
+    }
+
+    h2 {
+      margin: 0;
+      color: var(--navy);
+      font-size: 22px;
+      line-height: 1.5;
+    }
+
+    h3 {
+      color: var(--navy);
+      font-size: 17px;
+      margin: 25px 0 8px;
+    }
+
+    p {
+      margin: 8px 0;
+    }
+
+    .muted {
+      color: var(--muted);
+    }
+
+    ul {
+      margin: 10px 0;
+      padding-right: 22px;
+    }
+
+    li {
+      margin: 6px 0;
+    }
+
+    .data-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .data-card {
+      border: 1px solid var(--border);
+      background: #fafbfe;
+      border-radius: 16px;
+      padding: 17px;
+    }
+
+    .data-card strong {
+      display: block;
+      color: var(--navy);
+      margin-bottom: 4px;
+    }
+
+    .check {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: var(--soft-orange);
+      color: var(--primary-dark);
+      font-size: 12px;
+      margin-left: 6px;
+    }
+
+    .contact {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-top: 18px;
+    }
+
+    .contact-box {
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 18px;
+    }
+
+    .contact-box span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 4px;
+    }
+
+    .contact-box a {
+      color: var(--navy);
+      font-weight: 700;
+    }
+
+    .footer {
+      background: var(--navy);
+      color: rgba(255,255,255,.65);
+      padding: 38px 20px;
+      text-align: center;
+    }
+
+    .footer strong {
+      color: #fff;
+    }
+
+    .footer .orange {
+      color: var(--primary);
+    }
+
+    @media (max-width: 900px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .toc {
+        position: relative;
+        top: auto;
+      }
+
+      .toc a {
+        display: inline-block;
+      }
+    }
+
+    @media (max-width: 620px) {
+      .hero {
+        padding-bottom: 70px;
+      }
+
+      .hero-content {
+        margin-top: 45px;
+      }
+
+      .hero p {
+        font-size: 15px;
+      }
+
+      .section {
+        padding: 22px 18px;
+      }
+
+      .data-grid,
+      .contact {
+        grid-template-columns: 1fr;
+      }
+
+      .nav-link {
+        display: none;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <header class="hero">
+    <nav class="nav">
+      <a href="/" class="brand" aria-label="Flash Pay">
+        <span class="brand-mark">F</span>
+        <span>Flash <span style="color:#ff9700">Pay</span></span>
+      </a>
+      <a href="/" class="nav-link">العودة إلى الموقع</a>
+    </nav>
+
+    <div class="hero-content">
+      <span class="badge">🔒 خصوصيتك وأمان بياناتك</span>
+      <h1>سياسة الخصوصية <span>Flash Pay</span></h1>
+      <p>
+        توضح هذه السياسة كيفية جمع معلوماتك واستخدامها وحمايتها عند استخدام
+        تطبيق وخدمات Flash Pay.
+      </p>
+      <div class="updated">آخر تحديث: 30 أغسطس 2026</div>
+    </div>
+  </header>
+
+  <main class="layout">
+
+    <aside class="toc">
+      <div class="toc-title">محتويات السياسة</div>
+      <a href="#intro">1. مقدمة</a>
+      <a href="#collect">2. البيانات التي نجمعها</a>
+      <a href="#use">3. كيفية استخدام البيانات</a>
+      <a href="#sharing">4. مشاركة البيانات</a>
+      <a href="#storage">5. التخزين والأمان</a>
+      <a href="#retention">6. الاحتفاظ بالبيانات</a>
+      <a href="#deletion">7. حذف الحساب والبيانات</a>
+      <a href="#rights">8. حقوق المستخدم</a>
+      <a href="#children">9. خصوصية الأطفال</a>
+      <a href="#third-party">10. الخدمات الخارجية</a>
+      <a href="#changes">11. التغييرات</a>
+      <a href="#contact">12. التواصل معنا</a>
+    </aside>
+
+    <div class="content">
+
+      <div class="notice">
+        <strong>تنبيه مهم:</strong>
+        باستخدامك لتطبيق Flash Pay أو خدماته، فإنك تقر بأنك قرأت هذه السياسة
+        وفهمت كيفية التعامل مع بياناتك. هذه الصفحة يجب أن تعكس ممارسات التطبيق
+        الفعلية والخدمات التي يستخدمها قبل إرسالها إلى Google Play.
+      </div>
+
+      <section class="section" id="intro">
+        <div class="section-head">
+          <div class="number">01</div>
+          <div>
+            <h2>مقدمة</h2>
+            <p class="muted">نحترم خصوصيتك ونسعى إلى حماية معلوماتك الشخصية.</p>
+          </div>
+        </div>
+
+        <p>
+          مرحبًا بك في Flash Pay. تهدف هذه السياسة إلى توضيح أنواع المعلومات
+          التي قد يتم جمعها عند استخدام تطبيق Flash Pay أو خدماته، والأغراض
+          التي نستخدمها من أجلها، وكيف نحافظ على أمنها، والخيارات المتاحة لك
+          فيما يتعلق ببياناتك.
+        </p>
+
+        <p>
+          تُطبّق هذه السياسة على مستخدمي تطبيق Flash Pay والمواقع والخدمات
+          المرتبطة به، بالقدر الذي تنطبق فيه هذه السياسة على تلك الخدمات.
+        </p>
+      </section>
+
+      <section class="section" id="collect">
+        <div class="section-head">
+          <div class="number">02</div>
+          <div>
+            <h2>البيانات التي نجمعها</h2>
+            <p class="muted">نقوم بجمع المعلومات اللازمة لتشغيل الخدمة وتوفيرها بأمان.</p>
+          </div>
+        </div>
+
+        <div class="data-grid">
+          <div class="data-card">
+            <strong>معلومات الحساب</strong>
+            الاسم، رقم الهاتف، البريد الإلكتروني، ومعلومات تسجيل الدخول أو الحساب بحسب ما يطلبه التطبيق.
+          </div>
+
+          <div class="data-card">
+            <strong>معلومات المعاملات</strong>
+            المعلومات المرتبطة بالحوالات والمعاملات التي تنشئها أو تستقبلها من خلال الخدمة.
+          </div>
+
+          <div class="data-card">
+            <strong>معلومات الجهاز</strong>
+            معلومات تقنية ضرورية لتشغيل التطبيق وتحسين الأمان والأداء، وقد تشمل نوع الجهاز وإصدار النظام ومعرّفات تقنية.
+          </div>
+
+          <div class="data-card">
+            <strong>الإشعارات</strong>
+            قد تتم معالجة معرّف الإشعارات الخاص بالجهاز (مثل FCM Token) لإرسال إشعارات متعلقة بالحساب والمعاملات.
+          </div>
+        </div>
+
+        <h3>المعلومات التي تقدمها لنا</h3>
+        <ul>
+          <li><span class="check">✓</span> بيانات التسجيل وإنشاء الحساب.</li>
+          <li><span class="check">✓</span> البيانات التي تدخلها عند إنشاء أو متابعة حوالة.</li>
+          <li><span class="check">✓</span> المعلومات التي تقدمها عند التواصل مع الدعم.</li>
+        </ul>
+
+        <h3>المعلومات التي قد يتم جمعها تلقائيًا</h3>
+        <ul>
+          <li><span class="check">✓</span> معلومات تقنية عن الجهاز والتطبيق.</li>
+          <li><span class="check">✓</span> بيانات السجلات والأخطاء لتحسين الاستقرار والأمان.</li>
+          <li><span class="check">✓</span> معلومات مرتبطة بالإشعارات، عند تفعيلها.</li>
+        </ul>
+      </section>
+
+      <section class="section" id="use">
+        <div class="section-head">
+          <div class="number">03</div>
+          <div>
+            <h2>كيف نستخدم بياناتك؟</h2>
+            <p class="muted">نستخدم المعلومات للأغراض المرتبطة بتقديم الخدمة وحمايتها.</p>
+          </div>
+        </div>
+
+        <ul>
+          <li>إنشاء الحساب وإدارته والتحقق من بيانات المستخدم عند الحاجة.</li>
+          <li>تنفيذ ومعالجة الحوالات والمعاملات المطلوبة من المستخدم.</li>
+          <li>إظهار حالة الحوالات وتقديم معلومات مرتبطة بالمعاملة.</li>
+          <li>إرسال الإشعارات المتعلقة بالحساب والمعاملات والخدمات.</li>
+          <li>توفير خدمة العملاء والدعم الفني.</li>
+          <li>اكتشاف محاولات الاحتيال أو إساءة الاستخدام والمساعدة في حماية الخدمة.</li>
+          <li>تحسين أداء التطبيق وإصلاح الأخطاء والمشكلات التقنية.</li>
+          <li>الامتثال للمتطلبات القانونية والتنظيمية عندما يكون ذلك مطلوبًا.</li>
+        </ul>
+      </section>
+
+      <section class="section" id="sharing">
+        <div class="section-head">
+          <div class="number">04</div>
+          <div>
+            <h2>مشاركة البيانات</h2>
+            <p class="muted">لا نبيع معلوماتك الشخصية.</p>
+          </div>
+        </div>
+
+        <p>
+          قد تتم مشاركة المعلومات بالقدر الضروري لتقديم الخدمة أو حمايتها،
+          وبما يتوافق مع القوانين واللوائح المعمول بها.
+        </p>
+
+        <ul>
+          <li>مع مزودي الخدمات التقنية الذين يساعدون في تشغيل البنية التحتية أو الإشعارات أو الخدمات المرتبطة بالتطبيق.</li>
+          <li>مع الجهات المختصة عندما يكون الإفصاح مطلوبًا بموجب القانون أو أمر رسمي.</li>
+          <li>لحماية حقوق وسلامة المستخدمين والخدمة ومنع الاحتيال أو إساءة الاستخدام.</li>
+        </ul>
+
+        <p>
+          لا نقوم ببيع بيانات المستخدمين الشخصية لأطراف ثالثة لأغراض تسويقية.
+        </p>
+      </section>
+
+      <section class="section" id="storage">
+        <div class="section-head">
+          <div class="number">05</div>
+          <div>
+            <h2>تخزين البيانات وأمانها</h2>
+            <p class="muted">نتخذ إجراءات تقنية وتنظيمية مناسبة للمساعدة في حماية المعلومات.</p>
+          </div>
+        </div>
+
+        <p>
+          يتم تخزين البيانات على أنظمة وخوادم مخصصة لتشغيل الخدمة، وقد تتم
+          معالجة بعض البيانات من خلال مزودي خدمات تقنيين موثوقين وفقًا لما
+          يلزم لتقديم وظائف Flash Pay.
+        </p>
+
+        <p>
+          نستخدم إجراءات أمنية مناسبة للمساعدة في حماية البيانات من الوصول
+          غير المصرح به أو التعديل أو الفقدان أو سوء الاستخدام. ومع ذلك،
+          لا يمكن ضمان أن تكون أي وسيلة نقل أو تخزين إلكترونية آمنة بنسبة 100%.
+        </p>
+      </section>
+
+      <section class="section" id="retention">
+        <div class="section-head">
+          <div class="number">06</div>
+          <div>
+            <h2>الاحتفاظ بالبيانات</h2>
+            <p class="muted">نحتفظ بالمعلومات فقط للمدة اللازمة للأغراض المشروعة.</p>
+          </div>
+        </div>
+
+        <p>
+          نحتفظ ببيانات الحساب والمعاملات والبيانات الأخرى للمدة اللازمة
+          لتقديم الخدمة، وحماية المستخدمين، وحل النزاعات، والامتثال للالتزامات
+          القانونية والتنظيمية أو المحاسبية عندما تكون قابلة للتطبيق.
+        </p>
+
+        <p>
+          قد تستمر بعض سجلات المعاملات أو السجلات المطلوبة قانونيًا في الوجود
+          حتى بعد حذف الحساب عندما يكون الاحتفاظ بها مطلوبًا أو مسموحًا به قانونيًا.
+        </p>
+      </section>
+
+      <section class="section" id="deletion">
+        <div class="section-head">
+          <div class="number">07</div>
+          <div>
+            <h2>حذف الحساب والبيانات</h2>
+            <p class="muted">يمكنك طلب حذف حسابك وفقًا للإجراءات المتاحة.</p>
+          </div>
+        </div>
+
+        <p>
+          إذا كان حسابك يدعم حذف الحساب، يمكنك إرسال طلب حذف من داخل التطبيق
+          من خلال إعدادات الحساب، أو التواصل معنا باستخدام معلومات الاتصال
+          الموجودة في أسفل هذه الصفحة.
+        </p>
+
+        <p>
+          عند معالجة طلب الحذف، سنحذف أو نجعل البيانات الشخصية غير قابلة
+          للتعرّف عليها عندما لا يكون هناك سبب قانوني أو تشغيلي مشروع للاحتفاظ بها.
+          وقد نحتفظ ببعض البيانات إذا كان ذلك مطلوبًا بموجب القانون أو للوفاء
+          بالتزامات تتعلق بالمعاملات ومنع الاحتيال وحل النزاعات.
+        </p>
+      </section>
+
+      <section class="section" id="rights">
+        <div class="section-head">
+          <div class="number">08</div>
+          <div>
+            <h2>حقوق المستخدم</h2>
+            <p class="muted">لديك حقوق قد تختلف بحسب موقعك والقوانين المطبقة عليك.</p>
+          </div>
+        </div>
+
+        <ul>
+          <li>طلب معرفة البيانات الشخصية التي نحتفظ بها عنك، عندما يسمح القانون بذلك.</li>
+          <li>طلب تصحيح المعلومات غير الدقيقة.</li>
+          <li>طلب حذف البيانات في الحالات التي يسمح بها القانون.</li>
+          <li>طلب توضيح كيفية استخدام بعض بياناتك.</li>
+          <li>التواصل معنا بشأن مخاوف الخصوصية أو معالجة البيانات.</li>
+        </ul>
+      </section>
+
+      <section class="section" id="children">
+        <div class="section-head">
+          <div class="number">09</div>
+          <div>
+            <h2>خصوصية الأطفال</h2>
+            <p class="muted">الخدمة ليست موجهة للأطفال.</p>
+          </div>
+        </div>
+
+        <p>
+          لا نهدف إلى جمع معلومات شخصية من الأطفال الذين لا يسمح لهم القانون
+          باستخدام الخدمات المالية أو إنشاء حسابات فيها. إذا علمت أن طفلًا
+          قدم معلومات شخصية بطريقة غير مناسبة، يرجى التواصل معنا حتى نتمكن
+          من اتخاذ الإجراءات المناسبة.
+        </p>
+      </section>
+
+      <section class="section" id="third-party">
+        <div class="section-head">
+          <div class="number">10</div>
+          <div>
+            <h2>الخدمات والروابط الخارجية</h2>
+            <p class="muted">قد يعتمد التطبيق على خدمات تقنية خارجية.</p>
+          </div>
+        </div>
+
+        <p>
+          قد يستخدم Flash Pay خدمات خارجية لتوفير وظائف مثل البنية التحتية
+          السحابية، الإشعارات، التحليلات، الأمان أو الخدمات التقنية الأخرى.
+          قد تقوم هذه الخدمات بمعالجة معلومات وفقًا لسياساتها الخاصة.
+        </p>
+
+        <p>
+          نوصي بمراجعة سياسات الخصوصية الخاصة بأي خدمة خارجية يتم الوصول إليها
+          من خلال التطبيق أو الموقع.
+        </p>
+      </section>
+
+      <section class="section" id="changes">
+        <div class="section-head">
+          <div class="number">11</div>
+          <div>
+            <h2>التغييرات على سياسة الخصوصية</h2>
+            <p class="muted">قد نقوم بتحديث هذه السياسة عند الحاجة.</p>
+          </div>
+        </div>
+
+        <p>
+          قد نحدّث سياسة الخصوصية من وقت لآخر لتعكس تغييرات في خدمات Flash Pay
+          أو المتطلبات القانونية أو ممارسات معالجة البيانات. سيتم نشر النسخة
+          المحدثة على هذه الصفحة مع تحديث تاريخ "آخر تحديث".
+        </p>
+
+        <p>
+          ننصحك بمراجعة هذه الصفحة بشكل دوري للاطلاع على أي تغييرات.
+        </p>
+      </section>
+
+      <section class="section" id="contact">
+        <div class="section-head">
+          <div class="number">12</div>
+          <div>
+            <h2>التواصل معنا</h2>
+            <p class="muted">لأي استفسار متعلق بالخصوصية أو البيانات الشخصية.</p>
+          </div>
+        </div>
+
+        <p>
+          إذا كانت لديك أسئلة أو طلبات تتعلق بسياسة الخصوصية أو بياناتك الشخصية،
+          يمكنك التواصل مع فريق Flash Pay.
+        </p>
+
+        <div class="contact">
+          <div class="contact-box">
+            <span>البريد الإلكتروني</span>
+            <a href="mailto:privacy@flashpay.website">kaisalafef7@gmail.com</a>
+          </div>
+
+          <div class="contact-box">
+            <span>الموقع</span>
+            <a href="https://flashpay.website/">flashpay.website</a>
+          </div>
+        </div>
+
+        <p class="muted" style="margin-top:18px;font-size:13px;">
+          ملاحظة: استبدل البريد الإلكتروني أعلاه بعنوان البريد الرسمي المعتمد
+          لدى شركتك إذا كان مختلفًا قبل نشر الصفحة.
+        </p>
+      </section>
+
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div>
+      <strong>Flash <span class="orange">Pay</span></strong>
+    </div>
+    <div style="margin-top:6px;font-size:13px;">
+      © 2026 Flash Pay. جميع الحقوق محفوظة.
+    </div>
+  </footer>
+
+</body>
+</html>

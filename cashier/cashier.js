@@ -1,4 +1,4 @@
-const API_URL = "https://flashpay-back-1.onrender.com/api";
+const API_URL = "https://api.flashpay.website/api";
 let token = null;
 
 /* ============================= */
@@ -13,7 +13,7 @@ async function checkAuth() {
   }
 
   try {
-    const res = await fetch("https://flashpay-back-1.onrender.com/api/me", {
+    const res = await fetch("https://api.flashpay.website/api/me", {
       headers: {
         Authorization: "Bearer " + token,
         Accept: "application/json",
@@ -109,6 +109,23 @@ function redirectByRole(role) {
 /*      LOAD READY TRANSFERS    */
 /* ============================= */
 
+/* ── المبلغ الذي يستلمه المستلم: يأتي جاهزاً من الـ API (receive_amount) ──
+   حوالة بالسوري → amount_in_syp | حوالة بالدولار → amount_in_usd ÷ سعر عملة الاستلام */
+function getTransferReceiveAmount(t) {
+  if (t.receive_amount !== undefined && t.receive_amount !== null) {
+    return Number(t.receive_amount);
+  }
+  const price = Number(t.currency?.price ?? 1);
+  return price > 0 ? Number(t.amount_in_usd ?? 0) / price : 0;
+}
+
+function fmtReceiveAmount(v, code) {
+  const n = Number(v) || 0;
+  return String(code).toUpperCase() === "SYP"
+    ? Math.round(n).toLocaleString("en-US")
+    : n.toFixed(2);
+}
+
 async function loadNewTransfers() {
   const tbody = document.getElementById("new-transfers-list");
   tbody.innerHTML = `<tr><td colspan="12" class="loading-row"><div class="loading-spinner"></div> جاري التحميل...</td></tr>`;
@@ -130,9 +147,8 @@ async function loadNewTransfers() {
 
     json.data.forEach((transfer) => {
       const amountUsd = Number(transfer.amount_in_usd ?? 0);
-      const currencyPrice = Number(transfer.currency?.price ?? 1);
       const currencyCode = transfer.currency?.code ?? "USD";
-      const deliveryPrice = currencyPrice > 0 ? amountUsd / currencyPrice : 0;
+      const deliveryPrice = getTransferReceiveAmount(transfer);
       const sendAmount = Number(transfer.amount ?? 0);
       const sendCurrency =
         transfer.send_currency?.code ?? transfer.sendCurrency?.code ?? "—";
@@ -177,7 +193,7 @@ async function loadNewTransfers() {
           </td>
           <td><span class="amount-cell">$${amountUsd.toFixed(2)}</span></td>
           <td style="font-size:12px;">${sendAmount.toFixed(2)} ${sendCurrency}</td>
-          <td><span class="delivery-price">${deliveryPrice.toFixed(2)} ${currencyCode}</span></td>
+          <td><span class="delivery-price">${fmtReceiveAmount(deliveryPrice, currencyCode)} ${currencyCode}</span></td>
           <td style="font-weight:700;color:var(--success);">
             ${fee > 0 ? "$" + fee.toFixed(2) : '<span style="opacity:.4;">—</span>'}
           </td>
@@ -1897,7 +1913,7 @@ async function custInitForm() {
       ? currJson
       : (currJson.data ?? []);
     _custFillCurrencySelect("cust-send-currency", "اختر عملة الإرسال...");
-    _custFillCurrencySelect("cust-recv-currency", "اختر عملة الاستلام...");
+    _custFillCurrencySelect("cust-recv-currency", "اختر عملة الاستلام...", true);
 
     // ── المكاتب ──
     const officeJson = await officeRes.json();
@@ -1920,12 +1936,18 @@ async function custInitForm() {
 }
 
 /* ── helper: ملء قائمة عملات ── */
-function _custFillCurrencySelect(selId, placeholder) {
+// عملات الاستلام المسموحة: الدولار والليرة السورية فقط
+const RECEIVE_CURRENCY_CODES = ["USD", "SYP"];
+function isReceiveCurrency(c) {
+  return RECEIVE_CURRENCY_CODES.includes(String(c.code).toUpperCase());
+}
+
+function _custFillCurrencySelect(selId, placeholder, receiveOnly = false) {
   const sel = document.getElementById(selId);
   if (!sel) return;
   sel.innerHTML = `<option value="">${placeholder}</option>`;
-  _custCurrencies.forEach((c) =>
-    sel.appendChild(new Option(`${c.name} (${c.code})`, c.id)),
+  (receiveOnly ? _custCurrencies.filter(isReceiveCurrency) : _custCurrencies).forEach(
+    (c) => sel.appendChild(new Option(`${c.name} (${c.code})`, c.id)),
   );
 }
 
@@ -1934,37 +1956,75 @@ function custCalcUsd() {
   const amount = parseFloat(document.getElementById("cust-amount").value) || 0;
   const sendCurrId =
     parseInt(document.getElementById("cust-send-currency").value) || 0;
+  const recvCurrId =
+    parseInt(document.getElementById("cust-recv-currency").value) || 0;
   const currency = _custCurrencies.find((c) => c.id === sendCurrId);
+  const recv = _custCurrencies.find((c) => c.id === recvCurrId);
+  // عملة الاستلام SYP → التصريف بأسعار السوري، غير ذلك → بأسعار الدولار
+  const isSyp = !!recv && String(recv.code).toUpperCase() === "SYP";
 
   const preview = document.getElementById("cust-usd-preview");
   const tierHint = document.getElementById("cust-tier-hint");
 
   if (!currency || amount <= 0) {
-    preview.textContent = "= $0.00";
+    preview.textContent = isSyp ? "= 0 SYP" : "= $0.00";
     tierHint.textContent = "";
     return;
   }
 
-  // نفس getEffectiveRate من admin.js
-  const rates = currency.rates ?? [];
-  let rate = parseFloat(currency.price ?? 1);
-  let tierLabel = null;
-
-  if (rates.length > 0 && amount > 0) {
+  // نفس منطق الـ API: الشريحة التي يقع فيها المبلغ (من min إلى max)
+  const pickRate = (type) => {
+    if (type === "syp" && String(currency.code).toUpperCase() === "SYP") {
+      return { rate: 1, tierLabel: null };
+    }
+    const rates =
+      (type === "syp" ? currency.syp_rates : currency.rates) ?? [];
     const sorted = [...rates].sort(
       (a, b) => parseFloat(a.min_amount) - parseFloat(b.min_amount),
     );
-    for (let i = sorted.length - 1; i >= 0; i--) {
-      if (amount >= parseFloat(sorted[i].min_amount)) {
-        rate = parseFloat(sorted[i].rate);
-        tierLabel = `≥ ${sorted[i].min_amount}`;
-        break;
+    for (const t of sorted) {
+      const min = parseFloat(t.min_amount);
+      const max = t.max_amount != null ? parseFloat(t.max_amount) : Infinity;
+      if (amount >= min && amount <= max) {
+        return {
+          rate: parseFloat(t.rate),
+          tierLabel: t.max_amount != null ? `${min} – ${max}` : `≥ ${min}`,
+        };
       }
     }
+    return {
+      rate: parseFloat(
+        type === "syp" ? (currency.price_syp ?? 0) : (currency.price ?? 1),
+      ),
+      tierLabel: null,
+    };
+  };
+
+  if (isSyp) {
+    const hasSyp =
+      String(currency.code).toUpperCase() === "SYP" ||
+      parseFloat(currency.price_syp) > 0 ||
+      (currency.syp_rates ?? []).length > 0;
+
+    if (!hasSyp) {
+      preview.textContent = "= —";
+      tierHint.textContent = `لا يوجد سعر صرف بالسوري للعملة ${currency.code}`;
+      tierHint.style.color = "var(--danger)";
+      return;
+    }
+
+    const { rate, tierLabel } = pickRate("syp");
+    const usdEq = amount * pickRate("usd").rate;
+    preview.textContent = `= ${Math.round(amount * rate).toLocaleString("en-US")} SYP`;
+    tierHint.textContent = tierLabel
+      ? `السعر المطبّق (سوري): ${rate} (${tierLabel}) • ≈ $${usdEq.toFixed(2)}`
+      : `السعر الأساسي (سوري): ${rate} • ≈ $${usdEq.toFixed(2)}`;
+    tierHint.style.color = tierLabel ? "var(--primary)" : "var(--gray)";
+    return;
   }
 
-  const eq = (amount * rate).toFixed(2);
-  preview.textContent = `= $${eq}`;
+  const { rate, tierLabel } = pickRate("usd");
+  preview.textContent = `= $${(amount * rate).toFixed(2)}`;
 
   if (tierLabel) {
     tierHint.textContent = `السعر المطبّق: ${rate} (${tierLabel})`;
@@ -2123,10 +2183,10 @@ function printTransferReceipt(tx) {
   const sendAmount = fmtNum(tx.amount);
   const sendCurrencyCode = tx.send_currency?.code ?? "USD";
   const amountUsd = parseFloat(tx.amount_in_usd ?? 0);
-  const deliveryCurrencyPrice = parseFloat(tx.currency?.price ?? 1);
   const deliveryCurrencyCode = tx.currency?.code ?? "---";
   const deliveryAmount = fmtNum(
-    deliveryCurrencyPrice > 0 ? amountUsd / deliveryCurrencyPrice : 0,
+    getTransferReceiveAmount(tx),
+    deliveryCurrencyCode.toUpperCase() === "SYP" ? 0 : 2,
   );
   const receiverName = tx.receiver_name ?? "---";
   const receiverPhone = toEn(tx.receiver_phone ?? "---");
@@ -2749,11 +2809,10 @@ function _renderCompletedRows(rows, empty) {
   tbody.innerHTML = rows
     .map((tx) => {
       const amountUsd = parseFloat(tx.amount_in_usd ?? 0);
-      const currPrice = parseFloat(tx.currency?.price ?? 1);
       const currCode = tx.currency?.code ?? "—";
       const sendAmt = parseFloat(tx.amount ?? 0);
       const sendCur = tx.send_currency?.code ?? tx.sendCurrency?.code ?? "—";
-      const deliveryAmt = currPrice > 0 ? amountUsd / currPrice : 0;
+      const deliveryAmt = getTransferReceiveAmount(tx);
       const fee = parseFloat(tx.fee ?? 0);
       const txDate = fmtDate(tx.updated_at || tx.created_at);
       const txJson = JSON.stringify(tx)

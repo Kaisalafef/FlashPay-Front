@@ -1,109 +1,98 @@
-const API_URL = 'https://flashpay-back-1.onrender.com/api';
+const API_URL = 'https://api.flashpay.website/api';
 
-document
-  .getElementById("login-form")
-  .addEventListener("submit", async function (e) {
-    e.preventDefault();
+const ROLE_PAGES = {
+  super_admin: "super_admin/super.html",
+  admin: "office_manager/admin.html",
+  cashier: "cashier/cashier.html",
+  accountant: "accountant/accountant.html",
+};
 
-    const emailInput = document.getElementById("email");
-    const passwordInput = document.getElementById("password");
-    const errorMessage = document.getElementById("errorMessage");
-    const errorText = document.getElementById("errorText");
-    const loadingOverlay = document.getElementById("loadingOverlay");
+let alertTimer = null;
+let alertFadeTimer = null;
 
-    // إعادة ضبط الحالة الأصلية
-    errorMessage.classList.remove("show");
-    emailInput.classList.remove("is-invalid");
-    passwordInput.classList.remove("is-invalid");
+/* ---------- عناصر الصفحة ---------- */
+const form = document.getElementById("login-form");
+const emailInput = document.getElementById("email");
+const passwordInput = document.getElementById("password");
+const loginBtn = document.getElementById("loginBtn");
+const loadingOverlay = document.getElementById("loadingOverlay");
+const capsHint = document.getElementById("capsHint");
 
-    // --- التحقق الذكي (Validation) ---
+document.getElementById("year").textContent = new Date().getFullYear();
 
-    if (!emailInput.value.trim()) {
-      emailInput.classList.add("is-invalid");
-      showAlert("يرجى إدخال البريد الإلكتروني أولاً ⚠️", "warning");
-      emailInput.focus();
-      return;
-    }
-    // 1. التحقق من البريد الإلكتروني
-    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailPattern.test(emailInput.value.trim())) {
-      showAlert("عذراً، صيغة البريد الإلكتروني غير مدعومة ❌");
-      errorText.textContent = "عذراً، البريد الإلكتروني الذي أدخلته غير صحيح.";
-      errorMessage.classList.add("show");
-      emailInput.classList.add("is-invalid");
-      emailInput.focus();
-      return;
-    }
+/* ---------- تسجيل الدخول ---------- */
+form.addEventListener("submit", async function (e) {
+  e.preventDefault();
 
-    // 2. التحقق من كلمة المرور
-    if (passwordInput.value.length < 6) {
-      errorText.textContent =
-        "أمنك يهمنا.. يجب أن تتكون كلمة المرور من 6 رموز على الأقل.";
-      errorMessage.classList.add("show");
-      passwordInput.classList.add("is-invalid");
-      showAlert("كلمة المرور قصيرة جداً، يجب أن تكون 6 رموز على الأقل 🔒");
-      passwordInput.focus();
-      return;
-    }
+  hideAlert();
+  emailInput.classList.remove("is-invalid");
+  passwordInput.classList.remove("is-invalid");
 
-    // إظهار التحميل في حال كانت البيانات سليمة
-    loadingOverlay.classList.add("show");
+  const email = emailInput.value.trim();
+  const password = passwordInput.value;
 
-    try {
-      const response = await fetch(`${API_URL}/login`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        body: JSON.stringify({
-          email: emailInput.value.trim(),
-          password: passwordInput.value,
-        }),
-      });
+  // 1) البريد فارغ
+  if (!email) {
+    return invalidField(emailInput, "يرجى إدخال البريد الإلكتروني أولاً ⚠️", "warning");
+  }
 
-      const data = await response.json();
-      loadingOverlay.classList.remove("show");
+  // 2) صيغة البريد
+  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailPattern.test(email)) {
+    return invalidField(emailInput, "صيغة البريد الإلكتروني غير صحيحة ❌");
+  }
 
-      if (response.ok && data.status === "success") {
-        localStorage.setItem("auth_token", data.access_token);
-        localStorage.setItem("user_data", JSON.stringify(data.user));
+  // 3) كلمة المرور
+  if (password.length < 6) {
+    return invalidField(
+      passwordInput,
+      "كلمة المرور قصيرة جداً، يجب أن تكون 6 رموز على الأقل 🔒"
+    );
+  }
 
-        const role = data.user.role;
-        switch (role) {
-          case "super_admin":
-            window.location.href = "super_admin/super.html";
-            break;
-          case "admin":
-            window.location.href = "office_manager/admin.html";
-            break;
-          case "cashier":
-            window.location.href = "cashier/cashier.html";
-            break;
-          case "accountant":
-            window.location.href = "accountant/accountant.html";
-            break;
+  setLoading(true);
 
-          default:
-            errorText.textContent = "عفواً، لا تملك صلاحية الوصول لهذا النظام.";
-            errorMessage.classList.add("show");
-        }
-      } else {
-        showAlert(
-          data.message || "بيانات الدخول غير صحيحة، تأكد من صحة الحساب.",
-        );
+  try {
+    const response = await fetch(`${API_URL}/login`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify({ email, password }),
+    });
+
+    const data = await response.json();
+
+    if (response.ok && data.status === "success") {
+      localStorage.setItem("auth_token", data.access_token);
+      localStorage.setItem("user_data", JSON.stringify(data.user));
+
+      const target = ROLE_PAGES[data.user.role];
+
+      if (target) {
+        window.location.href = target;
+        return; // نُبقي شاشة التحميل ظاهرة حتى يتم التحويل
       }
-    } catch (error) {
-      loadingOverlay.classList.remove("show");
-      showAlert("حدث خطأ في الاتصال بالسيرفر، يرجى المحاولة لاحقاً 🌐");
-      errorMessage.classList.add("show");
-    }
-  });
 
-// بقية كود window.onload كما هو في الملف الأصلي...
+      // دور غير معروف: ننظف البيانات حتى لا تبقى جلسة عالقة
+      localStorage.removeItem("auth_token");
+      localStorage.removeItem("user_data");
+      setLoading(false);
+      showAlert("عفواً، لا تملك صلاحية الوصول لهذا النظام.");
+    } else {
+      setLoading(false);
+      showAlert(data.message || "بيانات الدخول غير صحيحة، تأكد من صحة الحساب.");
+    }
+  } catch (error) {
+    setLoading(false);
+    showAlert("حدث خطأ في الاتصال بالسيرفر، يرجى المحاولة لاحقاً 🌐");
+  }
+});
+
+/* ---------- التحقق التلقائي من الجلسة السابقة ---------- */
 window.onload = async function () {
   const token = localStorage.getItem("auth_token");
-
   if (!token) return;
 
   try {
@@ -120,58 +109,90 @@ window.onload = async function () {
     }
 
     const data = await response.json();
-    const user = data.user;
-
-    if (user.role === "super_admin")
-      window.location.href = "super_admin/super.html";
-    else if (user.role === "admin")
-      window.location.href = "office_manager/admin.html";
-    else if (user.role === "cashier")
-      window.location.href = "cashier/cashier.html";
-    else if (user.role === "accountant")
-      window.location.href = "accountant/accountant.html";
+    const target = ROLE_PAGES[data.user.role];
+    if (target) window.location.href = target;
   } catch {
     localStorage.clear();
   }
 };
-// دالة مساعدة لإظهار التنبيهات بشكل احترافي
-function showAlert(message, type = "error") {
-  const errorBox = document.getElementById("errorMessage");
-  const errorText = document.getElementById("errorText");
-  const icon = errorBox.querySelector("i");
 
-  // تغيير الأيقونة واللون بناءً على النوع
-  if (type === "error") {
-    icon.className = "fa-solid fa-circle-xmark";
-    errorBox.style.borderRightColor = "#ff4d4d";
-  } else if (type === "warning") {
+/* ---------- دوال مساعدة ---------- */
+
+// تمييز الحقل الخاطئ + إظهار الرسالة + نقل التركيز إليه
+function invalidField(input, message, type = "error") {
+  input.classList.add("is-invalid");
+  showAlert(message, type);
+  input.focus();
+}
+
+// حالة التحميل (الزر + الشاشة)
+function setLoading(isLoading) {
+  loginBtn.disabled = isLoading;
+  loginBtn.classList.toggle("is-loading", isLoading);
+  loadingOverlay.classList.toggle("show", isLoading);
+}
+
+function hideAlert() {
+  const box = document.getElementById("errorMessage");
+  clearTimeout(alertTimer);
+  clearTimeout(alertFadeTimer);
+  box.classList.remove("show", "fade-out", "warning");
+}
+
+// إظهار التنبيهات (يعتمد على الكلاسات فقط حتى لا يتعطل الإظهار لاحقاً)
+function showAlert(message, type = "error") {
+  const box = document.getElementById("errorMessage");
+  const text = document.getElementById("errorText");
+  const icon = box.querySelector("i");
+
+  // إلغاء المؤقتات القديمة كي لا يختفي التنبيه الجديد قبل وقته
+  clearTimeout(alertTimer);
+  clearTimeout(alertFadeTimer);
+
+  box.classList.remove("show", "fade-out", "warning");
+  void box.offsetWidth; // إعادة تشغيل حركة الظهور
+
+  if (type === "warning") {
     icon.className = "fa-solid fa-triangle-exclamation";
-    errorBox.style.borderRightColor = "#fbbf24";
+    box.classList.add("warning");
+  } else {
+    icon.className = "fa-solid fa-circle-xmark";
   }
 
-  errorText.textContent = message;
-  errorBox.style.display = "flex";
-  errorBox.classList.remove("fade-out");
-  errorBox.classList.add("show");
+  text.textContent = message;
+  box.classList.add("show");
 
-  // إخفاء التنبيه تلقائياً بعد 5 ثوانٍ
-  setTimeout(() => {
-    errorBox.classList.add("fade-out");
-    setTimeout(() => {
-      errorBox.style.display = "none";
-    }, 500);
+  // إخفاء تلقائي بعد 5 ثوانٍ
+  alertTimer = setTimeout(() => {
+    box.classList.add("fade-out");
+    alertFadeTimer = setTimeout(() => {
+      box.classList.remove("show", "fade-out", "warning");
+    }, 400);
   }, 5000);
 }
 
 // إظهار/إخفاء كلمة المرور
 function togglePasswordVisibility() {
-  const input = document.getElementById("password");
-  const icon  = document.getElementById("eyeIcon");
-  if (input.type === "password") {
-    input.type = "text";
-    icon.className = "fa-solid fa-eye-slash";
-  } else {
-    input.type = "password";
-    icon.className = "fa-solid fa-eye";
-  }
+  const btn = document.getElementById("togglePassword");
+  const icon = document.getElementById("eyeIcon");
+  const show = passwordInput.type === "password";
+
+  passwordInput.type = show ? "text" : "password";
+  icon.className = show ? "fa-solid fa-eye-slash" : "fa-solid fa-eye";
+  btn.setAttribute("aria-pressed", String(show));
+  btn.setAttribute("aria-label", show ? "إخفاء كلمة المرور" : "إظهار كلمة المرور");
 }
+
+// إزالة علامة الخطأ بمجرد أن يبدأ المستخدم بالتعديل
+[emailInput, passwordInput].forEach((input) =>
+  input.addEventListener("input", () => input.classList.remove("is-invalid"))
+);
+
+// تنبيه Caps Lock
+function updateCapsHint(e) {
+  if (typeof e.getModifierState !== "function") return;
+  capsHint.classList.toggle("show", e.getModifierState("CapsLock"));
+}
+passwordInput.addEventListener("keydown", updateCapsHint);
+passwordInput.addEventListener("keyup", updateCapsHint);
+passwordInput.addEventListener("blur", () => capsHint.classList.remove("show"));
