@@ -1,5 +1,5 @@
-const API_URL = "https://flashpay-back-1.onrender.com/api";
-const STORAGE_URL = "https://flashpay-back-1.onrender.com/storage"; // ✅ يُستخدم مع receiver_id_image مباشرة (مثال: receipts/filename.jpg)
+const API_URL = "https://api.flashpay.website/api";
+const STORAGE_URL = "https://api.flashpay.website/storage"; // ✅ يُستخدم مع receiver_id_image مباشرة (مثال: receipts/filename.jpg)
 
 /* =========================
    Auth Check
@@ -13,7 +13,7 @@ async function checkAuth() {
   }
 
   try {
-    const res = await fetch("https://flashpay-back-1.onrender.com/api/me", {
+    const res = await fetch("https://api.flashpay.website/api/me", {
       headers: {
         Authorization: "Bearer " + token,
         Accept: "application/json",
@@ -144,9 +144,11 @@ async function loadCurrencies() {
   const tbody = document.getElementById("currencies-table-body");
   const sel = document.getElementById("currency-select");
   const selMain = document.getElementById("main-currency-select");
+  const selSyp = document.getElementById("currency-select-syp");
+  const selMainSyp = document.getElementById("main-currency-select-syp");
   if (!tbody) return;
 
-  tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:28px;color:var(--gray);">
+  tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;padding:28px;color:var(--gray);">
         <i class="fa-solid fa-spinner fa-spin" style="font-size:18px;"></i> جاري التحميل...
     </td></tr>`;
 
@@ -170,10 +172,18 @@ async function loadCurrencies() {
       selMain.innerHTML = `<option value="">اختر العملة</option>` + optionsHtml;
     }
 
+    // 4. قوائم جهة السوري
+    if (selSyp) {
+      selSyp.innerHTML = `<option value="">اختر العملة</option>` + optionsHtml;
+    }
+    if (selMainSyp) {
+      selMainSyp.innerHTML = `<option value="">اختر العملة</option>` + optionsHtml;
+    }
+
     renderCurrenciesTable(allCurrencies);
   } catch (err) {
     console.error("loadCurrencies:", err);
-    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--danger);padding:20px;">خطأ في التحميل</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;color:var(--danger);padding:20px;">خطأ في التحميل</td></tr>`;
   }
 }
 function fillSelect(select, data, placeholder = "اختر من القائمة") {
@@ -775,7 +785,10 @@ document
     }
 
     try {
-      const res = await fetch(`${API_URL}/register`, {
+      // ✅ تم التحويل من /register العام إلى /staff المحمي بصلاحية super_admin
+      // نفس البيانات تمامًا، فقط الـ endpoint تغيّر. هذا يسد ثغرة كانت تسمح
+      // لأي شخص خارجي بإنشاء حساب super_admin دون تسجيل دخول.
+      const res = await fetch(`${API_URL}/staff`, {
         method: "POST",
         headers: getHeaders(), // 👈 سيتم الآن إرسال Accept: application/json
         body: JSON.stringify(data),
@@ -1274,6 +1287,7 @@ async function updatePrice() {
 
     if (data.status === "success") {
       alert("تم تحديث السعر بنجاح");
+      if (typeof loadCurrencies === "function") loadCurrencies();
     } else {
       alert("خطأ: " + data.message);
     }
@@ -1350,67 +1364,64 @@ async function renderCurrenciesTable() {
   if (!tbody) return;
 
   const currencies = await fetchCurrencies();
-  tbody.innerHTML = "";
+  currenciesCache = currencies || [];
 
-  if (!currencies || currencies.length === 0) {
+  if (currenciesCache.length === 0) {
     tbody.innerHTML =
-      '<tr><td colspan="5" style="text-align:center;">لا توجد بيانات للعملات</td></tr>';
+      '<tr><td colspan="10" style="text-align:center;">لا توجد بيانات للعملات</td></tr>';
     return;
   }
 
-  // 1. استخراج سعر الليرة السورية مقابل الدولار لإجراء العملية الحسابية
-  const sypCurrency = currencies.find((c) => c.code === "SYP");
-  const sypPriceInUsd = sypCurrency ? parseFloat(sypCurrency.price) : 0;
+  // دولار: نفس التنسيق القديم — سوري: فواصل آلاف
+  const fmtUsd = (v) =>
+    v === null || v === undefined || v === ""
+      ? "—"
+      : parseFloat(v).toFixed(6).replace(/\.?0+$/, "");
+  const fmtSyp = (v) =>
+    v === null || v === undefined || v === ""
+      ? "—"
+      : new Intl.NumberFormat("en-US", { maximumFractionDigits: 6 }).format(
+          parseFloat(v),
+        );
 
-  currencies.forEach((currency, index) => {
-    // تنسيق السعر بالدولار
-    const priceInUsd = parseFloat(currency.price);
-    const mainPrice = parseFloat(currency.main_price || 0);
-    const formattedPriceUsd = priceInUsd.toFixed(6).replace(/\.?0+$/, "");
+  const tiersBadge = (rates) =>
+    rates && rates.length > 0
+      ? `<span class="tiers-count-badge"><i class="fa-solid fa-layer-group"></i> ${rates.length} شريحة</span>`
+      : `<span class="tiers-count-badge tiers-empty"><i class="fa-solid fa-minus"></i> لا يوجد</span>`;
 
-    // 2. حساب السعر بالليرة السورية وتنسيقه (Frontend Only)
-    let priceInSypHtml = "-";
-    if (sypPriceInUsd > 0) {
-      // المعادلة: سعر العملة / سعر الليرة السورية
-      const calculatedSyp = priceInUsd / sypPriceInUsd;
+  const priceStyle =
+    "font-weight: bold; color: var(--success); direction: ltr; text-align: right;";
+  const sypStyle =
+    "font-weight: bold; color: var(--secondary); direction: ltr; text-align: right;";
 
-      // تنسيق الرقم ليحتوي على فواصل الألوف (مثال: 15,000)
-      const formattedSyp = new Intl.NumberFormat("en-US", {
-        maximumFractionDigits: 2,
-      }).format(calculatedSyp);
-
-      priceInSypHtml = formattedSyp;
-    }
-
-    tbody.innerHTML += `
+  tbody.innerHTML = currenciesCache
+    .map(
+      (currency, index) => `
             <tr>
                 <td>${index + 1}</td>
                 <td><strong>${currency.name}</strong></td>
                 <td><span class="role-badge" style="background: var(--primary-bg); color: var(--primary-dark);">${currency.code}</span></td>
-                <td style="font-weight: bold; color: var(--success); direction: ltr; text-align: right;">
-                    ${formattedPriceUsd}
-                </td>
-                <td style="font-weight: bold; color: var(--success); direction: ltr; text-align: right;">
-                    ${mainPrice}
-                </td>
-                <td style="font-weight: bold; color: var(--secondary); direction: ltr; text-align: right;">
-                    ${priceInSypHtml}
-                </td>
+
+                <td class="col-usd" style="${priceStyle}">${fmtUsd(currency.price)}</td>
+                <td class="col-usd" style="${priceStyle}">${fmtUsd(currency.main_price ?? 0)}</td>
+                <td class="col-usd">${tiersBadge(currency.rates)}</td>
+
+                <td class="col-syp" style="${sypStyle}">${fmtSyp(currency.price_syp)}</td>
+                <td class="col-syp" style="${sypStyle}">${fmtSyp(currency.main_price_syp)}</td>
+                <td class="col-syp">${tiersBadge(currency.syp_rates)}</td>
+
                 <td>
-                    ${
-                      currency.rates && currency.rates.length > 0
-                        ? `<span class="tiers-count-badge"><i class="fa-solid fa-layer-group"></i> ${currency.rates.length} شريحة</span>`
-                        : `<span class="tiers-count-badge tiers-empty"><i class="fa-solid fa-minus"></i> لا يوجد</span>`
-                    }
-                </td>
-                <td>
-                    <button class="btn-manage-rates" onclick="openRatesModal(${currency.id}, '${currency.name}', '${currency.code}', ${JSON.stringify(currency.rates || []).replace(/"/g, "&quot;")})">
+                    <button class="btn-manage-rates col-usd" onclick="openRatesModal(${currency.id}, 'usd')">
+                        <i class="fa-solid fa-sliders"></i> إدارة الشرائح
+                    </button>
+                    <button class="btn-manage-rates col-syp" onclick="openRatesModal(${currency.id}, 'syp')">
                         <i class="fa-solid fa-sliders"></i> إدارة الشرائح
                     </button>
                 </td>
             </tr>
-        `;
-  });
+        `,
+    )
+    .join("");
 }
 
 let cachedCurrencies = [];
@@ -2392,14 +2403,52 @@ document.addEventListener('click', () => {
   document.querySelectorAll('.id-img-dropdown').forEach(d => d.style.display = 'none');
 });
 
-function openIdImageModal(imageUrl) {
+// ═══════════════════════════════════════════════════════
+//   تحميل الصور المحمية (هوية / إيصالات) عبر API بدل /storage
+//   السبب: nginx يعترض الروابط المنتهية بـ .jpg/.png ويُرجع 404،
+//   كما أن صور الهوية حساسة ويجب ألا تكون عامة.
+// ═══════════════════════════════════════════════════════
+const _secureImgCache = new Map();
+
+/** يقبل رابط STORAGE_URL/<path> ويُرجع blob: URL صالحاً للعرض والتنزيل */
+async function loadSecureImage(url) {
+  const prefix = STORAGE_URL + "/";
+  if (!url || !url.startsWith(prefix)) return url; // رابط خارجي/جاهز
+  const path = url.slice(prefix.length);
+  if (_secureImgCache.has(path)) return _secureImgCache.get(path);
+
+  const res = await fetch(
+    `${API_URL}/secure-file?p=${encodeURIComponent(path)}`,
+    {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+        Accept: "image/*",
+      },
+    },
+  );
+  if (!res.ok) throw new Error("HTTP " + res.status);
+  const blobUrl = URL.createObjectURL(await res.blob());
+  _secureImgCache.set(path, blobUrl);
+  return blobUrl;
+}
+
+async function openIdImageModal(imageUrl) {
   const modal = document.getElementById("id-image-modal");
   const img = document.getElementById("id-image-viewer");
   const dlBtn = document.getElementById("id-image-download");
-  img.src = imageUrl;
-  dlBtn.href = imageUrl;
+  img.removeAttribute("src");
   modal.classList.remove("hidden");
   document.body.style.overflow = "hidden";
+  try {
+    const src = await loadSecureImage(imageUrl);
+    img.src = src;
+    dlBtn.href = src;
+    dlBtn.download = decodeURIComponent(imageUrl.split("/").pop() || "image");
+  } catch (e) {
+    console.error("openIdImageModal error:", e);
+    modal.classList.add("hidden");
+    alert("تعذّر تحميل الصورة");
+  }
 }
 
 function closeIdImageModal(e) {
@@ -3942,16 +3991,34 @@ function filterSafesTable() {
    ============================================== */
 
 let currentRatesCurrencyId = null;
+let currentRatesType = "usd"; // "usd" | "syp"
+let currenciesCache = [];
 
-function openRatesModal(currencyId, name, code, rates) {
+function openRatesModal(currencyId, type = "usd") {
+  const currency = currenciesCache.find((c) => c.id == currencyId);
+  if (!currency) return;
+
   currentRatesCurrencyId = currencyId;
-  document.getElementById("rates-modal-currency-name").textContent = name;
-  document.getElementById("rates-modal-currency-code").textContent = code;
+  currentRatesType = type === "syp" ? "syp" : "usd";
+  const isSyp = currentRatesType === "syp";
+
+  document.getElementById("rates-modal-currency-name").textContent =
+    currency.name;
+  document.getElementById("rates-modal-currency-code").textContent =
+    `${currency.code} • ${isSyp ? "شرائح الأسعار بالليرة السورية" : "شرائح الأسعار بالدولار"}`;
+
+  const banner = document.querySelector("#rates-modal .rates-info-banner span");
+  if (banner) {
+    banner.textContent = isSyp
+      ? "حدد سعر الصرف بالليرة السورية لكل نطاق مبلغ. هذه الشرائح مستقلة تماماً عن شرائح الدولار."
+      : "حدد سعر الصرف وسعر رئيسي (main_price) لكل نطاق مبلغ. السعر الرئيسي هو السعر المرجعي الداخلي لكل شريحة.";
+  }
 
   const container = document.getElementById("rates-tiers-container");
   container.innerHTML = "";
 
-  if (rates && rates.length > 0) {
+  const rates = (isSyp ? currency.syp_rates : currency.rates) || [];
+  if (rates.length > 0) {
     rates.forEach((tier) => addRateTier(tier));
   } else {
     // شريحة افتراضية واحدة فارغة
@@ -3966,6 +4033,7 @@ function closeRatesModal() {
   document.getElementById("rates-modal").classList.add("hidden");
   document.body.style.overflow = "";
   currentRatesCurrencyId = null;
+  currentRatesType = "usd";
 }
 
 function handleRatesModalBackdrop(e) {
@@ -3977,6 +4045,12 @@ function handleRatesModalBackdrop(e) {
 function addRateTier(data = null) {
   const container = document.getElementById("rates-tiers-container");
   const index = container.querySelectorAll(".rate-tier-row").length + 1;
+  const isSyp = currentRatesType === "syp";
+  const minLabel = isSyp ? "من (مبلغ العملة)" : "من (USD)";
+  const maxLabel = isSyp ? "إلى (مبلغ العملة)" : "إلى (USD)";
+  const rateLabel = isSyp
+    ? '<i class="fa-solid fa-money-bill-wave"></i> السعر مقابل الليرة السورية'
+    : '<i class="fa-solid fa-dollar-sign"></i> السعر مقابل الدولار';
 
   const row = document.createElement("div");
   row.className = "rate-tier-row";
@@ -3984,18 +4058,18 @@ function addRateTier(data = null) {
         <div class="tier-number">${index}</div>
         <div class="tier-fields">
             <div class="tier-field">
-                <label><i class="fa-solid fa-arrow-down"></i> من (USD)</label>
+                <label><i class="fa-solid fa-arrow-down"></i> ${minLabel}</label>
                 <input type="number" class="tier-min" placeholder="0" min="0" step="any"
                     value="${data ? data.min_amount : ""}">
             </div>
             <div class="tier-field">
-                <label><i class="fa-solid fa-arrow-up"></i> إلى (USD)</label>
+                <label><i class="fa-solid fa-arrow-up"></i> ${maxLabel}</label>
                 <input type="number" class="tier-max" placeholder="∞ لا نهاية" min="0" step="any"
                     value="${data && data.max_amount != null ? data.max_amount : ""}">
                 <small class="tier-hint">اتركه فارغاً = ما لا نهاية</small>
             </div>
             <div class="tier-field">
-                <label><i class="fa-solid fa-dollar-sign"></i> السعر مقابل الدولار</label>
+                <label>${rateLabel}</label>
                 <input type="number" class="tier-rate" placeholder="1.0000" min="0" step="any"
                     value="${data ? data.rate : ""}">
             </div>
@@ -4064,9 +4138,10 @@ async function saveRates() {
     return;
   }
 
-  if (rates.length === 0) {
-    if (typeof notyf !== "undefined") notyf.error("أضف شريحة واحدة على الأقل");
-    else alert("أضف شريحة واحدة على الأقل");
+  if (
+    rates.length === 0 &&
+    !confirm("لم تُدخل أي شريحة، سيتم حذف كل الشرائح الحالية لهذه الجهة. هل تريد المتابعة؟")
+  ) {
     return;
   }
 
@@ -4077,7 +4152,7 @@ async function saveRates() {
 
   try {
     const res = await fetch(
-      `${API_URL}/currencies/${currentRatesCurrencyId}/rates`,
+      `${API_URL}/currencies/${currentRatesCurrencyId}/rates${currentRatesType === "syp" ? "-syp" : ""}`,
       {
         method: "POST",
         headers: getHeaders(),
@@ -4106,4 +4181,79 @@ async function saveRates() {
     saveBtn.disabled = false;
     saveBtn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> حفظ الشرائح';
   }
+}
+
+
+/* ==============================================
+   أسعار الصرف بالسوري + تبديل الجهة (دولار / سوري)
+   ============================================== */
+
+function setRateMode(mode) {
+  const section = document.getElementById("exchange-section");
+  if (!section) return;
+
+  section.dataset.mode = mode === "syp" ? "syp" : "usd";
+
+  document.querySelectorAll(".rate-mode-tab").forEach((btn) => {
+    btn.classList.toggle("active", btn.dataset.mode === section.dataset.mode);
+  });
+}
+
+function rateNotify(type, msg) {
+  if (typeof notyf !== "undefined") notyf[type](msg);
+  else alert(msg);
+}
+
+// يرسل تحديث سعر واحد (سعر البيع أو التكلفة بالسوري)
+async function sendSypPrice({ selectId, inputId, endpoint, field, successMsg }) {
+  const currencyId = document.getElementById(selectId)?.value;
+  const input = document.getElementById(inputId);
+  const value = input?.value;
+
+  if (!currencyId || value === "" || value === undefined) {
+    rateNotify("error", "يرجى اختيار العملة وإدخال السعر الجديد");
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_URL}/currencies/${endpoint}/${currencyId}`, {
+      method: "PUT",
+      headers: getHeaders(),
+      body: JSON.stringify({ [field]: value }),
+    });
+    const data = await res.json();
+
+    if (res.ok && data.status === "success") {
+      rateNotify("success", successMsg);
+      input.value = "";
+      loadCurrencies(); // تحديث الجدول
+    } else {
+      rateNotify("error", data.message || "حدث خطأ أثناء التحديث");
+    }
+  } catch (error) {
+    console.error("sendSypPrice:", error);
+    rateNotify("error", "تعذر الاتصال بالسيرفر");
+  }
+}
+
+// سعر البيع بالسوري (السعر للمستخدم)
+function updatePriceSyp() {
+  return sendSypPrice({
+    selectId: "currency-select-syp",
+    inputId: "new-price-syp",
+    endpoint: "update-price-syp",
+    field: "price_syp",
+    successMsg: "تم تحديث السعر بالسوري بنجاح",
+  });
+}
+
+// سعر التكلفة بالسوري (السعر الرئيسي)
+function updateMainPriceSyp() {
+  return sendSypPrice({
+    selectId: "main-currency-select-syp",
+    inputId: "new-main-price-syp",
+    endpoint: "update-main-price-syp",
+    field: "main_price_syp",
+    successMsg: "تم تحديث السعر الرئيسي بالسوري بنجاح",
+  });
 }

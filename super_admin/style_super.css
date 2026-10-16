@@ -4277,3 +4277,48 @@ select:focus {
     text-align: center;
     flex-shrink: 0;
 }
+
+/* ===== تبويب جهة سعر الصرف: دولار / سوري ===== */
+.rate-mode-tabs {
+    display: flex;
+    gap: 8px;
+    margin: 0 0 24px;
+    padding: 6px;
+    background: var(--light);
+    border-radius: var(--radius-sm);
+}
+
+.rate-mode-tab {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 11px 16px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--gray);
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.rate-mode-tab:hover {
+    color: var(--primary-dark);
+}
+
+.rate-mode-tab.active {
+    background: var(--primary);
+    color: #fff;
+    box-shadow: var(--shadow);
+}
+
+#exchange-section[data-mode="usd"] .mode-syp,
+#exchange-section[data-mode="usd"] .col-syp,
+#exchange-section[data-mode="syp"] .mode-usd,
+#exchange-section[data-mode="syp"] .col-usd {
+    display: none !important;
+}

@@ -1,4 +1,4 @@
-const API_URL = "https://flashpay-back-1.onrender.com/api";
+const API_URL = "https://api.flashpay.website/api";
 async function checkAuth() {
   const token = localStorage.getItem("auth_token"); // ✅ مفتاح موحّد مع getHeaders
 
@@ -8,7 +8,7 @@ async function checkAuth() {
   }
 
   try {
-    const res = await fetch("https://flashpay-back-1.onrender.com/api/me", {
+    const res = await fetch("https://api.flashpay.website/api/me", {
       headers: {
         Authorization: "Bearer " + token,
         Accept: "application/json",
@@ -153,6 +153,23 @@ function setActive(element) {
 
   element.parentElement.classList.add("active");
 }
+/* ── المبلغ الذي يستلمه المستلم: يأتي جاهزاً من الـ API (receive_amount) ──
+   حوالة بالسوري → amount_in_syp | حوالة بالدولار → amount_in_usd ÷ سعر عملة الاستلام */
+function getTransferReceiveAmount(t) {
+  if (t.receive_amount !== undefined && t.receive_amount !== null) {
+    return Number(t.receive_amount);
+  }
+  const price = Number(t.currency?.price ?? 1);
+  return price > 0 ? Number(t.amount_in_usd ?? 0) / price : 0;
+}
+
+function fmtReceiveAmount(v, code) {
+  const n = Number(v) || 0;
+  return String(code).toUpperCase() === "SYP"
+    ? Math.round(n).toLocaleString("en-US")
+    : n.toFixed(2);
+}
+
 async function loadAllTransfers() {
   const tbody = document.getElementById("all-transfers-list");
   const emptyEl = document.getElementById("all-transfers-empty");
@@ -195,8 +212,7 @@ async function loadAllTransfers() {
       const sendCurrency =
         transfer.send_currency?.code ?? transfer.sendCurrency?.code ?? "—";
       const recvCurrency = transfer.currency?.code ?? "—";
-      const recvPrice = Number(transfer.currency?.price ?? 1);
-      const deliveryAmt = recvPrice > 0 ? amountUsd / recvPrice : 0;
+      const deliveryAmt = getTransferReceiveAmount(transfer);
       const fee = Number(transfer.fee ?? 0);
       const date = transfer.created_at
         ? new Date(transfer.created_at).toLocaleString("ar-SY")
@@ -224,7 +240,7 @@ async function loadAllTransfers() {
           <td>
             <div style="font-weight:800;color:var(--primary);">$${amountUsd.toFixed(2)}</div>
             <div style="font-size:11px;color:var(--gray);direction:ltr;margin-top:2px;">${sendAmount.toFixed(2)} ${sendCurrency}</div>
-            <div style="font-size:11px;color:#7c3aed;margin-top:2px;">يستلم: <b>${deliveryAmt.toFixed(2)} ${recvCurrency}</b></div>
+            <div style="font-size:11px;color:#7c3aed;margin-top:2px;">يستلم: <b>${fmtReceiveAmount(deliveryAmt, recvCurrency)} ${recvCurrency}</b></div>
           </td>
           <td>
             <div style="font-weight:700;">${transfer.sender?.name ?? "—"}</div>
@@ -1916,8 +1932,7 @@ async function loadPendingTransfers() {
       const sendCurrency =
         transfer.send_currency?.code ?? transfer.sendCurrency?.code ?? "—";
       const recvCurrency = transfer.currency?.code ?? "—";
-      const recvPrice = Number(transfer.currency?.price ?? 1);
-      const deliveryAmt = recvPrice > 0 ? amountUsd / recvPrice : 0;
+      const deliveryAmt = getTransferReceiveAmount(transfer);
       const fee = Number(transfer.fee ?? 0);
       const date = transfer.created_at
         ? new Date(transfer.created_at).toLocaleString("ar-SY")
@@ -1965,7 +1980,7 @@ async function loadPendingTransfers() {
           <td>
             <div style="font-weight:800;color:var(--primary);">$${amountUsd.toFixed(2)}</div>
             <div style="font-size:11px;color:var(--gray);direction:ltr;">${sendAmount.toFixed(2)} ${sendCurrency}</div>
-            <div style="font-size:11px;color:#7c3aed;">يستلم: ${deliveryAmt.toFixed(2)} ${recvCurrency}</div>
+            <div style="font-size:11px;color:#7c3aed;">يستلم: ${fmtReceiveAmount(deliveryAmt, recvCurrency)} ${recvCurrency}</div>
             ${fee > 0 ? `<div style="font-size:11px;color:var(--success);">رسوم: $${fee.toFixed(2)}</div>` : ""}
           </td>
           <td style="font-size:12px;">${destText}</td>
@@ -2103,7 +2118,7 @@ async function ctInitForm() {
     const currJson = await currRes.json();
     _ctCurrencies = Array.isArray(currJson) ? currJson : (currJson.data ?? []);
     _fillCurrencySelect("ct-send-currency", "اختر عملة الإرسال...");
-    _fillCurrencySelect("ct-recv-currency", "اختر عملة الاستلام...");
+    _fillCurrencySelect("ct-recv-currency", "اختر عملة الاستلام...", true);
 
     // ── المكاتب ──
     const officeJson = await officeRes.json();
@@ -2125,13 +2140,19 @@ async function ctInitForm() {
   }
 }
 
-// helper: يملأ قائمة عملات
-function _fillCurrencySelect(selId, placeholder) {
+// عملات الاستلام المسموحة: الدولار والليرة السورية فقط
+const RECEIVE_CURRENCY_CODES = ["USD", "SYP"];
+function isReceiveCurrency(c) {
+  return RECEIVE_CURRENCY_CODES.includes(String(c.code).toUpperCase());
+}
+
+// helper: يملأ قائمة عملات (receiveOnly = قائمة عملة الاستلام: USD و SYP فقط)
+function _fillCurrencySelect(selId, placeholder, receiveOnly = false) {
   const sel = document.getElementById(selId);
   if (!sel) return;
   sel.innerHTML = `<option value="">${placeholder}</option>`;
-  _ctCurrencies.forEach((c) =>
-    sel.appendChild(new Option(`${c.name} (${c.code})`, c.id)),
+  (receiveOnly ? _ctCurrencies.filter(isReceiveCurrency) : _ctCurrencies).forEach(
+    (c) => sel.appendChild(new Option(`${c.name} (${c.code})`, c.id)),
   );
 }
 
@@ -2142,8 +2163,15 @@ function _fillCurrencySelect(selId, placeholder) {
  * وإلا → يستخدم السعر الأساسي (currency.price)
  * يُرجع: { rate, tierLabel }
  */
-function getEffectiveRate(currency, amount) {
-  const rates = currency.rates ?? [];
+function getEffectiveRate(currency, amount, type = "usd") {
+  const isSyp = type === "syp";
+
+  // إرسال بالليرة واستلام بالليرة: لا يوجد تصريف
+  if (isSyp && String(currency.code).toUpperCase() === "SYP") {
+    return { rate: 1, tierLabel: null };
+  }
+
+  const rates = (isSyp ? currency.syp_rates : currency.rates) ?? [];
   if (rates.length > 0 && amount > 0) {
     // ترتيب تصاعدي حسب min_amount (الباك يُرجعها مرتبة لكن نضمن)
     const sorted = [...rates].sort(
@@ -2163,43 +2191,94 @@ function getEffectiveRate(currency, amount) {
     }
   }
   // fallback: السعر الأساسي
-  return { rate: parseFloat(currency.price ?? 1), tierLabel: null };
+  return {
+    rate: parseFloat(isSyp ? (currency.price_syp ?? 0) : (currency.price ?? 1)),
+    tierLabel: null,
+  };
+}
+
+// هل لهذه العملة سعر صرف بالسوري؟
+function hasSypRate(currency) {
+  return (
+    String(currency.code).toUpperCase() === "SYP" ||
+    parseFloat(currency.price_syp) > 0 ||
+    (currency.syp_rates ?? []).length > 0
+  );
+}
+
+/**
+ * معاينة الحوالة (داخلية ct / خارجية intl):
+ * - عملة الاستلام SYP  → يُحسب المبلغ بأسعار السوري ويُعرض بالليرة
+ * - غير ذلك            → يُعرض المكافئ بالدولار (كما كان)
+ */
+function _calcTransferPreview(prefix, currencies) {
+  const el = (suffix) => document.getElementById(`${prefix}-${suffix}`);
+  const amount = parseFloat(el("amount").value);
+  const sendCurrId = parseInt(el("send-currency").value);
+  const recvCurrId = parseInt(el("recv-currency")?.value);
+  const usdVal = el("usd-value");
+  const usdPreview = el("usd-preview");
+  const tierHint = el("tier-hint");
+  const label = usdVal.previousElementSibling; // .ct-usd-label
+
+  const recv = currencies.find((c) => c.id === recvCurrId);
+  const isSyp = !!recv && String(recv.code).toUpperCase() === "SYP";
+
+  if (label) {
+    label.textContent = isSyp
+      ? "المبلغ الذي سيستلمه المستلم (بالليرة السورية)"
+      : "القيمة المعادلة بالدولار الأمريكي";
+  }
+
+  const show = (text) => {
+    usdVal.textContent = text;
+    if (usdPreview) usdPreview.textContent = text;
+  };
+  const hint = (text, color) => {
+    if (!tierHint) return;
+    if (!text) {
+      tierHint.style.display = "none";
+      return;
+    }
+    tierHint.textContent = text;
+    tierHint.style.display = "inline-flex";
+    tierHint.style.color = color || "";
+  };
+
+  const currency = currencies.find((c) => c.id === sendCurrId);
+  if (!amount || isNaN(amount) || !currency) {
+    show(isSyp ? "0 SYP" : "$0.00");
+    hint(null);
+    return;
+  }
+
+  if (isSyp) {
+    if (!hasSypRate(currency)) {
+      show("—");
+      hint(`لا يوجد سعر صرف بالسوري للعملة ${currency.code}`, "#dc2626");
+      return;
+    }
+    const { rate, tierLabel } = getEffectiveRate(currency, amount, "syp");
+    const usdEq = amount * getEffectiveRate(currency, amount, "usd").rate;
+    show(`${Math.round(amount * rate).toLocaleString("en-US")} SYP`);
+    hint(
+      `${tierLabel ? "السعر المطبّق (سوري)" : "السعر الأساسي (سوري)"}: ${rate}` +
+        `${tierLabel ? ` (${tierLabel})` : ""} • ≈ $${usdEq.toFixed(2)}`,
+    );
+    return;
+  }
+
+  const { rate, tierLabel } = getEffectiveRate(currency, amount, "usd");
+  show(`$${(amount * rate).toFixed(2)}`);
+  hint(
+    tierLabel
+      ? `السعر المطبّق: ${rate} (${tierLabel})`
+      : `السعر الأساسي: ${rate}`,
+  );
 }
 
 function ctCalculateUsd() {
-  const amount = parseFloat(document.getElementById("ct-amount").value);
-  const sendCurrId = parseInt(
-    document.getElementById("ct-send-currency").value,
-  );
-  const usdVal = document.getElementById("ct-usd-value");
-  const usdPreview = document.getElementById("ct-usd-preview");
-  const tierHint = document.getElementById("ct-tier-hint");
-
-  if (!amount || !sendCurrId || isNaN(amount)) {
-    usdVal.textContent = usdPreview.textContent = "$0.00";
-    if (tierHint) tierHint.style.display = "none";
-    return;
-  }
-  const currency = _ctCurrencies.find((c) => c.id === sendCurrId);
-  if (!currency) {
-    usdVal.textContent = usdPreview.textContent = "$0.00";
-    if (tierHint) tierHint.style.display = "none";
-    return;
-  }
-
-  const { rate, tierLabel } = getEffectiveRate(currency, amount);
-  const eq = (amount * rate).toFixed(2);
-  usdVal.textContent = usdPreview.textContent = `$${eq}`;
-
-  if (tierHint) {
-    if (tierLabel) {
-      tierHint.textContent = `السعر المطبّق: ${rate} (${tierLabel})`;
-      tierHint.style.display = "inline-flex";
-    } else {
-      tierHint.textContent = `السعر الأساسي: ${rate}`;
-      tierHint.style.display = "inline-flex";
-    }
-  }
+  _calcTransferPreview("ct", _ctCurrencies);
 }
 
 // معالجة رفع هوية المرسل – داخلية
@@ -2394,7 +2473,9 @@ async function intlInitForm() {
     intlRecvSel.innerHTML = '<option value="">اختر عملة الاستلام...</option>';
     _intlCurrencies.forEach((c) => {
       intlSendSel.appendChild(new Option(`${c.name} (${c.code})`, c.id));
-      intlRecvSel.appendChild(new Option(`${c.name} (${c.code})`, c.id));
+      if (isReceiveCurrency(c)) {
+        intlRecvSel.appendChild(new Option(`${c.name} (${c.code})`, c.id));
+      }
     });
 
     // ── المكاتب (يختارها المدير يدوياً) ──
@@ -2470,39 +2551,7 @@ async function intlOnCountryChange() {
 
 // حساب الدولار – خارجية
 function intlCalculateUsd() {
-  const amount = parseFloat(document.getElementById("intl-amount").value);
-  const sendCurrId = parseInt(
-    document.getElementById("intl-send-currency").value,
-  );
-  const usdVal = document.getElementById("intl-usd-value");
-  const usdPreview = document.getElementById("intl-usd-preview");
-  const tierHint = document.getElementById("intl-tier-hint");
-
-  if (!amount || !sendCurrId || isNaN(amount)) {
-    usdVal.textContent = usdPreview.textContent = "$0.00";
-    if (tierHint) tierHint.style.display = "none";
-    return;
-  }
-  const currency = _intlCurrencies.find((c) => c.id === sendCurrId);
-  if (!currency) {
-    usdVal.textContent = usdPreview.textContent = "$0.00";
-    if (tierHint) tierHint.style.display = "none";
-    return;
-  }
-
-  const { rate, tierLabel } = getEffectiveRate(currency, amount);
-  const eq = (amount * rate).toFixed(2);
-  usdVal.textContent = usdPreview.textContent = `$${eq}`;
-
-  if (tierHint) {
-    if (tierLabel) {
-      tierHint.textContent = `السعر المطبّق: ${rate} (${tierLabel})`;
-      tierHint.style.display = "inline-flex";
-    } else {
-      tierHint.textContent = `السعر الأساسي: ${rate}`;
-      tierHint.style.display = "inline-flex";
-    }
-  }
+  _calcTransferPreview("intl", _intlCurrencies);
 }
 
 // هوية المرسل – خارجية
@@ -2794,6 +2843,8 @@ function openEditModal(transfer) {
       <span style="color:var(--primary);font-weight:800;">#${transfer.id}${tracking}</span>
       &nbsp;—&nbsp;
       <span>$${amtUsd.toFixed(2)}</span>
+      &nbsp;|&nbsp;
+      <span style="color:#7c3aed;">يستلم: ${fmtReceiveAmount(getTransferReceiveAmount(transfer), transfer.currency?.code ?? "")} ${transfer.currency?.code ?? ""}</span>
       &nbsp;|&nbsp;
       <span style="color:var(--gray);">المرسل: ${transfer.sender?.name ?? "—"}</span>`;
   }
@@ -3186,7 +3237,7 @@ async function loadChatMessages() {
 
     // إعادة رسم فقط إذا تغيّر العدد (لتجنّب الوميض عند الـ polling)
     if (messages.length !== prevCount) {
-      listEl.innerHTML = messages.map((msg) => buildChatBubble(msg)).join("");
+      listEl.innerHTML = renderChatMessages(messages);
       if (wasAtBottom || messages.length !== prevCount) scrollChatToBottom();
     }
   } catch (err) {
@@ -3200,6 +3251,73 @@ async function loadChatMessages() {
   }
 }
 
+/** يحوّل مسار الصورة القادم من الـ API إلى رابط كامل صالح (/storage/...) */
+function resolveChatImageUrl(path) {
+  if (!path) return null;
+  if (path.startsWith("data:")) return path;
+  if (/^(https?:)?\/\//i.test(path)) {
+    // asset() خلف proxy قد يُنتج http:// فتحجبه المتصفحات (mixed content)
+    return location.protocol === "https:"
+      ? path.replace(/^http:\/\//i, "https://")
+      : path;
+  }
+  const base = API_URL.replace(/\/api\/?$/, "");
+  let p = String(path).replace(/^\/+/, "");
+  if (!p.startsWith("storage/")) p = "storage/" + p;
+  return `${base}/${p}`;
+}
+
+/** عند فشل تحميل الصورة: نستبدلها برسالة خطأ بدون أي inline-quotes */
+function chatImageFailed(img) {
+  const wrap = img.closest(".bubble-img-wrap");
+  if (!wrap) return;
+  const failedUrl = img.currentSrc || img.src;
+  console.warn("[chat] image failed to load:", failedUrl);
+  wrap.innerHTML = "";
+  const box = document.createElement("span");
+  box.className = "bubble-img-error";
+  box.innerHTML = '<i class="fa-solid fa-image"></i> تعذّر تحميل الصورة';
+  wrap.appendChild(box);
+}
+
+/** فتح الصورة بملء الشاشة (يُمرَّر العنصر نفسه، لا نص URL داخل attribute) */
+function chatImageOpen(img) {
+  openImageLightbox(img.currentSrc || img.src);
+}
+
+/** تسمية اليوم لفاصل الرسائل: اليوم / أمس / تاريخ */
+function chatDayLabel(d) {
+  const today = new Date();
+  const yesterday = new Date();
+  yesterday.setDate(today.getDate() - 1);
+  if (d.toDateString() === today.toDateString()) return "اليوم";
+  if (d.toDateString() === yesterday.toDateString()) return "أمس";
+  return d.toLocaleDateString("ar", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+}
+
+/** يرسم الرسائل مع فاصل تاريخ عند تغيّر اليوم */
+function renderChatMessages(messages) {
+  let lastDay = "";
+  return messages
+    .map((msg) => {
+      let sep = "";
+      const d = msg.created_at ? new Date(msg.created_at) : null;
+      if (d && !isNaN(d)) {
+        const key = d.toDateString();
+        if (key !== lastDay) {
+          lastDay = key;
+          sep = `<div class="chat-day-sep" role="separator">${chatDayLabel(d)}</div>`;
+        }
+      }
+      return sep + buildChatBubble(msg);
+    })
+    .join("");
+}
+
 /**
  * بناء فقاعة رسالة واحدة
  * يعتمد على message.sender_id مقارنةً بـ _chat.currentUserId
@@ -3208,7 +3326,7 @@ function buildChatBubble(msg) {
   const isMe = msg.sender_id === _chat.currentUserId;
   const name = msg.sender?.name ?? (isMe ? "أنت" : "الزبون");
   const text = msg.message ?? msg.text ?? "";
-  const imageUrl = msg.image_url ?? msg.image ?? null; // ← حقل الصورة من الـ API
+  const imageUrl = resolveChatImageUrl(msg.image_url ?? msg.image ?? null);
   const time = msg.created_at
     ? new Date(msg.created_at).toLocaleTimeString("ar", {
         hour: "2-digit",
@@ -3217,23 +3335,19 @@ function buildChatBubble(msg) {
     : "";
   const sideClass = isMe ? "bubble-me" : "bubble-other";
 
-  // ── محتوى الفقاعة: صورة أو نص أو كليهما معاً ──
   let contentHtml = "";
 
   if (imageUrl) {
-    // عرض الصورة — نُنشئ رابطاً كاملاً إذا كان relative path
-    const fullUrl = imageUrl.startsWith("http")
-      ? imageUrl
-      : `${API_URL.replace("/api", "")}/${imageUrl.replace(/^\//, "")}`;
     contentHtml += `
             <div class="bubble-img-wrap">
                 <img
-                    src="${fullUrl}"
+                    src="${escapeHtml(imageUrl)}"
                     class="bubble-img"
-                    alt="صورة"
+                    alt="صورة مرفقة"
                     loading="lazy"
-                    onclick="openImageLightbox('${fullUrl}')"
-                    onerror="this.closest('.bubble-img-wrap').innerHTML='<span class=\'bubble-img-error\'><i class=\'fa-solid fa-image-slash\'></i> تعذّر تحميل الصورة</span>'"
+                    onclick="chatImageOpen(this)"
+                    onload="this.classList.add('is-loaded')"
+                    onerror="chatImageFailed(this)"
                 >
             </div>`;
   }
@@ -3245,7 +3359,7 @@ function buildChatBubble(msg) {
   return `
         <div class="chat-bubble ${sideClass}">
             ${!isMe ? `<div class="bubble-name">${escapeHtml(name)}</div>` : ""}
-            <div class="bubble-body">
+            <div class="bubble-body${imageUrl && !text ? " has-img-only" : ""}">
                 ${contentHtml}
                 ${time ? `<span class="bubble-time">${time}</span>` : ""}
             </div>
@@ -3307,20 +3421,33 @@ function formatFileSize(bytes) {
 /** مشغّل الصورة fullscreen (lightbox بسيط) */
 function openImageLightbox(url) {
   const lb = document.createElement("div");
-  lb.style.cssText = `
-        position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:9999;
-        display:flex;align-items:center;justify-content:center;cursor:zoom-out;
-        animation:fadeIn .2s ease;
-    `;
-  lb.innerHTML = `
-        <img src="${url}" style="max-width:92vw;max-height:92vh;border-radius:10px;box-shadow:0 8px 40px rgba(0,0,0,0.6);">
-        <button style="position:absolute;top:18px;left:18px;background:rgba(255,255,255,.15);border:none;color:white;width:38px;height:38px;border-radius:50%;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;" onclick="this.parentElement.remove()">
-            <i class="fa-solid fa-xmark"></i>
-        </button>
-    `;
-  lb.onclick = (e) => {
-    if (e.target === lb) lb.remove();
+  lb.setAttribute("role", "dialog");
+  lb.setAttribute("aria-label", "عرض الصورة");
+  lb.style.cssText =
+    "position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:9999;display:flex;align-items:center;justify-content:center;cursor:zoom-out;animation:fadeIn .2s ease;";
+
+  const img = document.createElement("img");
+  img.src = url;
+  img.style.cssText =
+    "max-width:92vw;max-height:92vh;border-radius:10px;box-shadow:0 8px 40px rgba(0,0,0,0.6);";
+
+  const close = document.createElement("button");
+  close.type = "button";
+  close.setAttribute("aria-label", "إغلاق");
+  close.style.cssText =
+    "position:absolute;top:18px;left:18px;background:rgba(255,255,255,.15);border:none;color:white;width:44px;height:44px;border-radius:50%;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;";
+  close.innerHTML = '<i class="fa-solid fa-xmark"></i>';
+
+  const remove = () => {
+    lb.remove();
+    document.removeEventListener("keydown", onKey);
   };
+  const onKey = (ev) => ev.key === "Escape" && remove();
+  close.onclick = remove;
+  lb.onclick = (ev) => ev.target === lb && remove();
+  document.addEventListener("keydown", onKey);
+
+  lb.append(img, close);
   document.body.appendChild(lb);
 }
 
@@ -3366,7 +3493,7 @@ async function sendChatMessage() {
       await loadChatMessages();
       scrollChatToBottom();
     } else {
-      const err = await res.json();
+      const err = await res.json().catch(() => ({}));
       alert(err.message ?? "تعذّر إرسال الرسالة");
     }
   } catch (e) {
@@ -4896,3 +5023,11 @@ function closeSnapshotModal() {
   if (modal) modal.classList.add("hidden");
   document.body.style.overflow = "";
 }
+
+// ── Esc يغلق لوحة الدردشة (إلا إذا كانت الصورة مفتوحة بملء الشاشة) ──
+document.addEventListener("keydown", (e) => {
+  if (e.key !== "Escape") return;
+  if (document.querySelector('[role="dialog"][aria-label="عرض الصورة"]')) return;
+  const panel = document.getElementById("chat-panel");
+  if (panel && !panel.classList.contains("hidden")) closeChatPanel();
+});

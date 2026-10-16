@@ -1029,21 +1029,32 @@
                     </div>
                 </div>
 
-                <div id="exchange-section" class="card hidden">
+                <div id="exchange-section" class="card hidden" data-mode="usd">
 
                     <!-- Hero Banner لأسعار الصرف -->
                     <div class="section-hero exchange-hero">
                         <div class="section-hero-text">
                             <h2><i class="fa-solid fa-exchange-alt"></i> إدارة
                                 أسعار الصرف</h2>
-                            <p>تحديث ومراقبة أسعار العملات مقابل الدولار
-                                الأمريكي</p>
+                            <p>تحديث ومراقبة أسعار العملات مقابل الدولار والليرة السورية (كل جهة مستقلة)</p>
                         </div>
                         <div class="section-hero-stats">
 
                         </div>
                     </div>
 
+                    <!-- تبويب اختيار جهة سعر الصرف: دولار / سوري -->
+                    <div class="rate-mode-tabs">
+                        <button type="button" class="rate-mode-tab active" data-mode="usd" onclick="setRateMode('usd')">
+                            <i class="fa-solid fa-dollar-sign"></i> التحويل بالدولار
+                        </button>
+                        <button type="button" class="rate-mode-tab" data-mode="syp" onclick="setRateMode('syp')">
+                            <i class="fa-solid fa-money-bill-wave"></i> التحويل بالسوري
+                        </button>
+                    </div>
+
+                    <!-- ========== جهة الدولار (كما كانت) ========== -->
+                    <div class="mode-usd">
                     <!-- فورم تحديث السعر  الرئيسي-->
                     <div class="collapsible-form" style="margin-bottom:28px;">
                         <button class="collapse-toggle"
@@ -1139,6 +1150,72 @@
                     </div>
                     <hr class="section-divider">
 
+                    </div>
+                    <!-- ========== نهاية جهة الدولار ========== -->
+
+                    <!-- ========== جهة السوري ========== -->
+                    <div class="mode-syp">
+                        <!-- فورم تحديث سعر الصرف الرئيسي بالسوري -->
+                        <div class="collapsible-form" style="margin-bottom:28px;">
+                            <button class="collapse-toggle"
+                                style="cursor:default; pointer-events:none;">
+                                <span><i class="fa-solid fa-rotate"></i> تحديث سعر الصرف الرئيسي بالسوري</span>
+                            </button>
+                            <div class="collapse-body open" style="max-height:300px;">
+                                <div class="styled-form" style="padding:24px;">
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label><i class="fa-solid fa-coins"></i> العملة</label>
+                                            <select id="main-currency-select-syp"></select>
+                                        </div>
+                                        <div class="form-group">
+                                            <label><i class="fa-solid fa-money-bill-wave"></i>
+                                                السعر الجديد (بالليرة السورية)</label>
+                                            <input type="number" id="new-main-price-syp"
+                                                inputmode="decimal" step="any" min="0" placeholder="0.00">
+                                        </div>
+                                    </div>
+                                    <div class="form-actions">
+                                        <button class="btn-update-price" onclick="updateMainPriceSyp()">
+                                            <i class="fa-solid fa-rotate"></i> تحديث السعر
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <hr class="section-divider">
+                        <!-- فورم تحديث سعر الصرف بالسوري -->
+                        <div class="collapsible-form" style="margin-bottom:28px;">
+                            <button class="collapse-toggle"
+                                style="cursor:default; pointer-events:none;">
+                                <span><i class="fa-solid fa-rotate"></i> تحديث سعر الصرف بالسوري</span>
+                            </button>
+                            <div class="collapse-body open" style="max-height:300px;">
+                                <div class="styled-form" style="padding:24px;">
+                                    <div class="form-row">
+                                        <div class="form-group">
+                                            <label><i class="fa-solid fa-coins"></i> العملة</label>
+                                            <select id="currency-select-syp"></select>
+                                        </div>
+                                        <div class="form-group">
+                                            <label><i class="fa-solid fa-money-bill-wave"></i>
+                                                السعر الجديد (بالليرة السورية)</label>
+                                            <input type="number" id="new-price-syp"
+                                                inputmode="decimal" step="any" min="0" placeholder="0.00">
+                                        </div>
+                                    </div>
+                                    <div class="form-actions">
+                                        <button class="btn-update-price" onclick="updatePriceSyp()">
+                                            <i class="fa-solid fa-rotate"></i> تحديث السعر
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <hr class="section-divider">
+                    </div>
+                    <!-- ========== نهاية جهة السوري ========== -->
+
                     <!-- شريط أدوات الجدول -->
                     <div class="table-toolbar" style="margin-bottom:16px;">
                         <div
@@ -1165,10 +1242,12 @@
                                     <th>#</th>
                                     <th>العملة</th>
                                     <th>الرمز</th>
-                                    <th>السعر للمستخدم </th>
-                                    <th>السعر الرئيسي </th>
-                                    <th>السعر (ل.س)</th>
-                                    <th>الشرائح</th>
+                                    <th class="col-usd">السعر للمستخدم ($)</th>
+                                    <th class="col-usd">السعر الرئيسي ($)</th>
+                                    <th class="col-usd">شرائح الدولار</th>
+                                    <th class="col-syp">السعر للمستخدم (ل.س)</th>
+                                    <th class="col-syp">السعر الرئيسي (ل.س)</th>
+                                    <th class="col-syp">شرائح السوري</th>
                                     <th>إجراءات</th>
                                 </tr>
                             </thead>

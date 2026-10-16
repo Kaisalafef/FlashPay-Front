@@ -1,209 +1,443 @@
-/* --- الإعدادات الأساسية --- */
-html {
-    font-size: 16px;
-    height: 100%;
+/* =====================================================
+   FlashPay – صفحة تسجيل الدخول
+   الملف: login/login.css
+   ===================================================== */
+
+:root {
+    /* ألوان العلامة */
+    --brand-600: #c2410c;
+    --brand-700: #9a3412;
+    --brand-400: #fb923c;
+    --gold: #fbbf24;
+
+    /* ألوان الواجهة */
+    --ink-950: #070b16;
+    --ink-900: #0b1220;
+    --ink-800: #111b33;
+    --text: #0f172a;
+    --text-muted: #5b6475;
+    --line: #e2e8f0;
+    --field-bg: #f8fafc;
+
+    --danger: #dc2626;
+    --danger-bg: #fef2f2;
+    --warn: #b45309;
+    --warn-bg: #fffbeb;
+
+    --radius-lg: 28px;
+    --radius-md: 14px;
+    --ease: cubic-bezier(.22, 1, .36, 1);
 }
 
-* {
+*,
+*::before,
+*::after {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    font-family: 'Cairo', sans-serif;
+}
+
+html {
+    font-size: 16px;
+    -webkit-text-size-adjust: 100%;
 }
 
 body {
-    background: linear-gradient(135deg, rgba(26, 26, 46, 0.85) 0%, rgba(22, 33, 62, 0.9) 20%, rgba(15, 52, 96, 0.85) 50%),
-        url('https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=1920&q=80') center/cover no-repeat fixed;
-    height: 100vh;
-    /* استخدام height بدلاً من min-height لمنع السكرول */
-    width: 100vw;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-    position: relative;
-    overflow: hidden;
-    /* يمنع ظهور شريط التمرير */
+    font-family: 'Cairo', system-ui, sans-serif;
     direction: rtl;
     line-height: 1.6;
-    font-size: 0.875rem;
-}
-
-.login-container {
-    background: rgba(255, 255, 255, 0.98);
-    border-radius: 24px;
-    box-shadow: 0 25px 80px rgba(0, 0, 0, 0.4);
-    width: 100%;
-    max-width: 440px;
-    /* تقليل العرض قليلاً ليتناسب مع كافة الشاشات */
-    padding: 40px 35px;
-    /* موازنة الحواف الداخلية */
+    color: var(--text);
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: grid;
+    place-items: center;
+    padding: 24px;
     position: relative;
-    z-index: 10;
-    max-height: 95vh;
-    /* ضمان عدم خروج الحاوية عن الشاشة */
-    overflow-y: auto;
-    /* يسمح بالسكرول داخل الكارت فقط إذا كانت الشاشة صغيرة جداً */
+    overflow-x: hidden;
+    background:
+        radial-gradient(1200px 600px at 85% -10%, rgba(234, 88, 12, .22), transparent 60%),
+        radial-gradient(900px 600px at 0% 110%, rgba(37, 99, 235, .22), transparent 60%),
+        linear-gradient(160deg, var(--ink-950), var(--ink-900) 55%, var(--ink-800));
 }
 
-/* --- شعار النظام --- */
+/* شبكة خفيفة في الخلفية */
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background-image:
+        linear-gradient(rgba(255, 255, 255, .035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, .035) 1px, transparent 1px);
+    background-size: 44px 44px;
+    -webkit-mask-image: radial-gradient(ellipse at center, #000 30%, transparent 75%);
+    mask-image: radial-gradient(ellipse at center, #000 30%, transparent 75%);
+    pointer-events: none;
+}
+
+/* كرات ضوئية متحركة */
+.orb {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: .5;
+    pointer-events: none;
+    will-change: transform;
+}
+
+.orb-1 {
+    width: 380px;
+    height: 380px;
+    background: #ea580c;
+    top: -120px;
+    right: -100px;
+    animation: float 14s ease-in-out infinite;
+}
+
+.orb-2 {
+    width: 340px;
+    height: 340px;
+    background: #2563eb;
+    bottom: -140px;
+    left: -100px;
+    animation: float 18s ease-in-out infinite reverse;
+}
+
+/* ===== الهيكل العام ===== */
+.auth-shell {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    max-width: 980px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    background: #fff;
+    box-shadow:
+        0 40px 100px rgba(0, 0, 0, .55),
+        0 0 0 1px rgba(255, 255, 255, .08);
+    animation: cardIn .7s var(--ease) both;
+}
+
+/* ===== لوحة النموذج ===== */
+.form-panel {
+    padding: 48px 44px 28px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
 .logo-section {
     text-align: center;
-    margin-bottom: 25px;
+    margin-bottom: 28px;
 }
 
 .logo {
-    width: 80px;
-    height: 80px;
-    background: linear-gradient(135deg, hsl(28, 95%, 40%) 0%, hsl(28, 95%, 55%) 100%);
-    border-radius: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 0 auto 15px;
-    box-shadow: 0 15px 40px rgba(198, 105, 0, 0.35);
+    width: 72px;
+    height: 72px;
+    margin: 0 auto 14px;
+    border-radius: 22px;
+    display: grid;
+    place-items: center;
+    background: linear-gradient(135deg, #f97316, var(--brand-600));
+    box-shadow: 0 14px 34px rgba(194, 65, 12, .38), inset 0 1px 0 rgba(255, 255, 255, .35);
+    position: relative;
+}
+
+.logo::after {
+    content: "";
+    position: absolute;
+    inset: -6px;
+    border-radius: 28px;
+    border: 1px dashed rgba(194, 65, 12, .35);
 }
 
 .logo i {
-    font-size: 2rem;
-    color: white;
+    font-size: 1.9rem;
+    color: #fff;
+    filter: drop-shadow(0 2px 6px rgba(0, 0, 0, .25));
 }
 
 .logo-section h1 {
-    color: #1f2937;
-    font-size: 1.5rem;
-    font-weight: 700;
-    margin-bottom: 5px;
+    font-size: 1.75rem;
+    font-weight: 800;
+    letter-spacing: .3px;
+    color: var(--text);
 }
 
 .logo-section p {
-    color: #6b7280;
-    font-size: 0.85rem;
+    margin-top: 2px;
+    color: var(--text-muted);
+    font-size: .9rem;
     font-weight: 500;
 }
 
-/* --- الحقول والنصوص --- */
+.welcome {
+    margin-bottom: 22px;
+    text-align: center;
+}
+
+.welcome h2 {
+    font-size: 1.15rem;
+    font-weight: 700;
+}
+
+.welcome span {
+    color: var(--text-muted);
+    font-size: .85rem;
+}
+
+/* ===== الحقول ===== */
 .form-group {
-    margin-bottom: 20px;
-    position: relative;
+    margin-bottom: 18px;
 }
 
 .form-group label {
     display: block;
-    margin-bottom: 8px;
-    color: #1f2937;
+    margin-bottom: 7px;
     font-weight: 600;
-    font-size: 0.85rem;
+    font-size: .88rem;
+    color: var(--text);
 }
 
 .form-group label .required {
-    color: #dc3545;
+    color: var(--danger);
 }
 
 .input-wrapper {
     position: relative;
 }
 
-.input-wrapper i {
+.input-wrapper .field-icon {
     position: absolute;
     right: 16px;
     top: 50%;
     transform: translateY(-50%);
-    color: hsl(28, 95%, 40%);
+    color: #94a3b8;
     font-size: 1rem;
+    pointer-events: none;
+    transition: color .25s;
+}
+
+.input-wrapper:focus-within .field-icon {
+    color: var(--brand-600);
 }
 
 .form-control {
     width: 100%;
-    padding: 14px 45px 14px 15px;
-    border: 2px solid #e5e7eb;
-    border-radius: 12px;
-    font-size: 0.9rem;
-    background: #f9fafb;
-    transition: all 0.3s ease;
+    height: 52px;
+    padding: 0 46px 0 16px;
+    font: inherit;
+    font-size: .95rem;
+    color: var(--text);
+    background: var(--field-bg);
+    border: 1.5px solid var(--line);
+    border-radius: var(--radius-md);
+    transition: border-color .25s, background .25s, box-shadow .25s;
+}
+
+.form-control::placeholder {
+    color: #94a3b8;
+}
+
+.form-control:hover {
+    border-color: #cbd5e1;
 }
 
 .form-control:focus {
     outline: none;
-    border-color: hsl(28, 95%, 40%);
-    background: white;
-    box-shadow: 0 0 0 4px rgba(198, 105, 0, 0.12);
+    border-color: var(--brand-600);
+    background: #fff;
+    box-shadow: 0 0 0 4px rgba(194, 65, 12, .14);
 }
 
-/* --- نظام التنبيهات المطور (الدمج والإصلاح) --- */
-.error-message {
-    position: relative;
-    background: #fff5f5;
-    border-right: 5px solid #ff4d4d;
-    color: #c53030;
-    padding: 14px 18px;
-    border-radius: 12px;
-    margin-bottom: 20px;
+/* البريد يُكتب من اليسار لليمين لكن يبقى محاذياً لليمين */
+.form-control.ltr {
+    direction: ltr;
+    text-align: right;
+}
+
+.form-control.ltr::placeholder {
+    text-align: right;
+}
+
+.form-control.has-toggle {
+    padding-left: 52px;
+}
+
+.form-control.is-invalid {
+    border-color: var(--danger);
+    background: var(--danger-bg);
+    animation: shake .4s ease-in-out;
+}
+
+.form-control.is-invalid:focus {
+    box-shadow: 0 0 0 4px rgba(220, 38, 38, .15);
+}
+
+/* زر إظهار كلمة المرور */
+.toggle-password {
+    position: absolute;
+    left: 6px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+    background: none;
+    border: none;
+    border-radius: 10px;
+    color: #94a3b8;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: color .2s, background .2s;
+}
+
+.toggle-password:hover {
+    color: var(--brand-600);
+    background: rgba(194, 65, 12, .08);
+}
+
+.hint {
     display: none;
-    /* يتم إظهاره عبر JS */
+    align-items: center;
+    gap: 6px;
+    margin-top: 7px;
+    font-size: .78rem;
+    font-weight: 600;
+    color: var(--warn);
+}
+
+.hint.show {
+    display: flex;
+}
+
+/* ===== رسائل التنبيه ===== */
+.error-message {
+    display: none;
     align-items: center;
     gap: 12px;
-    font-size: 0.85rem;
+    margin-bottom: 18px;
+    padding: 13px 16px;
+    font-size: .86rem;
     font-weight: 600;
-    box-shadow: 0 10px 20px rgba(220, 38, 38, 0.1);
-    animation: slideDownFade 0.4s ease forwards, shake 0.4s ease-in-out;
-}
-
-.error-message.show {
-    display: flex;
+    color: #991b1b;
+    background: var(--danger-bg);
+    border: 1px solid #fecaca;
+    border-right: 5px solid var(--danger);
+    border-radius: var(--radius-md);
 }
 
 .error-message i {
     font-size: 1.1rem;
-    color: #ff4d4d;
+    color: var(--danger);
 }
 
-/* تأثير الحقل المخطئ */
-.form-control.is-invalid {
-    border-color: #ff4d4d !important;
-    background-color: #fffafa !important;
-    box-shadow: 0 0 8px rgba(255, 77, 77, 0.2) !important;
-    animation: shake 0.4s ease-in-out;
+.error-message.warning {
+    color: #92400e;
+    background: var(--warn-bg);
+    border-color: #fde68a;
+    border-right-color: var(--gold);
 }
 
-/* زر تسجيل الدخول */
+.error-message.warning i {
+    color: var(--warn);
+}
+
+.error-message.show {
+    display: flex;
+    animation: slideDownFade .4s var(--ease) both;
+}
+
+.error-message.fade-out {
+    animation: fadeOut .4s ease forwards;
+}
+
+/* ===== زر الدخول ===== */
 .btn-login {
     width: 100%;
-    padding: 15px;
-    background: linear-gradient(135deg, hsl(28, 95%, 40%) 0%, hsl(28, 95%, 35%) 100%);
-    color: white;
-    border: none;
-    border-radius: 12px;
+    height: 54px;
+    margin-top: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    font: inherit;
     font-size: 1rem;
-    font-weight: 600;
+    font-weight: 700;
+    color: #fff;
+    background: linear-gradient(135deg, var(--brand-600), var(--brand-700));
+    border: none;
+    border-radius: var(--radius-md);
     cursor: pointer;
-    transition: all 0.3s;
-    margin-top: 10px;
-    box-shadow: 0 4px 15px rgba(198, 105, 0, 0.3);
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 10px 26px rgba(194, 65, 12, .35);
+    transition: transform .25s var(--ease), box-shadow .25s;
+}
+
+.btn-login::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -60%;
+    width: 40%;
+    height: 100%;
+    background: linear-gradient(100deg, transparent, rgba(255, 255, 255, .28), transparent);
+    transform: skewX(-20deg);
+    transition: left .7s var(--ease);
 }
 
 .btn-login:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(198, 105, 0, 0.45);
+    box-shadow: 0 14px 34px rgba(194, 65, 12, .45);
+}
+
+.btn-login:hover::before {
+    left: 130%;
 }
 
 .btn-login:active {
     transform: translateY(0);
 }
 
-/* الروابط السفلية */
+.btn-login:disabled {
+    cursor: not-allowed;
+    opacity: .85;
+    transform: none;
+}
+
+.btn-login .btn-spinner {
+    display: none;
+    width: 18px;
+    height: 18px;
+    border: 2.5px solid rgba(255, 255, 255, .4);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin .8s linear infinite;
+}
+
+.btn-login.is-loading .btn-spinner {
+    display: block;
+}
+
+/* ===== الروابط السفلية ===== */
 .footer-links {
+    margin-top: 20px;
+    padding-top: 16px;
     text-align: center;
-    margin-top: 25px;
-    padding-top: 20px;
-    border-top: 1px solid #e5e7eb;
+    border-top: 1px solid var(--line);
 }
 
 .footer-links a {
-    color: hsl(28, 95%, 40%);
-    text-decoration: none;
-    font-size: 0.85rem;
+    display: inline-block;
+    padding: 8px 12px;
+    color: var(--brand-600);
+    font-size: .88rem;
     font-weight: 600;
+    text-decoration: none;
+    border-radius: 8px;
 }
 
 .footer-links a:hover {
@@ -211,26 +445,129 @@ body {
 }
 
 .copyright {
+    margin-top: 6px;
     text-align: center;
-    margin-top: 15px;
-    color: #6b7280;
-    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-size: .78rem;
 }
 
-/* --- التحميل (Loading Overlay) --- */
+/* ===== اللوحة الجانبية (العلامة التجارية) ===== */
+.brand-panel {
+    position: relative;
+    padding: 48px 40px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    color: #fff;
+    overflow: hidden;
+    background:
+        radial-gradient(500px 300px at 100% 0%, rgba(251, 146, 60, .45), transparent 60%),
+        radial-gradient(400px 300px at 0% 100%, rgba(37, 99, 235, .4), transparent 60%),
+        linear-gradient(160deg, #0f1b3d, var(--ink-900));
+}
+
+.brand-panel::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(rgba(255, 255, 255, .09) 1px, transparent 1px);
+    background-size: 22px 22px;
+    -webkit-mask-image: linear-gradient(180deg, #000, transparent 85%);
+    mask-image: linear-gradient(180deg, #000, transparent 85%);
+}
+
+.brand-panel > * {
+    position: relative;
+}
+
+.brand-badge {
+    align-self: flex-start;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    margin-bottom: 22px;
+    font-size: .78rem;
+    font-weight: 700;
+    color: var(--gold);
+    background: rgba(251, 191, 36, .1);
+    border: 1px solid rgba(251, 191, 36, .3);
+    border-radius: 999px;
+}
+
+.brand-panel h2 {
+    font-size: 1.9rem;
+    font-weight: 800;
+    line-height: 1.45;
+    margin-bottom: 12px;
+}
+
+.brand-panel h2 em {
+    font-style: normal;
+    background: linear-gradient(90deg, var(--gold), var(--brand-400));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+.brand-panel > p {
+    color: #cbd5e1;
+    font-size: .95rem;
+    margin-bottom: 28px;
+}
+
+.feature-list {
+    list-style: none;
+    display: grid;
+    gap: 14px;
+}
+
+.feature-list li {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 16px;
+    font-size: .92rem;
+    font-weight: 600;
+    background: rgba(255, 255, 255, .06);
+    border: 1px solid rgba(255, 255, 255, .1);
+    border-radius: var(--radius-md);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    transition: transform .3s var(--ease), background .3s;
+}
+
+.feature-list li:hover {
+    transform: translateX(-4px);
+    background: rgba(255, 255, 255, .1);
+}
+
+.feature-list .f-icon {
+    flex: none;
+    width: 40px;
+    height: 40px;
+    display: grid;
+    place-items: center;
+    font-size: 1rem;
+    color: #fff;
+    background: linear-gradient(135deg, #f97316, var(--brand-600));
+    border-radius: 12px;
+}
+
+/* ===== شاشة التحميل ===== */
 .loading-overlay {
     position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(255, 255, 255, 0.95);
+    inset: 0;
+    z-index: 9999;
     display: none;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    z-index: 9999;
-    gap: 20px;
+    gap: 18px;
+    color: #fff;
+    background: rgba(7, 11, 22, .75);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
 }
 
 .loading-overlay.show {
@@ -238,83 +575,98 @@ body {
 }
 
 .loading-spinner {
-    width: 50px;
-    height: 50px;
-    border: 4px solid #f3f3f3;
-    border-top: 4px solid hsl(28, 95%, 40%);
+    width: 52px;
+    height: 52px;
+    border: 4px solid rgba(255, 255, 255, .18);
+    border-top-color: var(--brand-400);
     border-radius: 50%;
     animation: spin 1s linear infinite;
 }
 
-/* --- Animations --- */
-@keyframes spin {
-    0% {
-        transform: rotate(0deg);
-    }
+.loading-text {
+    font-weight: 600;
+    font-size: .95rem;
+}
 
-    100% {
-        transform: rotate(360deg);
-    }
+/* ===== حالات التركيز (إمكانية الوصول) ===== */
+.btn-login:focus-visible,
+.toggle-password:focus-visible,
+.footer-links a:focus-visible {
+    outline: 3px solid rgba(194, 65, 12, .55);
+    outline-offset: 2px;
+}
+
+/* ===== Animations ===== */
+@keyframes spin {
+    to { transform: rotate(360deg); }
 }
 
 @keyframes shake {
-
-    0%,
-    100% {
-        transform: translateX(0);
-    }
-
-    25% {
-        transform: translateX(-5px);
-    }
-
-    50% {
-        transform: translateX(5px);
-    }
-
-    75% {
-        transform: translateX(-5px);
-    }
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    50% { transform: translateX(5px); }
+    75% { transform: translateX(-4px); }
 }
 
 @keyframes slideDownFade {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.fade-out {
-    animation: fadeOut 0.4s ease forwards;
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes fadeOut {
-    from {
-        opacity: 1;
-        transform: translateY(0);
+    from { opacity: 1; transform: translateY(0); }
+    to { opacity: 0; transform: translateY(-8px); }
+}
+
+@keyframes cardIn {
+    from { opacity: 0; transform: translateY(24px) scale(.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes float {
+    0%, 100% { transform: translate(0, 0); }
+    50% { transform: translate(30px, 40px); }
+}
+
+/* ===== الاستجابة للشاشات ===== */
+@media (max-width: 860px) {
+    .auth-shell {
+        grid-template-columns: 1fr;
+        max-width: 460px;
     }
 
-    to {
-        opacity: 0;
-        transform: translateY(-10px);
+    .brand-panel {
+        display: none;
+    }
+
+    .form-panel {
+        padding: 36px 26px 22px;
     }
 }
 
-/* استجابة الشاشات الصغيرة جداً */
-@media (max-height: 600px) {
+@media (max-width: 380px) {
     body {
-        align-items: flex-start;
-        overflow-y: auto;
-        padding: 10px;
+        padding: 12px;
     }
 
-    .login-container {
-        margin-top: 10px;
-        padding: 25px 20px;
+    .form-panel {
+        padding: 28px 18px 18px;
+    }
+}
+
+@media (max-height: 640px) {
+    body {
+        place-items: start center;
+    }
+}
+
+/* احترام تفضيل تقليل الحركة */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .01ms !important;
     }
 }
